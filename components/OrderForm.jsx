@@ -98,6 +98,21 @@ export default function OrderForm() {
     const [showTeamDropdown, setShowTeamDropdown] = useState(false)
     const teamDropdownRef = useRef(null)
 
+    // Modal State
+    const [activeItemIndex, setActiveItemIndex] = useState(null)
+    const [showJobModal, setShowJobModal] = useState(false)
+    const [modalJobDetails, setModalJobDetails] = useState({
+        type: 'installation',
+        team: '',
+        dateTime: '',
+        address: '',
+        googleMapLink: ''
+    })
+    const [modalShowAddressDropdown, setModalShowAddressDropdown] = useState(false)
+    const [modalShowTeamDropdown, setModalShowTeamDropdown] = useState(false)
+    const modalAddressDropdownRef = useRef(null)
+    const modalTeamDropdownRef = useRef(null)
+
     // Close dropdowns when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
@@ -109,6 +124,13 @@ export default function OrderForm() {
             }
             if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
                 setShowTeamDropdown(false)
+            }
+            // Modal dropdowns
+            if (modalAddressDropdownRef.current && !modalAddressDropdownRef.current.contains(event.target)) {
+                setModalShowAddressDropdown(false)
+            }
+            if (modalTeamDropdownRef.current && !modalTeamDropdownRef.current.contains(event.target)) {
+                setModalShowTeamDropdown(false)
             }
         }
         document.addEventListener("mousedown", handleClickOutside)
@@ -133,7 +155,8 @@ export default function OrderForm() {
             remote: '',
             remark: '',
             qty: 1,
-            unitPrice: 0
+            unitPrice: 0,
+            specificJob: null
         }
     ])
 
@@ -179,6 +202,22 @@ export default function OrderForm() {
             setDistance(null)
         }
     }, [jobInfo.googleMapLink])
+
+    // Sync Master Job to Items
+    useEffect(() => {
+        if (jobInfo.jobType !== 'separate_job') {
+            setItems(prevItems => prevItems.map(item => ({
+                ...item,
+                specificJob: {
+                    type: jobInfo.jobType,
+                    team: jobInfo.team,
+                    dateTime: jobInfo.appointmentDate,
+                    address: jobInfo.installAddress,
+                    googleMapLink: jobInfo.googleMapLink
+                }
+            })))
+        }
+    }, [jobInfo])
 
     // Handlers
     const handleCustomerChange = (field, value, parent = null) => {
@@ -233,7 +272,8 @@ export default function OrderForm() {
             remote: '',
             remark: '',
             qty: 1,
-            unitPrice: 0
+            unitPrice: 0,
+            specificJob: null
         }])
     }
 
@@ -278,6 +318,47 @@ export default function OrderForm() {
         setTeams(teams.filter(t => t !== teamToDelete))
         if (jobInfo.team === teamToDelete) {
             setJobInfo({ ...jobInfo, team: '' })
+        }
+    }
+
+    // Modal Handlers
+    const openJobModal = (index) => {
+        setActiveItemIndex(index)
+        const currentJob = items[index].specificJob || {
+            type: 'installation',
+            team: '',
+            dateTime: '',
+            address: '',
+            googleMapLink: ''
+        }
+        setModalJobDetails(currentJob)
+        setShowJobModal(true)
+    }
+
+    const closeJobModal = () => {
+        setShowJobModal(false)
+        setActiveItemIndex(null)
+    }
+
+    const saveJobModal = () => {
+        if (activeItemIndex !== null) {
+            handleItemChange(activeItemIndex, 'specificJob', modalJobDetails)
+        }
+        closeJobModal()
+    }
+
+    const handleModalAddTeam = () => {
+        if (modalJobDetails.team && !teams.includes(modalJobDetails.team)) {
+            setTeams([...teams, modalJobDetails.team])
+            setModalShowTeamDropdown(false)
+        }
+    }
+
+    const handleModalSaveAddress = () => {
+        const isDuplicate = savedAddresses.some(item => item.address === modalJobDetails.address)
+        if (modalJobDetails.address && !isDuplicate) {
+            setSavedAddresses([...savedAddresses, { address: modalJobDetails.address, googleMapLink: modalJobDetails.googleMapLink }])
+            setModalShowAddressDropdown(false)
         }
     }
 
@@ -489,7 +570,8 @@ export default function OrderForm() {
                                 onChange={e => setJobInfo({ ...jobInfo, jobType: e.target.value })}
                             >
                                 <option value="installation">งานติดตั้ง (Installation)</option>
-                                <option value="delivery">จัดส่งสินค้า (Delivery)</option>
+                                <option value="delivery">งานจัดส่ง (Delivery)</option>
+                                <option value="separate_job">Jobงานแยก (Separate Job)</option>
                             </select>
                         </div>
 
@@ -548,9 +630,9 @@ export default function OrderForm() {
                             </div>
                         </div>
                         <div className="form-group">
-                            <label>วันที่นัดหมาย</label>
+                            <label>วัน-เวลาที่นัดหมาย</label>
                             <input
-                                type="date"
+                                type="datetime-local"
                                 value={jobInfo.appointmentDate}
                                 onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
                             />
@@ -738,6 +820,7 @@ export default function OrderForm() {
                                 <th className="th-equal">แสงไฟ</th>
                                 <th className="th-equal">รีโมท</th>
                                 <th style={{ width: '20%', minWidth: 200 }}>รายละเอียด</th>
+                                <th style={{ width: 60 }}>Job</th>
                                 <th style={{ width: 60 }}>จำนวน</th>
                                 <th style={{ width: 90 }}>ราคา/หน่วย</th>
                                 <th style={{ width: 90 }}>รวม</th>
@@ -775,6 +858,14 @@ export default function OrderForm() {
                                     <td><input type="text" className="input-grid" value={item.light} onChange={e => handleItemChange(idx, 'light', e.target.value)} /></td>
                                     <td><input type="text" className="input-grid" value={item.remote} onChange={e => handleItemChange(idx, 'remote', e.target.value)} /></td>
                                     <td><input type="text" className="input-grid" value={item.remark} onChange={e => handleItemChange(idx, 'remark', e.target.value)} placeholder="รายละเอียด" /></td>
+                                    <td className="text-center">
+                                        <button
+                                            className={`btn-job ${item.specificJob ? 'active' : ''}`}
+                                            onClick={() => openJobModal(idx)}
+                                        >
+                                            {item.specificJob ? 'แก้ไข' : 'Job'}
+                                        </button>
+                                    </td>
                                     <td><input type="number" className="input-grid text-right" min={1} value={item.qty} onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))} /></td>
                                     <td><input type="number" className="input-grid text-right" min={0} value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', Number(e.target.value))} /></td>
                                     <td className="text-right">{currency(item.qty * item.unitPrice)}</td>
@@ -786,6 +877,164 @@ export default function OrderForm() {
                     <button className="btn-add-item" onClick={addItem}>+ เพิ่มรายการ</button>
                 </div>
             </div>
+
+            {/* Job Detail Modal */}
+            {showJobModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>รายละเอียดงาน (Job Details) - รายการที่ {activeItemIndex + 1}</h3>
+                            <button className="btn-close-modal" onClick={closeJobModal}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label>ประเภทงาน</label>
+                                <select
+                                    value={modalJobDetails.type}
+                                    onChange={e => setModalJobDetails({ ...modalJobDetails, type: e.target.value })}
+                                >
+                                    <option value="installation">งานติดตั้ง (Installation)</option>
+                                    <option value="delivery">งานจัดส่ง (Delivery)</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group" ref={modalTeamDropdownRef} style={{ position: 'relative' }}>
+                                <label>ทีม (Team)</label>
+                                <div className="address-combobox">
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.team}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, team: e.target.value })}
+                                        placeholder="ระบุหรือเลือกทีม..."
+                                        className="address-input"
+                                        onFocus={() => setModalShowTeamDropdown(true)}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-dropdown-toggle"
+                                        onClick={() => setModalShowTeamDropdown(!modalShowTeamDropdown)}
+                                    >
+                                        ▼
+                                    </button>
+
+                                    {modalShowTeamDropdown && (
+                                        <div className="dropdown-menu">
+                                            {teams.map((team, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="dropdown-item"
+                                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                                    onClick={() => {
+                                                        setModalJobDetails({ ...modalJobDetails, team: team })
+                                                        setModalShowTeamDropdown(false)
+                                                    }}
+                                                >
+                                                    <span>{team}</span>
+                                                    <button
+                                                        className="btn-icon-delete"
+                                                        style={{ fontSize: 12, padding: '0 4px', color: '#e53e3e', border: 'none', background: 'none', cursor: 'pointer' }}
+                                                        onClick={(e) => handleDeleteTeam(team, e)}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {modalJobDetails.team && !teams.includes(modalJobDetails.team) && (
+                                                <div
+                                                    className="dropdown-item add-new"
+                                                    onClick={handleModalAddTeam}
+                                                >
+                                                    + เพิ่ม "{modalJobDetails.team}"
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
+                                <input
+                                    type="datetime-local"
+                                    value={modalJobDetails.dateTime}
+                                    onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
+                                <label>สถานที่ติดตั้ง / จัดส่ง</label>
+                                <div className="address-combobox">
+                                    <textarea
+                                        rows={3}
+                                        value={modalJobDetails.address}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, address: e.target.value })}
+                                        placeholder="ระบุสถานที่..."
+                                        className="address-input"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-dropdown-toggle"
+                                        onClick={() => setModalShowAddressDropdown(!modalShowAddressDropdown)}
+                                    >
+                                        ▼
+                                    </button>
+
+                                    {modalShowAddressDropdown && (
+                                        <div className="dropdown-menu">
+                                            {savedAddresses.map((item, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        setModalJobDetails({ ...modalJobDetails, address: item.address, googleMapLink: item.googleMapLink })
+                                                        setModalShowAddressDropdown(false)
+                                                    }}
+                                                >
+                                                    <strong>{item.address}</strong>
+                                                    {item.googleMapLink && <><br /><small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small></>}
+                                                </div>
+                                            ))}
+                                            {modalJobDetails.address && !savedAddresses.some(item => item.address === modalJobDetails.address) && (
+                                                <div
+                                                    className="dropdown-item add-new"
+                                                    onClick={handleModalSaveAddress}
+                                                >
+                                                    + เพิ่ม &quot;{modalJobDetails.address}&quot; ลงในรายการ
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Google Maps Link</label>
+                                <input
+                                    type="text"
+                                    value={modalJobDetails.googleMapLink}
+                                    onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
+                                    placeholder="https://maps.google.com/..."
+                                />
+                                {modalJobDetails.googleMapLink && (
+                                    <a
+                                        href={modalJobDetails.googleMapLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ fontSize: 12, color: '#0070f3', marginTop: 4, display: 'inline-block' }}
+                                    >
+                                        🗺️ เปิดแผนที่
+                                    </a>
+                                )}
+                            </div>
+
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn-secondary" onClick={closeJobModal}>ยกเลิก</button>
+                            <button className="btn-primary" onClick={saveJobModal}>บันทึก</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style jsx>{`
         .order-page {
@@ -1003,6 +1252,77 @@ export default function OrderForm() {
           font-size: 14px;
         }
         .btn-remove-image:hover { background: rgba(229, 62, 62, 0.8); }
+
+        /* Job Button */
+        .btn-job {
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            color: #4a5568;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+        }
+        .btn-job:hover { background: #e2e8f0; }
+        .btn-job.active {
+            background: #0070f3;
+            color: white;
+            border-color: #0070f3;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { margin: 0; font-size: 16px; color: #2d3748; }
+        .btn-close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+        .modal-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid #edf2f7;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
 
         @media (max-width: 1400px) {
             .top-layout { grid-template-columns: 1fr 1fr; }

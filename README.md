@@ -17,22 +17,26 @@ npm run dev
 ```
 
 What's included
+
 - `pages/quotation.js`: Quotation (ใบเสนอราคา) page with legal/company info, sample customer, items, VAT calculation, and terms.
 - `components/Quotation.jsx`: React component rendering the quotation
 - `styles/globals.css`: Basic styles
 
 Next steps you might want:
+
 - Add PDF export (html-to-pdf / Puppeteer)
 - Persist quotations in a database (Postgres / MongoDB)
 - Add authentication and admin management pages
 
 If you'd like, I can:
+
 - Add print-to-PDF functionality
 - Integrate a simple API route to save/load quotations
 - Build additional pages (inventory, customers, invoices)
 
 Print / บันทึกเป็น PDF
 ---------------------
+
 คุณสามารถพิมพ์หรือบันทึกเป็น PDF โดยใช้ปุ่ม "พิมพ์ / บันทึกเป็น PDF" บนหน้าใบเสนอราคา หรือใช้คำสั่งพิมพ์ของเบราว์เซอร์ (File → Print) แล้วเลือก "Save as PDF" ในหน้าต่างพิมพ์ ตัวอย่างคำสั่งรันเซิร์ฟเวอร์และเปิดหน้า:
 
 ```bash
@@ -43,4 +47,3 @@ npm run dev
 ```
 
 ถ้าต้องการให้ผมเพิ่มการสร้าง PDF ฝั่งเซิร์ฟเวอร์ (เช่นใช้ Puppeteer) หรือสร้างปุ่มดาวน์โหลด PDF แบบอัตโนมัติ แจ้งได้เลย ผมจะดำเนินการต่อให้
-
