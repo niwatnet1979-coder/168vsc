@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="18" y="18" width="564" height="564" rx="12" fill="#f7fff7" stroke="#00a050" stroke-width="12"/>
+  <g fill="#000">
+    <rect x="80" y="80" width="440" height="440" fill="#000"/>
+    <rect x="120" y="120" width="120" height="120" fill="#fff"/>
+    <rect x="360" y="120" width="120" height="120" fill="#fff"/>
+    <rect x="120" y="360" width="120" height="120" fill="#fff"/>
+  </g>
+  <text x="300" y="540" font-size="20" font-family="Arial" text-anchor="middle" fill="#004d00">QR Payment (placeholder) — วางไฟล์ QR จริงที่ public/qr.png</text>
+</svg>

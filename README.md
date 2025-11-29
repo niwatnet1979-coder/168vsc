@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 168VSC — 168 Interior Lighting Store App
 
-## Getting Started
+This repository contains a minimal Next.js app with a sales/quotation page (ใบเสนอราคา) for 168 Interior Lighting.
 
-First, run the development server:
+Quick start (macOS, zsh):
 
 ```bash
+# 1. Install dependencies
+cd /Users/seng/PROJECT/168vsc
+npm install
+
+# 2. Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 3. Open the quotation page
+# In your browser visit http://localhost:3001/quotation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+What's included
+- `pages/quotation.js`: Quotation (ใบเสนอราคา) page with legal/company info, sample customer, items, VAT calculation, and terms.
+- `components/Quotation.jsx`: React component rendering the quotation
+- `styles/globals.css`: Basic styles
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Next steps you might want:
+- Add PDF export (html-to-pdf / Puppeteer)
+- Persist quotations in a database (Postgres / MongoDB)
+- Add authentication and admin management pages
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If you'd like, I can:
+- Add print-to-PDF functionality
+- Integrate a simple API route to save/load quotations
+- Build additional pages (inventory, customers, invoices)
 
-## Learn More
+Print / บันทึกเป็น PDF
+---------------------
+คุณสามารถพิมพ์หรือบันทึกเป็น PDF โดยใช้ปุ่ม "พิมพ์ / บันทึกเป็น PDF" บนหน้าใบเสนอราคา หรือใช้คำสั่งพิมพ์ของเบราว์เซอร์ (File → Print) แล้วเลือก "Save as PDF" ในหน้าต่างพิมพ์ ตัวอย่างคำสั่งรันเซิร์ฟเวอร์และเปิดหน้า:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cd /Users/seng/PROJECT/168vsc
+npm install
+npm run dev
+# เปิด http://localhost:3000/quotation
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ถ้าต้องการให้ผมเพิ่มการสร้าง PDF ฝั่งเซิร์ฟเวอร์ (เช่นใช้ Puppeteer) หรือสร้างปุ่มดาวน์โหลด PDF แบบอัตโนมัติ แจ้งได้เลย ผมจะดำเนินการต่อให้
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

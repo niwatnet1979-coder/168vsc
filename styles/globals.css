@@ -1,0 +1,6 @@
+/* Basic global styles for 168VSC */
+html,body,#__next{height:100%}
+body{margin:0;background:#f6f7fb;color:#111;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+h1,h2,h3,h4{margin:0 0 8px 0}
+p{margin:0 0 12px 0}
+a{color:inherit}
