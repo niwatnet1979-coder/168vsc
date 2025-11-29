@@ -46,8 +46,13 @@ export default function OrderForm() {
         name: '',
         phone: '',
         email: '',
+        line: '',
+        facebook: '',
+        instagram: '',
         contact1: { name: '', phone: '' },
-        contact2: { name: '', phone: '' }
+        contact2: { name: '', phone: '' },
+        mediaSource: '',
+        mediaSourceOther: ''
     })
 
     // Tax Invoice Data (separate from customer)
@@ -82,7 +87,9 @@ export default function OrderForm() {
         appointmentDate: '',
         installAddress: '',
         googleMapLink: '',
-        team: ''
+        team: '',
+        inspector1: { name: '', phone: '' },
+        inspector2: { name: '', phone: '' }
     })
 
     const [savedAddresses, setSavedAddresses] = useState([
@@ -98,6 +105,19 @@ export default function OrderForm() {
     const [showTeamDropdown, setShowTeamDropdown] = useState(false)
     const teamDropdownRef = useRef(null)
 
+    // Inspectors Data - stored by customer name
+    const [savedInspectors, setSavedInspectors] = useState({})
+    const [showInspector1Dropdown, setShowInspector1Dropdown] = useState(false)
+    const [showInspector2Dropdown, setShowInspector2Dropdown] = useState(false)
+    const inspector1DropdownRef = useRef(null)
+    const inspector2DropdownRef = useRef(null)
+
+    // Modal Inspector Dropdowns
+    const [modalShowInspector1Dropdown, setModalShowInspector1Dropdown] = useState(false)
+    const [modalShowInspector2Dropdown, setModalShowInspector2Dropdown] = useState(false)
+    const modalInspector1DropdownRef = useRef(null)
+    const modalInspector2DropdownRef = useRef(null)
+
     // Modal State
     const [activeItemIndex, setActiveItemIndex] = useState(null)
     const [showJobModal, setShowJobModal] = useState(false)
@@ -106,7 +126,9 @@ export default function OrderForm() {
         team: '',
         dateTime: '',
         address: '',
-        googleMapLink: ''
+        googleMapLink: '',
+        inspector1: { name: '', phone: '' },
+        inspector2: { name: '', phone: '' }
     })
     const [modalShowAddressDropdown, setModalShowAddressDropdown] = useState(false)
     const [modalShowTeamDropdown, setModalShowTeamDropdown] = useState(false)
@@ -131,6 +153,20 @@ export default function OrderForm() {
             }
             if (modalTeamDropdownRef.current && !modalTeamDropdownRef.current.contains(event.target)) {
                 setModalShowTeamDropdown(false)
+            }
+            // Inspector dropdowns
+            if (inspector1DropdownRef.current && !inspector1DropdownRef.current.contains(event.target)) {
+                setShowInspector1Dropdown(false)
+            }
+            if (inspector2DropdownRef.current && !inspector2DropdownRef.current.contains(event.target)) {
+                setShowInspector2Dropdown(false)
+            }
+            // Modal Inspector dropdowns
+            if (modalInspector1DropdownRef.current && !modalInspector1DropdownRef.current.contains(event.target)) {
+                setModalShowInspector1Dropdown(false)
+            }
+            if (modalInspector2DropdownRef.current && !modalInspector2DropdownRef.current.contains(event.target)) {
+                setModalShowInspector2Dropdown(false)
             }
         }
         document.addEventListener("mousedown", handleClickOutside)
@@ -213,7 +249,9 @@ export default function OrderForm() {
                     team: jobInfo.team,
                     dateTime: jobInfo.appointmentDate,
                     address: jobInfo.installAddress,
-                    googleMapLink: jobInfo.googleMapLink
+                    googleMapLink: jobInfo.googleMapLink,
+                    inspector1: jobInfo.inspector1,
+                    inspector2: jobInfo.inspector2
                 }
             })))
         }
@@ -365,10 +403,10 @@ export default function OrderForm() {
     return (
         <div className="order-page">
             <header className="page-header">
-                <div>
-                    <h1>บันทึกข้อมูลสั่งซื้อ (Purchase Order Entry)</h1>
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <label style={{ fontSize: 14, color: '#4a5568' }}>วันที่สั่งซื้อ:</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <h1 style={{ margin: 0 }}>บันทึกข้อมูลสั่งซื้อ (Purchase Order Entry)</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <label style={{ fontSize: 14, color: '#4a5568', whiteSpace: 'nowrap' }}>วันที่สั่งซื้อ:</label>
                         <input
                             type="date"
                             value={jobInfo.orderDate}
@@ -406,52 +444,99 @@ export default function OrderForm() {
                             />
                         </div>
                         <div className="form-group">
-                            <label>อีเมล / LINE</label>
+                            <label>อีเมล</label>
                             <input
-                                type="text"
+                                type="email"
                                 value={customer.email}
                                 onChange={e => handleCustomerChange('email', e.target.value)}
+                                placeholder="example@email.com"
                             />
                         </div>
-                    </div>
-
-                    <div className="sub-section">
-                        <h3 className="sub-header">ผู้ติดต่อ (Contacts)</h3>
-                        <div className="form-grid two-col">
+                        <div className="form-group">
+                            <label>LINE ID</label>
+                            <input
+                                type="text"
+                                value={customer.line}
+                                onChange={e => handleCustomerChange('line', e.target.value)}
+                                placeholder="@lineid"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Facebook</label>
+                            <input
+                                type="text"
+                                value={customer.facebook}
+                                onChange={e => handleCustomerChange('facebook', e.target.value)}
+                                placeholder="facebook.com/..."
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Instagram</label>
+                            <input
+                                type="text"
+                                value={customer.instagram}
+                                onChange={e => handleCustomerChange('instagram', e.target.value)}
+                                placeholder="@instagram"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>สื่อที่ลูกค้าเห็น</label>
+                            <select
+                                value={customer.mediaSource}
+                                onChange={e => handleCustomerChange('mediaSource', e.target.value)}
+                            >
+                                <option value="">-- เลือกสื่อ --</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Line@">Line@</option>
+                                <option value="Google">Google</option>
+                                <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
+                                <option value="อื่นๆระบุ">อื่นๆระบุ</option>
+                            </select>
+                        </div>
+                        {customer.mediaSource === 'อื่นๆระบุ' && (
                             <div className="form-group">
-                                <label>ผู้ติดต่อ 1</label>
+                                <label>ระบุสื่ออื่นๆ</label>
                                 <input
                                     type="text"
-                                    value={customer.contact1.name}
-                                    onChange={e => handleCustomerChange('name', e.target.value, 'contact1')}
-                                    placeholder="ชื่อ"
+                                    value={customer.mediaSourceOther}
+                                    onChange={e => handleCustomerChange('mediaSourceOther', e.target.value)}
+                                    placeholder="โปรดระบุ..."
                                 />
                             </div>
-                            <div className="form-group">
-                                <label>เบอร์โทร</label>
-                                <input
-                                    type="text"
-                                    value={customer.contact1.phone}
-                                    onChange={e => handleCustomerChange('phone', e.target.value, 'contact1')}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>ผู้ติดต่อ 2</label>
-                                <input
-                                    type="text"
-                                    value={customer.contact2.name}
-                                    onChange={e => handleCustomerChange('name', e.target.value, 'contact2')}
-                                    placeholder="ชื่อ"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>เบอร์โทร</label>
-                                <input
-                                    type="text"
-                                    value={customer.contact2.phone}
-                                    onChange={e => handleCustomerChange('phone', e.target.value, 'contact2')}
-                                />
-                            </div>
+                        )}
+                        <div className="form-group">
+                            <label>ผู้ติดต่อ 1</label>
+                            <input
+                                type="text"
+                                value={customer.contact1.name}
+                                onChange={e => handleCustomerChange('name', e.target.value, 'contact1')}
+                                placeholder="ชื่อ"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>เบอร์โทร</label>
+                            <input
+                                type="text"
+                                value={customer.contact1.phone}
+                                onChange={e => handleCustomerChange('phone', e.target.value, 'contact1')}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>ผู้ติดต่อ 2</label>
+                            <input
+                                type="text"
+                                value={customer.contact2.name}
+                                onChange={e => handleCustomerChange('name', e.target.value, 'contact2')}
+                                placeholder="ชื่อ"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>เบอร์โทร</label>
+                            <input
+                                type="text"
+                                value={customer.contact2.phone}
+                                onChange={e => handleCustomerChange('phone', e.target.value, 'contact2')}
+                            />
                         </div>
                     </div>
                 </div>
@@ -629,6 +714,7 @@ export default function OrderForm() {
                                 )}
                             </div>
                         </div>
+
                         <div className="form-group">
                             <label>วัน-เวลาที่นัดหมาย</label>
                             <input
@@ -706,6 +792,44 @@ export default function OrderForm() {
                                         🗺️ เปิดแผนที่
                                     </a>
                                 )}
+                            </div>
+
+                            {/* Inspector 1 */}
+                            <div style={{ marginTop: 12 }}>
+                                <label>ผู้ตรวจงาน 1</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                                    <input
+                                        type="text"
+                                        value={jobInfo.inspector1.name}
+                                        onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, name: e.target.value } })}
+                                        placeholder="ชื่อผู้ตรวจงาน"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={jobInfo.inspector1.phone}
+                                        onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, phone: e.target.value } })}
+                                        placeholder="เบอร์โทร"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Inspector 2 */}
+                            <div style={{ marginTop: 12 }}>
+                                <label>ผู้ตรวจงาน 2</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
+                                    <input
+                                        type="text"
+                                        value={jobInfo.inspector2.name}
+                                        onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, name: e.target.value } })}
+                                        placeholder="ชื่อผู้ตรวจงาน"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={jobInfo.inspector2.phone}
+                                        onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, phone: e.target.value } })}
+                                        placeholder="เบอร์โทร"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -863,7 +987,10 @@ export default function OrderForm() {
                                             className={`btn-job ${item.specificJob ? 'active' : ''}`}
                                             onClick={() => openJobModal(idx)}
                                         >
-                                            {item.specificJob ? 'แก้ไข' : 'Job'}
+                                            {item.specificJob ? (
+                                                item.specificJob.type === 'installation' ? 'ติดตั้ง' :
+                                                    item.specificJob.type === 'delivery' ? 'จัดส่ง' : 'แก้ไข'
+                                            ) : 'Job'}
                                         </button>
                                     </td>
                                     <td><input type="number" className="input-grid text-right" min={1} value={item.qty} onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))} /></td>
@@ -1015,16 +1142,65 @@ export default function OrderForm() {
                                     onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
                                     placeholder="https://maps.google.com/..."
                                 />
-                                {modalJobDetails.googleMapLink && (
-                                    <a
-                                        href={modalJobDetails.googleMapLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ fontSize: 12, color: '#0070f3', marginTop: 4, display: 'inline-block' }}
-                                    >
-                                        🗺️ เปิดแผนที่
-                                    </a>
-                                )}
+                                {modalJobDetails.googleMapLink && (() => {
+                                    const coords = extractCoordinates(modalJobDetails.googleMapLink)
+                                    const dist = coords ? calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon) : null
+                                    return (
+                                        <div style={{ marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
+                                            <a
+                                                href={modalJobDetails.googleMapLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ fontSize: 12, color: '#0070f3' }}
+                                            >
+                                                🗺️ เปิดแผนที่
+                                            </a>
+                                            {dist && (
+                                                <span style={{ fontSize: 12, color: '#4a5568' }}>
+                                                    ({dist} km)
+                                                </span>
+                                            )}
+                                        </div>
+                                    )
+                                })()}
+                            </div>
+
+                            {/* Inspector 1 */}
+                            <div className="form-group">
+                                <label>ผู้ตรวจงาน 1</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.inspector1.name}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
+                                        placeholder="ชื่อผู้ตรวจงาน"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.inspector1.phone}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
+                                        placeholder="เบอร์โทร"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Inspector 2 */}
+                            <div className="form-group">
+                                <label>ผู้ตรวจงาน 2</label>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.inspector2.name}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
+                                        placeholder="ชื่อผู้ตรวจงาน"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.inspector2.phone}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
+                                        placeholder="เบอร์โทร"
+                                    />
+                                </div>
                             </div>
 
                         </div>
