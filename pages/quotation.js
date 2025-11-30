@@ -1,4 +1,5 @@
 import Quotation from '../components/Quotation'
+import Link from 'next/link'
 
 const sampleQuotation = {
   company: {
@@ -48,8 +49,15 @@ const sampleQuotation = {
 
 export default function QuotationPage() {
   return (
-    <div style={{padding: 24, fontFamily: 'Inter, system-ui, -apple-system'}}>
-      <Quotation data={sampleQuotation} />
+    <div style={{ background: '#f5f7fa', minHeight: '100vh' }}>
+      <div style={{ background: 'white', padding: '20px 40px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', marginBottom: '24px' }}>
+        <Link href="/" style={{ color: '#718096', textDecoration: 'none', fontSize: '14px', display: 'inline-block' }}>
+          ← กลับหน้าหลัก
+        </Link>
+      </div>
+      <div style={{ padding: 24, fontFamily: 'Inter, system-ui, -apple-system' }}>
+        <Quotation data={sampleQuotation} />
+      </div>
     </div>
   )
 }

@@ -1,5 +1,4 @@
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 
@@ -16,7 +15,8 @@ export default function CustomersPage() {
             mediaSource: 'Facebook',
             mediaSourceOther: '',
             contact1: { name: 'สมชาย ใจดี', phone: '081-234-5678' },
-            contact2: { name: 'สมหญิง รักงาน', phone: '082-345-6789' }
+            contact2: { name: 'สมหญิง รักงาน', phone: '082-345-6789' },
+            lastOrder: '10/10/2023'
         },
         {
             id: 2,
@@ -29,7 +29,8 @@ export default function CustomersPage() {
             mediaSource: 'Google',
             mediaSourceOther: '',
             contact1: { name: 'วิชัย สุขใจ', phone: '083-456-7890' },
-            contact2: { name: 'สุดา แสงจันทร์', phone: '084-567-8901' }
+            contact2: { name: 'สุดา แสงจันทร์', phone: '084-567-8901' },
+            lastOrder: '15/10/2023'
         },
         {
             id: 3,
@@ -42,7 +43,8 @@ export default function CustomersPage() {
             mediaSource: 'เพื่อนแนะนำ',
             mediaSourceOther: '',
             contact1: { name: 'ประยุทธ์ มั่นคง', phone: '085-678-9012' },
-            contact2: { name: 'อรุณี สว่างไสว', phone: '086-789-0123' }
+            contact2: { name: 'อรุณี สว่างไสว', phone: '086-789-0123' },
+            lastOrder: '20/10/2023'
         },
         {
             id: 4,
@@ -55,7 +57,8 @@ export default function CustomersPage() {
             mediaSource: 'Line@',
             mediaSourceOther: '',
             contact1: { name: 'ชัยวัฒน์ สร้างสรรค์', phone: '087-890-1234' },
-            contact2: { name: 'พิมพ์ใจ งามสง่า', phone: '088-901-2345' }
+            contact2: { name: 'พิมพ์ใจ งามสง่า', phone: '088-901-2345' },
+            lastOrder: '25/10/2023'
         },
         {
             id: 5,
@@ -68,7 +71,8 @@ export default function CustomersPage() {
             mediaSource: 'อื่นๆระบุ',
             mediaSourceOther: 'ป้ายโฆษณา',
             contact1: { name: 'สมศักดิ์ เจริญสุข', phone: '089-012-3456' },
-            contact2: { name: '', phone: '' }
+            contact2: { name: '', phone: '' },
+            lastOrder: '-'
         },
         {
             id: 6,
@@ -81,7 +85,8 @@ export default function CustomersPage() {
             mediaSource: 'Facebook',
             mediaSourceOther: '',
             contact1: { name: 'นภา สุขสันต์', phone: '090-123-4567' },
-            contact2: { name: 'ธนา เจริญทรัพย์', phone: '091-234-5678' }
+            contact2: { name: 'ธนา เจริญทรัพย์', phone: '091-234-5678' },
+            lastOrder: '01/11/2023'
         },
         {
             id: 7,
@@ -94,7 +99,8 @@ export default function CustomersPage() {
             mediaSource: 'Google',
             mediaSourceOther: '',
             contact1: { name: 'สุรชัย ดีงาม', phone: '092-345-6789' },
-            contact2: { name: 'มาลี สวยงาม', phone: '093-456-7890' }
+            contact2: { name: 'มาลี สวยงาม', phone: '093-456-7890' },
+            lastOrder: '05/11/2023'
         },
         {
             id: 8,
@@ -107,7 +113,8 @@ export default function CustomersPage() {
             mediaSource: 'เพื่อนแนะนำ',
             mediaSourceOther: '',
             contact1: { name: 'วิทยา แข็งแรง', phone: '094-567-8901' },
-            contact2: { name: 'สมบูรณ์ มั่นคง', phone: '095-678-9012' }
+            contact2: { name: 'สมบูรณ์ มั่นคง', phone: '095-678-9012' },
+            lastOrder: '10/11/2023'
         },
         {
             id: 9,
@@ -120,7 +127,8 @@ export default function CustomersPage() {
             mediaSource: 'Line@',
             mediaSourceOther: '',
             contact1: { name: 'สุภาพร ใจดี', phone: '096-789-0123' },
-            contact2: { name: '', phone: '' }
+            contact2: { name: '', phone: '' },
+            lastOrder: '-'
         },
         {
             id: 10,
@@ -133,9 +141,23 @@ export default function CustomersPage() {
             mediaSource: 'อื่นๆระบุ',
             mediaSourceOther: 'TikTok',
             contact1: { name: 'ธีระ เทคโนโลยี', phone: '097-890-1234' },
-            contact2: { name: 'ปิยะ ดิจิทัล', phone: '098-901-2345' }
+            contact2: { name: 'ปิยะ ดิจิทัล', phone: '098-901-2345' },
+            lastOrder: '12/11/2023'
         }
     ])
+
+    // Load data from LocalStorage on mount
+    useEffect(() => {
+        const savedData = localStorage.getItem('customers_data')
+        if (savedData) {
+            setCustomers(JSON.parse(savedData))
+        }
+    }, [])
+
+    // Save data to LocalStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('customers_data', JSON.stringify(customers))
+    }, [customers])
 
     const [searchTerm, setSearchTerm] = useState('')
     const [showModal, setShowModal] = useState(false)
@@ -216,90 +238,132 @@ export default function CustomersPage() {
         c.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
+    // Icons
+    const SearchIcon = () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    )
+
+    const BackIcon = () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+    )
+
+    const DeleteIcon = () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+    )
+
     return (
         <>
             <Head>
                 <title>จัดการข้อมูลลูกค้า - Customer Management</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet" />
+                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
             </Head>
 
-            <div className="customers-page">
+            <div className="page-container">
                 <header className="page-header">
-                    <h1>จัดการข้อมูลลูกค้า (Customer Management)</h1>
-                    <div className="header-actions">
-                        <input
-                            type="text"
-                            placeholder="ค้นหา ชื่อ, เบอร์โทร, อีเมล..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="search-input"
-                        />
-                        <button className="btn-primary" onClick={handleAdd}>+ เพิ่มลูกค้าใหม่</button>
+                    <div className="header-left">
+                        <Link href="/" className="btn-back-circle">
+                            <BackIcon />
+                        </Link>
+                        <h1>จัดการข้อมูลลูกค้า (Customer Management)</h1>
                     </div>
+                    <Link href="/customers/new" className="btn-primary">+ เพิ่มลูกค้าใหม่</Link>
                 </header>
 
-                <div className="table-container">
-                    <table className="customers-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>ชื่อลูกค้า/บริษัท</th>
-                                <th>เบอร์โทรศัพท์</th>
-                                <th>อีเมล</th>
-                                <th>LINE ID</th>
-                                <th>สื่อที่เห็น</th>
-                                <th>ผู้ติดต่อ 1</th>
-                                <th>ผู้ติดต่อ 2</th>
-                                <th>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredCustomers.map((customer, index) => (
-                                <tr key={customer.id}>
-                                    <td>{index + 1}</td>
-                                    <td>
-                                        <Link href={`/customers/${customer.id}`} className="customer-name-link">
-                                            <strong>{customer.name}</strong>
-                                        </Link>
-                                    </td>
-                                    <td>{customer.phone}</td>
-                                    <td>{customer.email}</td>
-                                    <td>{customer.line}</td>
-                                    <td>
-                                        {customer.mediaSource === 'อื่นๆระบุ'
-                                            ? customer.mediaSourceOther
-                                            : customer.mediaSource}
-                                    </td>
-                                    <td>
-                                        {customer.contact1.name && (
-                                            <div>
-                                                <div>{customer.contact1.name}</div>
-                                                <small style={{ color: '#666' }}>{customer.contact1.phone}</small>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {customer.contact2.name && (
-                                            <div>
-                                                <div>{customer.contact2.name}</div>
-                                                <small style={{ color: '#666' }}>{customer.contact2.phone}</small>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button className="btn-edit" onClick={() => handleEdit(customer)}>แก้ไข</button>
-                                            <button className="btn-delete" onClick={() => handleDelete(customer.id)}>ลบ</button>
-                                        </div>
-                                    </td>
+                <main className="main-content">
+                    <div className="search-container">
+                        <div className="search-wrapper">
+                            <div className="search-icon">
+                                <SearchIcon />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="ค้นหา ชื่อ, เบอร์โทร, อีเมล..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="search-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="table-card">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>ชื่อลูกค้า/บริษัท</th>
+                                    <th>เบอร์โทรศัพท์</th>
+                                    <th>อีเมล</th>
+                                    <th>LINE ID</th>
+                                    <th>สื่อที่เห็น</th>
+                                    <th>ผู้ติดต่อ 1</th>
+                                    <th>ผู้ติดต่อ 2</th>
+                                    <th>สั่งซื้อล่าสุด</th>
+                                    <th style={{ textAlign: 'right' }}>จัดการ</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredCustomers.length === 0 && (
-                        <div className="no-data">ไม่พบข้อมูลลูกค้า</div>
-                    )}
-                </div>
+                            </thead>
+                            <tbody>
+                                {filteredCustomers.map((customer, index) => (
+                                    <tr key={customer.id}>
+                                        <td><span className="text-id">{index + 1}</span></td>
+                                        <td>
+                                            <Link href={`/customers/${customer.id}`} className="customer-name-link">
+                                                {customer.name}
+                                            </Link>
+                                        </td>
+                                        <td>{customer.phone}</td>
+                                        <td>{customer.email}</td>
+                                        <td>{customer.line}</td>
+                                        <td>
+                                            {customer.mediaSource === 'อื่นๆระบุ'
+                                                ? customer.mediaSourceOther
+                                                : customer.mediaSource}
+                                        </td>
+                                        <td>
+                                            {customer.contact1.name && (
+                                                <div className="contact-info">
+                                                    <div>{customer.contact1.name}</div>
+                                                    <small>{customer.contact1.phone}</small>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {customer.contact2.name && (
+                                                <div className="contact-info">
+                                                    <div>{customer.contact2.name}</div>
+                                                    <small>{customer.contact2.phone}</small>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {customer.lastOrder || '-'}
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <button className="btn-icon" onClick={() => handleDelete(customer.id)} title="ลบ">
+                                                    <DeleteIcon />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {filteredCustomers.length === 0 && (
+                            <div className="empty-state">ไม่พบข้อมูลลูกค้า</div>
+                        )}
+                    </div>
+                </main>
 
                 {/* Modal */}
                 {showModal && (
@@ -434,142 +498,173 @@ export default function CustomersPage() {
                 )}
 
                 <style jsx>{`
-                    .customers-page {
+                    .page-container {
                         min-height: 100vh;
-                        background: #f5f7fa;
-                        padding: 24px;
+                        background-color: #f8f9fa;
                         font-family: 'Sarabun', sans-serif;
+                        padding: 24px 40px;
                     }
                     .page-header {
-                        background: white;
-                        padding: 20px 24px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                        margin-bottom: 24px;
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
+                        margin-bottom: 24px;
+                    }
+                    .header-left {
+                        display: flex;
+                        align-items: center;
+                        gap: 16px;
+                    }
+                    .btn-back-circle {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #4a5568;
+                        transition: all 0.2s;
+                    }
+                    .btn-back-circle:hover {
+                        background: #f7fafc;
+                        border-color: #cbd5e0;
                     }
                     .page-header h1 {
-                        margin: 0;
                         font-size: 24px;
                         color: #1a202c;
+                        margin: 0;
+                        font-weight: 600;
                     }
-                    .header-actions {
+                    .btn-primary {
+                        background: #2563eb;
+                        color: white;
+                        border: none;
+                        padding: 10px 24px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: background 0.2s;
+                        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+                    }
+                    .btn-primary:hover {
+                        background: #1d4ed8;
+                    }
+
+                    /* Search */
+                    .search-container {
+                        margin-bottom: 24px;
+                    }
+                    .search-wrapper {
+                        position: relative;
+                        width: 100%;
+                    }
+                    .search-icon {
+                        position: absolute;
+                        left: 16px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #9ca3af;
                         display: flex;
-                        gap: 12px;
-                        align-items: center;
                     }
                     .search-input {
-                        padding: 8px 16px;
+                        width: 100%;
+                        padding: 14px 16px 14px 48px;
                         border: 1px solid #e2e8f0;
-                        border-radius: 6px;
-                        font-size: 14px;
-                        width: 300px;
+                        border-radius: 12px;
+                        font-size: 15px;
+                        background: white;
+                        transition: all 0.2s;
                     }
                     .search-input:focus {
                         outline: none;
-                        border-color: #0070f3;
+                        border-color: #2563eb;
+                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
                     }
-                    .btn-primary {
-                        background: #0070f3;
-                        color: white;
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        font-size: 14px;
-                    }
-                    .btn-primary:hover {
-                        background: #0051cc;
-                    }
-                    .btn-secondary {
-                        background: #fff;
-                        color: #666;
-                        border: 1px solid #ddd;
-                        padding: 8px 16px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        font-size: 14px;
-                    }
-                    .btn-secondary:hover {
-                        background: #f7fafc;
-                    }
-                    .table-container {
+
+                    /* Table */
+                    .table-card {
                         background: white;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        border-radius: 12px;
+                        border: 1px solid #e2e8f0;
                         overflow: hidden;
-                        overflow-x: auto;
                     }
-                    .customers-table {
+                    .data-table {
                         width: 100%;
                         border-collapse: collapse;
-                        min-width: 1000px;
                     }
-                    .customers-table th {
-                        background: #f7fafc;
-                        padding: 12px;
+                    .data-table th {
+                        background: white;
+                        padding: 16px 24px;
                         text-align: left;
-                        font-size: 13px;
+                        font-size: 12px;
                         font-weight: 600;
-                        color: #4a5568;
-                        border-bottom: 2px solid #edf2f7;
-                        white-space: nowrap;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        border-bottom: 1px solid #e2e8f0;
                     }
-                    .customers-table td {
-                        padding: 12px;
-                        border-bottom: 1px solid #edf2f7;
+                    .data-table td {
+                        padding: 20px 24px;
+                        border-bottom: 1px solid #f1f5f9;
                         font-size: 14px;
+                        color: #334155;
                         vertical-align: top;
                     }
-                    .customers-table tr:hover {
-                        background: #f7fafc;
+                    .data-table tr:last-child td {
+                        border-bottom: none;
+                    }
+                    .data-table tr:hover {
+                        background: #f8fafc;
+                    }
+                    .text-id {
+                        font-family: monospace;
+                        color: #475569;
+                        font-weight: 500;
                     }
                     .customer-name-link {
-                        color: #0070f3;
+                        color: #2563eb;
                         text-decoration: none;
-                        cursor: pointer;
+                        font-weight: 600;
+                        transition: color 0.2s;
                     }
                     .customer-name-link:hover {
+                        color: #1d4ed8;
                         text-decoration: underline;
+                    }
+                    .contact-info small {
+                        display: block;
+                        color: #64748b;
+                        margin-top: 2px;
                     }
                     .action-buttons {
                         display: flex;
-                        gap: 8px;
+                        gap: 12px;
+                        justify-content: flex-end;
                     }
-                    .btn-edit {
-                        background: #0070f3;
-                        color: white;
+                    .btn-icon {
+                        background: none;
                         border: none;
-                        padding: 4px 12px;
-                        border-radius: 4px;
                         cursor: pointer;
-                        font-size: 12px;
-                    }
-                    .btn-edit:hover {
-                        background: #0051cc;
-                    }
-                    .btn-delete {
-                        background: #e53e3e;
-                        color: white;
-                        border: none;
-                        padding: 4px 12px;
+                        padding: 4px;
                         border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 12px;
+                        transition: background 0.2s;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
                     }
-                    .btn-delete:hover {
-                        background: #c53030;
+                    .btn-icon:hover {
+                        background: #f1f5f9;
                     }
-                    .no-data {
+                    .empty-state {
+                        padding: 60px;
                         text-align: center;
-                        padding: 40px;
-                        color: #a0aec0;
-                        font-size: 16px;
+                        color: #94a3b8;
                     }
+
+                    /* Modal */
                     .modal-overlay {
                         position: fixed;
                         top: 0;
@@ -581,21 +676,21 @@ export default function CustomersPage() {
                         align-items: center;
                         justify-content: center;
                         z-index: 1000;
+                        backdrop-filter: blur(2px);
                     }
                     .modal-content {
                         background: white;
-                        border-radius: 8px;
+                        border-radius: 16px;
                         width: 700px;
                         max-width: 90%;
+                        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
                         max-height: 90vh;
-                        overflow-y: auto;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                         display: flex;
                         flex-direction: column;
                     }
                     .modal-header {
-                        padding: 16px 24px;
-                        border-bottom: 1px solid #edf2f7;
+                        padding: 20px 24px;
+                        border-bottom: 1px solid #e2e8f0;
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
@@ -603,68 +698,78 @@ export default function CustomersPage() {
                     .modal-header h3 {
                         margin: 0;
                         font-size: 18px;
-                        color: #2d3748;
+                        color: #1a202c;
+                        font-weight: 600;
                     }
                     .btn-close {
                         background: none;
                         border: none;
                         font-size: 24px;
+                        color: #94a3b8;
                         cursor: pointer;
-                        color: #a0aec0;
                         padding: 0;
-                        width: 30px;
-                        height: 30px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                    .btn-close:hover {
-                        color: #4a5568;
+                        line-height: 1;
                     }
                     .modal-body {
                         padding: 24px;
-                    }
-                    .modal-footer {
-                        padding: 16px 24px;
-                        border-top: 1px solid #edf2f7;
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 12px;
+                        overflow-y: auto;
                     }
                     .form-grid {
                         display: grid;
                         grid-template-columns: 1fr 1fr;
-                        gap: 16px;
+                        gap: 20px;
                     }
                     .form-group {
                         display: flex;
                         flex-direction: column;
-                        gap: 4px;
+                        gap: 6px;
                     }
                     .form-group.full-width {
-                        grid-column: 1 / -1;
+                        grid-column: span 2;
                     }
                     .form-group label {
                         font-size: 13px;
                         font-weight: 500;
-                        color: #4a5568;
+                        color: #64748b;
                     }
-                    .form-group input,
-                    .form-group select {
-                        padding: 8px 12px;
+                    .form-group input, .form-group select {
+                        padding: 10px 12px;
                         border: 1px solid #e2e8f0;
-                        border-radius: 4px;
+                        border-radius: 8px;
                         font-size: 14px;
                         font-family: inherit;
+                        transition: all 0.2s;
                     }
-                    .form-group input:focus,
-                    .form-group select:focus {
+                    .form-group input:focus, .form-group select:focus {
                         outline: none;
-                        border-color: #0070f3;
+                        border-color: #2563eb;
+                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+                    }
+                    .modal-footer {
+                        padding: 20px 24px;
+                        border-top: 1px solid #e2e8f0;
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 12px;
+                        background: #f8fafc;
+                        border-radius: 0 0 16px 16px;
+                    }
+                    .btn-secondary {
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        color: #475569;
+                        padding: 10px 24px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    .btn-secondary:hover {
+                        background: #f1f5f9;
+                        border-color: #cbd5e0;
                     }
                 `}</style>
             </div>
         </>
     )
 }
-
