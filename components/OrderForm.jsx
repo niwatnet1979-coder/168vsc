@@ -152,28 +152,79 @@ export default function OrderForm() {
 
     // Load Customers from LocalStorage
     const [customersData, setCustomersData] = useState([])
+    const [savedCustomers, setSavedCustomers] = useState([]); // New state for customers
 
     // Load Products from LocalStorage
     const [productsData, setProductsData] = useState([])
+    // allProducts state is already declared or not needed here if we use productsData, 
+    // but based on previous context, let's remove the duplicate declaration if it exists elsewhere.
+    // Checking the file, it seems I added it in line 159 but it might be clashing with another one.
+    // Let's just remove this block and rely on the one I added or the existing one.
+    // Actually, I will remove the duplicate lines I added in step 2177.
 
+    // Load teams from localStorage, filtered for Master Job
+    const [availableTeams, setAvailableTeams] = useState([]); // New state for available teams
+
+    // Load saved data on mount
     useEffect(() => {
-        const savedData = localStorage.getItem('customers_data')
-        if (savedData) {
-            setCustomersData(JSON.parse(savedData))
+        // Load customers
+        const savedCustomersData = localStorage.getItem('customers_data');
+        if (savedCustomersData) {
+            setCustomersData(JSON.parse(savedCustomersData));
+            setSavedCustomers(JSON.parse(savedCustomersData)); // Also set the new state
         } else {
             // Fallback to mock data if no saved data
-            setCustomersData(MOCK_CUSTOMERS_DATA)
+            setCustomersData(MOCK_CUSTOMERS_DATA);
+            setSavedCustomers(MOCK_CUSTOMERS_DATA);
         }
 
-        // Load products
-        const savedProducts = localStorage.getItem('products_data')
+        // Load tax profiles
+        const savedTax = localStorage.getItem('tax_profiles_data');
+        if (savedTax) {
+            setSavedTaxProfiles(JSON.parse(savedTax));
+        }
+
+        // Load teams and filter for Master Job (QC and Technician only)
+        const savedTeams = localStorage.getItem('team_data'); // Correct key: team_data
+        if (savedTeams) {
+            try {
+                const allMembers = JSON.parse(savedTeams);
+                // Filter members by teamType 'QC' or 'ช่าง'
+                const validMembers = allMembers.filter(m => m.teamType === 'QC' || m.teamType === 'ช่าง');
+
+                // Extract unique team names
+                const uniqueTeams = [...new Set(validMembers.map(m => m.team))].filter(Boolean);
+
+                // Create objects for the dropdown
+                const teamOptions = uniqueTeams.map(teamName => {
+                    // Find the type of this team (assuming all members in a team have the same type, or take the first one found)
+                    const member = validMembers.find(m => m.team === teamName);
+                    return {
+                        name: teamName,
+                        type: member ? member.teamType : 'ช่าง'
+                    };
+                });
+
+                setAvailableTeams(teamOptions);
+            } catch (e) {
+                console.error("Error parsing team data", e);
+                setAvailableTeams([]);
+            }
+        } else {
+            setAvailableTeams([]);
+        }
+
+        // Load products for search
+        const savedProducts = localStorage.getItem('products_data_v2'); // Using v2 as per instruction
         if (savedProducts) {
-            setProductsData(JSON.parse(savedProducts))
+            setAllProducts(JSON.parse(savedProducts));
+            setProductsData(JSON.parse(savedProducts)); // Keep existing productsData for compatibility if needed
         } else {
             // Fallback to mock data
-            setProductsData(MOCK_PRODUCTS_DATA)
+            setProductsData(MOCK_PRODUCTS_DATA);
+            setAllProducts(MOCK_PRODUCTS_DATA);
         }
-    }, [])
+    }, []);
 
     // Load existing order for editing
     useEffect(() => {
@@ -819,7 +870,9 @@ export default function OrderForm() {
             team: '',
             dateTime: '',
             address: '',
-            googleMapLink: ''
+            googleMapLink: '',
+            inspector1: { name: '', phone: '' },
+            inspector2: { name: '', phone: '' }
         }
         setModalJobDetails(currentJob)
         setShowJobModal(true)
@@ -944,6 +997,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={customer.phone}
                                 onChange={e => handleCustomerChange('phone', e.target.value)}
+                                placeholder="ระบุเบอร์โทรศัพท์..."
                             />
                         </div>
                         <div className="form-group">
@@ -1003,7 +1057,7 @@ export default function OrderForm() {
                                     type="text"
                                     value={customer.mediaSourceOther}
                                     onChange={e => handleCustomerChange('mediaSourceOther', e.target.value)}
-                                    placeholder="โปรดระบุ..."
+                                    placeholder="ระบุสื่ออื่นๆ..."
                                 />
                             </div>
                         )}
@@ -1013,15 +1067,16 @@ export default function OrderForm() {
                                 type="text"
                                 value={customer.contact1.name}
                                 onChange={e => handleCustomerChange('name', e.target.value, 'contact1')}
-                                placeholder="ชื่อ"
+                                placeholder="ระบุชื่อผู้ติดต่อ..."
                             />
                         </div>
                         <div className="form-group">
-                            <label>เบอร์โทร</label>
+                            <label>&nbsp;</label>
                             <input
                                 type="text"
                                 value={customer.contact1.phone}
                                 onChange={e => handleCustomerChange('phone', e.target.value, 'contact1')}
+                                placeholder="ระบุเบอร์โทร..."
                             />
                         </div>
                         <div className="form-group">
@@ -1030,15 +1085,16 @@ export default function OrderForm() {
                                 type="text"
                                 value={customer.contact2.name}
                                 onChange={e => handleCustomerChange('name', e.target.value, 'contact2')}
-                                placeholder="ชื่อ"
+                                placeholder="ระบุชื่อผู้ติดต่อ..."
                             />
                         </div>
                         <div className="form-group">
-                            <label>เบอร์โทร</label>
+                            <label>&nbsp;</label>
                             <input
                                 type="text"
                                 value={customer.contact2.phone}
                                 onChange={e => handleCustomerChange('phone', e.target.value, 'contact2')}
+                                placeholder="ระบุเบอร์โทร..."
                             />
                         </div>
                     </div>
@@ -1046,59 +1102,59 @@ export default function OrderForm() {
 
                 {/* 2. Tax Invoice Section */}
                 <div className="section-card tax-section" ref={taxDropdownRef}>
-                    <h2 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        ข้อมูลใบกำกับภาษี (Tax Invoice)
-                        <button
-                            type="button"
-                            className="btn-dropdown-toggle-header"
-                            onClick={() => setShowTaxDropdown(!showTaxDropdown)}
-                        >
-                            เลือกชุดข้อมูล ▼
-                        </button>
-                    </h2>
-
-                    {showTaxDropdown && (
-                        <div className="dropdown-menu-absolute">
-                            {savedTaxProfiles.length > 0 ? (
-                                <>
-                                    {savedTaxProfiles.map((profile, i) => (
-                                        <div
-                                            key={i}
-                                            className="dropdown-item"
-                                            onClick={() => handleSelectTaxProfile(profile)}
-                                        >
-                                            <strong>{profile.companyName}</strong><br />
-                                            <small>เลขที่: {profile.taxId || '-'}</small>
-                                        </div>
-                                    ))}
-                                    {taxInvoice.companyName && taxInvoice.taxId && !savedTaxProfiles.some(
-                                        p => p.companyName === taxInvoice.companyName && p.taxId === taxInvoice.taxId
-                                    ) && (
-                                            <div
-                                                className="dropdown-item add-new"
-                                                onClick={handleSaveTaxProfile}
-                                            >
-                                                + บันทึกชุดข้อมูลปัจจุบัน
-                                            </div>
-                                        )}
-                                </>
-                            ) : (
-                                <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
-                                    ไม่มีข้อมูลใบกำกับภาษีที่บันทึกไว้
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <h2>ข้อมูลใบกำกับภาษี (Tax Invoice)</h2>
 
                     <div className="form-grid two-col">
-                        <div className="form-group full-width">
+                        <div className="form-group full-width" style={{ position: 'relative' }}>
                             <label>ชื่อบริษัท</label>
-                            <input
-                                type="text"
-                                value={taxInvoice.companyName}
-                                onChange={e => handleTaxInvoiceChange('companyName', e.target.value)}
-                                placeholder="ชื่อบริษัทสำหรับออกใบกำกับภาษี"
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    value={taxInvoice.companyName}
+                                    onChange={e => {
+                                        handleTaxInvoiceChange('companyName', e.target.value)
+                                        setShowTaxDropdown(true)
+                                    }}
+                                    onFocus={() => setShowTaxDropdown(true)}
+                                    placeholder="ระบุชื่อบริษัท..."
+                                    style={{ width: '100%' }}
+                                />
+                                {showTaxDropdown && (
+                                    <div className="dropdown-menu-absolute">
+                                        {savedTaxProfiles.length > 0 ? (
+                                            <>
+                                                {savedTaxProfiles.filter(p =>
+                                                    !taxInvoice.companyName ||
+                                                    p.companyName.toLowerCase().includes(taxInvoice.companyName.toLowerCase())
+                                                ).map((profile, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="dropdown-item"
+                                                        onClick={() => handleSelectTaxProfile(profile)}
+                                                    >
+                                                        <strong>{profile.companyName}</strong><br />
+                                                        <small>เลขที่: {profile.taxId || '-'}</small>
+                                                    </div>
+                                                ))}
+                                                {taxInvoice.companyName && taxInvoice.taxId && !savedTaxProfiles.some(
+                                                    p => p.companyName === taxInvoice.companyName && p.taxId === taxInvoice.taxId
+                                                ) && (
+                                                        <div
+                                                            className="dropdown-item add-new"
+                                                            onClick={handleSaveTaxProfile}
+                                                        >
+                                                            + บันทึกชุดข้อมูลปัจจุบัน
+                                                        </div>
+                                                    )}
+                                            </>
+                                        ) : (
+                                            <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                                ไม่มีข้อมูลใบกำกับภาษีที่บันทึกไว้
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="form-group">
                             <label>สาขา</label>
@@ -1106,7 +1162,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={taxInvoice.branch}
                                 onChange={e => handleTaxInvoiceChange('branch', e.target.value)}
-                                placeholder="สำนักงานใหญ่ / สาขา"
+                                placeholder="ระบุสาขา..."
                             />
                         </div>
                         <div className="form-group">
@@ -1115,7 +1171,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={taxInvoice.taxId}
                                 onChange={e => handleTaxInvoiceChange('taxId', e.target.value)}
-                                placeholder="13 หลัก"
+                                placeholder="ระบุเลขที่ผู้เสียภาษี..."
                             />
                         </div>
                         <div className="form-group full-width">
@@ -1124,7 +1180,7 @@ export default function OrderForm() {
                                 rows={2}
                                 value={taxInvoice.address}
                                 onChange={e => handleTaxInvoiceChange('address', e.target.value)}
-                                placeholder="ที่อยู่สำหรับออกใบกำกับภาษี"
+                                placeholder="ระบุที่อยู่..."
                             />
                         </div>
                         <div className="form-group">
@@ -1133,6 +1189,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={taxInvoice.phone}
                                 onChange={e => handleTaxInvoiceChange('phone', e.target.value)}
+                                placeholder="ระบุเบอร์โทรศัพท์..."
                             />
                         </div>
                         <div className="form-group">
@@ -1141,6 +1198,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={taxInvoice.email}
                                 onChange={e => handleTaxInvoiceChange('email', e.target.value)}
+                                placeholder="ระบุอีเมล..."
                             />
                         </div>
                         <div className="form-group full-width">
@@ -1149,7 +1207,7 @@ export default function OrderForm() {
                                 type="text"
                                 value={taxInvoice.deliveryAddress}
                                 onChange={e => handleTaxInvoiceChange('deliveryAddress', e.target.value)}
-                                placeholder="ถ้าต่างจากที่อยู่บริษัท"
+                                placeholder="ระบุที่อยู่จัดส่ง..."
                             />
                         </div>
                     </div>
@@ -1171,72 +1229,61 @@ export default function OrderForm() {
                             </select>
                         </div>
 
-                        {/* Team Dropdown */}
-                        <div className="form-group" ref={teamDropdownRef} style={{ position: 'relative' }}>
-                            <label>ทีม (Team)</label>
-                            <div className="address-combobox">
-                                <input
-                                    type="text"
-                                    value={jobInfo.team}
-                                    onChange={e => setJobInfo({ ...jobInfo, team: e.target.value })}
-                                    placeholder="ระบุหรือเลือกทีม..."
-                                    className="address-input"
-                                    onFocus={() => setShowTeamDropdown(true)}
-                                />
-                                <button
-                                    type="button"
-                                    className="btn-dropdown-toggle"
-                                    onClick={() => setShowTeamDropdown(!showTeamDropdown)}
-                                >
-                                    ▼
-                                </button>
+                        {/* Team and Appointment Date - Two Columns */}
+                        <div className="form-grid two-col">
+                            {/* Team Dropdown */}
+                            <div className="form-group" ref={teamDropdownRef}>
+                                <label>ทีม (Team)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        value={jobInfo.team}
+                                        onChange={e => {
+                                            setJobInfo({ ...jobInfo, team: e.target.value })
+                                            setShowTeamDropdown(true)
+                                        }}
+                                        onFocus={() => setShowTeamDropdown(true)}
+                                        placeholder="ระบุหรือเลือกทีม..."
+                                        style={{ width: '100%' }}
+                                    />
+                                    {showTeamDropdown && (
+                                        <div className="dropdown-menu-absolute">
+                                            {availableTeams.length > 0 ? (
+                                                availableTeams.filter(t =>
+                                                    !jobInfo.team ||
+                                                    t.name.toLowerCase().includes(jobInfo.team.toLowerCase())
+                                                ).map((team, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="dropdown-item"
+                                                        onClick={() => {
+                                                            setJobInfo({ ...jobInfo, team: team.name })
+                                                            setShowTeamDropdown(false)
+                                                        }}
+                                                    >
+                                                        {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
-                                {showTeamDropdown && (
-                                    <div className="dropdown-menu">
-                                        {teams.map((team, i) => (
-                                            <div
-                                                key={i}
-                                                className="dropdown-item"
-                                                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                                                onClick={() => {
-                                                    setJobInfo({ ...jobInfo, team: team })
-                                                    setShowTeamDropdown(false)
-                                                }}
-                                            >
-                                                <span>{team}</span>
-                                                <button
-                                                    className="btn-icon-delete"
-                                                    style={{ fontSize: 12, padding: '0 4px', color: '#e53e3e', border: 'none', background: 'none', cursor: 'pointer' }}
-                                                    onClick={(e) => handleDeleteTeam(team, e)}
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {jobInfo.team && !teams.includes(jobInfo.team) && (
-                                            <div
-                                                className="dropdown-item add-new"
-                                                onClick={handleAddTeam}
-                                            >
-                                                + เพิ่ม "{jobInfo.team}"
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                            <div className="form-group">
+                                <label>วัน-เวลาที่นัดหมาย</label>
+                                <input
+                                    type="datetime-local"
+                                    value={jobInfo.appointmentDate}
+                                    onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
+                                />
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label>วัน-เวลาที่นัดหมาย</label>
-                            <input
-                                type="datetime-local"
-                                value={jobInfo.appointmentDate}
-                                onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
-                            />
-                        </div>
-
                         {/* Address Combobox */}
-                        <div className="form-group" style={{ marginTop: 8 }} ref={addressDropdownRef}>
+                        <div className="form-group" ref={addressDropdownRef}>
                             <label>สถานที่ติดตั้ง / จัดส่ง</label>
                             <div className="address-combobox">
                                 <textarea
@@ -1246,13 +1293,7 @@ export default function OrderForm() {
                                     placeholder="ระบุสถานที่..."
                                     className="address-input"
                                 />
-                                <button
-                                    type="button"
-                                    className="btn-dropdown-toggle"
-                                    onClick={() => setShowAddressDropdown(!showAddressDropdown)}
-                                >
-                                    ▼
-                                </button>
+
 
                                 {showAddressDropdown && (
                                     <div className="dropdown-menu">
@@ -1321,13 +1362,13 @@ export default function OrderForm() {
                                         type="text"
                                         value={jobInfo.inspector1.name}
                                         onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, name: e.target.value } })}
-                                        placeholder="ชื่อผู้ตรวจงาน"
+                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
                                     />
                                     <input
                                         type="text"
                                         value={jobInfo.inspector1.phone}
                                         onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, phone: e.target.value } })}
-                                        placeholder="เบอร์โทร"
+                                        placeholder="ระบุเบอร์โทร..."
                                     />
                                 </div>
                             </div>
@@ -1340,13 +1381,13 @@ export default function OrderForm() {
                                         type="text"
                                         value={jobInfo.inspector2.name}
                                         onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, name: e.target.value } })}
-                                        placeholder="ชื่อผู้ตรวจงาน"
+                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
                                     />
                                     <input
                                         type="text"
                                         value={jobInfo.inspector2.phone}
                                         onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, phone: e.target.value } })}
-                                        placeholder="เบอร์โทร"
+                                        placeholder="ระบุเบอร์โทร..."
                                     />
                                 </div>
                             </div>
@@ -1369,6 +1410,7 @@ export default function OrderForm() {
                                 min={0}
                                 value={shippingFee}
                                 onChange={e => setShippingFee(Number(e.target.value))}
+                                placeholder="0"
                                 style={{ width: 100, textAlign: 'right', padding: '2px 4px', border: '1px solid #e2e8f0', borderRadius: 4 }}
                             />
                         </div>
@@ -1446,18 +1488,18 @@ export default function OrderForm() {
             <div className="section-card items-section-full">
                 <h2>รายการสินค้า (Order Items)</h2>
                 <div className="items-table-container">
-                    <table className="items-table">
+                    <table className="items-table" style={{ tableLayout: 'fixed' }}>
                         <thead>
                             <tr>
-                                <th style={{ width: 40 }}>#</th>
-                                <th style={{ width: 80 }}>รูปภาพ</th>
-                                <th style={{ minWidth: 400 }}>ข้อมูลสินค้า</th>
-                                <th style={{ width: '15%' }}>หมายเหตุ</th>
-                                <th style={{ width: 60 }}>Job</th>
-                                <th style={{ width: 60 }}>จำนวน</th>
-                                <th style={{ width: 90 }}>ราคา/หน่วย</th>
-                                <th style={{ width: 90 }}>รวม</th>
-                                <th style={{ width: 40 }}></th>
+                                <th className="text-center" style={{ width: '50px' }}>#</th>
+                                <th className="text-center" style={{ width: '100px' }}>รูปภาพ</th>
+                                <th style={{ width: 'auto' }}>ข้อมูลสินค้า</th>
+                                <th style={{ width: '200px' }}>หมายเหตุ</th>
+                                <th className="text-center" style={{ width: '80px' }}>Job</th>
+                                <th className="text-center" style={{ width: '80px' }}>จำนวน</th>
+                                <th className="text-right" style={{ width: '120px' }}>ราคา/หน่วย</th>
+                                <th className="text-right" style={{ width: '120px' }}>รวม</th>
+                                <th style={{ width: '50px' }}></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1483,9 +1525,9 @@ export default function OrderForm() {
 
                                 return (
                                     <tr key={idx}>
-                                        <td className="text-center">{idx + 1}</td>
-                                        <td className="text-center">
-                                            <div className="image-cell">
+                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{idx + 1}</td>
+                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                            <div className="image-cell" style={{ margin: '0 auto' }}>
                                                 {(item.images && item.images[0]) ? (
                                                     <div className="image-preview">
                                                         <img src={item.images[0]} alt="Product" />
@@ -1497,110 +1539,109 @@ export default function OrderForm() {
                                                         <button className="btn-remove-image" onClick={() => removeImage(idx)}>×</button>
                                                     </div>
                                                 ) : (
-                                                    <label className="btn-add-image">
-                                                        +
-                                                        <input type="file" accept="image/*" onChange={(e) => handleImageChange(idx, e)} style={{ display: 'none' }} />
-                                                    </label>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div style={{ position: 'relative' }}>
-                                                {!item.code ? (
                                                     <>
+                                                        <label htmlFor={`img-${idx}`} className="upload-placeholder">
+                                                            <span>+</span>
+                                                        </label>
                                                         <input
-                                                            type="text"
-                                                            placeholder="🔍 ค้นหารหัสสินค้า..."
-                                                            className="form-control"
-                                                            style={{ fontSize: 13, borderColor: '#e2e8f0' }}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                // Update temporary search state for this row (we need a way to track search term per row, 
-                                                                // but for simplicity let's use a local state or just filter on the fly if we had a component.
-                                                                // Since this is inside a map, it's tricky without extracting a component.
-                                                                // Let's try a simpler approach: use a datalist or a custom dropdown controlled by a new state array.
-
-                                                                // BETTER APPROACH: Extract Row Component or use a specific state for active search
-                                                                handleSearchProduct(idx, val);
-                                                            }}
-                                                            value={item._searchTerm || ''} // We'll add _searchTerm to item structure temporarily
+                                                            id={`img-${idx}`}
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleImageChange(idx, e)}
+                                                            style={{ display: 'none' }}
                                                         />
-                                                        {/* Dropdown Results */}
-                                                        {activeSearchIndex === idx && searchResults.length > 0 && (
-                                                            <div className="search-dropdown" style={{
-                                                                position: 'absolute', top: '100%', left: 0, right: 0,
-                                                                background: 'white', border: '1px solid #e2e8f0',
-                                                                borderRadius: 6, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-                                                                zIndex: 10, maxHeight: 200, overflowY: 'auto'
-                                                            }}>
-                                                                {searchResults.map(p => (
-                                                                    <div
-                                                                        key={p.id}
-                                                                        onClick={() => selectProduct(idx, p)}
-                                                                        style={{
-                                                                            padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #edf2f7',
-                                                                            display: 'flex', alignItems: 'center', gap: 10
-                                                                        }}
-                                                                        className="dropdown-item"
-                                                                    >
-                                                                        {p.images && p.images[0] && (
-                                                                            <img src={p.images[0]} style={{ width: 30, height: 30, objectFit: 'cover', borderRadius: 4 }} />
-                                                                        )}
-                                                                        <div>
-                                                                            <div style={{ fontWeight: 600, fontSize: 13 }}>{p.id}</div>
-                                                                            <div style={{ fontSize: 11, color: '#718096' }}>฿{p.price?.toLocaleString()}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                                <div
-                                                                    onClick={() => window.open('/products', '_blank')}
-                                                                    style={{ padding: 10, textAlign: 'center', fontSize: 12, color: '#3182ce', cursor: 'pointer', background: '#ebf8ff' }}
-                                                                >
-                                                                    + เพิ่มสินค้าใหม่ (ไปหน้าจัดการสินค้า)
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                     </>
-                                                ) : (
-                                                    <div style={{ position: 'relative' }}>
-                                                        <div style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5568', fontWeight: 600 }}>
-                                                            {item.code}
-                                                        </div>
-                                                        <div style={{ fontSize: 12, color: '#718096' }}>
-                                                            {[
-                                                                item.category,
-                                                                (item.length || item.width || item.height) ? `${item.length || '-'}x${item.width || '-'}x${item.height || '-'}` : null,
-                                                                item.color,
-                                                                item.light
-                                                            ].filter(Boolean).join(' • ')}
-                                                        </div>
-                                                        <button
-                                                            onClick={() => clearRowProduct(idx)}
-                                                            style={{
-                                                                position: 'absolute', top: -4, right: -4,
-                                                                background: '#fed7d7', color: '#c53030',
-                                                                border: 'none', borderRadius: '50%',
-                                                                width: 18, height: 18, fontSize: 10, cursor: 'pointer',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}
-                                                            title="เปลี่ยนสินค้า"
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {item.remark && (
-                                                    <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>
-                                                        {item.remark}
-                                                    </div>
                                                 )}
                                             </div>
                                         </td>
-                                        <td><textarea className="input-grid" value={item.note} onChange={e => handleItemChange(idx, 'note', e.target.value)} rows={1} title="หมายเหตุเพิ่มเติม" /></td>
-                                        <td className="text-center">
+                                        <td style={{ verticalAlign: 'top', padding: '8px' }}>
+                                            {!item.code ? (
+                                                <div className="search-container" style={{ position: 'relative', width: '100%' }}>
+                                                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#a0aec0', zIndex: 1 }}>🔍</span>
+                                                    <input
+                                                        type="text"
+                                                        className="input-grid"
+                                                        style={{
+                                                            textAlign: 'left',
+                                                            paddingLeft: 35,
+                                                            width: '100%',
+                                                            boxSizing: 'border-box',
+                                                            height: '36px'
+                                                        }}
+                                                        placeholder="ค้นหารหัสสินค้า..."
+                                                        value={item._searchTerm !== undefined ? item._searchTerm : ''}
+                                                        onChange={(e) => handleSearchProduct(idx, e.target.value)}
+                                                        onFocus={() => setActiveSearchIndex(idx)}
+                                                    />
+                                                    {/* Dropdown Results */}
+                                                    {activeSearchIndex === idx && searchResults.length > 0 && (
+                                                        <div className="search-dropdown" style={{
+                                                            position: 'absolute', top: '100%', left: 0, right: 0,
+                                                            background: 'white', border: '1px solid #e2e8f0',
+                                                            borderRadius: 4, zIndex: 100, maxHeight: 200, overflowY: 'auto',
+                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                                        }}>
+                                                            {searchResults.map(p => (
+                                                                <div
+                                                                    key={p.id}
+                                                                    className="dropdown-item"
+                                                                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid #f7fafc', cursor: 'pointer' }}
+                                                                    onClick={() => selectProduct(idx, p)}
+                                                                >
+                                                                    <div style={{ width: 30, height: 30, background: '#f7fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>
+                                                                        {p.images && p.images[0] ? <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📷'}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div style={{ fontWeight: 600, fontSize: 13 }}>{p.id}</div>
+                                                                        <div style={{ fontSize: 11, color: '#718096' }}>{currency(p.price)}</div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            <div className="dropdown-item add-new" style={{ padding: 8, textAlign: 'center', fontSize: 12 }}>
+                                                                <a href="/products" target="_blank" style={{ color: '#0070f3', textDecoration: 'none' }}>+ เพิ่มสินค้าใหม่ (ไปหน้าจัดการสินค้า)</a>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <div>
+                                                        <div style={{ fontWeight: 600, color: '#2d3748' }}>{item.code}</div>
+                                                        <div style={{ fontSize: 12, lineHeight: 1.4, color: '#4a5568' }}>
+                                                            {productInfo || '-'}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        className="btn-icon-delete"
+                                                        style={{ fontSize: 14, color: '#cbd5e0' }}
+                                                        onClick={() => clearRowProduct(idx)}
+                                                        title="เปลี่ยนสินค้า"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td style={{ verticalAlign: 'top', padding: '8px' }}>
+                                            <textarea
+                                                className="input-grid"
+                                                value={item.note}
+                                                onChange={e => handleItemChange(idx, 'note', e.target.value)}
+                                                rows={2}
+                                                style={{
+                                                    textAlign: 'left',
+                                                    resize: 'vertical',
+                                                    minHeight: '36px',
+                                                    width: '100%',
+                                                    boxSizing: 'border-box',
+                                                    padding: '4px 8px'
+                                                }}
+                                            />
+                                        </td>
+                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                             <button
                                                 className={`btn-sm ${item.specificJob ? 'btn-primary' : 'btn-secondary'}`}
-                                                style={{ fontSize: 12, padding: '2px 8px' }}
+                                                style={{ fontSize: 12, padding: '4px 8px', width: '100%' }}
                                                 onClick={() => openJobModal(idx)}
                                             >
                                                 {item.specificJob ? (
@@ -1609,10 +1650,29 @@ export default function OrderForm() {
                                                 ) : 'ระบุ'}
                                             </button>
                                         </td>
-                                        <td><input type="number" className="input-grid text-right" min={1} value={item.qty} onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))} /></td>
-                                        <td><input type="number" className="input-grid text-right" min={0} value={item.unitPrice} onChange={e => handleItemChange(idx, 'unitPrice', Number(e.target.value))} /></td>
-                                        <td className="text-right">{currency(item.qty * item.unitPrice)}</td>
-                                        <td className="text-center">
+                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                            <input
+                                                type="number"
+                                                className="input-grid"
+                                                min={1}
+                                                value={item.qty}
+                                                onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))}
+                                                style={{ textAlign: 'center', width: '100%', boxSizing: 'border-box' }}
+                                            />
+                                        </td>
+                                        <td style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                                            <input
+                                                type="number"
+                                                className="input-grid"
+                                                value={item.unitPrice}
+                                                onChange={e => handleItemChange(idx, 'unitPrice', Number(e.target.value))}
+                                                style={{ textAlign: 'right', width: '100%', boxSizing: 'border-box', paddingRight: '8px' }}
+                                            />
+                                        </td>
+                                        <td style={{ textAlign: 'right', verticalAlign: 'middle', paddingRight: '12px' }}>
+                                            {currency(item.qty * item.unitPrice)}
+                                        </td>
+                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                             <button className="btn-icon-delete" onClick={() => removeItem(idx)} tabIndex={-1} title="ลบรายการ">×</button>
                                         </td>
                                     </tr>
@@ -1643,68 +1703,58 @@ export default function OrderForm() {
                                     <option value="delivery">งานจัดส่ง (Delivery)</option>
                                 </select>
                             </div>
+                            {/* Team and Appointment Date - Two Columns */}
+                            <div className="form-grid two-col">
+                                {/* Team Dropdown */}
+                                <div className="form-group" ref={modalTeamDropdownRef}>
+                                    <label>ทีม (Team)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            value={modalJobDetails.team}
+                                            onChange={e => {
+                                                setModalJobDetails({ ...modalJobDetails, team: e.target.value })
+                                                setModalShowTeamDropdown(true)
+                                            }}
+                                            onFocus={() => setModalShowTeamDropdown(true)}
+                                            placeholder="ระบุหรือเลือกทีม..."
+                                            style={{ width: '100%' }}
+                                        />
 
-                            <div className="form-group" ref={modalTeamDropdownRef} style={{ position: 'relative' }}>
-                                <label>ทีม (Team)</label>
-                                <div className="address-combobox">
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.team}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, team: e.target.value })}
-                                        placeholder="ระบุหรือเลือกทีม..."
-                                        className="address-input"
-                                        onFocus={() => setModalShowTeamDropdown(true)}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="btn-dropdown-toggle"
-                                        onClick={() => setModalShowTeamDropdown(!modalShowTeamDropdown)}
-                                    >
-                                        ▼
-                                    </button>
-
-                                    {modalShowTeamDropdown && (
-                                        <div className="dropdown-menu">
-                                            {teams.map((team, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="dropdown-item"
-                                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                                                    onClick={() => {
-                                                        setModalJobDetails({ ...modalJobDetails, team: team })
-                                                        setModalShowTeamDropdown(false)
-                                                    }}
-                                                >
-                                                    <span>{team}</span>
-                                                    <button
-                                                        className="btn-icon-delete"
-                                                        style={{ fontSize: 12, padding: '0 4px', color: '#e53e3e', border: 'none', background: 'none', cursor: 'pointer' }}
-                                                        onClick={(e) => handleDeleteTeam(team, e)}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            {modalJobDetails.team && !teams.includes(modalJobDetails.team) && (
-                                                <div
-                                                    className="dropdown-item add-new"
-                                                    onClick={handleModalAddTeam}
-                                                >
-                                                    + เพิ่ม "{modalJobDetails.team}"
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                        {modalShowTeamDropdown && (
+                                            <div className="dropdown-menu-absolute">
+                                                {availableTeams.length > 0 ? (
+                                                    availableTeams.filter(t =>
+                                                        !modalJobDetails.team ||
+                                                        t.name.toLowerCase().includes(modalJobDetails.team.toLowerCase())
+                                                    ).map((team, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="dropdown-item"
+                                                            onClick={() => {
+                                                                setModalJobDetails({ ...modalJobDetails, team: team.name })
+                                                                setModalShowTeamDropdown(false)
+                                                            }}
+                                                        >
+                                                            {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="form-group">
-                                <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
-                                <input
-                                    type="datetime-local"
-                                    value={modalJobDetails.dateTime}
-                                    onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
-                                />
+                                <div className="form-group">
+                                    <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={modalJobDetails.dateTime}
+                                        onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
@@ -1717,13 +1767,7 @@ export default function OrderForm() {
                                         placeholder="ระบุสถานที่..."
                                         className="address-input"
                                     />
-                                    <button
-                                        type="button"
-                                        className="btn-dropdown-toggle"
-                                        onClick={() => setModalShowAddressDropdown(!modalShowAddressDropdown)}
-                                    >
-                                        ▼
-                                    </button>
+
 
                                     {modalShowAddressDropdown && (
                                         <div className="dropdown-menu">
@@ -1792,13 +1836,13 @@ export default function OrderForm() {
                                         type="text"
                                         value={modalJobDetails.inspector1.name}
                                         onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
-                                        placeholder="ชื่อผู้ตรวจงาน"
+                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
                                     />
                                     <input
                                         type="text"
                                         value={modalJobDetails.inspector1.phone}
                                         onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
-                                        placeholder="เบอร์โทร"
+                                        placeholder="ระบุเบอร์โทร..."
                                     />
                                 </div>
                             </div>
@@ -1811,13 +1855,13 @@ export default function OrderForm() {
                                         type="text"
                                         value={modalJobDetails.inspector2.name}
                                         onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
-                                        placeholder="ชื่อผู้ตรวจงาน"
+                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
                                     />
                                     <input
                                         type="text"
                                         value={modalJobDetails.inspector2.phone}
                                         onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
-                                        placeholder="เบอร์โทร"
+                                        placeholder="ระบุเบอร์โทร..."
                                     />
                                 </div>
                             </div>
@@ -1957,13 +2001,13 @@ export default function OrderForm() {
           background: #f8fafc;
         }
 
-        /* Top Layout Grid - Updated to 4 columns */
+        /* Top Layout Grid - Updated to 4 equal columns */
         .top-layout {
           display: grid;
-          grid-template-columns: 1.3fr 1.5fr 1fr 1.2fr; /* Customer : Tax : Job : Summary */
+          grid-template-columns: repeat(4, 1fr); /* Equal width for all 4 cards */
           gap: 12px;
           margin-bottom: 16px;
-          align-items: start;
+          align-items: stretch; /* Make them same height */
         }
 
         .section-card {

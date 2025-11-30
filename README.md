@@ -19,14 +19,17 @@ npm run dev
 What's included
 
 - `pages/quotation.js`: Quotation (ใบเสนอราคา) page with legal/company info, sample customer, items, VAT calculation, and terms.
+- `pages/products.js`: **(New in V0.3)** Product Management with Excel export, sorting, and "Smart SKU Generator" (Auto-create IDs like `AA036-GLD-60`).
+- `components/OrderForm.jsx`: **(New in V0.3)** Enhanced order form with product search, auto-fill, and job details.
 - `components/Quotation.jsx`: React component rendering the quotation
 - `styles/globals.css`: Basic styles
 
-Next steps you might want:
+## Version 0.3 Highlights
 
-- Add PDF export (html-to-pdf / Puppeteer)
-- Persist quotations in a database (Postgres / MongoDB)
-- Add authentication and admin management pages
+- **Smart SKU Generator**: Automatically generates standardized product IDs (e.g., `AA036-GLD-100-50-30`) based on category, running number, color, and dimensions.
+- **Product Search**: Search for products directly in the order form by ID or category, with auto-fill for price and details.
+- **Excel Export**: Export your product inventory to Excel format for easy management.
+- **Refined Data**: Product IDs are now structured as `CODE-COLOR-L-W-H` for better inventory tracking.
 
 If you'd like, I can:
 
