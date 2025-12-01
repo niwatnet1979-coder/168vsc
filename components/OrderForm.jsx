@@ -1816,210 +1816,249 @@ export default function OrderForm() {
                             <button className="btn-close-modal" onClick={closeJobModal}>×</button>
                         </div>
                         <div className="modal-body">
-                            <div className="form-group">
-                                <label>ประเภทงาน</label>
-                                <select
-                                    value={modalJobDetails.type}
-                                    onChange={e => setModalJobDetails({ ...modalJobDetails, type: e.target.value })}
-                                >
-                                    <option value="installation">งานติดตั้ง (Installation)</option>
-                                    <option value="delivery">งานจัดส่ง (Delivery)</option>
-                                </select>
-                            </div>
-                            {/* Team and Appointment Date - Two Columns */}
-                            <div className="form-grid two-col">
-                                {/* Team Dropdown */}
-                                <div className="form-group" ref={modalTeamDropdownRef}>
-                                    <label>ทีม (Team)</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            value={modalJobDetails.team}
-                                            onChange={e => {
-                                                setModalJobDetails({ ...modalJobDetails, team: e.target.value })
-                                                setModalShowTeamDropdown(true)
-                                            }}
-                                            onFocus={() => setModalShowTeamDropdown(true)}
-                                            placeholder="ระบุหรือเลือกทีม..."
-                                            style={{ width: '100%' }}
-                                        />
+                            {/* Logic Check: Is Job Editable? */}
+                            {(() => {
+                                const isJobEditable = jobInfo.jobType === 'separate_job';
 
-                                        {modalShowTeamDropdown && (
-                                            <div className="dropdown-menu-absolute">
-                                                {availableTeams.length > 0 ? (
-                                                    availableTeams.filter(t =>
-                                                        !modalJobDetails.team ||
-                                                        t.name.toLowerCase().includes(modalJobDetails.team.toLowerCase())
-                                                    ).map((team, i) => (
-                                                        <div
-                                                            key={i}
-                                                            className="dropdown-item"
-                                                            onClick={() => {
-                                                                setModalJobDetails({ ...modalJobDetails, team: team.name })
-                                                                setModalShowTeamDropdown(false)
-                                                            }}
-                                                        >
-                                                            {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={modalJobDetails.dateTime}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Modal Location Name Combobox */}
-                            <div className="form-group" ref={modalLocationNameDropdownRef}>
-                                <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
-                                <div style={{ position: 'relative' }}>
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.installLocationName}
-                                        onChange={e => {
-                                            setModalJobDetails({ ...modalJobDetails, installLocationName: e.target.value })
-                                            setModalShowLocationNameDropdown(true)
-                                        }}
-                                        onFocus={() => setModalShowLocationNameDropdown(true)}
-                                        placeholder="เลือกหรือระบุชื่อสถานที่..."
-                                        style={{ width: '100%' }}
-                                    />
-                                    {modalShowLocationNameDropdown && (
-                                        <div className="dropdown-menu-absolute">
-                                            {savedAddresses.length > 0 ? (
-                                                <>
-                                                    {savedAddresses.filter(item =>
-                                                        !modalJobDetails.installLocationName ||
-                                                        item.name.toLowerCase().includes(modalJobDetails.installLocationName.toLowerCase()) ||
-                                                        savedAddresses.some(saved => saved.name === modalJobDetails.installLocationName)
-                                                    ).map((item, i) => (
-                                                        <div
-                                                            key={i}
-                                                            className="dropdown-item"
-                                                            onClick={() => handleModalSelectLocationName(item)}
-                                                        >
-                                                            <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
-                                                            <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
-                                                            {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
-                                                        </div>
-                                                    ))}
-                                                </>
-                                            ) : (
-                                                <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
-                                                    ไม่มีข้อมูลสถานที่ที่บันทึกไว้
-                                                </div>
-                                            )}
-                                            <div className="divider" style={{ margin: '4px 0' }}></div>
-                                            <div
-                                                className="dropdown-item"
-                                                onClick={() => {
-                                                    // Save temp state
-                                                    const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
-                                                    localStorage.setItem('order_form_temp', JSON.stringify(state));
-
-                                                    if (customer.id) {
-                                                        router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
-                                                    } else if (customer.name) {
-                                                        router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
-                                                    } else {
-                                                        alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
-                                                    }
-                                                }}
-                                                style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
-                                            >
-                                                <span>+</span> เพิ่มสถานที่ติดตั้ง
-                                            </div>
+                                return (<>
+                                    {!isJobEditable && (
+                                        <div style={{
+                                            background: '#ebf8ff',
+                                            color: '#2b6cb0',
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            fontSize: '13px',
+                                            marginBottom: '16px',
+                                            border: '1px solid #bee3f8'
+                                        }}>
+                                            ℹ️ ข้อมูลถูกอ้างอิงจากงานหลัก (Master Job) ไม่สามารถแก้ไขได้ หากต้องการแยกงาน กรุณาเลือกประเภทงานหลักเป็น "Job งานแยก"
                                         </div>
                                     )}
-                                </div>
-                            </div>
 
-                            <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
-                                <label>สถานที่ติดตั้ง / จัดส่ง</label>
-                                <div className="address-combobox">
-                                    <textarea
-                                        rows={3}
-                                        value={modalJobDetails.address}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, address: e.target.value })}
-                                        placeholder="ระบุสถานที่..."
-                                        className="address-input"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>
-                                    {modalJobDetails.googleMapLink ? (
-                                        <a
-                                            href={modalJobDetails.googleMapLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                    <div className="form-group">
+                                        <label>ประเภทงาน</label>
+                                        <select
+                                            value={modalJobDetails.type}
+                                            onChange={e => setModalJobDetails({ ...modalJobDetails, type: e.target.value })}
+                                            disabled={!isJobEditable}
+                                            style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
                                         >
-                                            🗺️ Google Maps Link
-                                        </a>
-                                    ) : (
-                                        'Google Maps Link'
-                                    )}
-                                    {modalJobDetails.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({modalJobDetails.distance} km)</span>}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={modalJobDetails.googleMapLink}
-                                    onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
-                                    placeholder="https://maps.google.com/..."
-                                />
-                            </div>
+                                            <option value="installation">งานติดตั้ง (Installation)</option>
+                                            <option value="delivery">งานจัดส่ง (Delivery)</option>
+                                        </select>
+                                    </div>
+                                    {/* Team and Appointment Date - Two Columns */}
+                                    <div className="form-grid two-col">
+                                        {/* Team Dropdown */}
+                                        <div className="form-group" ref={modalTeamDropdownRef}>
+                                            <label>ทีม (Team)</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type="text"
+                                                    value={modalJobDetails.team}
+                                                    onChange={e => {
+                                                        setModalJobDetails({ ...modalJobDetails, team: e.target.value })
+                                                        setModalShowTeamDropdown(true)
+                                                    }}
+                                                    onFocus={() => isJobEditable && setModalShowTeamDropdown(true)}
+                                                    placeholder="ระบุหรือเลือกทีม..."
+                                                    style={{ width: '100%', ...(!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}) }}
+                                                    disabled={!isJobEditable}
+                                                />
 
-                            {/* Inspector 1 */}
-                            <div className="form-group">
-                                <label>ผู้ตรวจงาน 1</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.inspector1.name}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
-                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
-                                    />
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.inspector1.phone}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
-                                        placeholder="ระบุเบอร์โทร..."
-                                    />
-                                </div>
-                            </div>
+                                                {isJobEditable && modalShowTeamDropdown && (
+                                                    <div className="dropdown-menu-absolute">
+                                                        {availableTeams.length > 0 ? (
+                                                            availableTeams.filter(t =>
+                                                                !modalJobDetails.team ||
+                                                                t.name.toLowerCase().includes(modalJobDetails.team.toLowerCase())
+                                                            ).map((team, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="dropdown-item"
+                                                                    onClick={() => {
+                                                                        setModalJobDetails({ ...modalJobDetails, team: team.name })
+                                                                        setModalShowTeamDropdown(false)
+                                                                    }}
+                                                                >
+                                                                    {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
 
-                            {/* Inspector 2 */}
-                            <div className="form-group">
-                                <label>ผู้ตรวจงาน 2</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.inspector2.name}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
-                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
-                                    />
-                                    <input
-                                        type="text"
-                                        value={modalJobDetails.inspector2.phone}
-                                        onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
-                                        placeholder="ระบุเบอร์โทร..."
-                                    />
-                                </div>
-                            </div>
+                                        <div className="form-group">
+                                            <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
+                                            <input
+                                                type="datetime-local"
+                                                value={modalJobDetails.dateTime}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                        </div>
+                                    </div>
 
+                                    {/* Modal Location Name Combobox */}
+                                    <div className="form-group" ref={modalLocationNameDropdownRef}>
+                                        <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                type="text"
+                                                value={modalJobDetails.installLocationName}
+                                                onChange={e => {
+                                                    setModalJobDetails({ ...modalJobDetails, installLocationName: e.target.value })
+                                                    setModalShowLocationNameDropdown(true)
+                                                }}
+                                                onFocus={() => isJobEditable && setModalShowLocationNameDropdown(true)}
+                                                placeholder="เลือกหรือระบุชื่อสถานที่..."
+                                                style={{ width: '100%', ...(!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}) }}
+                                                disabled={!isJobEditable}
+                                            />
+                                            {isJobEditable && modalShowLocationNameDropdown && (
+                                                <div className="dropdown-menu-absolute">
+                                                    {savedAddresses.length > 0 ? (
+                                                        <>
+                                                            {savedAddresses.filter(item =>
+                                                                !modalJobDetails.installLocationName ||
+                                                                item.name.toLowerCase().includes(modalJobDetails.installLocationName.toLowerCase()) ||
+                                                                savedAddresses.some(saved => saved.name === modalJobDetails.installLocationName)
+                                                            ).map((item, i) => (
+                                                                <div
+                                                                    key={i}
+                                                                    className="dropdown-item"
+                                                                    onClick={() => handleModalSelectLocationName(item)}
+                                                                >
+                                                                    <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
+                                                                    <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
+                                                                    {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
+                                                                </div>
+                                                            ))}
+                                                        </>
+                                                    ) : (
+                                                        <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                                            ไม่มีข้อมูลสถานที่ที่บันทึกไว้
+                                                        </div>
+                                                    )}
+                                                    <div className="divider" style={{ margin: '4px 0' }}></div>
+                                                    <div
+                                                        className="dropdown-item"
+                                                        onClick={() => {
+                                                            // Save temp state
+                                                            const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                            localStorage.setItem('order_form_temp', JSON.stringify(state));
+
+                                                            if (customer.id) {
+                                                                router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
+                                                            } else if (customer.name) {
+                                                                router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
+                                                            } else {
+                                                                alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
+                                                            }
+                                                        }}
+                                                        style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
+                                                    >
+                                                        <span>+</span> เพิ่มสถานที่ติดตั้ง
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
+                                        <label>สถานที่ติดตั้ง / จัดส่ง</label>
+                                        <div className="address-combobox">
+                                            <textarea
+                                                rows={3}
+                                                value={modalJobDetails.address}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, address: e.target.value })}
+                                                placeholder="ระบุสถานที่..."
+                                                className="address-input"
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>
+                                            {modalJobDetails.googleMapLink ? (
+                                                <a
+                                                    href={modalJobDetails.googleMapLink}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                                >
+                                                    🗺️ Google Maps Link
+                                                </a>
+                                            ) : (
+                                                'Google Maps Link'
+                                            )}
+                                            {modalJobDetails.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({modalJobDetails.distance} km)</span>}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={modalJobDetails.googleMapLink}
+                                            onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
+                                            placeholder="https://maps.google.com/..."
+                                            disabled={!isJobEditable}
+                                            style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                        />
+                                    </div>
+
+                                    {/* Inspector 1 */}
+                                    <div className="form-group">
+                                        <label>ผู้ตรวจงาน 1</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                            <input
+                                                type="text"
+                                                value={modalJobDetails.inspector1.name}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
+                                                placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                            <input
+                                                type="text"
+                                                value={modalJobDetails.inspector1.phone}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
+                                                placeholder="ระบุเบอร์โทร..."
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Inspector 2 */}
+                                    <div className="form-group">
+                                        <label>ผู้ตรวจงาน 2</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                            <input
+                                                type="text"
+                                                value={modalJobDetails.inspector2.name}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
+                                                placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                            <input
+                                                type="text"
+                                                value={modalJobDetails.inspector2.phone}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
+                                                placeholder="ระบุเบอร์โทร..."
+                                                disabled={!isJobEditable}
+                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                                );
+                            })()}
                         </div>
                         <div className="modal-footer">
                             <button className="btn-secondary" onClick={closeJobModal}>ยกเลิก</button>
