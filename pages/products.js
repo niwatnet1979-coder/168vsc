@@ -40,11 +40,24 @@ export default function ProductManagement() {
     }
 
     // Filter and Sort products
-    const filteredProducts = products.filter(p =>
-        p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (p.subcategory && p.subcategory.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).sort((a, b) => {
+    const filteredProducts = products.filter(p => {
+        const term = searchTerm.toLowerCase();
+        return (
+            p.id.toLowerCase().includes(term) ||
+            (p.category && p.category.toLowerCase().includes(term)) ||
+            (p.subcategory && p.subcategory.toLowerCase().includes(term)) ||
+            (p.description && p.description.toLowerCase().includes(term)) ||
+            (p.material && p.material.toLowerCase().includes(term)) ||
+            (p.color && p.color.toLowerCase().includes(term)) ||
+            (p.crystalColor && p.crystalColor.toLowerCase().includes(term)) ||
+            (p.bulbType && p.bulbType.toLowerCase().includes(term)) ||
+            (p.length && p.length.toString().includes(term)) ||
+            (p.width && p.width.toString().includes(term)) ||
+            (p.height && p.height.toString().includes(term)) ||
+            (p.light && p.light.toLowerCase().includes(term)) ||
+            (p.remote && p.remote.toLowerCase().includes(term))
+        );
+    }).sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
             return sortConfig.direction === 'ascending' ? -1 : 1;
         }

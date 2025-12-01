@@ -148,9 +148,9 @@ export default function OrdersListPage() {
                                                 {Array.isArray(order.items) ? order.items.length : order.items}
                                             </td>
                                             <td style={{ textAlign: 'right', fontWeight: 600, color: '#2563eb' }}>
-                                                ฿{order.total.toLocaleString()}
+                                                ฿{(order.total || 0).toLocaleString()}
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>฿{order.deposit.toLocaleString()}</td>
+                                            <td style={{ textAlign: 'right' }}>฿{(order.deposit || 0).toLocaleString()}</td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <span className={`badge job-${order.jobType === 'ติดตั้ง' ? 'install' : order.jobType === 'ส่งของ' ? 'delivery' : 'other'}`}>
                                                     {order.jobType}

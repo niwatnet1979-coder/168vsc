@@ -25,6 +25,13 @@ export default function NewCustomerPage() {
 
     const [formData, setFormData] = useState(initialFormState)
 
+    useEffect(() => {
+        // Auto-fill name if provided in query
+        if (router.query.name) {
+            setFormData(prev => ({ ...prev, name: router.query.name }))
+        }
+    }, [router.query.name])
+
     const handleSave = () => {
         if (!formData.name) {
             alert('กรุณากรอกชื่อลูกค้า/บริษัท')
@@ -46,7 +53,13 @@ export default function NewCustomerPage() {
         localStorage.setItem('customers_data', JSON.stringify(customers))
 
         alert('บันทึกข้อมูลลูกค้าเรียบร้อย')
-        router.push('/customers')
+
+        const { returnUrl } = router.query
+        if (returnUrl) {
+            router.push(`${returnUrl}?newCustomerId=${newCustomer.id}`)
+        } else {
+            router.push('/customers')
+        }
     }
 
     const handleChange = (field, value, parent = null) => {
@@ -129,8 +142,15 @@ export default function NewCustomerPage() {
 
             <div className="detail-page">
                 <header className="page-header">
-                    <button className="btn-back" onClick={() => router.push('/customers')}>
-                        ← กลับหน้ารายชื่อ
+                    <button className="btn-back" onClick={() => {
+                        const { returnUrl } = router.query
+                        if (returnUrl) {
+                            router.push(returnUrl)
+                        } else {
+                            router.push('/customers')
+                        }
+                    }}>
+                        ← {router.query.returnUrl ? 'กลับไปหน้าก่อนหน้า' : 'กลับหน้ารายชื่อ'}
                     </button>
                     <h1>เพิ่มลูกค้าใหม่</h1>
                 </header>
@@ -163,7 +183,11 @@ export default function NewCustomerPage() {
                         {activeTab === 'customer' && (
                             <>
                                 <div className="tab-actions">
-                                    <button className="btn-cancel" onClick={() => router.push('/customers')}>ยกเลิก</button>
+                                    <button className="btn-cancel" onClick={() => {
+                                        const { returnUrl } = router.query
+                                        if (returnUrl) router.push(returnUrl)
+                                        else router.push('/customers')
+                                    }}>ยกเลิก</button>
                                     <button className="btn-save" onClick={handleSave}>บันทึก</button>
                                 </div>
                                 <div className="content-card">
@@ -287,7 +311,11 @@ export default function NewCustomerPage() {
                             <>
                                 <div className="tab-actions">
                                     <button className="btn-add-tab" onClick={handleAddTaxInvoice}>+ เพิ่มข้อมูล</button>
-                                    <button className="btn-cancel" onClick={() => router.push('/customers')}>ยกเลิก</button>
+                                    <button className="btn-cancel" onClick={() => {
+                                        const { returnUrl } = router.query
+                                        if (returnUrl) router.push(returnUrl)
+                                        else router.push('/customers')
+                                    }}>ยกเลิก</button>
                                     <button className="btn-save" onClick={handleSave}>บันทึก</button>
                                 </div>
                                 <div className="tax-list">
@@ -397,7 +425,11 @@ export default function NewCustomerPage() {
                             <>
                                 <div className="tab-actions">
                                     <button className="btn-add-tab" onClick={handleAddAddress}>+ เพิ่มข้อมูล</button>
-                                    <button className="btn-cancel" onClick={() => router.push('/customers')}>ยกเลิก</button>
+                                    <button className="btn-cancel" onClick={() => {
+                                        const { returnUrl } = router.query
+                                        if (returnUrl) router.push(returnUrl)
+                                        else router.push('/customers')
+                                    }}>ยกเลิก</button>
                                     <button className="btn-save" onClick={handleSave}>บันทึก</button>
                                 </div>
                                 <div className="address-list">

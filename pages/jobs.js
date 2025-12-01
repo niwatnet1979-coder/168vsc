@@ -1,154 +1,93 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 
-// Mock Job Queue Data
-const MOCK_JOBS = [
-    {
-        id: 'ORD-001',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2024-12-05',
-        team: 'ทีม A',
-        inspector: 'คุณวิศวะ',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'ติดตั้งกล้องวงจรปิด 4 จุด',
-        status: 'Pending',
-        priority: 'High'
-    },
-    {
-        id: 'ORD-005',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2024-12-08',
-        team: 'ทีม A',
-        inspector: 'คุณวิศวะ',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'ติดตั้งระบบไฟสวนหย่อม',
-        status: 'Processing',
-        priority: 'Medium'
-    },
-    {
-        id: 'ORD-007',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2024-12-10',
-        team: 'ทีม C',
-        inspector: 'คุณสมชาย',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'ติดตั้งไฟราง Track Light',
-        status: 'Processing',
-        priority: 'Low'
-    },
-    {
-        id: 'ORD-004',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ส่งของ (Delivery Only)',
-        appointmentDate: '2024-12-06',
-        team: 'ขนส่งเอกชน',
-        inspector: '-',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'หลอดไฟ Downlight 50 ชุด',
-        status: 'Pending',
-        priority: 'High'
-    },
-    {
-        id: 'ORD-008',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ส่งของ (Delivery Only)',
-        appointmentDate: '2024-12-12',
-        team: 'ขนส่งบริษัท',
-        inspector: '-',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'โคมไฟตั้งพื้น 10 ชุด',
-        status: 'Shipped',
-        priority: 'Medium'
-    },
-    {
-        id: 'ORD-001-PAST',
-        customer: 'ร้านค้าปลีก ABC',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2023-11-15',
-        team: 'ทีม B',
-        inspector: 'คุณช่างใหญ่',
-        address: '888 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กทม. 10310',
-        items: 'ติดตั้งระบบไฟ LED',
-        status: 'Completed',
-        priority: 'Medium'
-    },
-    {
-        id: 'ORD-002-PAST',
-        customer: 'ร้านค้าปลีก ABC',
-        jobType: 'ส่งของ (Delivery Only)',
-        appointmentDate: '2023-10-20',
-        team: 'ขนส่งเอกชน',
-        inspector: '-',
-        address: '888 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กทม. 10310',
-        items: 'หลอดไฟ 100 ชุด',
-        status: 'Completed',
-        priority: 'Low'
-    },
-    {
-        id: 'ORD-009',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'รื้อถอน (Demolition)',
-        appointmentDate: '2023-09-15',
-        team: 'ทีม A',
-        inspector: 'คุณวิศวะ',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'รื้อถอนโคมไฟเก่า',
-        status: 'Completed',
-        priority: 'Medium'
-    },
-    {
-        id: 'ORD-010',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2024-12-15',
-        team: 'ทีม B',
-        inspector: 'คุณช่างใหญ่',
-        address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
-        items: 'ติดตั้งไฟ LED Strip Light ห้องประชุม',
-        status: 'Pending',
-        priority: 'High'
-    },
-    {
-        id: 'ORD-011',
-        customer: 'โรงแรม Grand Plaza',
-        jobType: 'ติดตั้ง (Installation)',
-        appointmentDate: '2024-12-07',
-        team: 'ทีม C',
-        inspector: 'คุณสมชาย',
-        address: '456 ถ.สาทร แขวงยานนาวา เขตสาทร กทม. 10120',
-        items: 'ติดตั้งโคมไฟระย้าห้องโถง',
-        status: 'Processing',
-        priority: 'High'
-    }
-]
-
 export default function JobQueuePage() {
+    const [jobs, setJobs] = useState([])
     const [filter, setFilter] = useState('all') // all, pending-install, pending-delivery, completed
     const [searchTerm, setSearchTerm] = useState('')
 
+    // Load data from localStorage
+    useEffect(() => {
+        const loadJobs = () => {
+            const savedOrders = localStorage.getItem('orders_data')
+            if (savedOrders) {
+                const orders = JSON.parse(savedOrders)
+                const allJobs = []
+
+                orders.forEach(order => {
+                    if (order.items && order.items.length > 0) {
+                        order.items.forEach((item, index) => {
+                            // Determine job details: use specific job if available, otherwise fallback to master job
+                            // Note: Check if specificJob has content (it might be an empty object or have empty fields)
+                            const hasSpecificJob = item.specificJob && item.specificJob.type;
+                            const jobSource = hasSpecificJob ? item.specificJob : order.jobInfo;
+
+                            // If no job info found at all, skip (or use defaults)
+                            if (!jobSource) return;
+
+                            // Determine status
+                            // Logic: If order is completed, job is completed.
+                            // If not, check date. If date is passed, maybe 'Processing'.
+                            // For now, use order status or derive from date.
+                            let status = order.status || 'Pending';
+
+                            // Map job type to display label
+                            const jobTypeLabel = jobSource.type === 'installation' ? 'ติดตั้ง (Installation)' :
+                                jobSource.type === 'delivery' ? 'ส่งของ (Delivery Only)' : jobSource.type;
+
+                            allJobs.push({
+                                uniqueId: `${order.id}-${index + 1}`,
+                                orderId: order.id,
+                                customer: order.customer ? order.customer.name : 'Unknown',
+                                product: item,
+                                jobType: jobTypeLabel,
+                                rawJobType: jobSource.type,
+                                appointmentDate: jobSource.dateTime || '-',
+                                team: jobSource.team || '-',
+                                inspector: jobSource.inspector1?.name || '-',
+                                address: jobSource.installAddress || '-',
+                                status: status,
+                                priority: 'Medium' // Default
+                            })
+                        })
+                    }
+                })
+
+                // Sort by appointment date
+                allJobs.sort((a, b) => {
+                    if (a.appointmentDate === '-') return 1;
+                    if (b.appointmentDate === '-') return -1;
+                    return new Date(a.appointmentDate) - new Date(b.appointmentDate);
+                })
+
+                setJobs(allJobs)
+            }
+        }
+
+        loadJobs()
+        // Listen for storage events to update in real-time if other tabs change data
+        window.addEventListener('storage', loadJobs)
+        return () => window.removeEventListener('storage', loadJobs)
+    }, [])
+
     // Filter logic
-    const filteredJobs = MOCK_JOBS.filter(job => {
+    const filteredJobs = jobs.filter(job => {
         // Search filter
         const matchesSearch =
-            job.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.items.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.team.toLowerCase().includes(searchTerm.toLowerCase())
 
         if (!matchesSearch) return false
 
-        // Status filter
+        // Status/Type filter
         switch (filter) {
             case 'pending-install':
-                return job.jobType.includes('ติดตั้ง') &&
-                    (job.status === 'Pending' || job.status === 'Processing')
+                return job.rawJobType === 'installation' && job.status !== 'Completed'
             case 'pending-delivery':
-                return job.jobType.includes('ส่งของ') &&
-                    (job.status === 'Pending' || job.status === 'Shipped')
+                return job.rawJobType === 'delivery' && job.status !== 'Completed'
             case 'completed':
                 return job.status === 'Completed'
             case 'all':
@@ -157,17 +96,12 @@ export default function JobQueuePage() {
         }
     })
 
-    // Sort by appointment date (nearest first)
-    const sortedJobs = [...filteredJobs].sort((a, b) => {
-        return new Date(a.appointmentDate) - new Date(b.appointmentDate)
-    })
-
     // Count statistics
     const stats = {
-        pendingInstall: MOCK_JOBS.filter(j => j.jobType.includes('ติดตั้ง') && (j.status === 'Pending' || j.status === 'Processing')).length,
-        pendingDelivery: MOCK_JOBS.filter(j => j.jobType.includes('ส่งของ') && (j.status === 'Pending' || j.status === 'Shipped')).length,
-        completed: MOCK_JOBS.filter(j => j.status === 'Completed').length,
-        total: MOCK_JOBS.length
+        pendingInstall: jobs.filter(j => j.rawJobType === 'installation' && j.status !== 'Completed').length,
+        pendingDelivery: jobs.filter(j => j.rawJobType === 'delivery' && j.status !== 'Completed').length,
+        completed: jobs.filter(j => j.status === 'Completed').length,
+        total: jobs.length
     }
 
     return (
@@ -238,7 +172,7 @@ export default function JobQueuePage() {
                 <div className="search-bar">
                     <input
                         type="text"
-                        placeholder="🔍 ค้นหา Order ID, ลูกค้า, รายการ, ทีม..."
+                        placeholder="🔍 ค้นหา Order ID, ลูกค้า, สินค้า, ทีม..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -251,49 +185,60 @@ export default function JobQueuePage() {
                             <tr>
                                 <th>Order ID</th>
                                 <th>ลูกค้า</th>
+                                <th>สินค้า</th>
                                 <th>ประเภทงาน</th>
                                 <th>วันที่นัดหมาย</th>
                                 <th>ทีมช่าง</th>
                                 <th>ผู้ตรวจงาน</th>
-                                <th>รายการ</th>
                                 <th>สถานะ</th>
-                                <th>ความสำคัญ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedJobs.length > 0 ? (
-                                sortedJobs.map((job, i) => (
+                            {filteredJobs.length > 0 ? (
+                                filteredJobs.map((job, i) => (
                                     <tr key={i} className="hover-row">
                                         <td>
-                                            <Link href={`/orders/${job.id}`} className="order-link">
-                                                {job.id}
+                                            <Link href={`/order?id=${job.orderId}`} className="order-link">
+                                                {job.orderId}
                                             </Link>
                                         </td>
                                         <td className="customer-name">{job.customer}</td>
                                         <td>
-                                            <span className={`job-type-badge ${job.jobType.includes('ติดตั้ง') ? 'install' : job.jobType.includes('ส่งของ') ? 'delivery' : 'other'}`}>
+                                            <div className="product-cell">
+                                                {job.product.image ? (
+                                                    <img src={job.product.image} alt={job.product.name} className="product-thumb" />
+                                                ) : (
+                                                    <div className="product-thumb-placeholder">No Img</div>
+                                                )}
+                                                <div className="product-info">
+                                                    <div className="product-name">{job.product.name}</div>
+                                                    <div className="product-id">{job.product.id}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`job-type-badge ${job.rawJobType === 'installation' ? 'install' : job.rawJobType === 'delivery' ? 'delivery' : 'other'}`}>
                                                 {job.jobType}
                                             </span>
                                         </td>
-                                        <td className="date-cell">{job.appointmentDate}</td>
+                                        <td className="date-cell">
+                                            {job.appointmentDate !== '-' ? new Date(job.appointmentDate).toLocaleString('th-TH', {
+                                                year: 'numeric', month: 'short', day: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            }) : '-'}
+                                        </td>
                                         <td>{job.team}</td>
                                         <td>{job.inspector}</td>
-                                        <td className="items-cell">{job.items}</td>
                                         <td>
                                             <span className={`status-badge ${job.status.toLowerCase()}`}>
                                                 {job.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`priority-badge ${job.priority.toLowerCase()}`}>
-                                                {job.priority}
                                             </span>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="9" className="text-center empty-state">
+                                    <td colSpan="8" className="text-center empty-state">
                                         ไม่พบข้อมูลคิวงาน
                                     </td>
                                 </tr>
@@ -452,6 +397,7 @@ export default function JobQueuePage() {
                         border-bottom: 1px solid #edf2f7;
                         color: #2d3748;
                         font-size: 14px;
+                        vertical-align: middle;
                     }
                     .hover-row {
                         transition: background-color 0.2s;
@@ -469,6 +415,41 @@ export default function JobQueuePage() {
                     }
                     .customer-name {
                         font-weight: 500;
+                    }
+                    .product-cell {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    .product-thumb {
+                        width: 48px;
+                        height: 48px;
+                        object-fit: cover;
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                    }
+                    .product-thumb-placeholder {
+                        width: 48px;
+                        height: 48px;
+                        background: #edf2f7;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        color: #a0aec0;
+                    }
+                    .product-info {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .product-name {
+                        font-weight: 500;
+                        color: #2d3748;
+                    }
+                    .product-id {
+                        font-size: 12px;
+                        color: #718096;
                     }
                     .job-type-badge {
                         padding: 4px 12px;
@@ -493,12 +474,6 @@ export default function JobQueuePage() {
                         font-family: monospace;
                         font-weight: 500;
                     }
-                    .items-cell {
-                        max-width: 200px;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                    }
                     .status-badge {
                         padding: 4px 12px;
                         border-radius: 99px;
@@ -521,25 +496,6 @@ export default function JobQueuePage() {
                     .status-badge.shipped {
                         background: #bee3f8;
                         color: #2c5282;
-                    }
-                    .priority-badge {
-                        padding: 4px 12px;
-                        border-radius: 99px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        display: inline-block;
-                    }
-                    .priority-badge.high {
-                        background: #fed7d7;
-                        color: #742a2a;
-                    }
-                    .priority-badge.medium {
-                        background: #feebc8;
-                        color: #744210;
-                    }
-                    .priority-badge.low {
-                        background: #e2e8f0;
-                        color: #4a5568;
                     }
                     .text-center {
                         text-align: center;

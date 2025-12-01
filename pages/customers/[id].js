@@ -258,6 +258,17 @@ export default function CustomerDetailPage() {
         }
     }, [id])
 
+    // Handle Tab and Edit Mode from Query Params
+    useEffect(() => {
+        if (router.query.tab) {
+            setActiveTab(router.query.tab)
+        }
+        // If coming from another page (returnUrl exists), automatically enter edit mode
+        if (router.query.returnUrl) {
+            setIsEditing(true)
+        }
+    }, [router.query.tab, router.query.returnUrl])
+
     const handleEdit = () => {
         setIsEditing(true)
         setFormData({ ...customer })
@@ -285,6 +296,12 @@ export default function CustomerDetailPage() {
         setCustomer({ ...formData })
         setIsEditing(false)
         alert('บันทึกข้อมูลเรียบร้อย')
+
+        // Handle Return URL
+        const { returnUrl } = router.query
+        if (returnUrl) {
+            router.push(returnUrl)
+        }
     }
 
     const handleChange = (field, value, parent = null) => {
@@ -370,8 +387,15 @@ export default function CustomerDetailPage() {
 
             <div className="detail-page">
                 <header className="page-header">
-                    <button className="btn-back" onClick={() => router.push('/customers')}>
-                        ← กลับหน้ารายชื่อ
+                    <button className="btn-back" onClick={() => {
+                        const { returnUrl } = router.query
+                        if (returnUrl) {
+                            router.push(returnUrl)
+                        } else {
+                            router.push('/customers')
+                        }
+                    }}>
+                        ← {router.query.returnUrl ? 'กลับไปหน้าก่อนหน้า' : 'กลับหน้ารายชื่อ'}
                     </button>
                     <h1>{customer.name}</h1>
                     <div className="customer-meta">
@@ -907,7 +931,7 @@ export default function CustomerDetailPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {customer.orders.length > 0 ? (
+                                            {customer.orders && customer.orders.length > 0 ? (
                                                 customer.orders.map((order, i) => (
                                                     <tr key={i} className="hover:bg-gray-50 transition-colors">
                                                         <td>

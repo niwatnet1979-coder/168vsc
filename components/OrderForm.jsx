@@ -28,16 +28,34 @@ function deg2rad(deg) {
 
 function extractCoordinates(url) {
     if (!url) return null
-    // Try to match @lat,lon
+
+    // 1. Try to match @lat,lon
     const match = url.match(/@([-0-9.]+),([-0-9.]+)/)
     if (match) {
         return { lat: parseFloat(match[1]), lon: parseFloat(match[2]) }
     }
-    // Try to match q=lat,lon
-    const matchQ = url.match(/q=([-0-9.]+),([-0-9.]+)/)
+
+    // 2. Try to match q=lat,lon
+    const matchQ = url.match(/[?&]q=([-0-9.]+),([-0-9.]+)/)
     if (matchQ) {
         return { lat: parseFloat(matchQ[1]), lon: parseFloat(matchQ[2]) }
     }
+
+    // 3. Try to match /search/lat,lon
+    const matchSearch = url.match(/\/search\/([-0-9.]+),([-0-9.]+)/)
+    if (matchSearch) {
+        return { lat: parseFloat(matchSearch[1]), lon: parseFloat(matchSearch[2]) }
+    }
+
+    // 4. Try to match /place/.../@lat,lon
+    // (Usually handled by case 1, but just in case)
+
+    // 5. Try to match /dir/.../lat,lon
+    const matchDir = url.match(/\/dir\/.*\/([-0-9.]+),([-0-9.]+)/)
+    if (matchDir) {
+        return { lat: parseFloat(matchDir[1]), lon: parseFloat(matchDir[2]) }
+    }
+
     return null
 }
 
@@ -364,15 +382,20 @@ export default function OrderForm() {
         jobType: 'installation',
         orderDate: new Date().toISOString().split('T')[0],
         appointmentDate: '',
+        installLocationName: '', // ชื่อสถานที่ติดตั้ง
         installAddress: '',
         googleMapLink: '',
         team: '',
         inspector1: { name: '', phone: '' },
-        inspector2: { name: '', phone: '' }
+        inspector2: { name: '', phone: '' },
+        distance: '' // ระยะทางจากร้าน (กม.)
     })
+
 
     // Saved addresses (will be populated when customer is selected)
     const [savedAddresses, setSavedAddresses] = useState([])
+    const [showLocationNameDropdown, setShowLocationNameDropdown] = useState(false)
+    const locationNameDropdownRef = useRef(null)
     const [showAddressDropdown, setShowAddressDropdown] = useState(false)
     const addressDropdownRef = useRef(null)
 
@@ -406,22 +429,38 @@ export default function OrderForm() {
 
     // Filter customers based on input (using LocalStorage data)
     const filteredCustomers = customersData.filter(c =>
+        !customer.name ||
         c.name.toLowerCase().includes(customer.name.toLowerCase()) ||
-        (c.phone && c.phone.includes(customer.name))
+        (c.phone && c.phone.includes(customer.name)) ||
+        customersData.some(saved => saved.name === customer.name)
     )
 
     // Filter products based on input (dynamic based on active row)
     const getFilteredProducts = (searchTerm) => {
         if (!searchTerm) return productsData
+        const term = searchTerm.toLowerCase()
         return productsData.filter(p =>
-            p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.name.toLowerCase().includes(searchTerm.toLowerCase())
+            p.id.toLowerCase().includes(term) ||
+            p.name.toLowerCase().includes(term) ||
+            (p.category && p.category.toLowerCase().includes(term)) ||
+            (p.subcategory && p.subcategory.toLowerCase().includes(term)) ||
+            (p.description && p.description.toLowerCase().includes(term)) ||
+            (p.material && p.material.toLowerCase().includes(term)) ||
+            (p.color && p.color.toLowerCase().includes(term)) ||
+            (p.crystalColor && p.crystalColor.toLowerCase().includes(term)) ||
+            (p.bulbType && p.bulbType.toLowerCase().includes(term)) ||
+            (p.length && p.length.toString().includes(term)) ||
+            (p.width && p.width.toString().includes(term)) ||
+            (p.height && p.height.toString().includes(term)) ||
+            (p.light && p.light.toLowerCase().includes(term)) ||
+            (p.remote && p.remote.toLowerCase().includes(term))
         )
     }
 
     const handleSelectCustomer = (selectedCustomer) => {
         setCustomer({
             ...customer,
+            id: selectedCustomer.id, // Important: Save ID
             name: selectedCustomer.name,
             phone: selectedCustomer.phone,
             email: selectedCustomer.email || '',
@@ -461,8 +500,14 @@ export default function OrderForm() {
         // Update saved addresses dropdown with customer's saved addresses
         if (selectedCustomer.savedAddresses && selectedCustomer.savedAddresses.length > 0) {
             const formattedAddresses = selectedCustomer.savedAddresses.map(addr => ({
-                address: `${addr.name} - ${addr.address}`,
-                googleMapLink: addr.mapLink || ''
+                name: addr.name, // Store place name separately
+                address: addr.address, // Store physical address separately
+                googleMapLink: addr.mapLink || '',
+                fullLabel: `${addr.name} - ${addr.address}`, // Keep a combined label for searching if needed
+                inspector1: addr.inspector1 || '',
+                inspector1Phone: addr.inspector1Phone || '',
+                inspector2: addr.inspector2 || '',
+                inspector2Phone: addr.inspector2Phone || ''
             }))
             setSavedAddresses(formattedAddresses)
 
@@ -470,6 +515,7 @@ export default function OrderForm() {
             if (selectedCustomer.savedAddresses[0]) {
                 setJobInfo(prev => ({
                     ...prev,
+                    installLocationName: selectedCustomer.savedAddresses[0].name || '',
                     installAddress: selectedCustomer.savedAddresses[0].address,
                     googleMapLink: selectedCustomer.savedAddresses[0].mapLink || '',
                     inspector1: {
@@ -494,13 +540,17 @@ export default function OrderForm() {
         type: 'installation',
         team: '',
         dateTime: '',
+        installLocationName: '', // ชื่อสถานที่ติดตั้ง
         address: '',
         googleMapLink: '',
         inspector1: { name: '', phone: '' },
-        inspector2: { name: '', phone: '' }
+        inspector2: { name: '', phone: '' },
+        distance: ''
     })
+    const [modalShowLocationNameDropdown, setModalShowLocationNameDropdown] = useState(false)
     const [modalShowAddressDropdown, setModalShowAddressDropdown] = useState(false)
     const [modalShowTeamDropdown, setModalShowTeamDropdown] = useState(false)
+    const modalLocationNameDropdownRef = useRef(null)
     const modalAddressDropdownRef = useRef(null)
     const modalTeamDropdownRef = useRef(null)
 
@@ -516,7 +566,13 @@ export default function OrderForm() {
             if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
                 setShowTeamDropdown(false)
             }
+            if (locationNameDropdownRef.current && !locationNameDropdownRef.current.contains(event.target)) {
+                setShowLocationNameDropdown(false)
+            }
             // Modal dropdowns
+            if (modalLocationNameDropdownRef.current && !modalLocationNameDropdownRef.current.contains(event.target)) {
+                setModalShowLocationNameDropdown(false)
+            }
             if (modalAddressDropdownRef.current && !modalAddressDropdownRef.current.contains(event.target)) {
                 setModalShowAddressDropdown(false)
             }
@@ -600,7 +656,67 @@ export default function OrderForm() {
                 setAllProducts(mod.default || []);
             }).catch(err => console.error("Failed to load products", err));
         }
+
+        // Load temp state if exists (returning from add new page)
+        const tempState = localStorage.getItem('order_form_temp');
+        if (tempState) {
+            try {
+                const parsed = JSON.parse(tempState);
+                if (parsed.customer) setCustomer(parsed.customer);
+                if (parsed.taxInvoice) setTaxInvoice(parsed.taxInvoice);
+                if (parsed.jobInfo) setJobInfo(parsed.jobInfo);
+                if (parsed.items) setItems(parsed.items);
+                if (parsed.shippingFee !== undefined) setShippingFee(parsed.shippingFee);
+                if (parsed.discount) setDiscount(parsed.discount);
+                if (parsed.deposit) setDeposit(parsed.deposit);
+
+                // Refresh saved profiles from latest customer data
+                if (parsed.customer && parsed.customer.id) {
+                    // We need to re-read localStorage here to get the absolute latest
+                    const currentSavedData = localStorage.getItem('customers_data');
+                    if (currentSavedData) {
+                        const allCustomers = JSON.parse(currentSavedData);
+                        const currentCustomer = allCustomers.find(c => c.id === parsed.customer.id);
+                        if (currentCustomer) {
+                            if (currentCustomer.taxInvoices) setSavedTaxProfiles(currentCustomer.taxInvoices);
+
+                            if (currentCustomer.savedAddresses) {
+                                const formattedAddresses = currentCustomer.savedAddresses.map(addr => ({
+                                    name: addr.name,
+                                    address: addr.address,
+                                    googleMapLink: addr.mapLink || '',
+                                    fullLabel: `${addr.name} - ${addr.address}`,
+                                    inspector1: addr.inspector1 || '',
+                                    inspector1Phone: addr.inspector1Phone || '',
+                                    inspector2: addr.inspector2 || '',
+                                    inspector2Phone: addr.inspector2Phone || ''
+                                }));
+                                setSavedAddresses(formattedAddresses);
+                            }
+                        }
+                    }
+                }
+
+                // Clear temp state after loading
+                localStorage.removeItem('order_form_temp');
+            } catch (e) {
+                console.error("Failed to load temp state", e);
+            }
+        }
     }, []);
+
+    // Auto-select new customer if returning from create page
+    useEffect(() => {
+        if (router.query.newCustomerId && customersData.length > 0) {
+            const newId = parseInt(router.query.newCustomerId);
+            const newCustomer = customersData.find(c => c.id === newId);
+            if (newCustomer) {
+                handleSelectCustomer(newCustomer);
+                // Clear query param to prevent re-selecting on refresh (optional but good practice)
+                router.replace('/order', undefined, { shallow: true });
+            }
+        }
+    }, [router.query.newCustomerId, customersData]);
 
     const handleSearchProduct = (index, term) => {
         const newItems = [...items];
@@ -700,17 +816,28 @@ export default function OrderForm() {
     const outstanding = Math.max(0, total - depositAmount)
 
     // Distance Calculation
-    const [distance, setDistance] = useState(null)
-
     useEffect(() => {
         const coords = extractCoordinates(jobInfo.googleMapLink)
         if (coords) {
             const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
-            setDistance(dist)
-        } else {
-            setDistance(null)
+            setJobInfo(prev => {
+                if (prev.distance === dist) return prev
+                return { ...prev, distance: dist }
+            })
         }
     }, [jobInfo.googleMapLink])
+
+    // Modal Distance Calculation
+    useEffect(() => {
+        const coords = extractCoordinates(modalJobDetails.googleMapLink)
+        if (coords) {
+            const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
+            setModalJobDetails(prev => {
+                if (prev.distance === dist) return prev
+                return { ...prev, distance: dist }
+            })
+        }
+    }, [modalJobDetails.googleMapLink])
 
     // Sync Master Job to Items
     useEffect(() => {
@@ -832,6 +959,24 @@ export default function OrderForm() {
         }
     }
 
+    const handleSelectLocationName = (location) => {
+        setJobInfo({
+            ...jobInfo,
+            installLocationName: location.name,
+            installAddress: location.address,
+            googleMapLink: location.googleMapLink,
+            inspector1: {
+                name: location.inspector1 || '',
+                phone: location.inspector1Phone || ''
+            },
+            inspector2: {
+                name: location.inspector2 || '',
+                phone: location.inspector2Phone || ''
+            }
+        })
+        setShowLocationNameDropdown(false)
+    }
+
     const handleSelectTaxProfile = (profile) => {
         setTaxInvoice(profile)
         setShowTaxDropdown(false)
@@ -866,13 +1011,15 @@ export default function OrderForm() {
     const openJobModal = (index) => {
         setActiveItemIndex(index)
         const currentJob = items[index].specificJob || {
-            type: 'installation',
-            team: '',
-            dateTime: '',
-            address: '',
-            googleMapLink: '',
-            inspector1: { name: '', phone: '' },
-            inspector2: { name: '', phone: '' }
+            type: jobInfo.jobType || 'installation',
+            team: jobInfo.team || '',
+            dateTime: jobInfo.appointmentDate || '',
+            installLocationName: jobInfo.installLocationName || '',
+            address: jobInfo.installAddress || '',
+            googleMapLink: jobInfo.googleMapLink || '',
+            inspector1: jobInfo.inspector1 || { name: '', phone: '' },
+            inspector2: jobInfo.inspector2 || { name: '', phone: '' },
+            distance: jobInfo.distance || ''
         }
         setModalJobDetails(currentJob)
         setShowJobModal(true)
@@ -903,6 +1050,24 @@ export default function OrderForm() {
             setSavedAddresses([...savedAddresses, { address: modalJobDetails.address, googleMapLink: modalJobDetails.googleMapLink }])
             setModalShowAddressDropdown(false)
         }
+    }
+
+    const handleModalSelectLocationName = (location) => {
+        setModalJobDetails({
+            ...modalJobDetails,
+            installLocationName: location.name,
+            address: location.address,
+            googleMapLink: location.googleMapLink,
+            inspector1: {
+                name: location.inspector1 || '',
+                phone: location.inspector1Phone || ''
+            },
+            inspector2: {
+                name: location.inspector2 || '',
+                phone: location.inspector2Phone || ''
+            }
+        })
+        setModalShowLocationNameDropdown(false)
     }
 
     return (
@@ -978,14 +1143,18 @@ export default function OrderForm() {
                                                 </div>
                                             )}
                                             <div className="divider" style={{ margin: '4px 0' }}></div>
-                                            <a
-                                                href="/customers"
-                                                target="_blank"
+                                            <div
                                                 className="dropdown-item"
-                                                style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}
+                                                onClick={() => {
+                                                    // Save temp state before navigating
+                                                    const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                    localStorage.setItem('order_form_temp', JSON.stringify(state));
+                                                    router.push('/customers/new?returnUrl=/order');
+                                                }}
+                                                style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
                                             >
                                                 <span>+</span> เพิ่มลูกค้าใหม่
-                                            </a>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1125,7 +1294,8 @@ export default function OrderForm() {
                                             <>
                                                 {savedTaxProfiles.filter(p =>
                                                     !taxInvoice.companyName ||
-                                                    p.companyName.toLowerCase().includes(taxInvoice.companyName.toLowerCase())
+                                                    p.companyName.toLowerCase().includes(taxInvoice.companyName.toLowerCase()) ||
+                                                    savedTaxProfiles.some(saved => saved.companyName === taxInvoice.companyName)
                                                 ).map((profile, i) => (
                                                     <div
                                                         key={i}
@@ -1146,6 +1316,27 @@ export default function OrderForm() {
                                                             + บันทึกชุดข้อมูลปัจจุบัน
                                                         </div>
                                                     )}
+                                                <div className="divider" style={{ margin: '4px 0' }}></div>
+                                                <div
+                                                    className="dropdown-item"
+                                                    onClick={() => {
+                                                        // Save temp state
+                                                        const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                        localStorage.setItem('order_form_temp', JSON.stringify(state));
+
+                                                        if (customer.id) {
+                                                            router.push(`/customers/${customer.id}?tab=tax&returnUrl=/order`)
+                                                        } else if (customer.name) {
+                                                            // If name exists but no ID, go to create new customer
+                                                            router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
+                                                        } else {
+                                                            alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มข้อมูล')
+                                                        }
+                                                    }}
+                                                    style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
+                                                >
+                                                    <span>+</span> เพิ่มข้อมูลใบกำกับภาษี
+                                                </div>
                                             </>
                                         ) : (
                                             <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
@@ -1282,6 +1473,72 @@ export default function OrderForm() {
                             </div>
                         </div>
 
+                        {/* Location Name Combobox */}
+                        <div className="form-group" ref={locationNameDropdownRef}>
+                            <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    value={jobInfo.installLocationName}
+                                    onChange={e => {
+                                        setJobInfo({ ...jobInfo, installLocationName: e.target.value })
+                                        setShowLocationNameDropdown(true)
+                                    }}
+                                    onFocus={() => setShowLocationNameDropdown(true)}
+                                    placeholder="เลือกหรือระบุชื่อสถานที่..."
+                                    style={{ width: '100%' }}
+                                />
+                                {showLocationNameDropdown && (
+                                    <div className="dropdown-menu-absolute">
+                                        {savedAddresses.length > 0 ? (
+                                            <>
+                                                {savedAddresses.filter(item =>
+                                                    !jobInfo.installLocationName ||
+                                                    item.name.toLowerCase().includes(jobInfo.installLocationName.toLowerCase()) ||
+                                                    savedAddresses.some(saved => saved.name === jobInfo.installLocationName)
+                                                ).map((item, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="dropdown-item"
+                                                        onClick={() => handleSelectLocationName(item)}
+                                                    >
+                                                        <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
+                                                        <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
+                                                        {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
+                                                    </div>
+                                                ))}
+                                            </>
+                                        ) : (
+                                            <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                                ไม่มีข้อมูลสถานที่ที่บันทึกไว้
+                                            </div>
+                                        )}
+                                        <div className="divider" style={{ margin: '4px 0' }}></div>
+                                        <div
+                                            className="dropdown-item"
+                                            onClick={() => {
+                                                // Save temp state
+                                                const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                localStorage.setItem('order_form_temp', JSON.stringify(state));
+
+                                                if (customer.id) {
+                                                    router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
+                                                } else if (customer.name) {
+                                                    // If name exists but no ID, go to create new customer
+                                                    router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
+                                                } else {
+                                                    alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
+                                                }
+                                            }}
+                                            style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
+                                        >
+                                            <span>+</span> เพิ่มสถานที่ติดตั้ง
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Address Combobox */}
                         <div className="form-group" ref={addressDropdownRef}>
                             <label>สถานที่ติดตั้ง / จัดส่ง</label>
@@ -1293,48 +1550,24 @@ export default function OrderForm() {
                                     placeholder="ระบุสถานที่..."
                                     className="address-input"
                                 />
-
-
-                                {showAddressDropdown && (
-                                    <div className="dropdown-menu">
-                                        {savedAddresses.length > 0 ? (
-                                            <>
-                                                {savedAddresses.map((item, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className="dropdown-item"
-                                                        onClick={() => {
-                                                            setJobInfo({ ...jobInfo, installAddress: item.address, googleMapLink: item.googleMapLink })
-                                                            setShowAddressDropdown(false)
-                                                        }}
-                                                    >
-                                                        <strong>{item.address}</strong>
-                                                        {item.googleMapLink && <><br /><small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small></>}
-                                                    </div>
-                                                ))}
-                                                {jobInfo.installAddress && !savedAddresses.some(item => item.address === jobInfo.installAddress) && (
-                                                    <div
-                                                        className="dropdown-item add-new"
-                                                        onClick={handleSaveAddress}
-                                                    >
-                                                        + เพิ่ม &quot;{jobInfo.installAddress}&quot; ลงในรายการ
-                                                    </div>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
-                                                ไม่มีที่อยู่ที่บันทึกไว้
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
                             </div>
 
                             {/* Google Maps Link */}
                             <div style={{ marginTop: 8 }}>
                                 <label>
-                                    Google Maps Link
-                                    {distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({distance} km)</span>}
+                                    {jobInfo.googleMapLink ? (
+                                        <a
+                                            href={jobInfo.googleMapLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            🗺️ Google Maps Link
+                                        </a>
+                                    ) : (
+                                        'Google Maps Link'
+                                    )}
+                                    {jobInfo.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({jobInfo.distance} km)</span>}
                                 </label>
                                 <input
                                     type="text"
@@ -1342,16 +1575,6 @@ export default function OrderForm() {
                                     onChange={e => setJobInfo({ ...jobInfo, googleMapLink: e.target.value })}
                                     placeholder="https://maps.google.com/..."
                                 />
-                                {jobInfo.googleMapLink && (
-                                    <a
-                                        href={jobInfo.googleMapLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ fontSize: 12, color: '#0070f3', marginTop: 4, display: 'inline-block' }}
-                                    >
-                                        🗺️ เปิดแผนที่
-                                    </a>
-                                )}
                             </div>
 
                             {/* Inspector 1 */}
@@ -1757,6 +1980,71 @@ export default function OrderForm() {
                                 </div>
                             </div>
 
+                            {/* Modal Location Name Combobox */}
+                            <div className="form-group" ref={modalLocationNameDropdownRef}>
+                                <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        value={modalJobDetails.installLocationName}
+                                        onChange={e => {
+                                            setModalJobDetails({ ...modalJobDetails, installLocationName: e.target.value })
+                                            setModalShowLocationNameDropdown(true)
+                                        }}
+                                        onFocus={() => setModalShowLocationNameDropdown(true)}
+                                        placeholder="เลือกหรือระบุชื่อสถานที่..."
+                                        style={{ width: '100%' }}
+                                    />
+                                    {modalShowLocationNameDropdown && (
+                                        <div className="dropdown-menu-absolute">
+                                            {savedAddresses.length > 0 ? (
+                                                <>
+                                                    {savedAddresses.filter(item =>
+                                                        !modalJobDetails.installLocationName ||
+                                                        item.name.toLowerCase().includes(modalJobDetails.installLocationName.toLowerCase()) ||
+                                                        savedAddresses.some(saved => saved.name === modalJobDetails.installLocationName)
+                                                    ).map((item, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="dropdown-item"
+                                                            onClick={() => handleModalSelectLocationName(item)}
+                                                        >
+                                                            <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
+                                                            <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
+                                                            {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            ) : (
+                                                <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                                    ไม่มีข้อมูลสถานที่ที่บันทึกไว้
+                                                </div>
+                                            )}
+                                            <div className="divider" style={{ margin: '4px 0' }}></div>
+                                            <div
+                                                className="dropdown-item"
+                                                onClick={() => {
+                                                    // Save temp state
+                                                    const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                    localStorage.setItem('order_form_temp', JSON.stringify(state));
+
+                                                    if (customer.id) {
+                                                        router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
+                                                    } else if (customer.name) {
+                                                        router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
+                                                    } else {
+                                                        alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
+                                                    }
+                                                }}
+                                                style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
+                                            >
+                                                <span>+</span> เพิ่มสถานที่ติดตั้ง
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
                                 <label>สถานที่ติดตั้ง / จัดส่ง</label>
                                 <div className="address-combobox">
@@ -1767,65 +2055,31 @@ export default function OrderForm() {
                                         placeholder="ระบุสถานที่..."
                                         className="address-input"
                                     />
-
-
-                                    {modalShowAddressDropdown && (
-                                        <div className="dropdown-menu">
-                                            {savedAddresses.map((item, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="dropdown-item"
-                                                    onClick={() => {
-                                                        setModalJobDetails({ ...modalJobDetails, address: item.address, googleMapLink: item.googleMapLink })
-                                                        setModalShowAddressDropdown(false)
-                                                    }}
-                                                >
-                                                    <strong>{item.address}</strong>
-                                                    {item.googleMapLink && <><br /><small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small></>}
-                                                </div>
-                                            ))}
-                                            {modalJobDetails.address && !savedAddresses.some(item => item.address === modalJobDetails.address) && (
-                                                <div
-                                                    className="dropdown-item add-new"
-                                                    onClick={handleModalSaveAddress}
-                                                >
-                                                    + เพิ่ม &quot;{modalJobDetails.address}&quot; ลงในรายการ
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label>Google Maps Link</label>
+                                <label>
+                                    {modalJobDetails.googleMapLink ? (
+                                        <a
+                                            href={modalJobDetails.googleMapLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            🗺️ Google Maps Link
+                                        </a>
+                                    ) : (
+                                        'Google Maps Link'
+                                    )}
+                                    {modalJobDetails.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({modalJobDetails.distance} km)</span>}
+                                </label>
                                 <input
                                     type="text"
                                     value={modalJobDetails.googleMapLink}
                                     onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
                                     placeholder="https://maps.google.com/..."
                                 />
-                                {modalJobDetails.googleMapLink && (() => {
-                                    const coords = extractCoordinates(modalJobDetails.googleMapLink)
-                                    const dist = coords ? calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon) : null
-                                    return (
-                                        <div style={{ marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
-                                            <a
-                                                href={modalJobDetails.googleMapLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ fontSize: 12, color: '#0070f3' }}
-                                            >
-                                                🗺️ เปิดแผนที่
-                                            </a>
-                                            {dist && (
-                                                <span style={{ fontSize: 12, color: '#4a5568' }}>
-                                                    ({dist} km)
-                                                </span>
-                                            )}
-                                        </div>
-                                    )
-                                })()}
                             </div>
 
                             {/* Inspector 1 */}
@@ -2090,7 +2344,19 @@ export default function OrderForm() {
           background: white;
           border: 1px solid #e2e8f0;
           border-radius: 4px;
-          z-index: 1000;
+          z-index: 10000;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          max-height: 300px;
+          overflow-y: auto;
+          min-width: 280px;
+        }
+
+        .dropdown-menu-modal {
+          position: fixed;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          z-index: 10001;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           max-height: 300px;
           overflow-y: auto;
@@ -2269,7 +2535,7 @@ export default function OrderForm() {
             width: 500px;
             max-width: 90%;
             max-height: 90vh;
-            overflow-y: auto;
+            overflow: visible;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
@@ -2294,6 +2560,8 @@ export default function OrderForm() {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
         }
         .modal-footer {
             padding: 16px;
