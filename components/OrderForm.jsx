@@ -906,17 +906,21 @@ export default function OrderForm() {
     // Modal Handlers
     const openJobModal = (index) => {
         setActiveItemIndex(index)
-        const currentJob = items[index].specificJob || {
-            type: jobInfo.jobType || 'installation',
-            team: jobInfo.team || '',
-            dateTime: jobInfo.appointmentDate || '',
-            installLocationName: jobInfo.installLocationName || '',
-            address: jobInfo.installAddress || '',
-            googleMapLink: jobInfo.googleMapLink || '',
-            inspector1: jobInfo.inspector1 || { name: '', phone: '' },
-            inspector2: jobInfo.inspector2 || { name: '', phone: '' },
-            distance: jobInfo.distance || ''
+        const existingJob = items[index].specificJob || {}
+
+        // Merge existing specific job with master job info for missing fields
+        const currentJob = {
+            type: existingJob.type || jobInfo.jobType || 'installation',
+            team: existingJob.team || jobInfo.team || '',
+            dateTime: existingJob.dateTime || jobInfo.appointmentDate || '',
+            installLocationName: existingJob.installLocationName || jobInfo.installLocationName || '',
+            address: existingJob.address || jobInfo.installAddress || '',
+            googleMapLink: existingJob.googleMapLink || jobInfo.googleMapLink || '',
+            inspector1: existingJob.inspector1 || jobInfo.inspector1 || { name: '', phone: '' },
+            inspector2: existingJob.inspector2 || jobInfo.inspector2 || { name: '', phone: '' },
+            distance: existingJob.distance || jobInfo.distance || ''
         }
+
         setModalJobDetails(currentJob)
         setShowJobModal(true)
     }
