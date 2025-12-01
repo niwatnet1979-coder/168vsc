@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
+import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
+
 
 function currency(n) {
     return n.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })
 }
 
-// Shop Coordinates
-const SHOP_LAT = 13.9647757
-const SHOP_LON = 100.6203268
+
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371 // Radius of the earth in km
@@ -59,111 +59,7 @@ function extractCoordinates(url) {
     return null
 }
 
-// Mock Customers Data (Should be shared or fetched)
-const MOCK_CUSTOMERS_DATA = [
-    {
-        id: 1,
-        name: 'บริษัท เทคโนโลยี จำกัด',
-        phone: '02-123-4567',
-        email: 'info@techno.com',
-        line: '@techno',
-        facebook: 'TechnoCo',
-        instagram: 'techno_official',
-        contact1: { name: 'สมชาย ใจดี', phone: '081-234-5678' },
-        taxInvoice: {
-            companyName: 'บริษัท เทคโนโลยี จำกัด',
-            taxId: '0123456789012',
-            branch: 'สำนักงานใหญ่',
-            address: '123 ถนนสุขุมวิท กรุงเทพฯ 10110'
-        }
-    },
-    {
-        id: 2,
-        name: 'ร้านค้าปลีก ABC',
-        phone: '089-999-8888',
-        email: 'contact@abcstore.com',
-        line: 'abcstore',
-        facebook: 'ABC Store',
-        instagram: 'abc_store',
-        contact1: { name: 'คุณเอ', phone: '089-999-8888' },
-        taxInvoice: {
-            companyName: 'ร้านค้าปลีก ABC',
-            taxId: '1234567890123',
-            branch: 'สาขาย่อย',
-            address: '456 ถนนเพชรบุรี กรุงเทพฯ 10400'
-        }
-    },
-    {
-        id: 3,
-        name: 'คุณวิชัย มั่งคั่ง',
-        phone: '081-555-6666',
-        email: 'wichai@email.com',
-        line: 'wichai.m',
-        facebook: 'Wichai M',
-        instagram: 'wichai_m',
-        contact1: { name: '-', phone: '-' },
-        taxInvoice: {
-            companyName: 'นายวิชัย มั่งคั่ง',
-            taxId: '3210987654321',
-            branch: '-',
-            address: '789 ถนนลาดพร้าว กรุงเทพฯ 10900'
-        }
-    }
-]
 
-// Mock Products Data
-const MOCK_PRODUCTS_DATA = [
-    {
-        id: 'CAM-001',
-        name: 'กล้องวงจรปิด HD',
-        type: 'กล้องวงจรปิด',
-        length: '10', width: '10', height: '15',
-        material: 'พลาสติก', color: 'ขาว', crystalColor: '-',
-        bulbType: '-', light: 'Infrared', remote: 'App',
-        price: 3500,
-        description: 'ความละเอียด 1080p, กันน้ำ'
-    },
-    {
-        id: 'LED-BULB-09',
-        name: 'หลอดไฟ LED 9W',
-        type: 'หลอดไฟ',
-        length: '6', width: '6', height: '12',
-        material: 'แก้ว/พลาสติก', color: 'ขาว', crystalColor: '-',
-        bulbType: 'E27', light: 'Daylight', remote: '-',
-        price: 150,
-        description: 'แสง Daylight, ขั้ว E27'
-    },
-    {
-        id: 'CHAN-001',
-        name: 'โคมไฟระย้าคริสตัล',
-        type: 'โคมไฟตกแต่ง',
-        length: '80', width: '80', height: '120',
-        material: 'คริสตัล/โลหะ', color: 'ทอง', crystalColor: 'ใส',
-        bulbType: 'E14', light: 'Warm White', remote: 'มี',
-        price: 15000,
-        description: 'ขนาด 80cm, สีทอง'
-    },
-    {
-        id: 'TRACK-BK',
-        name: 'รางไฟ Track Light 1m',
-        type: 'อุปกรณ์ติดตั้ง',
-        length: '100', width: '4', height: '2',
-        material: 'อลูมิเนียม', color: 'ดำ', crystalColor: '-',
-        bulbType: '-', light: '-', remote: '-',
-        price: 450,
-        description: 'สีดำ, อลูมิเนียม'
-    },
-    {
-        id: 'STRIP-RGB',
-        name: 'ไฟเส้น LED Strip RGB',
-        type: 'ไฟเส้น',
-        length: '500', width: '1', height: '0.2',
-        material: 'PCB', color: 'ขาว', crystalColor: '-',
-        bulbType: 'LED', light: 'RGB', remote: 'มี',
-        price: 850,
-        description: 'ม้วนละ 5 เมตร, พร้อมรีโมท'
-    }
-]
 
 export default function OrderForm() {
     const router = useRouter()

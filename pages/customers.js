@@ -1,150 +1,10 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { MOCK_CUSTOMERS_DATA } from '../lib/mockData'
 
 export default function CustomersPage() {
-    const [customers, setCustomers] = useState([
-        {
-            id: 1,
-            name: 'บริษัท เทคโนโลยี จำกัด',
-            phone: '02-123-4567',
-            email: 'info@techno.com',
-            line: '@techno',
-            facebook: 'facebook.com/techno',
-            instagram: '@techno_official',
-            mediaSource: 'Facebook',
-            mediaSourceOther: '',
-            contact1: { name: 'สมชาย ใจดี', phone: '081-234-5678' },
-            contact2: { name: 'สมหญิง รักงาน', phone: '082-345-6789' },
-            lastOrder: '10/10/2023'
-        },
-        {
-            id: 2,
-            name: 'ร้านค้าปลีก ABC',
-            phone: '02-234-5678',
-            email: 'abc@retail.com',
-            line: '@abcretail',
-            facebook: 'facebook.com/abcretail',
-            instagram: '@abc_retail',
-            mediaSource: 'Google',
-            mediaSourceOther: '',
-            contact1: { name: 'วิชัย สุขใจ', phone: '083-456-7890' },
-            contact2: { name: 'สุดา แสงจันทร์', phone: '084-567-8901' },
-            lastOrder: '15/10/2023'
-        },
-        {
-            id: 3,
-            name: 'บริษัท การค้าสากล จำกัด',
-            phone: '02-345-6789',
-            email: 'contact@international.co.th',
-            line: '@intltrade',
-            facebook: '',
-            instagram: '',
-            mediaSource: 'เพื่อนแนะนำ',
-            mediaSourceOther: '',
-            contact1: { name: 'ประยุทธ์ มั่นคง', phone: '085-678-9012' },
-            contact2: { name: 'อรุณี สว่างไสว', phone: '086-789-0123' },
-            lastOrder: '20/10/2023'
-        },
-        {
-            id: 4,
-            name: 'ห้างหุ้นส่วน ดีไซน์ครีเอทีฟ',
-            phone: '02-456-7890',
-            email: 'hello@designcreative.com',
-            line: '@designcreate',
-            facebook: 'facebook.com/designcreative',
-            instagram: '@design_creative',
-            mediaSource: 'Line@',
-            mediaSourceOther: '',
-            contact1: { name: 'ชัยวัฒน์ สร้างสรรค์', phone: '087-890-1234' },
-            contact2: { name: 'พิมพ์ใจ งามสง่า', phone: '088-901-2345' },
-            lastOrder: '25/10/2023'
-        },
-        {
-            id: 5,
-            name: 'คุณสมศักดิ์ เจริญสุข',
-            phone: '089-012-3456',
-            email: 'somsak@email.com',
-            line: '@somsak',
-            facebook: '',
-            instagram: '@somsak_personal',
-            mediaSource: 'อื่นๆระบุ',
-            mediaSourceOther: 'ป้ายโฆษณา',
-            contact1: { name: 'สมศักดิ์ เจริญสุข', phone: '089-012-3456' },
-            contact2: { name: '', phone: '' },
-            lastOrder: '-'
-        },
-        {
-            id: 6,
-            name: 'บริษัท อาหารและเครื่องดื่ม จำกัด',
-            phone: '02-567-8901',
-            email: 'info@foodbev.co.th',
-            line: '@foodbeverage',
-            facebook: 'facebook.com/foodbeverage',
-            instagram: '@food_beverage_th',
-            mediaSource: 'Facebook',
-            mediaSourceOther: '',
-            contact1: { name: 'นภา สุขสันต์', phone: '090-123-4567' },
-            contact2: { name: 'ธนา เจริญทรัพย์', phone: '091-234-5678' },
-            lastOrder: '01/11/2023'
-        },
-        {
-            id: 7,
-            name: 'ร้านเฟอร์นิเจอร์โมเดิร์น',
-            phone: '02-678-9012',
-            email: 'modern@furniture.com',
-            line: '@modernfurniture',
-            facebook: 'facebook.com/modernfurniture',
-            instagram: '@modern_furniture',
-            mediaSource: 'Google',
-            mediaSourceOther: '',
-            contact1: { name: 'สุรชัย ดีงาม', phone: '092-345-6789' },
-            contact2: { name: 'มาลี สวยงาม', phone: '093-456-7890' },
-            lastOrder: '05/11/2023'
-        },
-        {
-            id: 8,
-            name: 'บริษัท ก่อสร้างและพัฒนา จำกัด',
-            phone: '02-789-0123',
-            email: 'construction@develop.co.th',
-            line: '@construct',
-            facebook: '',
-            instagram: '',
-            mediaSource: 'เพื่อนแนะนำ',
-            mediaSourceOther: '',
-            contact1: { name: 'วิทยา แข็งแรง', phone: '094-567-8901' },
-            contact2: { name: 'สมบูรณ์ มั่นคง', phone: '095-678-9012' },
-            lastOrder: '10/11/2023'
-        },
-        {
-            id: 9,
-            name: 'คุณสุภาพร ใจดี',
-            phone: '096-789-0123',
-            email: 'supaporn@gmail.com',
-            line: '@supaporn',
-            facebook: 'facebook.com/supaporn',
-            instagram: '@supaporn_shop',
-            mediaSource: 'Line@',
-            mediaSourceOther: '',
-            contact1: { name: 'สุภาพร ใจดี', phone: '096-789-0123' },
-            contact2: { name: '', phone: '' },
-            lastOrder: '-'
-        },
-        {
-            id: 10,
-            name: 'บริษัท เทคโนโลยีสารสนเทศ จำกัด',
-            phone: '02-890-1234',
-            email: 'it@technology.co.th',
-            line: '@ittech',
-            facebook: 'facebook.com/ittechnology',
-            instagram: '@it_technology',
-            mediaSource: 'อื่นๆระบุ',
-            mediaSourceOther: 'TikTok',
-            contact1: { name: 'ธีระ เทคโนโลยี', phone: '097-890-1234' },
-            contact2: { name: 'ปิยะ ดิจิทัล', phone: '098-901-2345' },
-            lastOrder: '12/11/2023'
-        }
-    ])
+    const [customers, setCustomers] = useState(MOCK_CUSTOMERS_DATA)
 
     // Load data from LocalStorage on mount
     useEffect(() => {
@@ -277,7 +137,22 @@ export default function CustomersPage() {
                         </Link>
                         <h1>จัดการข้อมูลลูกค้า (Customer Management)</h1>
                     </div>
-                    <Link href="/customers/new" className="btn-primary">+ เพิ่มลูกค้าใหม่</Link>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={() => {
+                                if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าเป็นค่าเริ่มต้นหรือไม่? ข้อมูลที่แก้ไขจะหายไปทั้งหมด')) {
+                                    localStorage.removeItem('customers_data');
+                                    setCustomers(MOCK_CUSTOMERS_DATA);
+                                    alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว');
+                                }
+                            }}
+                            className="btn-secondary"
+                            style={{ background: '#fff', border: '1px solid #e2e8f0' }}
+                        >
+                            ↻ รีเซ็ตข้อมูล
+                        </button>
+                        <Link href="/customers/new" className="btn-primary">+ เพิ่มลูกค้าใหม่</Link>
+                    </div>
                 </header>
 
                 <main className="main-content">
