@@ -1,0 +1,4322 @@
+[
+  {
+    "no": 1,
+    "oldId": "A022-23-GRY",
+    "newId": "OT022-GRY-00-23-00",
+    "category": "อื่นๆ",
+    "color": "เทา",
+    "dimensions": "x23x"
+  },
+  {
+    "no": 2,
+    "oldId": "A03-45-BLK",
+    "newId": "OT03-BLK-00-45-00",
+    "category": "อื่นๆ",
+    "color": "ดำ",
+    "dimensions": "x45x"
+  },
+  {
+    "no": 3,
+    "oldId": "A03-20-GLD",
+    "newId": "OT03-GLD-00-20-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 4,
+    "oldId": "A14-2-00-GLD",
+    "newId": "OT142-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 5,
+    "oldId": "AA002-60-SLV",
+    "newId": "AA002-SLV-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 6,
+    "oldId": "AA002-80-SLV",
+    "newId": "AA002-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 7,
+    "oldId": "AA002-50-50-OTH",
+    "newId": "AA00250-CHR-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีโครเมี่ยม",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 8,
+    "oldId": "AA002-60-60-OTH",
+    "newId": "AA00260-CHR-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีโครเมี่ยม",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 9,
+    "oldId": "AA002-80-80-OTH",
+    "newId": "AA00280-CHR-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีโครเมี่ยม",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 10,
+    "oldId": "AA018-40-BLK",
+    "newId": "AA018-BLK-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีดำ",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 11,
+    "oldId": "AA018-50-BLK",
+    "newId": "AA018-BLK-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 12,
+    "oldId": "AA020-60-GLD",
+    "newId": "AA020-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 13,
+    "oldId": "AA020-A-60-GLD",
+    "newId": "AA020-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 14,
+    "oldId": "AA022-240-NA",
+    "newId": "AA022-XXX-00-240-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x240x"
+  },
+  {
+    "no": 15,
+    "oldId": "AA022-A-120-SLV",
+    "newId": "AA022-SLV-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 16,
+    "oldId": "AA025-30-GLD",
+    "newId": "AA025-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 17,
+    "oldId": "AA031-20-RGD",
+    "newId": "AA031-RGD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 18,
+    "oldId": "AA031-00-RGD",
+    "newId": "AA031-RGD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีโรสโกลด์",
+    "dimensions": "xx"
+  },
+  {
+    "no": 19,
+    "oldId": "AA031-300-RGD",
+    "newId": "AA031-RGD-00-300-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x300x"
+  },
+  {
+    "no": 20,
+    "oldId": "AA035-18-RGD",
+    "newId": "AA035-RGD-00-18-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x18x"
+  },
+  {
+    "no": 21,
+    "oldId": "AA035-50-SLV",
+    "newId": "AA035-SLV-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงิน",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 22,
+    "oldId": "AA035-38-NA",
+    "newId": "AA035-XXX-00-38-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 23,
+    "oldId": "AA035-350-GRY",
+    "newId": "AA035-GRY-00-350-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา-เงา",
+    "dimensions": "x350x"
+  },
+  {
+    "no": 24,
+    "oldId": "AA035-350-SLV",
+    "newId": "AA035-SLV-00-350-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงิน,เงิน,โรสโกลด์",
+    "dimensions": "x350x"
+  },
+  {
+    "no": 25,
+    "oldId": "AA035-00-GRY",
+    "newId": "AA035-GRY-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา-เงา",
+    "dimensions": "xx"
+  },
+  {
+    "no": 26,
+    "oldId": "AA035-150-SLV",
+    "newId": "AA035-SLV-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "สแตนเลสเงิน",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 27,
+    "oldId": "AA035-15-SLV",
+    "newId": "AA035-SLV-00-15-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงินเข้ม",
+    "dimensions": "x15x"
+  },
+  {
+    "no": 28,
+    "oldId": "AA035-28-SLV",
+    "newId": "AA035-SLV-00-28-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงินเข้ม",
+    "dimensions": "x28x"
+  },
+  {
+    "no": 29,
+    "oldId": "AA035-00-SLV",
+    "newId": "AA035-SLV-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงินเข้ม",
+    "dimensions": "xx"
+  },
+  {
+    "no": 30,
+    "oldId": "AA035-20-MIX",
+    "newId": "AA035-คละ-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละแบบ",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 31,
+    "oldId": "AA035-38-GLD",
+    "newId": "AA035-GLD-00-38-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 32,
+    "oldId": "AA035-00-MIX",
+    "newId": "AA035-คละ-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละสี",
+    "dimensions": "xx"
+  },
+  {
+    "no": 33,
+    "oldId": "AA035-350-MIX",
+    "newId": "AA035-คละ-00-350-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละสี",
+    "dimensions": "x350x"
+  },
+  {
+    "no": 34,
+    "oldId": "AA035-18-SLV",
+    "newId": "AA035-SLV-00-18-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x18x"
+  },
+  {
+    "no": 35,
+    "oldId": "AA035-20-SLV",
+    "newId": "AA035-SLV-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 36,
+    "oldId": "AA035-28-GRN",
+    "newId": "AA035-GRN-00-28-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเขียว",
+    "dimensions": "x28x"
+  },
+  {
+    "no": 37,
+    "oldId": "AA035-28-CYN",
+    "newId": "AA035-สีฟ-00-28-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีฟ้า",
+    "dimensions": "x28x"
+  },
+  {
+    "no": 38,
+    "oldId": "AA035-15-MIX",
+    "newId": "AA035-คละ-00-15-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละสี",
+    "dimensions": "x15x"
+  },
+  {
+    "no": 39,
+    "oldId": "AA035-60-MIX",
+    "newId": "AA035-คละ-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละ",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 40,
+    "oldId": "AA035-38-MIX",
+    "newId": "AA035-คละ-00-38-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละสี",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 41,
+    "oldId": "AA035-18-MIX",
+    "newId": "AA035-คละ-00-18-00",
+    "category": "โคมไฟระย้า",
+    "color": "คละสี",
+    "dimensions": "x18x"
+  },
+  {
+    "no": 42,
+    "oldId": "AA035-00-NA",
+    "newId": "AA035-XXX-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 43,
+    "oldId": "AA035-28-GRY",
+    "newId": "AA035-GRY-00-28-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา",
+    "dimensions": "x28x"
+  },
+  {
+    "no": 44,
+    "oldId": "AA035-38-SLV",
+    "newId": "AA035-SLV-00-38-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำเงิน",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 45,
+    "oldId": "AA036-60-60-NA",
+    "newId": "AA03660-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 46,
+    "oldId": "AA036-80-80-NA",
+    "newId": "AA03680-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 47,
+    "oldId": "AA037-150-NA",
+    "newId": "AA037-XXX-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 48,
+    "oldId": "AA038-80-NA",
+    "newId": "AA038-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 49,
+    "oldId": "AA038-60-GRY",
+    "newId": "AA038-GRY-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 50,
+    "oldId": "AA038-60-NA",
+    "newId": "AA038-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 51,
+    "oldId": "AA039-340-BLK",
+    "newId": "AA039-BLK-00-340-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำเงา",
+    "dimensions": "x340x"
+  },
+  {
+    "no": 52,
+    "oldId": "AA044-105-GLD",
+    "newId": "AA044-GLD-00-105-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x105x"
+  },
+  {
+    "no": 53,
+    "oldId": "AA044-85-GLD",
+    "newId": "AA044-GLD-00-85-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x85x"
+  },
+  {
+    "no": 54,
+    "oldId": "AA044-00-GLD",
+    "newId": "AA044-GLD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 55,
+    "oldId": "AA044-1-00-GLD",
+    "newId": "AA0441-GLD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 56,
+    "oldId": "AA045-100-NA",
+    "newId": "AA045-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 57,
+    "oldId": "AA046-100-NA",
+    "newId": "AA046-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 58,
+    "oldId": "AA047-80-RGD",
+    "newId": "AA047-RGD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 59,
+    "oldId": "AA047-100-GLD",
+    "newId": "AA047-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 60,
+    "oldId": "AA051-40-NA",
+    "newId": "AA051-XXX-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 61,
+    "oldId": "AA051-40-WHT",
+    "newId": "AA051-WHT-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ขาว",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 62,
+    "oldId": "AA051-40-SLV",
+    "newId": "AA051-SLV-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 63,
+    "oldId": "AA051-80-SLV",
+    "newId": "AA051-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 64,
+    "oldId": "AA054-80-GLD",
+    "newId": "AA054-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 65,
+    "oldId": "AA058-40-GLD",
+    "newId": "AA058-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง-ดำ",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 66,
+    "oldId": "AA058-40-NA",
+    "newId": "AA058-XXX-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 67,
+    "oldId": "AA059-70-GLD",
+    "newId": "AA059-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 68,
+    "oldId": "AA059-50-NA",
+    "newId": "AA059-XXX-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 69,
+    "oldId": "AA060-50-NA",
+    "newId": "AA060-XXX-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 70,
+    "oldId": "AA061-70-GLD",
+    "newId": "AA061-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 71,
+    "oldId": "AA061-60-NA",
+    "newId": "AA061-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 72,
+    "oldId": "AA064-80-SLV",
+    "newId": "AA064-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 73,
+    "oldId": "AA066-150-SLV",
+    "newId": "AA066-SLV-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "สแตนเลสเงิน",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 74,
+    "oldId": "AA068-250-GLD",
+    "newId": "AA068-GLD-00-250-00",
+    "category": "โคมไฟระย้า",
+    "color": "ก้านสีทองใบสีขาว",
+    "dimensions": "x250x"
+  },
+  {
+    "no": 75,
+    "oldId": "AA069-120-GLD",
+    "newId": "AA069-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ก้านสีทองใบสีขาว",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 76,
+    "oldId": "AA071-450-NA",
+    "newId": "AA071-XXX-00-450-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x450x"
+  },
+  {
+    "no": 77,
+    "oldId": "AA072-180-GLD",
+    "newId": "AA072-GLD-00-180-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x180x"
+  },
+  {
+    "no": 78,
+    "oldId": "AA072-80-GLD",
+    "newId": "AA072-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 79,
+    "oldId": "AA106-160-00-BLK",
+    "newId": "AA106160-BLK-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "xx"
+  },
+  {
+    "no": 80,
+    "oldId": "AA220-40-SLV",
+    "newId": "AA220-SLV-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 81,
+    "oldId": "AB-201-120-120-NA",
+    "newId": "AA201120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 82,
+    "oldId": "AB023-40-NA",
+    "newId": "AA023-XXX-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 83,
+    "oldId": "AB023-30-GLD",
+    "newId": "AA023-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 84,
+    "oldId": "AB023-40-RGD",
+    "newId": "AA023-RGD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 85,
+    "oldId": "AB023-30-BRN",
+    "newId": "AA023-BRN-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำตาล",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 86,
+    "oldId": "AB023-30-NA",
+    "newId": "AA023-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 87,
+    "oldId": "AB026-150-RGD",
+    "newId": "AA026-RGD-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 88,
+    "oldId": "AB026-150-GLD",
+    "newId": "AA026-GLD-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 89,
+    "oldId": "AB026-150-BLK",
+    "newId": "AA026-BLK-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 90,
+    "oldId": "AB049-110-120-NA",
+    "newId": "AA049110-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 91,
+    "oldId": "AB076-100-NA",
+    "newId": "AA076-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 92,
+    "oldId": "AB078-100-NA",
+    "newId": "AA078-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 93,
+    "oldId": "AB080-120-120-GLD",
+    "newId": "AA080120-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 94,
+    "oldId": "AB080-60-60-GLD",
+    "newId": "AA08060-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 95,
+    "oldId": "AB085-80-NA",
+    "newId": "AA085-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 96,
+    "oldId": "AB086-100-GLD",
+    "newId": "AA086-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 97,
+    "oldId": "AB092-80-GLD",
+    "newId": "AA092-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 98,
+    "oldId": "AB096-00-BLK",
+    "newId": "AA096-BLK-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "xx"
+  },
+  {
+    "no": 99,
+    "oldId": "AB096-125-WHT",
+    "newId": "AA096-WHT-00-125-00",
+    "category": "โคมไฟระย้า",
+    "color": "ขาว",
+    "dimensions": "x125x"
+  },
+  {
+    "no": 100,
+    "oldId": "AB096-100-100-NA",
+    "newId": "AA096100-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 101,
+    "oldId": "AB096-120-120-NA",
+    "newId": "AA096120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 102,
+    "oldId": "AB096-120-00-NA",
+    "newId": "AA096120-XXX-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 103,
+    "oldId": "AB100-100-GLD",
+    "newId": "AA100-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 104,
+    "oldId": "AB106-180-GLD",
+    "newId": "AA106-GLD-00-180-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x180x"
+  },
+  {
+    "no": 105,
+    "oldId": "AB106-150-BLK",
+    "newId": "AA106-BLK-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 106,
+    "oldId": "AB106-120-120-NA",
+    "newId": "AA106120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 107,
+    "oldId": "AB106-200-200-NA",
+    "newId": "AA106200-XXX-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 108,
+    "oldId": "AB106-200-180-NA",
+    "newId": "AA106200-XXX-00-180-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x180x"
+  },
+  {
+    "no": 109,
+    "oldId": "AB106-A-80-NA",
+    "newId": "AA106-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 110,
+    "oldId": "AB117-120-GLD",
+    "newId": "AA117-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 111,
+    "oldId": "AB117-40-GLD",
+    "newId": "AA117-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 112,
+    "oldId": "AB117-100-GLD",
+    "newId": "AA117-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 113,
+    "oldId": "AB117-00-GLD",
+    "newId": "AA117-GLD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 114,
+    "oldId": "AB117-80-GLD",
+    "newId": "AA117-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 115,
+    "oldId": "AB117-120-NA",
+    "newId": "AA117-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 116,
+    "oldId": "AB137-120-NA",
+    "newId": "AA137-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 117,
+    "oldId": "AB137-120-GLD",
+    "newId": "AA137-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 118,
+    "oldId": "AB137-150-SLV",
+    "newId": "AA137-SLV-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 119,
+    "oldId": "AB137-30-GLD",
+    "newId": "AA137-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 120,
+    "oldId": "AB137-150-RGD",
+    "newId": "AA137-RGD-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 121,
+    "oldId": "AB140-80-GLD",
+    "newId": "AA140-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทองS",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 122,
+    "oldId": "AB142-100-GLD",
+    "newId": "AA142-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 123,
+    "oldId": "AB143-120-GLD",
+    "newId": "AA143-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 124,
+    "oldId": "AB163-110-SLV",
+    "newId": "AA163-SLV-00-110-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x110x"
+  },
+  {
+    "no": 125,
+    "oldId": "AB163-90-NA",
+    "newId": "AA163-XXX-00-90-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x90x"
+  },
+  {
+    "no": 126,
+    "oldId": "AB168-60-BLK",
+    "newId": "AA168-BLK-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 127,
+    "oldId": "AB169-120-GLD",
+    "newId": "AA169-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 128,
+    "oldId": "AB174-120-SLV",
+    "newId": "AA174-SLV-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 129,
+    "oldId": "AB174-120-120-GLD",
+    "newId": "AA174120-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 130,
+    "oldId": "AB174-80-80-NA",
+    "newId": "AA17480-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 131,
+    "oldId": "AB181-120-GLD",
+    "newId": "AA181-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 132,
+    "oldId": "AB181-60-GLD",
+    "newId": "AA181-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 133,
+    "oldId": "AB181-120-120-NA",
+    "newId": "AA181120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 134,
+    "oldId": "AB181-60-60-NA",
+    "newId": "AA18160-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 135,
+    "oldId": "AB182-120-120-NA",
+    "newId": "AA182120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 136,
+    "oldId": "AB182-200-200-GLD",
+    "newId": "AA182200-GLD-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 137,
+    "oldId": "AB184-180-RGD",
+    "newId": "AA184-RGD-00-180-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x180x"
+  },
+  {
+    "no": 138,
+    "oldId": "AB184-120-RGD",
+    "newId": "AA184-RGD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 139,
+    "oldId": "AB184-170-GLD",
+    "newId": "AA184-GLD-00-170-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x170x"
+  },
+  {
+    "no": 140,
+    "oldId": "AB184-150-150-RGD",
+    "newId": "AA184150-RGD-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 141,
+    "oldId": "AB184-200-200-RGD",
+    "newId": "AA184200-RGD-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 142,
+    "oldId": "AB186-125-BLK",
+    "newId": "AA186-BLK-00-125-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x125x"
+  },
+  {
+    "no": 143,
+    "oldId": "AB186-100-SLV",
+    "newId": "AA186-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 144,
+    "oldId": "AB186-120-120-NA",
+    "newId": "AA186120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 145,
+    "oldId": "AB193-150-150-BLK",
+    "newId": "AA193150-BLK-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 146,
+    "oldId": "AB195-120-120-NA",
+    "newId": "AA195120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 147,
+    "oldId": "AB195-75-75-NA",
+    "newId": "AA19575-XXX-00-75-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x75x"
+  },
+  {
+    "no": 148,
+    "oldId": "AB198-200-200-NA",
+    "newId": "AA198200-XXX-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 149,
+    "oldId": "AB199-120-GLD",
+    "newId": "AA199-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 150,
+    "oldId": "AB202-120-GLD",
+    "newId": "AA202-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 151,
+    "oldId": "AB202-60-NA",
+    "newId": "AA202-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 152,
+    "oldId": "AB205-85-GLD",
+    "newId": "AA205-GLD-00-85-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x85x"
+  },
+  {
+    "no": 153,
+    "oldId": "AB205-80-GLD",
+    "newId": "AA205-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 154,
+    "oldId": "AB205-120-GLD",
+    "newId": "AA205-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 155,
+    "oldId": "AB205-100-GLD",
+    "newId": "AA205-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 156,
+    "oldId": "AB205-60-NA",
+    "newId": "AA205-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 157,
+    "oldId": "AB205-120-NA",
+    "newId": "AA205-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 158,
+    "oldId": "AB215-120-120-GLD",
+    "newId": "AA215120-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 159,
+    "oldId": "AB215-120-120-NA",
+    "newId": "AA215120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 160,
+    "oldId": "AB215-80-80-NA",
+    "newId": "AA21580-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 161,
+    "oldId": "AB216-60-60-GLD",
+    "newId": "AA21660-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 162,
+    "oldId": "AB216-80-80-NA",
+    "newId": "AA21680-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 163,
+    "oldId": "AB220-40-GLD",
+    "newId": "AA220-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 164,
+    "oldId": "AB220-20-GLD",
+    "newId": "AA220-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 165,
+    "oldId": "AB220-00-GLD",
+    "newId": "AA220-GLD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 166,
+    "oldId": "AB221-120-120-NA",
+    "newId": "AA221120-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 167,
+    "oldId": "AB221-80-80-GLD",
+    "newId": "AA22180-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 168,
+    "oldId": "AB222-80-80-GLD",
+    "newId": "AA22280-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 169,
+    "oldId": "AB223-2-NA",
+    "newId": "AA223-XXX-00-02-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x2x"
+  },
+  {
+    "no": 170,
+    "oldId": "AB224-40-BLK",
+    "newId": "AA224-BLK-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 171,
+    "oldId": "AB225-120-GLD",
+    "newId": "AA225-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 172,
+    "oldId": "AB225-60-GLD",
+    "newId": "AA225-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 173,
+    "oldId": "AB225-125-GLD",
+    "newId": "AA225-GLD-00-125-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x125x"
+  },
+  {
+    "no": 174,
+    "oldId": "AB226-80-GLD",
+    "newId": "AA226-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 175,
+    "oldId": "AB226-120-GLD",
+    "newId": "AA226-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 176,
+    "oldId": "AB227-40-SLV",
+    "newId": "AA227-SLV-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 177,
+    "oldId": "AB227-30-SLV",
+    "newId": "AA227-SLV-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 178,
+    "oldId": "AB228-60-GLD",
+    "newId": "AA228-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 179,
+    "oldId": "AB228-120-GLD",
+    "newId": "AA228-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 180,
+    "oldId": "AB229-80-GLD",
+    "newId": "AA229-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 181,
+    "oldId": "AB230-100-GLD",
+    "newId": "AA230-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 182,
+    "oldId": "AB231-120-GLD",
+    "newId": "AA231-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 183,
+    "oldId": "AC002-70-GLD",
+    "newId": "AA002-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 184,
+    "oldId": "AC002-300-OTH",
+    "newId": "AA002-SGO-00-300-00",
+    "category": "โคมไฟระย้า",
+    "color": "SGold",
+    "dimensions": "x300x"
+  },
+  {
+    "no": 185,
+    "oldId": "AC002-70-OTH",
+    "newId": "AA002-SGO-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "SGold",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 186,
+    "oldId": "AC002-250-80-RGD",
+    "newId": "AA002250-RGD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 187,
+    "oldId": "AC002-350-80-RGD",
+    "newId": "AA002350-RGD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 188,
+    "oldId": "AC004-180-100-GLD",
+    "newId": "AA004180-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 189,
+    "oldId": "AC004-200-120-CLR",
+    "newId": "AA004200-ใส-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ใส",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 190,
+    "oldId": "AC006-20-RGD",
+    "newId": "AA006-RGD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 191,
+    "oldId": "AC006-B-20-NA",
+    "newId": "AA006-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 192,
+    "oldId": "AC006-B-30-NA",
+    "newId": "AA006-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 193,
+    "oldId": "AC006-B-20-GLD",
+    "newId": "AA006-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 194,
+    "oldId": "AC006-B-3-BLK",
+    "newId": "AA006-BLK-00-03-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x3x"
+  },
+  {
+    "no": 195,
+    "oldId": "AC006-C-30-GLD",
+    "newId": "AA006-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 196,
+    "oldId": "AC006-C-3-GLD",
+    "newId": "AA006-GLD-00-03-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x3x"
+  },
+  {
+    "no": 197,
+    "oldId": "AC006-C-30-SLV",
+    "newId": "AA006-SLV-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 198,
+    "oldId": "AC006-C-20-GLD",
+    "newId": "AA006-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 199,
+    "oldId": "AC006-D-20-NA",
+    "newId": "AA006-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 200,
+    "oldId": "AC012-45-CLR",
+    "newId": "AA012-ใส-00-45-00",
+    "category": "โคมไฟระย้า",
+    "color": "ใส",
+    "dimensions": "x45x"
+  },
+  {
+    "no": 201,
+    "oldId": "AC012-80-GLD",
+    "newId": "AA012-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 202,
+    "oldId": "AC012-45-GLD",
+    "newId": "AA012-GLD-00-45-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x45x"
+  },
+  {
+    "no": 203,
+    "oldId": "AC012-180-45-GLD",
+    "newId": "AA012180-GLD-00-45-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x45x"
+  },
+  {
+    "no": 204,
+    "oldId": "AC012-210-60-NA",
+    "newId": "AA012210-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 205,
+    "oldId": "AC012-C6-30-NA",
+    "newId": "AA0126-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 206,
+    "oldId": "AC012-C8-30-NA",
+    "newId": "AA0128-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 207,
+    "oldId": "AC012-C9-20-NA",
+    "newId": "AA0129-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 208,
+    "oldId": "AC025-30-GLD",
+    "newId": "AA025-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 209,
+    "oldId": "AC025-30-NA",
+    "newId": "AA025-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 210,
+    "oldId": "AC025-30-RGD",
+    "newId": "AA025-RGD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 211,
+    "oldId": "AC025-30-BLK",
+    "newId": "AA025-BLK-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 212,
+    "oldId": "AC025-100-BLK",
+    "newId": "AA025-BLK-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 213,
+    "oldId": "AC025-30-SLV",
+    "newId": "AA025-SLV-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 214,
+    "oldId": "AC025-20-RGD",
+    "newId": "AA025-RGD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 215,
+    "oldId": "AC025-40-GLD",
+    "newId": "AA025-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 216,
+    "oldId": "AC025-6-30-GLD",
+    "newId": "AA0256-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 217,
+    "oldId": "AC025-6-30-BLK",
+    "newId": "AA0256-BLK-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 218,
+    "oldId": "AC026-60-GLD",
+    "newId": "AA026-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 219,
+    "oldId": "AC026-100-BLK",
+    "newId": "AA026-BLK-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 220,
+    "oldId": "AC026-60-BLK",
+    "newId": "AA026-BLK-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 221,
+    "oldId": "AC026-100-GLD",
+    "newId": "AA026-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 222,
+    "oldId": "AC028-3-60-GLD",
+    "newId": "AA0283-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 223,
+    "oldId": "AC028-5-30-BLK",
+    "newId": "AA0285-BLK-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 224,
+    "oldId": "AC028-6-30-NA",
+    "newId": "AA0286-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 225,
+    "oldId": "AC028-6-40-NA",
+    "newId": "AA0286-XXX-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 226,
+    "oldId": "AC033-180-60-SLV",
+    "newId": "AA033180-SLV-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 227,
+    "oldId": "AC040-80-GRY",
+    "newId": "AA040-GRY-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 228,
+    "oldId": "AC040-80-GLD",
+    "newId": "AA040-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 229,
+    "oldId": "AC040-60-GLD",
+    "newId": "AA040-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 230,
+    "oldId": "AC040-45-GLD",
+    "newId": "AA040-GLD-00-45-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีทอง",
+    "dimensions": "x45x"
+  },
+  {
+    "no": 231,
+    "oldId": "AC040-210-70-NA",
+    "newId": "AA040210-XXX-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 232,
+    "oldId": "AC040-210-70-GLD",
+    "newId": "AA040210-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 233,
+    "oldId": "AC040-260-80-NA",
+    "newId": "AA040260-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 234,
+    "oldId": "AC041-150-55-GLD",
+    "newId": "AA041150-GLD-00-55-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x55x"
+  },
+  {
+    "no": 235,
+    "oldId": "AC042-60-GLD",
+    "newId": "AA042-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 236,
+    "oldId": "AC042-180-60-NA",
+    "newId": "AA042180-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 237,
+    "oldId": "AC042-210-70-GLD",
+    "newId": "AA042210-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 238,
+    "oldId": "AC044-85-NA",
+    "newId": "AA044-XXX-00-85-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x85x"
+  },
+  {
+    "no": 239,
+    "oldId": "AC046-60-SLV",
+    "newId": "AA046-SLV-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 240,
+    "oldId": "AC046-200-60-CLR",
+    "newId": "AA046200-คริ-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "คริสตัลใส",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 241,
+    "oldId": "AC046-200-200-NA",
+    "newId": "AA046200-XXX-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 242,
+    "oldId": "AC052-100-GLD",
+    "newId": "AA052-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 243,
+    "oldId": "AC052-20-GLD",
+    "newId": "AA052-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 244,
+    "oldId": "AC052-20-NA",
+    "newId": "AA052-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 245,
+    "oldId": "AC052-100-NA",
+    "newId": "AA052-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 246,
+    "oldId": "AC052-30-GLD",
+    "newId": "AA052-GLD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 247,
+    "oldId": "AC052-A-30-NA",
+    "newId": "AA052-XXX-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 248,
+    "oldId": "AC052-A-20-NA",
+    "newId": "AA052-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 249,
+    "oldId": "AC052-A-20-GLD",
+    "newId": "AA052-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 250,
+    "oldId": "AC052-B-40-GLD",
+    "newId": "AA052-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 251,
+    "oldId": "AC052-B-40-SLV",
+    "newId": "AA052-SLV-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 252,
+    "oldId": "AC052-B-00-SLV",
+    "newId": "AA052-SLV-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "xx"
+  },
+  {
+    "no": 253,
+    "oldId": "AC052-Cball-20-GLD",
+    "newId": "AA052-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 254,
+    "oldId": "AC052-CBall-8-GLD",
+    "newId": "AA052-GLD-00-08-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x8x"
+  },
+  {
+    "no": 255,
+    "oldId": "AC052-CBall-20-GLD",
+    "newId": "AA052-GLD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 256,
+    "oldId": "AC052-Cball-30-RGD",
+    "newId": "AA052-RGD-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 257,
+    "oldId": "AC052-Cball-30-SLV",
+    "newId": "AA052-SLV-00-30-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 258,
+    "oldId": "AC052-Cball-20-RGD",
+    "newId": "AA052-RGD-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 259,
+    "oldId": "AC052-CBall-40-GLD",
+    "newId": "AA052-GLD-00-40-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 260,
+    "oldId": "AC060-60-GLD",
+    "newId": "AA060-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 261,
+    "oldId": "AC060-70-GLD",
+    "newId": "AA060-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 262,
+    "oldId": "AC060-80-GLD",
+    "newId": "AA060-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 263,
+    "oldId": "AC060-00-GLD",
+    "newId": "AA060-GLD-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 264,
+    "oldId": "AC060-210-70-GLD",
+    "newId": "AA060210-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 265,
+    "oldId": "AC060-B-20-NA",
+    "newId": "AA060-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 266,
+    "oldId": "AC069-00-NA",
+    "newId": "AA069-XXX-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 267,
+    "oldId": "AC070-100-GLD",
+    "newId": "AA070-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 268,
+    "oldId": "AC070-100-RGD",
+    "newId": "AA070-RGD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 269,
+    "oldId": "AC072-100-GLD",
+    "newId": "AA072-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 270,
+    "oldId": "AC072-70-NA",
+    "newId": "AA072-XXX-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 271,
+    "oldId": "AC073-60-NA",
+    "newId": "AA073-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 272,
+    "oldId": "AC074-60-NA",
+    "newId": "AA074-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 273,
+    "oldId": "AC077-80-GLD",
+    "newId": "AA077-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 274,
+    "oldId": "AC082-100-SLV",
+    "newId": "AA082-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 275,
+    "oldId": "AC109-70-NA",
+    "newId": "AA109-XXX-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 276,
+    "oldId": "AC110-7-20-NA",
+    "newId": "AA1107-XXX-00-20-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 277,
+    "oldId": "AC116-100-GLD",
+    "newId": "AA116-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 278,
+    "oldId": "AC116-70-NA",
+    "newId": "AA116-XXX-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 279,
+    "oldId": "AC117-70-GLD",
+    "newId": "AA117-GLD-00-70-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x70x"
+  },
+  {
+    "no": 280,
+    "oldId": "AC117-100-GLD",
+    "newId": "AA117-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 281,
+    "oldId": "AC117-00-NA",
+    "newId": "AA117-XXX-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 282,
+    "oldId": "AC118-60-SLV",
+    "newId": "AA118-SLV-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 283,
+    "oldId": "AC119-62-NA",
+    "newId": "AA119-XXX-00-62-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x62x"
+  },
+  {
+    "no": 284,
+    "oldId": "AC119-68-GLD",
+    "newId": "AA119-GLD-00-68-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x68x"
+  },
+  {
+    "no": 285,
+    "oldId": "AC123-100-SLV",
+    "newId": "AA123-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 286,
+    "oldId": "AC127-105-NA",
+    "newId": "AA127-XXX-00-105-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x105x"
+  },
+  {
+    "no": 287,
+    "oldId": "AC128-100-GLD",
+    "newId": "AA128-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 288,
+    "oldId": "AC128-120-GLD",
+    "newId": "AA128-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 289,
+    "oldId": "AC128-140-80-GLD",
+    "newId": "AA128140-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 290,
+    "oldId": "AC129-80-SLV",
+    "newId": "AA129-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 291,
+    "oldId": "AC130-500-PNK",
+    "newId": "AA130-PNK-00-500-00",
+    "category": "โคมไฟระย้า",
+    "color": "ชมพู",
+    "dimensions": "x500x"
+  },
+  {
+    "no": 292,
+    "oldId": "AC130-450-NA",
+    "newId": "AA130-XXX-00-450-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x450x"
+  },
+  {
+    "no": 293,
+    "oldId": "AC131-80-RGD",
+    "newId": "AA131-RGD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 294,
+    "oldId": "AC132-120-NA",
+    "newId": "AA132-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 295,
+    "oldId": "AC135-100-GLD",
+    "newId": "AA135-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 296,
+    "oldId": "AC224-80-RGD",
+    "newId": "AA224-RGD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 297,
+    "oldId": "AC224-120-RGD",
+    "newId": "AA224-RGD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 298,
+    "oldId": "AC225-A-80-NA",
+    "newId": "AA225-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 299,
+    "oldId": "AC225-B-80-NA",
+    "newId": "AA225-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 300,
+    "oldId": "CC001-35-GRY",
+    "newId": "OT001-GRY-00-35-00",
+    "category": "อื่นๆ",
+    "color": "เทา",
+    "dimensions": "x35x"
+  },
+  {
+    "no": 301,
+    "oldId": "CC001-38-GLD",
+    "newId": "OT001-GLD-00-38-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 302,
+    "oldId": "CC001-38-GRY",
+    "newId": "OT001-GRY-00-38-00",
+    "category": "อื่นๆ",
+    "color": "เทา",
+    "dimensions": "x38x"
+  },
+  {
+    "no": 303,
+    "oldId": "CC023-00-GLD",
+    "newId": "OT023-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 304,
+    "oldId": "DV-00-NA",
+    "newId": "OT-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 305,
+    "oldId": "DV2L24V-1200-GOMIEOO-00-NA",
+    "newId": "OT2241200-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 306,
+    "oldId": "DV2L24V-200W-00-NA",
+    "newId": "OT224200-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 307,
+    "oldId": "DV2L24V-2200-GOMIEOO-00-NA",
+    "newId": "OT2242200-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 308,
+    "oldId": "DV2L24V-2700-GOMIEOO-00-NA",
+    "newId": "OT2242700-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 309,
+    "oldId": "DV2L24V-3000-GOMIEOO-00-NA",
+    "newId": "OT2243000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 310,
+    "oldId": "DV2L24V-4500-00-NA",
+    "newId": "OT2244500-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 311,
+    "oldId": "DV2L24V-4500-GOMIEOO-00-NA",
+    "newId": "OT2244500-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 312,
+    "oldId": "DV2L24V-4800-GMMA-00-NA",
+    "newId": "OT2244800-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 313,
+    "oldId": "DV2L24V-6000-GOMIEOO-00-NA",
+    "newId": "OT2246000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 314,
+    "oldId": "DV2L24V-7000-GOMIEOO-00-NA",
+    "newId": "OT2247000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 315,
+    "oldId": "DV2L24V-800-GOMIEOO-00-NA",
+    "newId": "OT224800-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 316,
+    "oldId": "DV2L24V-8000-00-NA",
+    "newId": "OT2248000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 317,
+    "oldId": "DV2L24V-8000-GOMIEOO-00-NA",
+    "newId": "OT2248000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 318,
+    "oldId": "DV2L24V-9000-GOMIEOO-00-NA",
+    "newId": "OT2249000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 319,
+    "oldId": "DV2L72V-1300-GOMIEOO-00-NA",
+    "newId": "OT2721300-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 320,
+    "oldId": "DV2L72V-2500-GOMIEOO-00-NA",
+    "newId": "OT2722500-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 321,
+    "oldId": "DV3L150V-1000-00-NA",
+    "newId": "OT31501000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 322,
+    "oldId": "DV3L150V-180-00-NA",
+    "newId": "OT3150180-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 323,
+    "oldId": "DV3L150V-2100-GOMIEOO-00-NA",
+    "newId": "OT31502100-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 324,
+    "oldId": "DV3L150V-800-00-NA",
+    "newId": "OT3150800-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 325,
+    "oldId": "DV3L24V-2000-GOMIEOO-00-NA",
+    "newId": "OT3242000-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 326,
+    "oldId": "E14-00-NA",
+    "newId": "OT14-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 327,
+    "oldId": "E27-00-WHT",
+    "newId": "OT27-WHT-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ขาวขุ่น",
+    "dimensions": "xx"
+  },
+  {
+    "no": 328,
+    "oldId": "G9-00-NA",
+    "newId": "OT9-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 329,
+    "oldId": "Gift-00-NA",
+    "newId": "OT-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 330,
+    "oldId": "IN001-80-GLD",
+    "newId": "AA001-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 331,
+    "oldId": "IN001-80-GRY",
+    "newId": "AA001-GRY-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ใส-เทา",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 332,
+    "oldId": "IN0010-80-GLD",
+    "newId": "AA0010-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 333,
+    "oldId": "IN004-80-GLD",
+    "newId": "AA004-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 334,
+    "oldId": "IN004-80-NA",
+    "newId": "AA004-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 335,
+    "oldId": "IN010-60-NA",
+    "newId": "AA010-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 336,
+    "oldId": "IN012-100-GLD",
+    "newId": "AA012-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 337,
+    "oldId": "IN012-100-NA",
+    "newId": "AA012-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 338,
+    "oldId": "IN013-100-GRY",
+    "newId": "AA013-GRY-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา-ใส",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 339,
+    "oldId": "IN013-100-NA",
+    "newId": "AA013-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 340,
+    "oldId": "IN016-100-SLV",
+    "newId": "AA016-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 341,
+    "oldId": "IN028-115-NA",
+    "newId": "AA028-XXX-00-115-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x115x"
+  },
+  {
+    "no": 342,
+    "oldId": "IN028-115-115-NA",
+    "newId": "AA028115-XXX-00-115-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x115x"
+  },
+  {
+    "no": 343,
+    "oldId": "IN028-80-82-NA",
+    "newId": "AA02880-XXX-00-82-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x82x"
+  },
+  {
+    "no": 344,
+    "oldId": "IN031-100-SLV",
+    "newId": "AA031-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 345,
+    "oldId": "IN031-80-NA",
+    "newId": "AA031-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 346,
+    "oldId": "IN032-80-NA",
+    "newId": "AA032-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 347,
+    "oldId": "IN033-100-SLV",
+    "newId": "AA033-SLV-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 348,
+    "oldId": "IN033-75-SLV",
+    "newId": "AA033-SLV-00-75-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x75x"
+  },
+  {
+    "no": 349,
+    "oldId": "IN033-100-NA",
+    "newId": "AA033-XXX-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 350,
+    "oldId": "IN034-80-SLV",
+    "newId": "AA034-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 351,
+    "oldId": "IN034-60-GRY",
+    "newId": "AA034-GRY-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 352,
+    "oldId": "IN035-60-GLD",
+    "newId": "AA035-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 353,
+    "oldId": "IN036-80-SLV",
+    "newId": "AA036-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 354,
+    "oldId": "IN037-60-GLD",
+    "newId": "AA037-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 355,
+    "oldId": "IN039-60-NA",
+    "newId": "AA039-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 356,
+    "oldId": "IN040-80-SLV",
+    "newId": "AA040-SLV-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 357,
+    "oldId": "IN040-80-GLD",
+    "newId": "AA040-GLD-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีทอง",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 358,
+    "oldId": "IN040-80-NA",
+    "newId": "AA040-XXX-00-80-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 359,
+    "oldId": "IN041-60-GLD",
+    "newId": "AA041-GLD-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 360,
+    "oldId": "IN042-60-GRY",
+    "newId": "AA042-GRY-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "ใส-เทา",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 361,
+    "oldId": "IN043-200-RGD",
+    "newId": "AA043-RGD-00-200-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x200x"
+  },
+  {
+    "no": 362,
+    "oldId": "IN044-56-RGD",
+    "newId": "AA044-RGD-00-56-00",
+    "category": "โคมไฟระย้า",
+    "color": "โรสโกลด์",
+    "dimensions": "x56x"
+  },
+  {
+    "no": 363,
+    "oldId": "IN045-60-SLV",
+    "newId": "AA045-SLV-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีเงิน",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 364,
+    "oldId": "IN046-50-GLD",
+    "newId": "AA046-GLD-00-50-00",
+    "category": "โคมไฟระย้า",
+    "color": "สีทอง",
+    "dimensions": "x50x"
+  },
+  {
+    "no": 365,
+    "oldId": "IN05-60-60-NA",
+    "newId": "AA0560-XXX-00-60-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x60x"
+  },
+  {
+    "no": 366,
+    "oldId": "K9-10-CLR",
+    "newId": "OT9-ใส-00-10-00",
+    "category": "อื่นๆ",
+    "color": "ใส",
+    "dimensions": "x10x"
+  },
+  {
+    "no": 367,
+    "oldId": "K9-2-CLR",
+    "newId": "OT9-ใส-00-02-00",
+    "category": "อื่นๆ",
+    "color": "ใส",
+    "dimensions": "x2x"
+  },
+  {
+    "no": 368,
+    "oldId": "K9-00-NA",
+    "newId": "OT9-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 369,
+    "oldId": "K9-30-CLR",
+    "newId": "OT9-ใส-00-30-00",
+    "category": "อื่นๆ",
+    "color": "ใส",
+    "dimensions": "x30x"
+  },
+  {
+    "no": 370,
+    "oldId": "K9-22-CLR",
+    "newId": "OT9-ใส-00-22-00",
+    "category": "อื่นๆ",
+    "color": "ใส",
+    "dimensions": "x22x"
+  },
+  {
+    "no": 371,
+    "oldId": "LE143C-5W-CH-00-NA",
+    "newId": "OT1435-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 372,
+    "oldId": "LE14XX-00-NA",
+    "newId": "OT14-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 373,
+    "oldId": "LE273C-T-00-CLR",
+    "newId": "OT273-ใส-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ใส",
+    "dimensions": "xx"
+  },
+  {
+    "no": 374,
+    "oldId": "LE273C-W-00-WHT",
+    "newId": "OT273-WHT-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "xx"
+  },
+  {
+    "no": 375,
+    "oldId": "LED2C2L24V-350ma-15M-2835-00-NA",
+    "newId": "OT2224350152835-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 376,
+    "oldId": "LEG4-00-NA",
+    "newId": "OT4-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 377,
+    "oldId": "LG93C-00-NA",
+    "newId": "OT93-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 378,
+    "oldId": "LG9W-00-NA",
+    "newId": "OT9-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 379,
+    "oldId": "LG9XX-00-NA",
+    "newId": "OT9-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 380,
+    "oldId": "LG9XX-00-GLD",
+    "newId": "OT9-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 381,
+    "oldId": "LP-40-WHT",
+    "newId": "OT-WHT-00-40-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "x40x"
+  },
+  {
+    "no": 382,
+    "oldId": "LP027-90-NA",
+    "newId": "OT027-XXX-00-90-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "x90x"
+  },
+  {
+    "no": 383,
+    "oldId": "LP046-1-22-GLD",
+    "newId": "OT0461-GLD-00-22-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x22x"
+  },
+  {
+    "no": 384,
+    "oldId": "LP047-1-20-WHT",
+    "newId": "OT0471-WHT-00-20-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 385,
+    "oldId": "LP060-15-GLD",
+    "newId": "OT060-GLD-00-15-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x15x"
+  },
+  {
+    "no": 386,
+    "oldId": "LP061-00-GLD",
+    "newId": "OT061-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 387,
+    "oldId": "LP062-00-GLD",
+    "newId": "OT062-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 388,
+    "oldId": "LP063-35-WHT",
+    "newId": "OT063-WHT-00-35-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "x35x"
+  },
+  {
+    "no": 389,
+    "oldId": "LP064-20-GLD",
+    "newId": "OT064-GLD-00-20-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 390,
+    "oldId": "LP065-20-GLD",
+    "newId": "OT065-GLD-00-20-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 391,
+    "oldId": "LP066-4-BLK",
+    "newId": "OT066-BLK-00-04-00",
+    "category": "อื่นๆ",
+    "color": "ดำ",
+    "dimensions": "x4x"
+  },
+  {
+    "no": 392,
+    "oldId": "MM013-120-BLK",
+    "newId": "AA013-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 393,
+    "oldId": "MM013-6-00-NA",
+    "newId": "AA0136-XXX-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 394,
+    "oldId": "MM019-120-BLK",
+    "newId": "AA019-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 395,
+    "oldId": "MM019-100-BLK",
+    "newId": "AA019-BLK-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 396,
+    "oldId": "MM026-100-GLD",
+    "newId": "AA026-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 397,
+    "oldId": "MM03-6-00-SLV",
+    "newId": "AA036-SLV-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "เงิน",
+    "dimensions": "xx"
+  },
+  {
+    "no": 398,
+    "oldId": "MM036-7-00-GRY",
+    "newId": "AA0367-GRY-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "เทา-เงา",
+    "dimensions": "xx"
+  },
+  {
+    "no": 399,
+    "oldId": "MM037-120-NA",
+    "newId": "AA037-XXX-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 400,
+    "oldId": "MM037-150-BLK",
+    "newId": "AA037-BLK-00-150-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 401,
+    "oldId": "MM054-120-GLD",
+    "newId": "AA054-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 402,
+    "oldId": "MM056-120-BLK",
+    "newId": "AA056-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 403,
+    "oldId": "MM056-120-GLD",
+    "newId": "AA056-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 404,
+    "oldId": "MM056-120-120-GLD",
+    "newId": "AA056120-GLD-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 405,
+    "oldId": "MM061-100-GLD",
+    "newId": "AA061-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 406,
+    "oldId": "MM073-100-BLK",
+    "newId": "AA073-BLK-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 407,
+    "oldId": "MM080-00-BLK",
+    "newId": "AA080-BLK-00-00-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "xx"
+  },
+  {
+    "no": 408,
+    "oldId": "MM080-96-BLK",
+    "newId": "AA080-BLK-00-96-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x96x"
+  },
+  {
+    "no": 409,
+    "oldId": "MM083-120-BLK",
+    "newId": "AA083-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 410,
+    "oldId": "MM083-145-BLK",
+    "newId": "AA083-BLK-00-145-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x145x"
+  },
+  {
+    "no": 411,
+    "oldId": "MM084-120-BLK",
+    "newId": "AA084-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 412,
+    "oldId": "MM085-120-BLK",
+    "newId": "AA085-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 413,
+    "oldId": "MM086-120-BLK",
+    "newId": "AA086-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 414,
+    "oldId": "MM087-100-GLD",
+    "newId": "AA087-GLD-00-100-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x100x"
+  },
+  {
+    "no": 415,
+    "oldId": "MM088-120-BRN",
+    "newId": "AA088-BRN-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "น้ำตาล",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 416,
+    "oldId": "MM089-120-BLK",
+    "newId": "AA089-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 417,
+    "oldId": "MM089-180-BLK",
+    "newId": "AA089-BLK-00-180-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x180x"
+  },
+  {
+    "no": 418,
+    "oldId": "MM090-115-GLD",
+    "newId": "AA090-GLD-00-115-00",
+    "category": "โคมไฟระย้า",
+    "color": "ทอง",
+    "dimensions": "x115x"
+  },
+  {
+    "no": 419,
+    "oldId": "MM091-120-BLK",
+    "newId": "AA091-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 420,
+    "oldId": "MM092-120-BLK",
+    "newId": "AA092-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 421,
+    "oldId": "MM093-120-BLK",
+    "newId": "AA093-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 422,
+    "oldId": "MM094-120-BLK",
+    "newId": "AA094-BLK-00-120-00",
+    "category": "โคมไฟระย้า",
+    "color": "ดำ",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 423,
+    "oldId": "NeoX-00-BLK",
+    "newId": "OT-BLK-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ดำ",
+    "dimensions": "xx"
+  },
+  {
+    "no": 424,
+    "oldId": "RM2CH-00-NA",
+    "newId": "OT2-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 425,
+    "oldId": "RM2CH-00-WHT",
+    "newId": "OT2-WHT-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "xx"
+  },
+  {
+    "no": 426,
+    "oldId": "RMDV1CH-GOMIEOO-00-NA",
+    "newId": "OT1-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 427,
+    "oldId": "SA012-00-GLD",
+    "newId": "OT012-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 428,
+    "oldId": "SS001-61-NA",
+    "newId": "OT001-XXX-00-61-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "x61x"
+  },
+  {
+    "no": 429,
+    "oldId": "SS003-46-GLD",
+    "newId": "OT003-GLD-00-46-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x46x"
+  },
+  {
+    "no": 430,
+    "oldId": "SS005-80-BLK",
+    "newId": "OT005-BLK-00-80-00",
+    "category": "อื่นๆ",
+    "color": "ดำ",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 431,
+    "oldId": "ST010-150-RGD",
+    "newId": "OT010-RGD-00-150-00",
+    "category": "อื่นๆ",
+    "color": "โรสโกลด์",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 432,
+    "oldId": "ST011-120-GLD",
+    "newId": "OT011-GLD-00-120-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 433,
+    "oldId": "ST011-120-RGD",
+    "newId": "OT011-RGD-00-120-00",
+    "category": "อื่นๆ",
+    "color": "โรสโกลด์",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 434,
+    "oldId": "ST012-00-NA",
+    "newId": "OT012-XXX-00-00-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "xx"
+  },
+  {
+    "no": 435,
+    "oldId": "ST012-150-GLD",
+    "newId": "OT012-GLD-00-150-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 436,
+    "oldId": "ST012-00-GLD",
+    "newId": "OT012-GLD-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "xx"
+  },
+  {
+    "no": 437,
+    "oldId": "ST012-120-GLD",
+    "newId": "OT012-GLD-00-120-00",
+    "category": "อื่นๆ",
+    "color": "ทอง",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 438,
+    "oldId": "ST012-00-BLK",
+    "newId": "OT012-BLK-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ดำ",
+    "dimensions": "xx"
+  },
+  {
+    "no": 439,
+    "oldId": "ST015-120-NA",
+    "newId": "OT015-XXX-00-120-00",
+    "category": "อื่นๆ",
+    "color": "",
+    "dimensions": "x120x"
+  },
+  {
+    "no": 440,
+    "oldId": "SW-00-WHT",
+    "newId": "OT-WHT-00-00-00",
+    "category": "อื่นๆ",
+    "color": "ขาว",
+    "dimensions": "xx"
+  },
+  {
+    "no": 441,
+    "oldId": "WL-20-BLK",
+    "newId": "OT-BLK-00-20-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x20x"
+  },
+  {
+    "no": 442,
+    "oldId": "WL013-013-GLD",
+    "newId": "OT013-GLD-00-13-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x013x"
+  },
+  {
+    "no": 443,
+    "oldId": "WL018-018-GLD",
+    "newId": "OT018-GLD-00-18-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x018x"
+  },
+  {
+    "no": 444,
+    "oldId": "WL020-020-BLK",
+    "newId": "OT020-BLK-00-20-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x020x"
+  },
+  {
+    "no": 445,
+    "oldId": "WL020-020-GLD",
+    "newId": "OT020-GLD-00-20-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x020x"
+  },
+  {
+    "no": 446,
+    "oldId": "WL020-12-BLK",
+    "newId": "OT020-BLK-00-12-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x12x"
+  },
+  {
+    "no": 447,
+    "oldId": "WL029-029-NA",
+    "newId": "OT029-XXX-00-29-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x029x"
+  },
+  {
+    "no": 448,
+    "oldId": "WL029-029-GLD",
+    "newId": "OT029-GLD-00-29-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x029x"
+  },
+  {
+    "no": 449,
+    "oldId": "WL030-030-NA",
+    "newId": "OT030-XXX-00-30-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x030x"
+  },
+  {
+    "no": 450,
+    "oldId": "WL033-033-NA",
+    "newId": "OT033-XXX-00-33-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x033x"
+  },
+  {
+    "no": 451,
+    "oldId": "WL033-033-GLD",
+    "newId": "OT033-GLD-00-33-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง-ขาว",
+    "dimensions": "x033x"
+  },
+  {
+    "no": 452,
+    "oldId": "WL035-035-GLD",
+    "newId": "OT035-GLD-00-35-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x035x"
+  },
+  {
+    "no": 453,
+    "oldId": "WL037-137-GLD",
+    "newId": "OT037-GLD-00-137-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x137x"
+  },
+  {
+    "no": 454,
+    "oldId": "WL057-057-BLK",
+    "newId": "OT057-BLK-00-57-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x057x"
+  },
+  {
+    "no": 455,
+    "oldId": "WL063-063-GLD",
+    "newId": "OT063-GLD-00-63-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง-ใส",
+    "dimensions": "x063x"
+  },
+  {
+    "no": 456,
+    "oldId": "WL065-065-GLD",
+    "newId": "OT065-GLD-00-65-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x065x"
+  },
+  {
+    "no": 457,
+    "oldId": "WL067-067-GLD",
+    "newId": "OT067-GLD-00-67-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x067x"
+  },
+  {
+    "no": 458,
+    "oldId": "WL068-068-SLV",
+    "newId": "OT068-SLV-00-68-00",
+    "category": "โคมไฟผนัง",
+    "color": "เงิน",
+    "dimensions": "x068x"
+  },
+  {
+    "no": 459,
+    "oldId": "WL068-068-GLD",
+    "newId": "OT068-GLD-00-68-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x068x"
+  },
+  {
+    "no": 460,
+    "oldId": "WL069-069-GLD",
+    "newId": "OT069-GLD-00-69-00",
+    "category": "โคมไฟผนัง",
+    "color": "สีทอง",
+    "dimensions": "x069x"
+  },
+  {
+    "no": 461,
+    "oldId": "WL069-069-SLV",
+    "newId": "OT069-SLV-00-69-00",
+    "category": "โคมไฟผนัง",
+    "color": "เงิน",
+    "dimensions": "x069x"
+  },
+  {
+    "no": 462,
+    "oldId": "WL072-072-GLD",
+    "newId": "OT072-GLD-00-72-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x072x"
+  },
+  {
+    "no": 463,
+    "oldId": "WL078-60-078-NA",
+    "newId": "OT07860-XXX-00-78-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x078x"
+  },
+  {
+    "no": 464,
+    "oldId": "WL088-088-GLD",
+    "newId": "OT088-GLD-00-88-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x088x"
+  },
+  {
+    "no": 465,
+    "oldId": "WL089-089-NA",
+    "newId": "OT089-XXX-00-89-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x089x"
+  },
+  {
+    "no": 466,
+    "oldId": "WL089-089-GLD",
+    "newId": "OT089-GLD-00-89-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x089x"
+  },
+  {
+    "no": 467,
+    "oldId": "WL091-30-091-NA",
+    "newId": "OT09130-XXX-00-91-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x091x"
+  },
+  {
+    "no": 468,
+    "oldId": "WL092-092-NA",
+    "newId": "OT092-XXX-00-92-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x092x"
+  },
+  {
+    "no": 469,
+    "oldId": "WL092-092-GLD",
+    "newId": "OT092-GLD-00-92-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x092x"
+  },
+  {
+    "no": 470,
+    "oldId": "WL092-092-SLV",
+    "newId": "OT092-SLV-00-92-00",
+    "category": "โคมไฟผนัง",
+    "color": "เงิน",
+    "dimensions": "x092x"
+  },
+  {
+    "no": 471,
+    "oldId": "WL092-60-092-NA",
+    "newId": "OT09260-XXX-00-92-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x092x"
+  },
+  {
+    "no": 472,
+    "oldId": "WL095-095-GLD",
+    "newId": "OT095-GLD-00-95-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x095x"
+  },
+  {
+    "no": 473,
+    "oldId": "WL095-G-12-GLD",
+    "newId": "OT095-GLD-00-12-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x12x"
+  },
+  {
+    "no": 474,
+    "oldId": "WL095-G-095-GLD",
+    "newId": "OT095-GLD-00-95-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x095x"
+  },
+  {
+    "no": 475,
+    "oldId": "WL095-RG-12-RGD",
+    "newId": "OT095-RGD-00-12-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x12x"
+  },
+  {
+    "no": 476,
+    "oldId": "WL095-RG-095-RGD",
+    "newId": "OT095-RGD-00-95-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x095x"
+  },
+  {
+    "no": 477,
+    "oldId": "WL096-096-GLD",
+    "newId": "OT096-GLD-00-96-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x096x"
+  },
+  {
+    "no": 478,
+    "oldId": "WL097-097-GLD",
+    "newId": "OT097-GLD-00-97-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x097x"
+  },
+  {
+    "no": 479,
+    "oldId": "WL104-104-NA",
+    "newId": "OT104-XXX-00-104-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x104x"
+  },
+  {
+    "no": 480,
+    "oldId": "WL104-104-RGD",
+    "newId": "OT104-RGD-00-104-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x104x"
+  },
+  {
+    "no": 481,
+    "oldId": "WL104-104-GLD",
+    "newId": "OT104-GLD-00-104-00",
+    "category": "โคมไฟผนัง",
+    "color": "สีทอง",
+    "dimensions": "x104x"
+  },
+  {
+    "no": 482,
+    "oldId": "WL105-105-GLD",
+    "newId": "OT105-GLD-00-105-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x105x"
+  },
+  {
+    "no": 483,
+    "oldId": "WL108-108-BLK",
+    "newId": "OT108-BLK-00-108-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x108x"
+  },
+  {
+    "no": 484,
+    "oldId": "WL108-108-GLD",
+    "newId": "OT108-GLD-00-108-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x108x"
+  },
+  {
+    "no": 485,
+    "oldId": "WL108-108-NA",
+    "newId": "OT108-XXX-00-108-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x108x"
+  },
+  {
+    "no": 486,
+    "oldId": "WL110-110-NA",
+    "newId": "OT110-XXX-00-110-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x110x"
+  },
+  {
+    "no": 487,
+    "oldId": "WL110-110-GLD",
+    "newId": "OT110-GLD-00-110-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x110x"
+  },
+  {
+    "no": 488,
+    "oldId": "WL111-111-NA",
+    "newId": "OT111-XXX-00-111-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x111x"
+  },
+  {
+    "no": 489,
+    "oldId": "WL116-116-NA",
+    "newId": "OT116-XXX-00-116-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x116x"
+  },
+  {
+    "no": 490,
+    "oldId": "WL117-117-GLD",
+    "newId": "OT117-GLD-00-117-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x117x"
+  },
+  {
+    "no": 491,
+    "oldId": "WL119-119-NA",
+    "newId": "OT119-XXX-00-119-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x119x"
+  },
+  {
+    "no": 492,
+    "oldId": "WL119-119-GLD",
+    "newId": "OT119-GLD-00-119-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x119x"
+  },
+  {
+    "no": 493,
+    "oldId": "WL119-119-BLK",
+    "newId": "OT119-BLK-00-119-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x119x"
+  },
+  {
+    "no": 494,
+    "oldId": "WL119-80-BLK",
+    "newId": "OT119-BLK-00-80-00",
+    "category": "โคมไฟผนัง",
+    "color": "สีดำ",
+    "dimensions": "x80x"
+  },
+  {
+    "no": 495,
+    "oldId": "WL119-100-119-NA",
+    "newId": "OT119100-XXX-00-119-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x119x"
+  },
+  {
+    "no": 496,
+    "oldId": "WL121-121-NA",
+    "newId": "OT121-XXX-00-121-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x121x"
+  },
+  {
+    "no": 497,
+    "oldId": "WL123-123-GLD",
+    "newId": "OT123-GLD-00-123-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x123x"
+  },
+  {
+    "no": 498,
+    "oldId": "WL125-125-BLK",
+    "newId": "OT125-BLK-00-125-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x125x"
+  },
+  {
+    "no": 499,
+    "oldId": "WL128-128-GLD",
+    "newId": "OT128-GLD-00-128-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x128x"
+  },
+  {
+    "no": 500,
+    "oldId": "WL135-135-SLV",
+    "newId": "OT135-SLV-00-135-00",
+    "category": "โคมไฟผนัง",
+    "color": "เงิน",
+    "dimensions": "x135x"
+  },
+  {
+    "no": 501,
+    "oldId": "WL137-137-NA",
+    "newId": "OT137-XXX-00-137-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x137x"
+  },
+  {
+    "no": 502,
+    "oldId": "WL138-138-SLV",
+    "newId": "OT138-SLV-00-138-00",
+    "category": "โคมไฟผนัง",
+    "color": "เงิน",
+    "dimensions": "x138x"
+  },
+  {
+    "no": 503,
+    "oldId": "WL143-143-NA",
+    "newId": "OT143-XXX-00-143-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x143x"
+  },
+  {
+    "no": 504,
+    "oldId": "WL148-148-BRN",
+    "newId": "OT148-BRN-00-148-00",
+    "category": "โคมไฟผนัง",
+    "color": "น้ำตาล",
+    "dimensions": "x148x"
+  },
+  {
+    "no": 505,
+    "oldId": "WL150-150-NA",
+    "newId": "OT150-XXX-00-150-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x150x"
+  },
+  {
+    "no": 506,
+    "oldId": "WL151-151-OTH",
+    "newId": "OT151-โกล-00-151-00",
+    "category": "โคมไฟผนัง",
+    "color": "โกลด์",
+    "dimensions": "x151x"
+  },
+  {
+    "no": 507,
+    "oldId": "WL151-151-NA",
+    "newId": "OT151-XXX-00-151-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x151x"
+  },
+  {
+    "no": 508,
+    "oldId": "WL152-152-OTH",
+    "newId": "OT152-โกล-00-152-00",
+    "category": "โคมไฟผนัง",
+    "color": "โกลด์",
+    "dimensions": "x152x"
+  },
+  {
+    "no": 509,
+    "oldId": "WL153-153-OTH",
+    "newId": "OT153-โกล-00-153-00",
+    "category": "โคมไฟผนัง",
+    "color": "โกลด์",
+    "dimensions": "x153x"
+  },
+  {
+    "no": 510,
+    "oldId": "WL153-153-BLK",
+    "newId": "OT153-BLK-00-153-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x153x"
+  },
+  {
+    "no": 511,
+    "oldId": "WL153-153-NA",
+    "newId": "OT153-XXX-00-153-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x153x"
+  },
+  {
+    "no": 512,
+    "oldId": "WL155-155-RGD",
+    "newId": "OT155-RGD-00-155-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x155x"
+  },
+  {
+    "no": 513,
+    "oldId": "WL155-155-GLD",
+    "newId": "OT155-GLD-00-155-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x155x"
+  },
+  {
+    "no": 514,
+    "oldId": "WL156-156-GLD",
+    "newId": "OT156-GLD-00-156-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x156x"
+  },
+  {
+    "no": 515,
+    "oldId": "WL157-157-GLD",
+    "newId": "OT157-GLD-00-157-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง-ใส",
+    "dimensions": "x157x"
+  },
+  {
+    "no": 516,
+    "oldId": "WL158-158-GLD",
+    "newId": "OT158-GLD-00-158-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x158x"
+  },
+  {
+    "no": 517,
+    "oldId": "WL159-159-GLD",
+    "newId": "OT159-GLD-00-159-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x159x"
+  },
+  {
+    "no": 518,
+    "oldId": "WL160-160-GLD",
+    "newId": "OT160-GLD-00-160-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x160x"
+  },
+  {
+    "no": 519,
+    "oldId": "WL161-161-GLD",
+    "newId": "OT161-GLD-00-161-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x161x"
+  },
+  {
+    "no": 520,
+    "oldId": "WL162-162-NA",
+    "newId": "OT162-XXX-00-162-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x162x"
+  },
+  {
+    "no": 521,
+    "oldId": "WL163-163-GLD",
+    "newId": "OT163-GLD-00-163-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x163x"
+  },
+  {
+    "no": 522,
+    "oldId": "WL163-163-NA",
+    "newId": "OT163-XXX-00-163-00",
+    "category": "โคมไฟผนัง",
+    "color": "",
+    "dimensions": "x163x"
+  },
+  {
+    "no": 523,
+    "oldId": "WL164-164-RGD",
+    "newId": "OT164-RGD-00-164-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x164x"
+  },
+  {
+    "no": 524,
+    "oldId": "WL165-165-RGD",
+    "newId": "OT165-RGD-00-165-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x165x"
+  },
+  {
+    "no": 525,
+    "oldId": "WL166-166-GLD",
+    "newId": "OT166-GLD-00-166-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x166x"
+  },
+  {
+    "no": 526,
+    "oldId": "WL166-166-BLK",
+    "newId": "OT166-BLK-00-166-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x166x"
+  },
+  {
+    "no": 527,
+    "oldId": "WL167-167-WHT",
+    "newId": "OT167-WHT-00-167-00",
+    "category": "โคมไฟผนัง",
+    "color": "ขาว",
+    "dimensions": "x167x"
+  },
+  {
+    "no": 528,
+    "oldId": "WL168-168-BLK",
+    "newId": "OT168-BLK-00-168-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x168x"
+  },
+  {
+    "no": 529,
+    "oldId": "WL169-169-BLK",
+    "newId": "OT169-BLK-00-169-00",
+    "category": "โคมไฟผนัง",
+    "color": "ขาว-ดำ",
+    "dimensions": "x169x"
+  },
+  {
+    "no": 530,
+    "oldId": "WL170-170-BLK",
+    "newId": "OT170-BLK-00-170-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x170x"
+  },
+  {
+    "no": 531,
+    "oldId": "WL171-171-BLK",
+    "newId": "OT171-BLK-00-171-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x171x"
+  },
+  {
+    "no": 532,
+    "oldId": "WL172-7-BLK",
+    "newId": "OT172-BLK-00-07-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x7x"
+  },
+  {
+    "no": 533,
+    "oldId": "WL173-173-GLD",
+    "newId": "OT173-GLD-00-173-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x173x"
+  },
+  {
+    "no": 534,
+    "oldId": "WL174-174-BLK",
+    "newId": "OT174-BLK-00-174-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x174x"
+  },
+  {
+    "no": 535,
+    "oldId": "WL175-175-GLD",
+    "newId": "OT175-GLD-00-175-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x175x"
+  },
+  {
+    "no": 536,
+    "oldId": "WL176-176-GLD",
+    "newId": "OT176-GLD-00-176-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x176x"
+  },
+  {
+    "no": 537,
+    "oldId": "WL176-176-OTH",
+    "newId": "OT176-หิน-00-176-00",
+    "category": "โคมไฟผนัง",
+    "color": "หินอ่อน",
+    "dimensions": "x176x"
+  },
+  {
+    "no": 538,
+    "oldId": "WLA25-12-RGD",
+    "newId": "OT25-RGD-00-12-00",
+    "category": "โคมไฟผนัง",
+    "color": "โรสโกลด์",
+    "dimensions": "x12x"
+  },
+  {
+    "no": 539,
+    "oldId": "WLA25-12-GLD",
+    "newId": "OT25-GLD-00-12-00",
+    "category": "โคมไฟผนัง",
+    "color": "ทอง",
+    "dimensions": "x12x"
+  },
+  {
+    "no": 540,
+    "oldId": "WLO002-10-BLK",
+    "newId": "OT002-BLK-00-10-00",
+    "category": "โคมไฟผนัง",
+    "color": "ดำ",
+    "dimensions": "x10x"
+  }
+]

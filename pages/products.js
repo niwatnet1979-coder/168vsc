@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import MOCK_PRODUCTS from '../products_data_v2.json'
+import MOCK_PRODUCTS from '../products_data_v3.json'
 import * as XLSX from 'xlsx'
 
 export default function ProductManagement() {
@@ -13,20 +13,20 @@ export default function ProductManagement() {
 
     // Load products from LocalStorage on mount
     useEffect(() => {
-        const savedProducts = localStorage.getItem('products_data_v2')
+        const savedProducts = localStorage.getItem('products_data_v3')
         if (savedProducts) {
             setProducts(JSON.parse(savedProducts))
         } else {
             // Use new parsed data as fallback and init
             setProducts(MOCK_PRODUCTS)
-            localStorage.setItem('products_data_v2', JSON.stringify(MOCK_PRODUCTS))
+            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS))
         }
     }, [])
 
     // Save to LocalStorage whenever products change
     useEffect(() => {
         if (products.length > 0) {
-            localStorage.setItem('products_data_v2', JSON.stringify(products))
+            localStorage.setItem('products_data_v3', JSON.stringify(products))
         }
     }, [products])
 
