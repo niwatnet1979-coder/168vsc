@@ -656,11 +656,16 @@ export default function OrderForm() {
 
             // Extra fields for display
             category: product.category,
+            subcategory: product.subcategory,
+            material: product.material,
             length: product.length,
             width: product.width,
             height: product.height,
             color: product.color,
+            crystalColor: product.crystalColor,
+            bulbType: product.bulbType,
             light: product.light,
+            remote: product.remote,
 
             _searchTerm: '' // Clear search term
         };
@@ -1766,9 +1771,14 @@ export default function OrderForm() {
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                     <div>
                                                         <div style={{ fontWeight: 600, color: '#2d3748' }}>{item.code}</div>
-                                                        <div style={{ fontSize: 12, lineHeight: 1.4, color: '#4a5568' }}>
+                                                        <div style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5568' }}>
                                                             {productInfo || '-'}
                                                         </div>
+                                                        {item.description && (
+                                                            <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>
+                                                                {item.description}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <button
                                                         className="btn-icon-delete"
