@@ -1009,6 +1009,26 @@ export default function OrderForm() {
                         </svg>
                     </button>
                     <button className="btn-back" onClick={() => router.back()}>← ย้อนกลับ</button>
+                    <button
+                        className="btn-secondary"
+                        onClick={() => {
+                            const confirmed = confirm('รีโหลดข้อมูลสินค้าใหม่? (ใช้เมื่อค้นหาสินค้าไม่เจอ)')
+                            if (confirmed) {
+                                const products = localStorage.getItem('products_data_v3')
+                                if (products) {
+                                    const parsed = JSON.parse(products)
+                                    setAllProducts(parsed)
+                                    setProductsData(parsed)
+                                    alert(`โหลดข้อมูลสินค้าสำเร็จ: ${parsed.length} รายการ`)
+                                } else {
+                                    alert('ไม่พบข้อมูลสินค้า กรุณาตรวจสอบที่หน้า "จัดการสินค้า"')
+                                }
+                            }
+                        }}
+                        title="รีโหลดข้อมูลสินค้า"
+                    >
+                        🔄 รีโหลดสินค้า
+                    </button>
                     <button className="btn-primary" onClick={handleSaveOrder}>บันทึกข้อมูล</button>
                 </div>
             </header>
