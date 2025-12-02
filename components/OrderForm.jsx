@@ -1809,14 +1809,22 @@ export default function OrderForm() {
                                         </td>
                                         <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                                             <button
-                                                className={`btn-sm ${item.specificJob ? 'btn-primary' : 'btn-secondary'}`}
+                                                className={`btn-sm ${jobInfo.jobType !== 'separate_job'
+                                                        ? 'btn-primary' // Master Job active
+                                                        : item.specificJob ? 'btn-primary' : 'btn-secondary' // Separate Job logic
+                                                    }`}
                                                 style={{ fontSize: 12, padding: '4px 8px', width: '100%' }}
                                                 onClick={() => openJobModal(idx)}
                                             >
-                                                {item.specificJob ? (
-                                                    item.specificJob.type === 'installation' ? 'ติดตั้ง' :
-                                                        item.specificJob.type === 'delivery' ? 'จัดส่ง' : 'งานแยก'
-                                                ) : 'ระบุ'}
+                                                {jobInfo.jobType !== 'separate_job' ? (
+                                                    jobInfo.jobType === 'installation' ? 'ติดตั้ง' :
+                                                        jobInfo.jobType === 'delivery' ? 'จัดส่ง' : 'งานหลัก'
+                                                ) : (
+                                                    item.specificJob ? (
+                                                        item.specificJob.type === 'installation' ? 'ติดตั้ง' :
+                                                            item.specificJob.type === 'delivery' ? 'จัดส่ง' : 'งานแยก'
+                                                    ) : 'ระบุ'
+                                                )}
                                             </button>
                                         </td>
                                         <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
