@@ -625,7 +625,19 @@ export default function OrderForm() {
             const lowerTerm = term.toLowerCase();
             const results = allProducts.filter(p =>
                 p.id.toLowerCase().includes(lowerTerm) ||
-                (p.category && p.category.toLowerCase().includes(lowerTerm))
+                (p.name && p.name.toLowerCase().includes(lowerTerm)) ||
+                (p.type && p.type.toLowerCase().includes(lowerTerm)) ||
+                (p.category && p.category.toLowerCase().includes(lowerTerm)) ||
+                (p.description && p.description.toLowerCase().includes(lowerTerm)) ||
+                (p.material && p.material.toLowerCase().includes(lowerTerm)) ||
+                (p.color && p.color.toLowerCase().includes(lowerTerm)) ||
+                (p.crystalColor && p.crystalColor.toLowerCase().includes(lowerTerm)) ||
+                (p.bulbType && p.bulbType.toLowerCase().includes(lowerTerm)) ||
+                (p.light && p.light.toLowerCase().includes(lowerTerm)) ||
+                (p.remote && p.remote.toLowerCase().includes(lowerTerm)) ||
+                (p.length && p.length.toString().includes(lowerTerm)) ||
+                (p.width && p.width.toString().includes(lowerTerm)) ||
+                (p.height && p.height.toString().includes(lowerTerm))
             ).slice(0, 10); // Limit to 10 results
             setSearchResults(results);
         } else {
