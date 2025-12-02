@@ -1,80 +1,79 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-
-// Mock Finance Data
-const MOCK_PAYMENTS = [
-    {
-        id: 'ORD-001',
-        date: '2024-11-25',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        total: 83745,
-        deposit: 41872.50,
-        paid: 41872.50,
-        outstanding: 41872.50,
-        status: 'Partial',
-        dueDate: '2024-12-10'
-    },
-    {
-        id: 'ORD-002',
-        date: '2024-11-24',
-        customer: 'ร้านค้าปลีก ABC',
-        total: 15000,
-        deposit: 7500,
-        paid: 15000,
-        outstanding: 0,
-        status: 'Paid',
-        dueDate: '2024-12-05'
-    },
-    {
-        id: 'ORD-003',
-        date: '2024-11-23',
-        customer: 'คุณวิชัย มั่งคั่ง',
-        total: 3500,
-        deposit: 3500,
-        paid: 3500,
-        outstanding: 0,
-        status: 'Paid',
-        dueDate: '2024-11-30'
-    },
-    {
-        id: 'ORD-004',
-        date: '2024-11-20',
-        customer: 'โรงแรม Grand Plaza',
-        total: 125000,
-        deposit: 62500,
-        paid: 62500,
-        outstanding: 62500,
-        status: 'Partial',
-        dueDate: '2024-12-15'
-    },
-    {
-        id: 'ORD-005',
-        date: '2024-11-18',
-        customer: 'บริษัท เทคโนโลยี จำกัด',
-        total: 45000,
-        deposit: 22500,
-        paid: 0,
-        outstanding: 45000,
-        status: 'Unpaid',
-        dueDate: '2024-12-01'
-    }
-]
+import AppLayout from '../components/AppLayout'
+import {
+    Search,
+    DollarSign,
+    CreditCard,
+    Clock,
+    CheckCircle,
+    AlertCircle,
+    FileText,
+    Filter,
+    ChevronLeft,
+    ChevronRight,
+    Wallet
+} from 'lucide-react'
 
 export default function FinancePage() {
+    const [payments, setPayments] = useState([])
     const [filter, setFilter] = useState('all') // all, paid, partial, unpaid, overdue
     const [searchTerm, setSearchTerm] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 15
 
-    // Calculate totals
-    const stats = {
-        totalRevenue: MOCK_PAYMENTS.reduce((sum, p) => sum + p.total, 0),
-        totalPaid: MOCK_PAYMENTS.reduce((sum, p) => sum + p.paid, 0),
-        totalOutstanding: MOCK_PAYMENTS.reduce((sum, p) => sum + p.outstanding, 0),
-        totalDeposit: MOCK_PAYMENTS.reduce((sum, p) => sum + p.deposit, 0)
-    }
+    // Load and calculate data from LocalStorage
+    useEffect(() => {
+        const loadPayments = () => {
+            const savedOrders = localStorage.getItem('orders_data')
+            if (savedOrders) {
+                const orders = JSON.parse(savedOrders)
 
-    // Filter payments
-    const filteredPayments = MOCK_PAYMENTS.filter(payment => {
+                const calculatedPayments = orders.map(order => {
+                    const total = order.total || 0
+                    const deposit = order.deposit || 0
+                    // Assume paid amount is deposit for now, unless there's a specific paid field
+                    // In a real app, we would sum up payment transactions
+                    const paid = order.paidAmount || deposit
+                    const outstanding = total - paid
+
+                    let status = 'Unpaid'
+                    if (outstanding <= 0 && total > 0) status = 'Paid'
+                    else if (paid > 0) status = 'Partial'
+
+                    // Mock due date (e.g., 7 days after order date)
+                    const orderDate = new Date(order.date)
+                    const dueDate = new Date(orderDate)
+                    dueDate.setDate(dueDate.getDate() + 7)
+
+                    return {
+                        id: order.id,
+                        date: order.date,
+                        customer: order.customer || 'Unknown',
+                        total: total,
+                        deposit: deposit,
+                        paid: paid,
+                        outstanding: outstanding,
+                        status: status,
+                        dueDate: dueDate.toISOString().split('T')[0]
+                    }
+                })
+
+                // Sort by date desc
+                calculatedPayments.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+                setPayments(calculatedPayments)
+            }
+        }
+
+        loadPayments()
+        window.addEventListener('storage', loadPayments)
+        return () => window.removeEventListener('storage', loadPayments)
+    }, [])
+
+    // Filter logic
+    const filteredPayments = payments.filter(payment => {
         const matchesSearch =
             payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             payment.customer.toLowerCase().includes(searchTerm.toLowerCase())
@@ -83,6 +82,10 @@ export default function FinancePage() {
 
         const today = new Date()
         const dueDate = new Date(payment.dueDate)
+        // Reset time for accurate date comparison
+        today.setHours(0, 0, 0, 0)
+        dueDate.setHours(0, 0, 0, 0)
+
         const isOverdue = payment.outstanding > 0 && dueDate < today
 
         switch (filter) {
@@ -99,417 +102,265 @@ export default function FinancePage() {
         }
     })
 
+    // Pagination
+    const totalPages = Math.ceil(filteredPayments.length / itemsPerPage)
+    const paginatedPayments = filteredPayments.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
+
+    // Calculate stats
+    const stats = {
+        totalRevenue: payments.reduce((sum, p) => sum + p.total, 0),
+        totalPaid: payments.reduce((sum, p) => sum + p.paid, 0),
+        totalOutstanding: payments.reduce((sum, p) => sum + p.outstanding, 0),
+        totalDeposit: payments.reduce((sum, p) => sum + p.deposit, 0)
+    }
+
     const countByStatus = {
-        paid: MOCK_PAYMENTS.filter(p => p.status === 'Paid').length,
-        partial: MOCK_PAYMENTS.filter(p => p.status === 'Partial').length,
-        unpaid: MOCK_PAYMENTS.filter(p => p.status === 'Unpaid').length,
-        overdue: MOCK_PAYMENTS.filter(p => {
+        paid: payments.filter(p => p.status === 'Paid').length,
+        partial: payments.filter(p => p.status === 'Partial').length,
+        unpaid: payments.filter(p => p.status === 'Unpaid').length,
+        overdue: payments.filter(p => {
             const today = new Date()
             const dueDate = new Date(p.dueDate)
+            today.setHours(0, 0, 0, 0)
+            dueDate.setHours(0, 0, 0, 0)
             return p.outstanding > 0 && dueDate < today
         }).length
     }
 
+    const getStatusColor = (status, isOverdue) => {
+        if (isOverdue) return 'bg-danger-100 text-danger-700'
+        switch (status) {
+            case 'Paid': return 'bg-success-100 text-success-700'
+            case 'Partial': return 'bg-warning-100 text-warning-700'
+            case 'Unpaid': return 'bg-secondary-100 text-secondary-700'
+            default: return 'bg-secondary-100 text-secondary-700'
+        }
+    }
+
     return (
-        <>
+        <AppLayout>
             <Head>
-                <title>การเงิน - Finance Management</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+                <title>การเงิน - 168VSC System</title>
             </Head>
 
-            <div className="finance-page">
-                <header className="page-header">
-                    <div className="header-content">
-                        <h1>💰 การเงิน</h1>
-                        <p className="subtitle">Finance & Payment Management</p>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
+                            <Wallet className="text-primary-600" size={32} />
+                            การเงิน
+                        </h1>
+                        <p className="text-secondary-500 mt-1">จัดการสถานะการชำระเงินและยอดคงค้าง</p>
                     </div>
-                    <Link href="/" className="btn-back">← กลับหน้าหลัก</Link>
-                </header>
+                </div>
 
-                {/* Summary Stats */}
-                <div className="stats-grid">
-                    <div className="stat-card total">
-                        <div className="stat-icon">💵</div>
-                        <div className="stat-content">
-                            <div className="stat-label">ยอดรวมทั้งหมด</div>
-                            <div className="stat-value">฿{stats.totalRevenue.toLocaleString()}</div>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-secondary-500 text-sm font-medium">ยอดรวมทั้งหมด</span>
+                            <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                                <DollarSign size={20} />
+                            </div>
                         </div>
+                        <div className="text-2xl font-bold text-secondary-900">฿{stats.totalRevenue.toLocaleString()}</div>
                     </div>
-                    <div className="stat-card paid">
-                        <div className="stat-icon">✅</div>
-                        <div className="stat-content">
-                            <div className="stat-label">รับชำระแล้ว</div>
-                            <div className="stat-value">฿{stats.totalPaid.toLocaleString()}</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-success-600 text-sm font-medium">รับชำระแล้ว</span>
+                            <div className="p-2 bg-success-50 rounded-lg text-success-600">
+                                <CheckCircle size={20} />
+                            </div>
                         </div>
+                        <div className="text-2xl font-bold text-success-700">฿{stats.totalPaid.toLocaleString()}</div>
                     </div>
-                    <div className="stat-card outstanding">
-                        <div className="stat-icon">⏳</div>
-                        <div className="stat-content">
-                            <div className="stat-label">ค้างชำระ</div>
-                            <div className="stat-value">฿{stats.totalOutstanding.toLocaleString()}</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-danger-600 text-sm font-medium">ค้างชำระ</span>
+                            <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
+                                <AlertCircle size={20} />
+                            </div>
                         </div>
+                        <div className="text-2xl font-bold text-danger-700">฿{stats.totalOutstanding.toLocaleString()}</div>
                     </div>
-                    <div className="stat-card deposit">
-                        <div className="stat-icon">🏦</div>
-                        <div className="stat-content">
-                            <div className="stat-label">มัดจำรวม</div>
-                            <div className="stat-value">฿{stats.totalDeposit.toLocaleString()}</div>
+
+                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-warning-600 text-sm font-medium">มัดจำรวม</span>
+                            <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
+                                <CreditCard size={20} />
+                            </div>
                         </div>
+                        <div className="text-2xl font-bold text-warning-700">฿{stats.totalDeposit.toLocaleString()}</div>
                     </div>
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="filter-tabs">
-                    <button
-                        className={filter === 'all' ? 'active' : ''}
-                        onClick={() => setFilter('all')}
-                    >
-                        ทั้งหมด ({MOCK_PAYMENTS.length})
-                    </button>
-                    <button
-                        className={filter === 'paid' ? 'active' : ''}
-                        onClick={() => setFilter('paid')}
-                    >
-                        ชำระครบแล้ว ({countByStatus.paid})
-                    </button>
-                    <button
-                        className={filter === 'partial' ? 'active' : ''}
-                        onClick={() => setFilter('partial')}
-                    >
-                        ชำระบางส่วน ({countByStatus.partial})
-                    </button>
-                    <button
-                        className={filter === 'unpaid' ? 'active' : ''}
-                        onClick={() => setFilter('unpaid')}
-                    >
-                        ยังไม่ชำระ ({countByStatus.unpaid})
-                    </button>
-                    <button
-                        className={`${filter === 'overdue' ? 'active' : ''} overdue-btn`}
-                        onClick={() => setFilter('overdue')}
-                    >
-                        เกินกำหนด ({countByStatus.overdue})
-                    </button>
+                <div className="flex flex-wrap gap-2 bg-white p-2 rounded-xl border border-secondary-200 shadow-sm">
+                    {[
+                        { id: 'all', label: 'ทั้งหมด', count: payments.length, icon: FileText },
+                        { id: 'paid', label: 'ชำระครบ', count: countByStatus.paid, icon: CheckCircle },
+                        { id: 'partial', label: 'ชำระบางส่วน', count: countByStatus.partial, icon: Clock },
+                        { id: 'unpaid', label: 'ยังไม่ชำระ', count: countByStatus.unpaid, icon: AlertCircle },
+                        { id: 'overdue', label: 'เกินกำหนด', count: countByStatus.overdue, icon: AlertCircle }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => { setFilter(tab.id); setCurrentPage(1); }}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === tab.id
+                                    ? tab.id === 'overdue'
+                                        ? 'bg-danger-100 text-danger-700 shadow-sm'
+                                        : 'bg-primary-100 text-primary-700 shadow-sm'
+                                    : 'text-secondary-600 hover:bg-secondary-50'
+                                }`}
+                        >
+                            <tab.icon size={16} />
+                            {tab.label}
+                            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${filter === tab.id ? 'bg-white/50' : 'bg-secondary-100'
+                                }`}>
+                                {tab.count}
+                            </span>
+                        </button>
+                    ))}
                 </div>
 
                 {/* Search */}
-                <div className="search-bar">
-                    <input
-                        type="text"
-                        placeholder="🔍 ค้นหา Order ID หรือชื่อลูกค้า..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="ค้นหา Order ID หรือชื่อลูกค้า..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                        />
+                    </div>
                 </div>
 
-                {/* Payments Table */}
-                <div className="table-container">
-                    <table className="finance-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>วันที่</th>
-                                <th>ลูกค้า</th>
-                                <th className="text-right">ยอดรวม</th>
-                                <th className="text-right">มัดจำ</th>
-                                <th className="text-right">ชำระแล้ว</th>
-                                <th className="text-right">คงค้าง</th>
-                                <th>กำหนดชำระ</th>
-                                <th>สถานะ</th>
-                                <th className="text-center">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredPayments.length > 0 ? (
-                                filteredPayments.map(payment => {
-                                    const today = new Date()
-                                    const dueDate = new Date(payment.dueDate)
-                                    const isOverdue = payment.outstanding > 0 && dueDate < today
-
-                                    return (
-                                        <tr key={payment.id} className={isOverdue ? 'overdue-row' : ''}>
-                                            <td>
-                                                <Link href={`/orders/${payment.id}`} className="order-link">
-                                                    {payment.id}
-                                                </Link>
-                                            </td>
-                                            <td>{payment.date}</td>
-                                            <td className="customer-name">{payment.customer}</td>
-                                            <td className="text-right">฿{payment.total.toLocaleString()}</td>
-                                            <td className="text-right">฿{payment.deposit.toLocaleString()}</td>
-                                            <td className="text-right paid-amount">฿{payment.paid.toLocaleString()}</td>
-                                            <td className="text-right outstanding-amount">
-                                                {payment.outstanding > 0 ? `฿${payment.outstanding.toLocaleString()}` : '-'}
-                                            </td>
-                                            <td className={isOverdue ? 'overdue-date' : ''}>
-                                                {payment.dueDate}
-                                                {isOverdue && ' ⚠️'}
-                                            </td>
-                                            <td>
-                                                <span className={`status-badge ${payment.status.toLowerCase()}`}>
-                                                    {payment.status}
-                                                </span>
-                                            </td>
-                                            <td className="text-center">
-                                                <button className="btn-payment">บันทึกการชำระ</button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })
-                            ) : (
+                {/* Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <td colSpan="10" className="text-center empty-state">
-                                        ไม่พบข้อมูลการเงิน
-                                    </td>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">Order ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">มัดจำ</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ชำระแล้ว</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">คงค้าง</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">กำหนดชำระ</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-secondary-100">
+                                {paginatedPayments.length > 0 ? (
+                                    paginatedPayments.map((payment) => {
+                                        const today = new Date()
+                                        const dueDate = new Date(payment.dueDate)
+                                        today.setHours(0, 0, 0, 0)
+                                        dueDate.setHours(0, 0, 0, 0)
+                                        const isOverdue = payment.outstanding > 0 && dueDate < today
 
-                <style jsx>{`
-                    .finance-page {
-                        min-height: 100vh;
-                        background: #f5f7fa;
-                        padding: 24px;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .page-header {
-                        background: white;
-                        padding: 32px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        margin-bottom: 24px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .header-content h1 {
-                        margin: 0 0 8px 0;
-                        font-size: 32px;
-                        color: #1a202c;
-                    }
-                    .subtitle {
-                        margin: 0;
-                        color: #718096;
-                        font-size: 16px;
-                    }
-                    .btn-back {
-                        background: white;
-                        color: #4a5568;
-                        border: 1px solid #e2e8f0;
-                        text-decoration: none;
-                        font-size: 14px;
-                        font-weight: 600;
-                        padding: 10px 20px;
-                        border-radius: 6px;
-                        transition: all 0.2s;
-                        display: inline-block;
-                    }
-                    .btn-back:hover {
-                        background: #f7fafc;
-                        border-color: #cbd5e0;
-                    }
-                    .stats-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                        gap: 16px;
-                        margin-bottom: 24px;
-                    }
-                    .stat-card {
-                        background: white;
-                        padding: 24px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        display: flex;
-                        align-items: center;
-                        gap: 16px;
-                    }
-                    .stat-icon {
-                        font-size: 48px;
-                        width: 72px;
-                        height: 72px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border-radius: 12px;
-                    }
-                    .stat-card.total .stat-icon { background: #f0f7ff; }
-                    .stat-card.paid .stat-icon { background: #f0fff4; }
-                    .stat-card.outstanding .stat-icon { background: #fffaf0; }
-                    .stat-card.deposit .stat-icon { background: #fef5ff; }
-                    .stat-content {
-                        flex: 1;
-                    }
-                    .stat-label {
-                        font-size: 14px;
-                        color: #718096;
-                        margin-bottom: 4px;
-                    }
-                    .stat-value {
-                        font-size: 28px;
-                        font-weight: 700;
-                        color: #1a202c;
-                    }
-                    .filter-tabs {
-                        display: flex;
-                        gap: 12px;
-                        margin-bottom: 24px;
-                        background: white;
-                        padding: 16px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        flex-wrap: wrap;
-                    }
-                    .filter-tabs button {
-                        padding: 10px 20px;
-                        border: 2px solid #e2e8f0;
-                        background: white;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #4a5568;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .filter-tabs button:hover {
-                        border-color: #0070f3;
-                        color: #0070f3;
-                    }
-                    .filter-tabs button.active {
-                        background: #0070f3;
-                        border-color: #0070f3;
-                        color: white;
-                    }
-                    .filter-tabs button.overdue-btn:hover {
-                        border-color: #dc2626;
-                        color: #dc2626;
-                    }
-                    .filter-tabs button.overdue-btn.active {
-                        background: #dc2626;
-                        border-color: #dc2626;
-                    }
-                    .search-bar {
-                        margin-bottom: 24px;
-                    }
-                    .search-bar input {
-                        width: 100%;
-                        padding: 16px 20px;
-                        border: 2px solid #e2e8f0;
-                        border-radius: 12px;
-                        font-size: 16px;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .search-bar input:focus {
-                        outline: none;
-                        border-color: #0070f3;
-                        box-shadow: 0 0 0 3px rgba(0,112,243,0.1);
-                    }
-                    .table-container {
-                        background: white;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        overflow-x: auto;
-                    }
-                    .finance-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        min-width: 1200px;
-                    }
-                    .finance-table thead {
-                        background: #f7fafc;
-                    }
-                    .finance-table th {
-                        padding: 16px 12px;
-                        text-align: left;
-                        font-size: 13px;
-                        font-weight: 600;
-                        color: #4a5568;
-                        border-bottom: 2px solid #edf2f7;
-                    }
-                    .finance-table td {
-                        padding: 16px 12px;
-                        border-bottom: 1px solid #edf2f7;
-                        color: #2d3748;
-                        font-size: 14px;
-                    }
-                    .finance-table tr:hover {
-                        background: #f7fafc;
-                    }
-                    .overdue-row {
-                        background: #fff5f5 !important;
-                    }
-                    .overdue-row:hover {
-                        background: #fed7d7 !important;
-                    }
-                    .order-link {
-                        color: #0070f3;
-                        text-decoration: none;
-                        font-weight: 600;
-                        font-family: monospace;
-                    }
-                    .order-link:hover {
-                        text-decoration: underline;
-                    }
-                    .customer-name {
-                        font-weight: 500;
-                    }
-                    .paid-amount {
-                        color: #22543d;
-                        font-weight: 600;
-                    }
-                    .outstanding-amount {
-                        color: #c53030;
-                        font-weight: 700;
-                    }
-                    .overdue-date {
-                        color: #c53030;
-                        font-weight: 600;
-                    }
-                    .status-badge {
-                        padding: 4px 12px;
-                        border-radius: 99px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        display: inline-block;
-                    }
-                    .status-badge.paid {
-                        background: #c6f6d5;
-                        color: #22543d;
-                    }
-                    .status-badge.partial {
-                        background: #feebc8;
-                        color: #744210;
-                    }
-                    .status-badge.unpaid {
-                        background: #fed7d7;
-                        color: #742a2a;
-                    }
-                    .btn-payment {
-                        padding: 6px 12px;
-                        background: #10b981;
-                        color: white;
-                        border: none;
-                        border-radius: 6px;
-                        font-size: 13px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .btn-payment:hover {
-                        background: #059669;
-                    }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .empty-state {
-                        padding: 48px;
-                        color: #a0aec0;
-                        font-size: 16px;
-                    }
-                `}</style>
+                                        return (
+                                            <tr key={payment.id} className={`hover:bg-secondary-50 transition-colors ${isOverdue ? 'bg-danger-50/30' : ''}`}>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <Link href={`/order?id=${payment.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                        {payment.id}
+                                                    </Link>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
+                                                    {payment.date}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-medium text-secondary-900">{payment.customer}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-bold text-secondary-900">฿{payment.total.toLocaleString()}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className="text-sm text-secondary-600">฿{payment.deposit.toLocaleString()}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className="text-sm font-medium text-success-700">฿{payment.paid.toLocaleString()}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div className={`text-sm font-bold ${payment.outstanding > 0 ? 'text-danger-600' : 'text-secondary-400'}`}>
+                                                        {payment.outstanding > 0 ? `฿${payment.outstanding.toLocaleString()}` : '-'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className={`text-sm flex items-center gap-1 ${isOverdue ? 'text-danger-600 font-medium' : 'text-secondary-600'}`}>
+                                                        {payment.dueDate}
+                                                        {isOverdue && <AlertCircle size={14} />}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status, isOverdue)}`}>
+                                                        {isOverdue ? 'Overdue' : payment.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <button className="px-3 py-1 bg-success-600 text-white text-xs font-medium rounded hover:bg-success-700 transition-colors shadow-sm">
+                                                        บันทึก
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan="10" className="px-6 py-12 text-center text-secondary-500">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <Wallet size={48} className="text-secondary-300 mb-4" />
+                                                <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลการเงิน</p>
+                                                <p className="text-sm text-secondary-500 mt-1">ลองเปลี่ยนตัวกรอง หรือค้นหาใหม่</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="px-6 py-4 border-t border-secondary-200 flex items-center justify-between bg-secondary-50">
+                            <div className="text-sm text-secondary-600">
+                                แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredPayments.length)} จาก {filteredPayments.length} รายการ
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <span className="text-sm font-medium text-secondary-700 px-2">
+                                    หน้า {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-        </>
+        </AppLayout>
     )
 }

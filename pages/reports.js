@@ -1,164 +1,275 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import AppLayout from '../components/AppLayout'
+import {
+    BarChart3,
+    TrendingUp,
+    Package,
+    Users,
+    DollarSign,
+    Calendar,
+    ArrowUpRight,
+    ArrowDownRight,
+    CreditCard,
+    ShoppingBag
+} from 'lucide-react'
 
 export default function ReportsPage() {
-    const [period, setPeriod] = useState('month') // day, week, month, year
+    const [period, setPeriod] = useState('month') // today, week, month, year, all
+    const [stats, setStats] = useState({
+        revenue: 0,
+        orders: 0,
+        items: 0,
+        average: 0
+    })
+    const [topProducts, setTopProducts] = useState([])
+    const [topCustomers, setTopCustomers] = useState([])
+    const [recentOrders, setRecentOrders] = useState([])
 
-    // Mock Data
-    const salesData = {
-        today: { revenue: 83745, orders: 3, items: 12 },
-        week: { revenue: 245000, orders: 8, items: 35 },
-        month: { revenue: 1250000, orders: 42, items: 156 },
-        year: { revenue: 8500000, orders: 385, items: 1420 }
-    }
+    // Load and calculate data from LocalStorage
+    useEffect(() => {
+        const calculateStats = () => {
+            const savedOrders = localStorage.getItem('orders_data')
+            if (savedOrders) {
+                const orders = JSON.parse(savedOrders)
 
-    const currentData = salesData[period]
+                // Filter orders based on period
+                const now = new Date()
+                const filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.date)
+                    // Reset times to compare dates only
+                    const d1 = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate())
+                    const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    const topProducts = [
-        { name: 'กล้องวงจรปิด HD', sold: 45, revenue: 157500 },
-        { name: 'โคมไฟระย้าคริสตัล', sold: 12, revenue: 180000 },
-        { name: 'หลอดไฟ LED 9W', sold: 200, revenue: 30000 },
-        { name: 'รางไฟ Track Light', sold: 35, revenue: 15750 },
-        { name: 'ไฟเส้น LED Strip RGB', sold: 28, revenue: 23800 }
-    ]
+                    switch (period) {
+                        case 'today':
+                            return d1.getTime() === d2.getTime()
+                        case 'week':
+                            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                            return orderDate >= oneWeekAgo
+                        case 'month':
+                            return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear()
+                        case 'year':
+                            return orderDate.getFullYear() === now.getFullYear()
+                        case 'all':
+                        default:
+                            return true
+                    }
+                })
 
-    const topCustomers = [
-        { name: 'บริษัท เทคโนโลยี จำกัด', orders: 15, revenue: 850000 },
-        { name: 'โรงแรม Grand Plaza', orders: 8, revenue: 450000 },
-        { name: 'ร้านค้าปลีก ABC', orders: 12, revenue: 280000 },
-        { name: 'คุณวิชัย มั่งคั่ง', orders: 6, revenue: 125000 }
-    ]
+                // Calculate Stats
+                const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+                const totalOrders = filteredOrders.length
+                const totalItems = filteredOrders.reduce((sum, order) => {
+                    return sum + (Array.isArray(order.items) ? order.items.length : (order.items || 0))
+                }, 0)
+                const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-    const recentOrders = [
-        { id: 'ORD-001', date: '2024-11-25', customer: 'บริษัท เทคโนโลยี จำกัด', total: 83745, status: 'Pending' },
-        { id: 'ORD-002', date: '2024-11-24', customer: 'ร้านค้าปลีก ABC', total: 15000, status: 'Processing' },
-        { id: 'ORD-003', date: '2024-11-23', customer: 'คุณวิชัย มั่งคั่ง', total: 3500, status: 'Completed' }
-    ]
+                setStats({
+                    revenue: totalRevenue,
+                    orders: totalOrders,
+                    items: totalItems,
+                    average: averageOrder
+                })
+
+                // Calculate Top Products
+                const productMap = {}
+                filteredOrders.forEach(order => {
+                    if (Array.isArray(order.items)) {
+                        order.items.forEach(item => {
+                            const productName = item.name || 'Unknown Product'
+                            if (!productMap[productName]) {
+                                productMap[productName] = { name: productName, sold: 0, revenue: 0 }
+                            }
+                            productMap[productName].sold += (item.qty || 1)
+                            productMap[productName].revenue += (item.price || 0) * (item.qty || 1)
+                        })
+                    }
+                })
+                const sortedProducts = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+                setTopProducts(sortedProducts)
+
+                // Calculate Top Customers
+                const customerMap = {}
+                filteredOrders.forEach(order => {
+                    const customerName = order.customer || 'Unknown Customer'
+                    if (!customerMap[customerName]) {
+                        customerMap[customerName] = { name: customerName, orders: 0, revenue: 0 }
+                    }
+                    customerMap[customerName].orders += 1
+                    customerMap[customerName].revenue += (order.total || 0)
+                })
+                const sortedCustomers = Object.values(customerMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+                setTopCustomers(sortedCustomers)
+
+                // Recent Orders (from filtered set)
+                const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+                setRecentOrders(sortedOrders)
+            }
+        }
+
+        calculateStats()
+    }, [period])
 
     return (
-        <>
+        <AppLayout>
             <Head>
-                <title>รายงานและสถิติ - Reports & Analytics</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+                <title>รายงานและสถิติ - 168VSC System</title>
             </Head>
 
-            <div className="reports-page">
-                <header className="page-header">
-                    <div className="header-content">
-                        <h1>📊 รายงานและสถิติ</h1>
-                        <p className="subtitle">Reports & Analytics Dashboard</p>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
+                            <BarChart3 className="text-primary-600" size={32} />
+                            รายงานและสถิติ
+                        </h1>
+                        <p className="text-secondary-500 mt-1">สรุปภาพรวมยอดขายและประสิทธิภาพ</p>
                     </div>
-                    <Link href="/" className="btn-back">← กลับหน้าหลัก</Link>
-                </header>
 
-                {/* Period Selector */}
-                <div className="period-selector">
-                    <button
-                        className={period === 'today' ? 'active' : ''}
-                        onClick={() => setPeriod('today')}
-                    >
-                        วันนี้
-                    </button>
-                    <button
-                        className={period === 'week' ? 'active' : ''}
-                        onClick={() => setPeriod('week')}
-                    >
-                        สัปดาห์นี้
-                    </button>
-                    <button
-                        className={period === 'month' ? 'active' : ''}
-                        onClick={() => setPeriod('month')}
-                    >
-                        เดือนนี้
-                    </button>
-                    <button
-                        className={period === 'year' ? 'active' : ''}
-                        onClick={() => setPeriod('year')}
-                    >
-                        ปีนี้
-                    </button>
-                </div>
-
-                {/* Main Stats */}
-                <div className="stats-grid">
-                    <div className="stat-card revenue">
-                        <div className="stat-icon">💰</div>
-                        <div className="stat-content">
-                            <div className="stat-label">ยอดขายรวม</div>
-                            <div className="stat-value">฿{currentData.revenue.toLocaleString()}</div>
-                        </div>
-                    </div>
-                    <div className="stat-card orders">
-                        <div className="stat-icon">📦</div>
-                        <div className="stat-content">
-                            <div className="stat-label">จำนวนออเดอร์</div>
-                            <div className="stat-value">{currentData.orders}</div>
-                        </div>
-                    </div>
-                    <div className="stat-card items">
-                        <div className="stat-icon">📋</div>
-                        <div className="stat-content">
-                            <div className="stat-label">รายการสินค้า</div>
-                            <div className="stat-value">{currentData.items}</div>
-                        </div>
-                    </div>
-                    <div className="stat-card average">
-                        <div className="stat-icon">📈</div>
-                        <div className="stat-content">
-                            <div className="stat-label">ค่าเฉลี่ยต่อออเดอร์</div>
-                            <div className="stat-value">฿{Math.round(currentData.revenue / currentData.orders).toLocaleString()}</div>
-                        </div>
+                    {/* Period Selector */}
+                    <div className="flex bg-white p-1 rounded-lg border border-secondary-200 shadow-sm">
+                        {['today', 'week', 'month', 'year', 'all'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setPeriod(p)}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${period === p
+                                        ? 'bg-primary-100 text-primary-700 shadow-sm'
+                                        : 'text-secondary-600 hover:bg-secondary-50'
+                                    }`}
+                            >
+                                {p === 'today' ? 'วันนี้' :
+                                    p === 'week' ? 'สัปดาห์นี้' :
+                                        p === 'month' ? 'เดือนนี้' :
+                                            p === 'year' ? 'ปีนี้' : 'ทั้งหมด'}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* Charts Section */}
-                <div className="charts-grid">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-6 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 bg-success-50 text-success-600 rounded-xl">
+                                <DollarSign size={24} />
+                            </div>
+                            <span className="flex items-center text-xs font-medium text-success-600 bg-success-50 px-2 py-1 rounded-full">
+                                <ArrowUpRight size={14} className="mr-1" />
+                                Revenue
+                            </span>
+                        </div>
+                        <div className="text-secondary-500 text-sm font-medium mb-1">ยอดขายรวม</div>
+                        <div className="text-3xl font-bold text-secondary-900">฿{stats.revenue.toLocaleString()}</div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 bg-primary-50 text-primary-600 rounded-xl">
+                                <ShoppingBag size={24} />
+                            </div>
+                            <span className="flex items-center text-xs font-medium text-primary-600 bg-primary-50 px-2 py-1 rounded-full">
+                                <TrendingUp size={14} className="mr-1" />
+                                Orders
+                            </span>
+                        </div>
+                        <div className="text-secondary-500 text-sm font-medium mb-1">จำนวนออเดอร์</div>
+                        <div className="text-3xl font-bold text-secondary-900">{stats.orders}</div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 bg-warning-50 text-warning-600 rounded-xl">
+                                <Package size={24} />
+                            </div>
+                            <span className="text-xs font-medium text-secondary-400">Items Sold</span>
+                        </div>
+                        <div className="text-secondary-500 text-sm font-medium mb-1">รายการสินค้าที่ขาย</div>
+                        <div className="text-3xl font-bold text-secondary-900">{stats.items}</div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                                <CreditCard size={24} />
+                            </div>
+                            <span className="text-xs font-medium text-secondary-400">Avg. Order</span>
+                        </div>
+                        <div className="text-secondary-500 text-sm font-medium mb-1">เฉลี่ยต่อออเดอร์</div>
+                        <div className="text-3xl font-bold text-secondary-900">฿{Math.round(stats.average).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Top Products */}
-                    <div className="card">
-                        <h2>🏆 สินค้าขายดี</h2>
-                        <div className="table-simple">
-                            <table>
-                                <thead>
+                    <div className="bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                                <Package className="text-primary-500" size={20} />
+                                สินค้าขายดี
+                            </h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-secondary-50">
                                     <tr>
-                                        <th>สินค้า</th>
-                                        <th className="text-center">ขายได้</th>
-                                        <th className="text-right">รายได้</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">สินค้า</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">ขายได้ (ชิ้น)</th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold text-secondary-600 uppercase">รายได้</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {topProducts.map((product, i) => (
-                                        <tr key={i}>
-                                            <td>{product.name}</td>
-                                            <td className="text-center">{product.sold}</td>
-                                            <td className="text-right price">฿{product.revenue.toLocaleString()}</td>
+                                <tbody className="divide-y divide-secondary-100">
+                                    {topProducts.length > 0 ? (
+                                        topProducts.map((product, i) => (
+                                            <tr key={i} className="hover:bg-secondary-50">
+                                                <td className="px-6 py-4 text-sm font-medium text-secondary-900">{product.name}</td>
+                                                <td className="px-6 py-4 text-sm text-secondary-600 text-center">{product.sold}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-primary-600 text-right">฿{product.revenue.toLocaleString()}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="3" className="px-6 py-8 text-center text-secondary-500">ไม่มีข้อมูล</td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
                     {/* Top Customers */}
-                    <div className="card">
-                        <h2>👥 ลูกค้าประจำ</h2>
-                        <div className="table-simple">
-                            <table>
-                                <thead>
+                    <div className="bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                                <Users className="text-primary-500" size={20} />
+                                ลูกค้าประจำ
+                            </h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-secondary-50">
                                     <tr>
-                                        <th>ลูกค้า</th>
-                                        <th className="text-center">ออเดอร์</th>
-                                        <th className="text-right">รายได้</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">ลูกค้า</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">ออเดอร์</th>
+                                        <th className="px-6 py-3 text-right text-xs font-semibold text-secondary-600 uppercase">รายได้รวม</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {topCustomers.map((customer, i) => (
-                                        <tr key={i}>
-                                            <td>{customer.name}</td>
-                                            <td className="text-center">{customer.orders}</td>
-                                            <td className="text-right price">฿{customer.revenue.toLocaleString()}</td>
+                                <tbody className="divide-y divide-secondary-100">
+                                    {topCustomers.length > 0 ? (
+                                        topCustomers.map((customer, i) => (
+                                            <tr key={i} className="hover:bg-secondary-50">
+                                                <td className="px-6 py-4 text-sm font-medium text-secondary-900">{customer.name}</td>
+                                                <td className="px-6 py-4 text-sm text-secondary-600 text-center">{customer.orders}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-primary-600 text-right">฿{customer.revenue.toLocaleString()}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="3" className="px-6 py-8 text-center text-secondary-500">ไม่มีข้อมูล</td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -166,244 +277,59 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Recent Orders */}
-                <div className="card">
-                    <h2>📝 ออเดอร์ล่าสุด</h2>
-                    <div className="table-simple">
-                        <table>
-                            <thead>
+                <div className="bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                            <Calendar className="text-primary-500" size={20} />
+                            ออเดอร์ล่าสุด
+                        </h2>
+                        <Link href="/orders" className="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                            ดูทั้งหมด
+                        </Link>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-secondary-50">
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>วันที่</th>
-                                    <th>ลูกค้า</th>
-                                    <th className="text-right">ยอดรวม</th>
-                                    <th>สถานะ</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">Order ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">วันที่</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">ลูกค้า</th>
+                                    <th className="px-6 py-3 text-right text-xs font-semibold text-secondary-600 uppercase">ยอดรวม</th>
+                                    <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">สถานะ</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {recentOrders.map(order => (
-                                    <tr key={order.id}>
-                                        <td>
-                                            <Link href={`/orders/${order.id}`} className="order-link">
-                                                {order.id}
-                                            </Link>
-                                        </td>
-                                        <td>{order.date}</td>
-                                        <td>{order.customer}</td>
-                                        <td className="text-right price">฿{order.total.toLocaleString()}</td>
-                                        <td>
-                                            <span className={`status-badge ${order.status.toLowerCase()}`}>
-                                                {order.status}
-                                            </span>
-                                        </td>
+                            <tbody className="divide-y divide-secondary-100">
+                                {recentOrders.length > 0 ? (
+                                    recentOrders.map((order) => (
+                                        <tr key={order.id} className="hover:bg-secondary-50">
+                                            <td className="px-6 py-4 text-sm font-mono font-medium text-primary-600">
+                                                <Link href={`/order?id=${order.id}`} className="hover:underline">
+                                                    {order.id}
+                                                </Link>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-secondary-600">{order.date}</td>
+                                            <td className="px-6 py-4 text-sm text-secondary-900">{order.customer}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.total || 0).toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' ? 'bg-success-100 text-success-700' :
+                                                        order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :
+                                                            'bg-secondary-100 text-secondary-700'
+                                                    }`}>
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-8 text-center text-secondary-500">ไม่มีข้อมูล</td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                <style jsx>{`
-                    .reports-page {
-                        min-height: 100vh;
-                        background: #f5f7fa;
-                        padding: 24px;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .page-header {
-                        background: white;
-                        padding: 32px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        margin-bottom: 24px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .header-content h1 {
-                        margin: 0 0 8px 0;
-                        font-size: 32px;
-                        color: #1a202c;
-                    }
-                    .subtitle {
-                        margin: 0;
-                        color: #718096;
-                        font-size: 16px;
-                    }
-                    .btn-back {
-                        background: white;
-                        color: #4a5568;
-                        border: 1px solid #e2e8f0;
-                        text-decoration: none;
-                        font-size: 14px;
-                        font-weight: 600;
-                        padding: 10px 20px;
-                        border-radius: 6px;
-                        transition: all 0.2s;
-                        display: inline-block;
-                    }
-                    .btn-back:hover {
-                        background: #f7fafc;
-                        border-color: #cbd5e0;
-                    }
-                    .period-selector {
-                        display: flex;
-                        gap: 12px;
-                        margin-bottom: 24px;
-                        background: white;
-                        padding: 16px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    }
-                    .period-selector button {
-                        flex: 1;
-                        padding: 12px 24px;
-                        border: 2px solid #e2e8f0;
-                        background: white;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #4a5568;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .period-selector button:hover {
-                        border-color: #0070f3;
-                        color: #0070f3;
-                    }
-                    .period-selector button.active {
-                        background: #0070f3;
-                        border-color: #0070f3;
-                        color: white;
-                    }
-                    .stats-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                        gap: 16px;
-                        margin-bottom: 24px;
-                    }
-                    .stat-card {
-                        background: white;
-                        padding: 24px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                        display: flex;
-                        align-items: center;
-                        gap: 16px;
-                    }
-                    .stat-icon {
-                        font-size: 48px;
-                        width: 72px;
-                        height: 72px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border-radius: 12px;
-                    }
-                    .stat-card.revenue .stat-icon { background: #f0fff4; }
-                    .stat-card.orders .stat-icon { background: #f0f7ff; }
-                    .stat-card.items .stat-icon { background: #fffaf0; }
-                    .stat-card.average .stat-icon { background: #fef5ff; }
-                    .stat-content {
-                        flex: 1;
-                    }
-                    .stat-label {
-                        font-size: 14px;
-                        color: #718096;
-                        margin-bottom: 4px;
-                    }
-                    .stat-value {
-                        font-size: 28px;
-                        font-weight: 700;
-                        color: #1a202c;
-                    }
-                    .charts-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-                        gap: 24px;
-                        margin-bottom: 24px;
-                    }
-                    .card {
-                        background: white;
-                        padding: 24px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    }
-                    .card h2 {
-                        margin: 0 0 20px 0;
-                        font-size: 20px;
-                        color: #1a202c;
-                        border-bottom: 2px solid #edf2f7;
-                        padding-bottom: 12px;
-                    }
-                    .table-simple {
-                        overflow-x: auto;
-                    }
-                    .table-simple table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-                    .table-simple th {
-                        padding: 12px 8px;
-                        text-align: left;
-                        font-size: 13px;
-                        font-weight: 600;
-                        color: #4a5568;
-                        border-bottom: 2px solid #edf2f7;
-                    }
-                    .table-simple td {
-                        padding: 12px 8px;
-                        border-bottom: 1px solid #edf2f7;
-                        color: #2d3748;
-                        font-size: 14px;
-                    }
-                    .table-simple tr:hover {
-                        background: #f7fafc;
-                    }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .price {
-                        font-weight: 700;
-                        color: #0070f3;
-                    }
-                    .order-link {
-                        color: #0070f3;
-                        text-decoration: none;
-                        font-weight: 600;
-                        font-family: monospace;
-                    }
-                    .order-link:hover {
-                        text-decoration: underline;
-                    }
-                    .status-badge {
-                        padding: 4px 12px;
-                        border-radius: 99px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        display: inline-block;
-                    }
-                    .status-badge.pending {
-                        background: #fed7d7;
-                        color: #742a2a;
-                    }
-                    .status-badge.processing {
-                        background: #feebc8;
-                        color: #744210;
-                    }
-                    .status-badge.completed {
-                        background: #c6f6d5;
-                        color: #22543d;
-                    }
-                    @media (max-width: 768px) {
-                        .charts-grid {
-                            grid-template-columns: 1fr;
-                        }
-                        .period-selector {
-                            flex-wrap: wrap;
-                        }
-                    }
-                `}</style>
             </div>
-        </>
+        </AppLayout>
     )
 }

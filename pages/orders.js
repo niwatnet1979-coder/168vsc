@@ -2,12 +2,31 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import AppLayout from '../components/AppLayout'
+import {
+    Search,
+    Plus,
+    Filter,
+    Trash2,
+    Eye,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    Clock,
+    CheckCircle,
+    Truck,
+    Wrench,
+    Package,
+    MoreHorizontal
+} from 'lucide-react'
 
 export default function OrdersListPage() {
     const router = useRouter()
     const [orders, setOrders] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 15
 
     // Load data from LocalStorage on mount
     useEffect(() => {
@@ -19,13 +38,20 @@ export default function OrdersListPage() {
 
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
-            order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.customer.toLowerCase().includes(searchTerm.toLowerCase())
+            (order.id && order.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (order.customer && order.customer.toLowerCase().includes(searchTerm.toLowerCase()))
 
-        const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase()
+        const matchesStatus = statusFilter === 'all' || (order.status && order.status.toLowerCase() === statusFilter.toLowerCase())
 
         return matchesSearch && matchesStatus
-    })
+    }).sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date desc
+
+    // Pagination
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+    const paginatedOrders = filteredOrders.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
 
     const stats = {
         total: orders.length,
@@ -42,398 +68,246 @@ export default function OrdersListPage() {
         }
     }
 
-    // Icons
-    const SearchIcon = () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-    )
+    const getStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'bg-secondary-100 text-secondary-700'
+            case 'processing': return 'bg-primary-100 text-primary-700'
+            case 'completed': return 'bg-success-100 text-success-700'
+            case 'cancelled': return 'bg-danger-100 text-danger-700'
+            default: return 'bg-secondary-100 text-secondary-700'
+        }
+    }
 
-    const BackIcon = () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-    )
+    const getJobTypeColor = (type) => {
+        switch (type) {
+            case 'ติดตั้ง': return 'bg-danger-50 text-danger-700 border-danger-100'
+            case 'ส่งของ': return 'bg-warning-50 text-warning-700 border-warning-100'
+            default: return 'bg-primary-50 text-primary-700 border-primary-100'
+        }
+    }
 
-    const EyeIcon = () => (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-        </svg>
-    )
+    const getJobTypeIcon = (type) => {
+        switch (type) {
+            case 'ติดตั้ง': return <Wrench size={14} className="mr-1" />
+            case 'ส่งของ': return <Truck size={14} className="mr-1" />
+            default: return <Package size={14} className="mr-1" />
+        }
+    }
 
     return (
-        <>
+        <AppLayout>
             <Head>
-                <title>รายการคำสั่งซื้อ - Orders List</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+                <title>รายการคำสั่งซื้อ - 168VSC System</title>
             </Head>
 
-            <div className="page-container">
-                <header className="page-header">
-                    <div className="header-left">
-                        <Link href="/" className="btn-back-circle">
-                            <BackIcon />
-                        </Link>
-                        <h1>รายการคำสั่งซื้อ (Orders)</h1>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
+                            <FileText className="text-primary-600" size={32} />
+                            รายการคำสั่งซื้อ
+                        </h1>
+                        <p className="text-secondary-500 mt-1">จัดการคำสั่งซื้อทั้งหมด {orders.length} รายการ</p>
                     </div>
-                    <button className="btn-primary" onClick={() => router.push('/order')}>+ สร้างคำสั่งซื้อใหม่</button>
-                </header>
+                    <button
+                        onClick={() => router.push('/order')}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
+                    >
+                        <Plus size={18} />
+                        สร้างคำสั่งซื้อใหม่
+                    </button>
+                </div>
 
-                <main className="main-content">
-                    {/* Stats Cards */}
-                    <div className="stats-grid">
-                        <div className={`stat-card ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>
-                            <div className="stat-value">{stats.total}</div>
-                            <div className="stat-label">ทั้งหมด</div>
-                        </div>
-                        <div className={`stat-card pending ${statusFilter === 'pending' ? 'active' : ''}`} onClick={() => setStatusFilter('pending')}>
-                            <div className="stat-value">{stats.pending}</div>
-                            <div className="stat-label">รอดำเนินการ</div>
-                        </div>
-                        <div className={`stat-card processing ${statusFilter === 'processing' ? 'active' : ''}`} onClick={() => setStatusFilter('processing')}>
-                            <div className="stat-value">{stats.processing}</div>
-                            <div className="stat-label">กำลังดำเนินการ</div>
-                        </div>
-                        <div className={`stat-card completed ${statusFilter === 'completed' ? 'active' : ''}`} onClick={() => setStatusFilter('completed')}>
-                            <div className="stat-value">{stats.completed}</div>
-                            <div className="stat-label">เสร็จสิ้น</div>
-                        </div>
-                    </div>
-
-                    <div className="search-container">
-                        <div className="search-wrapper">
-                            <div className="search-icon">
-                                <SearchIcon />
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div
+                        onClick={() => setStatusFilter('all')}
+                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-secondary-500 text-sm font-medium">ทั้งหมด</span>
+                            <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
+                                <FileText size={20} />
                             </div>
-                            <input
-                                type="text"
-                                placeholder="ค้นหา Order ID หรือชื่อลูกค้า..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
-                            />
                         </div>
+                        <div className="text-3xl font-bold text-secondary-900">{stats.total}</div>
                     </div>
 
-                    <div className="table-card">
-                        <table className="data-table">
-                            <thead>
+                    <div
+                        onClick={() => setStatusFilter('pending')}
+                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'pending' ? 'border-secondary-500 ring-1 ring-secondary-500' : 'border-secondary-200 hover:border-secondary-300'}`}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-secondary-500 text-sm font-medium">รอดำเนินการ</span>
+                            <div className="p-2 bg-secondary-100 rounded-lg text-secondary-600">
+                                <Clock size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-secondary-900">{stats.pending}</div>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter('processing')}
+                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'processing' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-primary-600 text-sm font-medium">กำลังดำเนินการ</span>
+                            <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                                <Wrench size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-primary-700">{stats.processing}</div>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter('completed')}
+                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-success-600 text-sm font-medium">เสร็จสิ้น</span>
+                            <div className="p-2 bg-success-50 rounded-lg text-success-600">
+                                <CheckCircle size={20} />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-bold text-success-700">{stats.completed}</div>
+                    </div>
+                </div>
+
+                {/* Search & Filter */}
+                <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="ค้นหา Order ID หรือชื่อลูกค้า..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-secondary-50 rounded-lg border border-secondary-200 text-secondary-600 text-sm font-medium">
+                            <Filter size={16} />
+                            <span>สถานะ: {statusFilter === 'all' ? 'ทั้งหมด' : statusFilter}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th>Order ID</th>
-                                    <th>วันที่</th>
-                                    <th>ลูกค้า</th>
-                                    <th style={{ textAlign: 'center' }}>รายการ</th>
-                                    <th style={{ textAlign: 'right' }}>ยอดรวม</th>
-                                    <th style={{ textAlign: 'right' }}>มัดจำ</th>
-                                    <th style={{ textAlign: 'center' }}>ประเภทงาน</th>
-                                    <th style={{ textAlign: 'center' }}>สถานะ</th>
-                                    <th style={{ textAlign: 'right' }}>จัดการ</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">Order ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">รายการ</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">มัดจำ</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {filteredOrders.length > 0 ? (
-                                    filteredOrders.map(order => (
-                                        <tr key={order.id}>
-                                            <td style={{ fontWeight: 500 }}>
-                                                <Link href={`/order?id=${order.id}`} style={{ color: '#2563eb', textDecoration: 'underline' }}>
+                            <tbody className="divide-y divide-secondary-100">
+                                {paginatedOrders.length > 0 ? (
+                                    paginatedOrders.map((order) => (
+                                        <tr key={order.id} className="hover:bg-secondary-50 transition-colors group">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Link href={`/order?id=${order.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
                                                     {order.id}
                                                 </Link>
                                             </td>
-                                            <td>{order.date}</td>
-                                            <td><strong>{order.customer}</strong></td>
-                                            <td style={{ textAlign: 'center' }}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
+                                                {order.date}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-secondary-900">{order.customer}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
                                                 {Array.isArray(order.items) ? order.items.length : order.items}
                                             </td>
-                                            <td style={{ textAlign: 'right', fontWeight: 600, color: '#2563eb' }}>
-                                                ฿{(order.total || 0).toLocaleString()}
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <div className="text-sm font-bold text-primary-700">฿{(order.total || 0).toLocaleString()}</div>
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>฿{(order.deposit || 0).toLocaleString()}</td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <span className={`badge job-${order.jobType === 'ติดตั้ง' ? 'install' : order.jobType === 'ส่งของ' ? 'delivery' : 'other'}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <div className="text-sm text-secondary-600">฿{(order.deposit || 0).toLocaleString()}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(order.jobType)}`}>
+                                                    {getJobTypeIcon(order.jobType)}
                                                     {order.jobType}
                                                 </span>
                                             </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <span className={`badge status-${order.status.toLowerCase()}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                                                     {order.status}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <button
-                                                    className="action-btn delete-btn"
-                                                    onClick={() => handleDeleteOrder(order.id)}
-                                                    title="ลบคำสั่งซื้อ"
-                                                    style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }}
-                                                >
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                    </svg>
-                                                </button>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link href={`/order?id=${order.id}`}>
+                                                        <button className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="ดูรายละเอียด">
+                                                            <Eye size={18} />
+                                                        </button>
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDeleteOrder(order.id)}
+                                                        className="p-2 text-secondary-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                                        title="ลบคำสั่งซื้อ"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="9" className="empty-state">
-                                            ไม่พบข้อมูลคำสั่งซื้อ
+                                        <td colSpan="9" className="px-6 py-12 text-center text-secondary-500">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <FileText size={48} className="text-secondary-300 mb-4" />
+                                                <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคำสั่งซื้อ</p>
+                                                <p className="text-sm text-secondary-500 mt-1">ลองเปลี่ยนคำค้นหา หรือสร้างคำสั่งซื้อใหม่</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-                </main>
 
-                <style jsx>{`
-                    .page-container {
-                        min-height: 100vh;
-                        background-color: #f8f9fa;
-                        font-family: 'Sarabun', sans-serif;
-                        padding: 24px 40px;
-                    }
-                    .page-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 24px;
-                    }
-                    .header-left {
-                        display: flex;
-                        align-items: center;
-                        gap: 16px;
-                    }
-                    .btn-back-circle {
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        background: white;
-                        border: 1px solid #e2e8f0;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #4a5568;
-                        transition: all 0.2s;
-                    }
-                    .btn-back-circle:hover {
-                        background: #f7fafc;
-                        border-color: #cbd5e0;
-                    }
-                    .page-header h1 {
-                        font-size: 24px;
-                        color: #1a202c;
-                        margin: 0;
-                        font-weight: 600;
-                    }
-                    .view-btn:hover {
-                        background: #eff6ff;
-                        color: #2563eb;
-                    }
-                    .delete-btn:hover {
-                        background: #fef2f2 !important;
-                        color: #dc2626 !important;
-                    }
-                    .btn-primary {
-                        background: #2563eb;
-                        color: white;
-                        border: none;
-                        padding: 10px 24px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        cursor: pointer;
-                        font-size: 14px;
-                        transition: background 0.2s;
-                        text-decoration: none;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
-                        font-family: 'Sarabun', sans-serif;
-                    }
-                    .btn-primary:hover {
-                        background: #1d4ed8;
-                        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-                    }
-
-                    /* Stats */
-                    .stats-grid {
-                        display: grid;
-                        grid-template-columns: repeat(4, 1fr);
-                        gap: 16px;
-                        margin-bottom: 24px;
-                    }
-                    .stat-card {
-                        background: white;
-                        padding: 20px;
-                        border-radius: 12px;
-                        border: 2px solid #e2e8f0;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-                    .stat-card:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                    }
-                    .stat-card.active {
-                        border-color: #2563eb;
-                        background: #eff6ff;
-                    }
-                    .stat-card.pending {
-                        border-color: #fecaca;
-                    }
-                    .stat-card.pending.active {
-                        background: #fef2f2;
-                        border-color: #ef4444;
-                    }
-                    .stat-card.processing {
-                        border-color: #fed7aa;
-                    }
-                    .stat-card.processing.active {
-                        background: #fffbeb;
-                        border-color: #f59e0b;
-                    }
-                    .stat-card.completed {
-                        border-color: #bbf7d0;
-                    }
-                    .stat-card.completed.active {
-                        background: #f0fdf4;
-                        border-color: #22c55e;
-                    }
-                    .stat-value {
-                        font-size: 28px;
-                        font-weight: 700;
-                        color: #1a202c;
-                        line-height: 1.2;
-                        margin-bottom: 4px;
-                    }
-                    .stat-label {
-                        font-size: 14px;
-                        color: #64748b;
-                    }
-
-                    /* Search */
-                    .search-container {
-                        margin-bottom: 24px;
-                    }
-                    .search-wrapper {
-                        position: relative;
-                        width: 100%;
-                    }
-                    .search-icon {
-                        position: absolute;
-                        left: 16px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        color: #9ca3af;
-                        display: flex;
-                    }
-                    .search-input {
-                        width: 100%;
-                        padding: 14px 16px 14px 48px;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 12px;
-                        font-size: 15px;
-                        background: white;
-                        transition: all 0.2s;
-                    }
-                    .search-input:focus {
-                        outline: none;
-                        border-color: #2563eb;
-                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-                    }
-
-                    /* Table */
-                    .table-card {
-                        background: white;
-                        border-radius: 12px;
-                        border: 1px solid #e2e8f0;
-                        overflow: hidden;
-                    }
-                    .data-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-                    .data-table th {
-                        background: white;
-                        padding: 16px 24px;
-                        text-align: left;
-                        font-size: 12px;
-                        font-weight: 600;
-                        color: #64748b;
-                        text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        border-bottom: 1px solid #e2e8f0;
-                    }
-                    .data-table td {
-                        padding: 20px 24px;
-                        border-bottom: 1px solid #f1f5f9;
-                        font-size: 14px;
-                        color: #334155;
-                        vertical-align: middle;
-                    }
-                    .data-table tr:last-child td {
-                        border-bottom: none;
-                    }
-                    .data-table tbody tr:hover {
-                        background: #f8fafc;
-                    }
-                    
-                    .order-id-link {
-                        font-family: monospace;
-                        color: #2563eb;
-                        font-weight: 600;
-                        text-decoration: none;
-                    }
-                    .order-id-link:hover {
-                        text-decoration: underline;
-                    }
-
-                    /* Badges */
-                    .badge {
-                        padding: 4px 10px;
-                        border-radius: 99px;
-                        font-size: 12px;
-                        font-weight: 600;
-                        display: inline-block;
-                    }
-                    .badge.job-install { background: #fee2e2; color: #991b1b; }
-                    .badge.job-delivery { background: #fef3c7; color: #92400e; }
-                    .badge.job-other { background: #e0e7ff; color: #3730a3; }
-                    
-                    .badge.status-pending { background: #f1f5f9; color: #475569; }
-                    .badge.status-processing { background: #dbeafe; color: #1e40af; }
-                    .badge.status-completed { background: #dcfce7; color: #166534; }
-
-                    .action-buttons {
-                        display: flex;
-                        gap: 12px;
-                        justify-content: flex-end;
-                    }
-                    .btn-icon {
-                        background: none;
-                        border: none;
-                        cursor: pointer;
-                        padding: 4px;
-                        border-radius: 4px;
-                        transition: background 0.2s;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: inherit;
-                    }
-                    .btn-icon:hover {
-                        background: #f1f5f9;
-                    }
-                    .empty-state {
-                        padding: 60px;
-                        text-align: center;
-                        color: #94a3b8;
-                    }
-                `}</style>
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="px-6 py-4 border-t border-secondary-200 flex items-center justify-between bg-secondary-50">
+                            <div className="text-sm text-secondary-600">
+                                แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredOrders.length)} จาก {filteredOrders.length} รายการ
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <span className="text-sm font-medium text-secondary-700 px-2">
+                                    หน้า {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
-        </>
+        </AppLayout>
     )
 }
