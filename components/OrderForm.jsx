@@ -671,26 +671,28 @@ export default function OrderForm() {
         const newItems = [...items];
         newItems[index] = {
             ...newItems[index],
-            code: product.id,
+            code: product.id || '',
             description: product.description || '',
             image: product.images && product.images[0] ? product.images[0] : null,
             price: product.price || 0,
+            unitPrice: product.price || 0, // Add unitPrice
 
             // Extra fields for display
-            category: product.category,
-            subcategory: product.subcategory,
-            material: product.material,
-            length: product.length,
-            width: product.width,
-            height: product.height,
-            color: product.color,
-            crystalColor: product.crystalColor,
-            bulbType: product.bulbType,
-            light: product.light,
-            remote: product.remote,
+            category: product.category || '',
+            subcategory: product.subcategory || '',
+            material: product.material || '',
+            length: product.length || '',
+            width: product.width || '',
+            height: product.height || '',
+            color: product.color || '',
+            crystalColor: product.crystalColor || '',
+            bulbType: product.bulbType || '',
+            light: product.light || '',
+            remote: product.remote || '',
 
             _searchTerm: '' // Clear search term
         };
+        console.log('selectProduct called:', { index, productId: product.id, newCode: newItems[index].code });
         setItems(newItems);
         setActiveSearchIndex(null);
         setSearchResults([]);
@@ -836,7 +838,8 @@ export default function OrderForm() {
             remote: product.remote || '',
             unitPrice: product.price,
             remark: product.description,
-            image: product.image || ''
+            image: product.image || '',
+            _searchTerm: '' // Clear search term
         }
         setItems(newItems)
         setActiveProductDropdownIndex(null)
@@ -1823,7 +1826,11 @@ export default function OrderForm() {
                                                                 <div
                                                                     key={p.id}
                                                                     className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 flex items-center gap-3"
-                                                                    onClick={() => selectProduct(idx, p)}
+                                                                    onMouseDown={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        selectProduct(idx, p);
+                                                                    }}
                                                                 >
                                                                     <div className="w-10 h-10 bg-secondary-100 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
                                                                         {p.images && p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover" /> : <span className="text-lg">📷</span>}
