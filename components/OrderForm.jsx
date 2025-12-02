@@ -163,8 +163,16 @@ export default function OrderForm() {
         setCustomer({
             ...customer,
             ...c,
-            contact1: c.contact1 || { name: '', phone: '' },
-            contact2: c.contact2 || { name: '', phone: '' }
+            contact1: c.contact1 ? {
+                name: String(c.contact1.name || ''),
+                phone: String(c.contact1.phone || ''),
+                address: typeof c.contact1.address === 'string' ? c.contact1.address : (c.contact1.address ? JSON.stringify(c.contact1.address) : '')
+            } : { name: '', phone: '', address: '' },
+            contact2: c.contact2 ? {
+                name: String(c.contact2.name || ''),
+                phone: String(c.contact2.phone || ''),
+                address: typeof c.contact2.address === 'string' ? c.contact2.address : (c.contact2.address ? JSON.stringify(c.contact2.address) : '')
+            } : { name: '', phone: '', address: '' }
         })
         setShowCustomerDropdown(false)
 
@@ -359,7 +367,78 @@ export default function OrderForm() {
                                 )}
                             </div>
 
+
                             {/* Customer Details Card */}
+                            {customer.name && (
+                                <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-4">
+                                    {/* Header with Name */}
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                                {String(customer.name).charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-secondary-900 text-xl leading-tight">{String(customer.name)}</h3>
+                                                <p className="text-xs text-secondary-500 mt-0.5">รหัสลูกค้า: {customer.id || '-'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Contact Information */}
+                                    <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 space-y-2.5">
+                                        <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ข้อมูลติดต่อ</h4>
+                                        <div className="grid grid-cols-1 gap-2.5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Phone size={16} className="text-primary-600" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs text-secondary-500">โทรศัพท์</p>
+                                                    <p className="text-sm font-medium text-secondary-900 truncate">{customer.phone || '-'}</p>
+                                                </div>
+                                            </div>
+                                            {customer.email && (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <Mail size={16} className="text-primary-600" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-secondary-500">อีเมล</p>
+                                                        <p className="text-sm font-medium text-secondary-900 truncate">{String(customer.email)}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Social Media */}
+                                    {(customer.line || customer.facebook || customer.instagram) && (
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">โซเชียลมีเดีย</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {customer.line && (
+                                                    <div className="flex items-center gap-2 bg-[#06c755] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                        <MessageCircle size={14} />
+                                                        <span>Line: {String(customer.line)}</span>
+                                                    </div>
+                                                )}
+                                                {customer.facebook && (
+                                                    <div className="flex items-center gap-2 bg-[#1877F2] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                        <Facebook size={14} />
+                                                        <span>FB: {String(customer.facebook)}</span>
+                                                    </div>
+                                                )}
+                                                {customer.instagram && (
+                                                    <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                        <Instagram size={14} />
+                                                        <span>IG: {String(customer.instagram)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                         </div>
                     </div>
@@ -462,15 +541,19 @@ export default function OrderForm() {
                                                             {jobInfo.inspector1?.name && (
                                                                 <div className="flex items-center gap-2 text-sm">
                                                                     <User size={14} className="text-secondary-500" />
-                                                                    <span className="font-medium text-secondary-700">{jobInfo.inspector1.name}</span>
-                                                                    <span className="text-secondary-500">({jobInfo.inspector1.phone})</span>
+                                                                    <span className="font-medium text-secondary-700">{String(jobInfo.inspector1.name)}</span>
+                                                                    {jobInfo.inspector1.phone && (
+                                                                        <span className="text-secondary-500">({String(jobInfo.inspector1.phone)})</span>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                             {jobInfo.inspector2?.name && (
                                                                 <div className="flex items-center gap-2 text-sm">
                                                                     <User size={14} className="text-secondary-500" />
-                                                                    <span className="font-medium text-secondary-700">{jobInfo.inspector2.name}</span>
-                                                                    <span className="text-secondary-500">({jobInfo.inspector2.phone})</span>
+                                                                    <span className="font-medium text-secondary-700">{String(jobInfo.inspector2.name)}</span>
+                                                                    {jobInfo.inspector2.phone && (
+                                                                        <span className="text-secondary-500">({String(jobInfo.inspector2.phone)})</span>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -590,13 +673,15 @@ export default function OrderForm() {
                                                     <div>
                                                         <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
                                                         <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {taxInvoice.address}
+                                                            {typeof taxInvoice.address === 'string' ? taxInvoice.address : JSON.stringify(taxInvoice.address)}
                                                         </div>
                                                     </div>
                                                     <div>
                                                         <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่จัดส่งเอกสาร</label>
                                                         <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {taxInvoice.deliveryAddress || taxInvoice.address}
+                                                            {typeof (taxInvoice.deliveryAddress || taxInvoice.address) === 'string'
+                                                                ? (taxInvoice.deliveryAddress || taxInvoice.address)
+                                                                : JSON.stringify(taxInvoice.deliveryAddress || taxInvoice.address)}
                                                         </div>
                                                     </div>
                                                 </div>
