@@ -1,13 +1,32 @@
-import { useState, useEffect } from 'react'
-import Head from 'next/head'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
+import Link from 'next/link'
+import AppLayout from '../../components/AppLayout'
+import {
+    ArrowLeft,
+    Save,
+    User,
+    Phone,
+    Mail,
+    MessageCircle,
+    Facebook,
+    Instagram,
+    FileText,
+    MapPin,
+    Plus,
+    Trash2,
+    Building2,
+    Home
+} from 'lucide-react'
 
 export default function NewCustomerPage() {
     const router = useRouter()
-    const [activeTab, setActiveTab] = useState('customer') // customer, tax, address, orders
+    const { returnUrl } = router.query
+    const [activeTab, setActiveTab] = useState('customer')
 
-    // Initial Empty State
-    const initialFormState = {
+    // Customer Info
+    const [customerData, setCustomerData] = useState({
         name: '',
         phone: '',
         email: '',
@@ -17,724 +36,508 @@ export default function NewCustomerPage() {
         mediaSource: '',
         mediaSourceOther: '',
         contact1: { name: '', phone: '' },
-        contact2: { name: '', phone: '' },
-        taxInvoices: [],
-        savedAddresses: [],
-        orders: []
+        contact2: { name: '', phone: '' }
+    })
+
+    // Tax Invoice Info (Multiple)
+    const [taxInvoices, setTaxInvoices] = useState([
+        { id: 1, companyName: '', taxId: '', address: '' }
+    ])
+
+    // Installation/Delivery Addresses (Multiple)
+    const [addresses, setAddresses] = useState([
+        { id: 1, label: '', address: '', province: '', postalCode: '', contactName: '', contactPhone: '' }
+    ])
+
+    // Add Tax Invoice
+    const addTaxInvoice = () => {
+        const newId = taxInvoices.length > 0 ? Math.max(...taxInvoices.map(t => t.id)) + 1 : 1
+        setTaxInvoices([...taxInvoices, { id: newId, companyName: '', taxId: '', address: '' }])
     }
 
-    const [formData, setFormData] = useState(initialFormState)
-
-    useEffect(() => {
-        // Auto-fill name if provided in query
-        if (router.query.name) {
-            setFormData(prev => ({ ...prev, name: router.query.name }))
+    // Remove Tax Invoice
+    const removeTaxInvoice = (id) => {
+        if (taxInvoices.length > 1) {
+            setTaxInvoices(taxInvoices.filter(t => t.id !== id))
         }
-    }, [router.query.name])
+    }
 
+    // Update Tax Invoice
+    const updateTaxInvoice = (id, field, value) => {
+        setTaxInvoices(taxInvoices.map(t => t.id === id ? { ...t, [field]: value } : t))
+    }
+
+    // Add Address
+    const addAddress = () => {
+        const newId = addresses.length > 0 ? Math.max(...addresses.map(a => a.id)) + 1 : 1
+        setAddresses([...addresses, { id: newId, label: '', address: '', province: '', postalCode: '', contactName: '', contactPhone: '' }])
+    }
+
+    // Remove Address
+    const removeAddress = (id) => {
+        if (addresses.length > 1) {
+            setAddresses(addresses.filter(a => a.id !== id))
+        }
+    }
+
+    // Update Address
+    const updateAddress = (id, field, value) => {
+        setAddresses(addresses.map(a => a.id === id ? { ...a, [field]: value } : a))
+    }
+
+    // Save Customer
     const handleSave = () => {
-        if (!formData.name) {
-            alert('กรุณากรอกชื่อลูกค้า/บริษัท')
+        if (!customerData.name || !customerData.phone) {
+            alert('กรุณากรอกชื่อและเบอร์โทรศัพท์')
             return
         }
 
         // Load existing customers
-        const savedData = localStorage.getItem('customers_data')
-        let customers = savedData ? JSON.parse(savedData) : []
+        const existingCustomers = JSON.parse(localStorage.getItem('customers_data') || '[]')
+        const newId = existingCustomers.length > 0 ? Math.max(...existingCustomers.map(c => c.id)) + 1 : 1
 
-        // Generate new ID
-        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1
+        // Prepare new customer data
+        const newCustomer = {
+            id: newId,
+            ...customerData,
+            taxInvoices: taxInvoices.filter(t => t.companyName || t.taxId || t.address),
+            addresses: addresses.filter(a => a.address || a.label)
+        }
 
-        // Add new customer
-        const newCustomer = { ...formData, id: newId }
-        customers.push(newCustomer)
+        // Save to localStorage
+        const updatedCustomers = [...existingCustomers, newCustomer]
+        localStorage.setItem('customers_data', JSON.stringify(updatedCustomers))
 
-        // Save to LocalStorage
-        localStorage.setItem('customers_data', JSON.stringify(customers))
-
-        alert('บันทึกข้อมูลลูกค้าเรียบร้อย')
-
-        const { returnUrl } = router.query
+        // Redirect
         if (returnUrl) {
-            router.push(`${returnUrl}?newCustomerId=${newCustomer.id}`)
+            router.push(returnUrl)
         } else {
             router.push('/customers')
         }
     }
 
-    const handleChange = (field, value, parent = null) => {
-        if (parent) {
-            setFormData(prev => ({
-                ...prev,
-                [parent]: {
-                    ...prev[parent],
-                    [field]: value
-                }
-            }))
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [field]: value
-            }))
-        }
-    }
-
-    const handleAddTaxInvoice = () => {
-        setFormData(prev => ({
-            ...prev,
-            taxInvoices: [
-                ...(prev.taxInvoices || []),
-                {
-                    companyName: '',
-                    taxId: '',
-                    branch: '',
-                    address: '',
-                    phone: '',
-                    email: '',
-                    deliveryAddress: ''
-                }
-            ]
-        }))
-    }
-
-    const handleRemoveTaxInvoice = (index) => {
-        const newTaxInvoices = [...formData.taxInvoices]
-        newTaxInvoices.splice(index, 1)
-        setFormData(prev => ({
-            ...prev,
-            taxInvoices: newTaxInvoices
-        }))
-    }
-
-    const handleAddAddress = () => {
-        setFormData(prev => ({
-            ...prev,
-            savedAddresses: [
-                ...(prev.savedAddresses || []),
-                {
-                    name: '',
-                    address: '',
-                    mapLink: '',
-                    inspector1: '',
-                    inspector1Phone: '',
-                    inspector2: '',
-                    inspector2Phone: ''
-                }
-            ]
-        }))
-    }
-
-    const handleRemoveAddress = (index) => {
-        const newAddresses = [...formData.savedAddresses]
-        newAddresses.splice(index, 1)
-        setFormData(prev => ({
-            ...prev,
-            savedAddresses: newAddresses
-        }))
-    }
+    const tabs = [
+        { id: 'customer', label: 'ข้อมูลลูกค้า (Customer)', icon: User },
+        { id: 'tax', label: 'ข้อมูลใบกำกับภาษี (Tax Invoice)', icon: FileText },
+        { id: 'address', label: 'ที่อยู่ติดตั้ง/จัดส่ง (Installation/Delivery Address)', icon: MapPin }
+    ]
 
     return (
-        <>
+        <AppLayout>
             <Head>
-                <title>เพิ่มลูกค้าใหม่ - 168APP</title>
-                <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+                <title>เพิ่มลูกค้าใหม่ - 168VSC System</title>
             </Head>
 
-            <div className="detail-page">
-                <header className="page-header">
-                    <button className="btn-back" onClick={() => {
-                        const { returnUrl } = router.query
-                        if (returnUrl) {
-                            router.push(returnUrl)
-                        } else {
-                            router.push('/customers')
-                        }
-                    }}>
-                        ← {router.query.returnUrl ? 'กลับไปหน้าก่อนหน้า' : 'กลับหน้ารายชื่อ'}
-                    </button>
-                    <h1>เพิ่มลูกค้าใหม่</h1>
-                </header>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={returnUrl || '/customers'}
+                            className="p-2 hover:bg-secondary-100 rounded-lg transition-colors"
+                        >
+                            <ArrowLeft size={24} className="text-secondary-600" />
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-bold text-secondary-900">เพิ่มลูกค้าใหม่</h1>
+                            <p className="text-secondary-500 mt-1">กรอกข้อมูลลูกค้าใหม่ในระบบ</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={returnUrl || '/customers'}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors font-medium"
+                        >
+                            ยกเลิก
+                        </Link>
+                        <button
+                            onClick={handleSave}
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-lg shadow-primary-500/30 flex items-center gap-2"
+                        >
+                            <Save size={18} />
+                            บันทึก
+                        </button>
+                    </div>
+                </div>
 
-                <div className="tabs-container">
-                    <div className="tabs-header">
-                        <button
-                            className={`tab-btn ${activeTab === 'customer' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('customer')}
-                        >
-                            ข้อมูลลูกค้า (Customer)
-                        </button>
-                        <button
-                            className={`tab-btn ${activeTab === 'tax' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('tax')}
-                        >
-                            ข้อมูลใบกำกับภาษี (Tax Invoice)
-                        </button>
-                        <button
-                            className={`tab-btn ${activeTab === 'address' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('address')}
-                        >
-                            สถานที่ติดตั้ง/จัดส่ง (Installation/Delivery Address)
-                        </button>
-                        {/* Note: Order Items tab is hidden for new customer creation as there are no orders yet */}
+                {/* Tabs */}
+                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
+                    <div className="border-b border-secondary-200">
+                        <div className="flex overflow-x-auto">
+                            {tabs.map((tab) => {
+                                const Icon = tab.icon
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${activeTab === tab.id
+                                                ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                                                : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                                            }`}
+                                    >
+                                        <Icon size={18} />
+                                        {tab.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
                     </div>
 
-                    <div className="tab-content">
-                        {/* 1. Customer Info Tab */}
+                    <div className="p-6">
+                        {/* Tab 1: Customer Info */}
                         {activeTab === 'customer' && (
-                            <>
-                                <div className="tab-actions">
-                                    <button className="btn-cancel" onClick={() => {
-                                        const { returnUrl } = router.query
-                                        if (returnUrl) router.push(returnUrl)
-                                        else router.push('/customers')
-                                    }}>ยกเลิก</button>
-                                    <button className="btn-save" onClick={handleSave}>บันทึก</button>
-                                </div>
-                                <div className="content-card">
-                                    <div className="info-grid">
-                                        <div className="info-group span-2">
-                                            <label>ชื่อลูกค้า / บริษัท *</label>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                                            ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={customerData.name}
+                                            onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
+                                            placeholder="ระบุชื่อลูกค้า หรือ บริษัท"
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                                            เบอร์โทรศัพท์ <span className="text-danger-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                                             <input
-                                                className="edit-input"
-                                                value={formData.name}
-                                                onChange={(e) => handleChange('name', e.target.value)}
-                                                placeholder="ระบุชื่อลูกค้า หรือ บริษัท"
+                                                type="text"
+                                                value={customerData.phone}
+                                                onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
+                                                placeholder="02-610-8000"
+                                                className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                             />
                                         </div>
-                                        <div className="info-group">
-                                            <label>เบอร์โทรศัพท์</label>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">อีเมล</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                                             <input
-                                                className="edit-input"
-                                                value={formData.phone}
-                                                onChange={(e) => handleChange('phone', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>อีเมล</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.email}
-                                                onChange={(e) => handleChange('email', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>LINE ID</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.line}
-                                                onChange={(e) => handleChange('line', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>Facebook</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.facebook}
-                                                onChange={(e) => handleChange('facebook', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>Instagram</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.instagram}
-                                                onChange={(e) => handleChange('instagram', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>สื่อที่ลูกค้าเห็น</label>
-                                            <select
-                                                className="edit-input"
-                                                value={formData.mediaSource}
-                                                onChange={(e) => handleChange('mediaSource', e.target.value)}
-                                            >
-                                                <option value="">-- เลือกสื่อ --</option>
-                                                <option value="Facebook">Facebook</option>
-                                                <option value="Google">Google</option>
-                                                <option value="Line@">Line@</option>
-                                                <option value="TikTok">TikTok</option>
-                                                <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
-                                                <option value="ป้ายโฆษณา">ป้ายโฆษณา</option>
-                                                <option value="อื่นๆระบุ">อื่นๆ ระบุ</option>
-                                            </select>
-                                        </div>
-                                        {formData.mediaSource === 'อื่นๆระบุ' && (
-                                            <div className="info-group">
-                                                <label>ระบุสื่ออื่นๆ</label>
-                                                <input
-                                                    className="edit-input"
-                                                    value={formData.mediaSourceOther}
-                                                    onChange={(e) => handleChange('mediaSourceOther', e.target.value)}
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="divider"></div>
-                                        <div className="info-group">
-                                            <label>ผู้ติดต่อ 1 (ชื่อ)</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.contact1?.name}
-                                                onChange={(e) => handleChange('name', e.target.value, 'contact1')}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>ผู้ติดต่อ 1 (เบอร์โทร)</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.contact1?.phone}
-                                                onChange={(e) => handleChange('phone', e.target.value, 'contact1')}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>ผู้ติดต่อ 2 (ชื่อ)</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.contact2?.name}
-                                                onChange={(e) => handleChange('name', e.target.value, 'contact2')}
-                                            />
-                                        </div>
-                                        <div className="info-group">
-                                            <label>ผู้ติดต่อ 2 (เบอร์โทร)</label>
-                                            <input
-                                                className="edit-input"
-                                                value={formData.contact2?.phone}
-                                                onChange={(e) => handleChange('phone', e.target.value, 'contact2')}
+                                                type="email"
+                                                value={customerData.email}
+                                                onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                                                placeholder="contact@siamparagon.co.th"
+                                                className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                             />
                                         </div>
                                     </div>
                                 </div>
-                            </>
+
+                                <div className="border-t border-secondary-200 pt-6">
+                                    <h3 className="text-sm font-bold text-secondary-900 mb-4">ช่องทางติดต่อ Social Media</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-medium text-secondary-600 mb-2">LINE ID</label>
+                                            <div className="relative">
+                                                <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-[#06c755]" size={16} />
+                                                <input
+                                                    type="text"
+                                                    value={customerData.line}
+                                                    onChange={(e) => setCustomerData({ ...customerData, line: e.target.value })}
+                                                    placeholder="@siamparagon"
+                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-secondary-600 mb-2">Facebook</label>
+                                            <div className="relative">
+                                                <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1877f2]" size={16} />
+                                                <input
+                                                    type="text"
+                                                    value={customerData.facebook}
+                                                    onChange={(e) => setCustomerData({ ...customerData, facebook: e.target.value })}
+                                                    placeholder="Siam Paragon"
+                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-secondary-600 mb-2">Instagram</label>
+                                            <div className="relative">
+                                                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 text-[#e4405f]" size={16} />
+                                                <input
+                                                    type="text"
+                                                    value={customerData.instagram}
+                                                    onChange={(e) => setCustomerData({ ...customerData, instagram: e.target.value })}
+                                                    placeholder="siamparagonshoppingcenter"
+                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-secondary-200 pt-6">
+                                    <h3 className="text-sm font-bold text-secondary-900 mb-4">ผู้ติดต่อเพิ่มเติม</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 1 (ชื่อ)</label>
+                                            <input
+                                                type="text"
+                                                value={customerData.contact1.name}
+                                                onChange={(e) => setCustomerData({
+                                                    ...customerData,
+                                                    contact1: { ...customerData.contact1, name: e.target.value }
+                                                })}
+                                                placeholder="คุณสมชาย (จัดซื้อ)"
+                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 1 (เบอร์โทร)</label>
+                                            <input
+                                                type="text"
+                                                value={customerData.contact1.phone}
+                                                onChange={(e) => setCustomerData({
+                                                    ...customerData,
+                                                    contact1: { ...customerData.contact1, phone: e.target.value }
+                                                })}
+                                                placeholder="081-111-1111"
+                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 2 (ชื่อ)</label>
+                                            <input
+                                                type="text"
+                                                value={customerData.contact2.name}
+                                                onChange={(e) => setCustomerData({
+                                                    ...customerData,
+                                                    contact2: { ...customerData.contact2, name: e.target.value }
+                                                })}
+                                                placeholder="คุณมีนา (บัญชี)"
+                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 2 (เบอร์โทร)</label>
+                                            <input
+                                                type="text"
+                                                value={customerData.contact2.phone}
+                                                onChange={(e) => setCustomerData({
+                                                    ...customerData,
+                                                    contact2: { ...customerData.contact2, phone: e.target.value }
+                                                })}
+                                                placeholder="082-222-2222"
+                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-secondary-200 pt-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-secondary-700 mb-2">สื่อที่ลูกค้าเห็น</label>
+                                            <select
+                                                value={customerData.mediaSource}
+                                                onChange={(e) => setCustomerData({ ...customerData, mediaSource: e.target.value })}
+                                                className="w-full px-3 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            >
+                                                <option value="">-- เลือกสื่อ --</option>
+                                                <option value="Facebook">Facebook</option>
+                                                <option value="Line@">Line@</option>
+                                                <option value="Google">Google</option>
+                                                <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
+                                                <option value="อื่นๆระบุ">อื่นๆระบุ</option>
+                                            </select>
+                                        </div>
+                                        {customerData.mediaSource === 'อื่นๆระบุ' && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ระบุสื่ออื่นๆ</label>
+                                                <input
+                                                    type="text"
+                                                    value={customerData.mediaSourceOther}
+                                                    onChange={(e) => setCustomerData({ ...customerData, mediaSourceOther: e.target.value })}
+                                                    className="w-full px-3 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
-                        {/* 2. Tax Invoice Tab */}
+                        {/* Tab 2: Tax Invoice */}
                         {activeTab === 'tax' && (
-                            <>
-                                <div className="tab-actions">
-                                    <button className="btn-add-tab" onClick={handleAddTaxInvoice}>+ เพิ่มข้อมูล</button>
-                                    <button className="btn-cancel" onClick={() => {
-                                        const { returnUrl } = router.query
-                                        if (returnUrl) router.push(returnUrl)
-                                        else router.push('/customers')
-                                    }}>ยกเลิก</button>
-                                    <button className="btn-save" onClick={handleSave}>บันทึก</button>
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-secondary-900">ข้อมูลใบกำกับภาษี</h3>
+                                    <button
+                                        onClick={addTaxInvoice}
+                                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm"
+                                    >
+                                        <Plus size={16} />
+                                        เพิ่มข้อมูลใบกำกับภาษี
+                                    </button>
                                 </div>
-                                <div className="tax-list">
-                                    {formData.taxInvoices?.map((tax, i) => (
-                                        <div key={i} className="tax-card">
-                                            <div className="card-header">
-                                                <h3>ข้อมูลชุดที่ {i + 1}</h3>
-                                                <button className="btn-remove" onClick={() => handleRemoveTaxInvoice(i)}>ลบ</button>
+
+                                {taxInvoices.map((tax, index) => (
+                                    <div key={tax.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="text-primary-600" size={20} />
+                                                <h4 className="font-bold text-secondary-900">ใบกำกับภาษี #{index + 1}</h4>
                                             </div>
-                                            <div className="info-grid">
-                                                <div className="info-group span-2">
-                                                    <label>ชื่อบริษัท (Company Name)</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.companyName}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], companyName: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>เลขประจำตัวผู้เสียภาษี</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.taxId}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], taxId: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>สาขา</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.branch}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], branch: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>เบอร์โทรศัพท์</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.phone}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], phone: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>อีเมล</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.email}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], email: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group span-2">
-                                                    <label>ที่อยู่ใบกำกับภาษี</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.address}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], address: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group span-2">
-                                                    <label>ที่อยู่จัดส่ง (Delivery Address)</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={tax.deliveryAddress}
-                                                        onChange={(e) => {
-                                                            const newTaxInvoices = [...formData.taxInvoices];
-                                                            newTaxInvoices[i] = { ...newTaxInvoices[i], deliveryAddress: e.target.value };
-                                                            setFormData({ ...formData, taxInvoices: newTaxInvoices });
-                                                        }}
-                                                    />
-                                                </div>
+                                            {taxInvoices.length > 1 && (
+                                                <button
+                                                    onClick={() => removeTaxInvoice(tax.id)}
+                                                    className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                                    title="ลบ"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อบริษัท</label>
+                                                <input
+                                                    type="text"
+                                                    value={tax.companyName}
+                                                    onChange={(e) => updateTaxInvoice(tax.id, 'companyName', e.target.value)}
+                                                    placeholder="บริษัท สยามพารากอน จำกัด"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">เลขประจำตัวผู้เสียภาษี</label>
+                                                <input
+                                                    type="text"
+                                                    value={tax.taxId}
+                                                    onChange={(e) => updateTaxInvoice(tax.id, 'taxId', e.target.value)}
+                                                    placeholder="0-1055-48148-53-1"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ที่อยู่ใบกำกับภาษี</label>
+                                                <input
+                                                    type="text"
+                                                    value={tax.address}
+                                                    onChange={(e) => updateTaxInvoice(tax.id, 'address', e.target.value)}
+                                                    placeholder="991 ถนนพระราม 1 ปทุมวัน กรุงเทพฯ 10330"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
                                             </div>
                                         </div>
-                                    ))}
-                                    {(!formData.taxInvoices || formData.taxInvoices.length === 0) && (
-                                        <div className="empty-state">กดปุ่ม "+ เพิ่มข้อมูล" เพื่อเพิ่มใบกำกับภาษี</div>
-                                    )}
-                                </div>
-                            </>
+                                    </div>
+                                ))}
+                            </div>
                         )}
 
-                        {/* 3. Address Tab */}
+                        {/* Tab 3: Addresses */}
                         {activeTab === 'address' && (
-                            <>
-                                <div className="tab-actions">
-                                    <button className="btn-add-tab" onClick={handleAddAddress}>+ เพิ่มข้อมูล</button>
-                                    <button className="btn-cancel" onClick={() => {
-                                        const { returnUrl } = router.query
-                                        if (returnUrl) router.push(returnUrl)
-                                        else router.push('/customers')
-                                    }}>ยกเลิก</button>
-                                    <button className="btn-save" onClick={handleSave}>บันทึก</button>
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-secondary-900">ที่อยู่ติดตั้ง/จัดส่ง</h3>
+                                    <button
+                                        onClick={addAddress}
+                                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm"
+                                    >
+                                        <Plus size={16} />
+                                        เพิ่มที่อยู่
+                                    </button>
                                 </div>
-                                <div className="address-list">
-                                    {formData.savedAddresses?.map((addr, i) => (
-                                        <div key={i} className="content-card">
-                                            <div className="card-header">
-                                                <h3>สถานที่ {i + 1}</h3>
-                                                <button className="btn-remove" onClick={() => handleRemoveAddress(i)}>ลบ</button>
+
+                                {addresses.map((addr, index) => (
+                                    <div key={addr.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Home className="text-primary-600" size={20} />
+                                                <h4 className="font-bold text-secondary-900">ที่อยู่ #{index + 1}</h4>
                                             </div>
-                                            <div className="info-grid">
-                                                <div className="info-group">
-                                                    <label>ชื่อสถานที่ (Location Name)</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.name}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], name: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group span-2">
-                                                    <label>ที่อยู่ (Address)</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.address}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], address: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>Google Maps Link</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.mapLink}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], mapLink: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="divider"></div>
-                                                <div className="info-group">
-                                                    <label>ผู้ตรวจงาน 1</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.inspector1}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], inspector1: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>เบอร์โทร</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.inspector1Phone}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], inspector1Phone: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>ผู้ตรวจงาน 2</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.inspector2}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], inspector2: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>เบอร์โทร</label>
-                                                    <input
-                                                        className="edit-input"
-                                                        value={addr.inspector2Phone}
-                                                        onChange={(e) => {
-                                                            const newAddresses = [...formData.savedAddresses];
-                                                            newAddresses[i] = { ...newAddresses[i], inspector2Phone: e.target.value };
-                                                            setFormData({ ...formData, savedAddresses: newAddresses });
-                                                        }}
-                                                    />
-                                                </div>
+                                            {addresses.length > 1 && (
+                                                <button
+                                                    onClick={() => removeAddress(addr.id)}
+                                                    className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                                    title="ลบ"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อที่อยู่ (Label)</label>
+                                                <input
+                                                    type="text"
+                                                    value={addr.label}
+                                                    onChange={(e) => updateAddress(addr.id, 'label', e.target.value)}
+                                                    placeholder="สำนักงานใหญ่, โกดัง, สาขา 1, ฯลฯ"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ที่อยู่</label>
+                                                <textarea
+                                                    value={addr.address}
+                                                    onChange={(e) => updateAddress(addr.id, 'address', e.target.value)}
+                                                    placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ"
+                                                    rows="2"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">จังหวัด</label>
+                                                <input
+                                                    type="text"
+                                                    value={addr.province}
+                                                    onChange={(e) => updateAddress(addr.id, 'province', e.target.value)}
+                                                    placeholder="กรุงเทพมหานคร"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">รหัสไปรษณีย์</label>
+                                                <input
+                                                    type="text"
+                                                    value={addr.postalCode}
+                                                    onChange={(e) => updateAddress(addr.id, 'postalCode', e.target.value)}
+                                                    placeholder="10330"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อผู้ติดต่อ</label>
+                                                <input
+                                                    type="text"
+                                                    value={addr.contactName}
+                                                    onChange={(e) => updateAddress(addr.id, 'contactName', e.target.value)}
+                                                    placeholder="คุณสมชาย"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">เบอร์ติดต่อ</label>
+                                                <input
+                                                    type="text"
+                                                    value={addr.contactPhone}
+                                                    onChange={(e) => updateAddress(addr.id, 'contactPhone', e.target.value)}
+                                                    placeholder="081-111-1111"
+                                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                />
                                             </div>
                                         </div>
-                                    ))}
-                                    {(!formData.savedAddresses || formData.savedAddresses.length === 0) && (
-                                        <div className="empty-state">กดปุ่ม "+ เพิ่มข้อมูล" เพื่อเพิ่มสถานที่ติดตั้ง/จัดส่ง</div>
-                                    )}
-                                </div>
-                            </>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
-
-                <style jsx>{`
-                    .detail-page {
-                        min-height: 100vh;
-                        background-color: #f8f9fa;
-                        font-family: 'Sarabun', sans-serif;
-                        padding: 24px 40px;
-                    }
-                    .page-header {
-                        background: white;
-                        padding: 24px 32px;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                        margin-bottom: 24px;
-                    }
-                    .btn-back {
-                        background: none;
-                        border: none;
-                        color: #64748b;
-                        font-size: 14px;
-                        cursor: pointer;
-                        padding: 0;
-                        margin-bottom: 12px;
-                        font-weight: 500;
-                    }
-                    .btn-back:hover {
-                        color: #334155;
-                        text-decoration: underline;
-                    }
-                    .page-header h1 {
-                        margin: 0;
-                        font-size: 28px;
-                        color: #1a202c;
-                    }
-                    
-                    /* Tabs */
-                    .tabs-container {
-                        background: white;
-                        border-radius: 12px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                        overflow: hidden;
-                        min-height: 600px;
-                    }
-                    .tabs-header {
-                        display: flex;
-                        border-bottom: 1px solid #e2e8f0;
-                        background: #f8fafc;
-                    }
-                    .tab-btn {
-                        padding: 16px 24px;
-                        background: none;
-                        border: none;
-                        border-bottom: 2px solid transparent;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #64748b;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    }
-                    .tab-btn.active {
-                        color: #2563eb;
-                        border-bottom-color: #2563eb;
-                        background: white;
-                    }
-                    .tab-btn:hover:not(.active) {
-                        background: #f1f5f9;
-                        color: #334155;
-                    }
-                    
-                    .tab-content {
-                        padding: 32px;
-                    }
-                    .tab-actions {
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 12px;
-                        margin-bottom: 24px;
-                    }
-                    
-                    /* Buttons */
-                    .btn-save {
-                        background: #2563eb;
-                        color: white;
-                        border: none;
-                        padding: 8px 20px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    }
-                    .btn-save:hover { background: #1d4ed8; }
-                    
-                    .btn-cancel {
-                        background: white;
-                        border: 1px solid #e2e8f0;
-                        color: #64748b;
-                        padding: 8px 20px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    }
-                    .btn-cancel:hover { background: #f1f5f9; }
-
-                    .btn-add-tab {
-                        background: #10b981;
-                        color: white;
-                        border: none;
-                        padding: 8px 20px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    }
-                    .btn-add-tab:hover { background: #059669; }
-
-                    .btn-remove {
-                        background: #ef4444;
-                        color: white;
-                        border: none;
-                        padding: 4px 12px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        cursor: pointer;
-                    }
-                    
-                    /* Content Card */
-                    .content-card, .tax-card {
-                        background: white;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 12px;
-                        padding: 24px;
-                        margin-bottom: 24px;
-                    }
-                    .card-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 20px;
-                        padding-bottom: 12px;
-                        border-bottom: 1px solid #f1f5f9;
-                    }
-                    .card-header h3 {
-                        margin: 0;
-                        font-size: 16px;
-                        color: #1e293b;
-                    }
-
-                    /* Grid Layout */
-                    .info-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                        gap: 24px;
-                    }
-                    .info-group {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-                    .info-group.span-2 {
-                        grid-column: span 2;
-                    }
-                    .info-group label {
-                        font-size: 13px;
-                        font-weight: 500;
-                        color: #64748b;
-                    }
-                    .value {
-                        font-size: 15px;
-                        color: #1e293b;
-                        padding: 8px 0;
-                        font-weight: 500;
-                    }
-                    .edit-input {
-                        padding: 10px 12px;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        font-family: inherit;
-                        width: 100%;
-                    }
-                    .edit-input:focus {
-                        outline: none;
-                        border-color: #2563eb;
-                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-                    }
-                    .divider {
-                        grid-column: 1 / -1;
-                        height: 1px;
-                        background: #e2e8f0;
-                        margin: 8px 0;
-                    }
-                    .empty-state {
-                        text-align: center;
-                        padding: 40px;
-                        color: #94a3b8;
-                        background: #f8fafc;
-                        border-radius: 12px;
-                        border: 2px dashed #e2e8f0;
-                    }
-                `}</style>
             </div>
-        </>
+        </AppLayout>
     )
 }

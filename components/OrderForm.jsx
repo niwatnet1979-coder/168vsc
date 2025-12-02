@@ -4,7 +4,7 @@ import {
     Home, ArrowLeft, Save, UserPlus, Search, MapPin, Calendar,
     X, Plus, Trash2, Truck, Wrench, FileText, CreditCard,
     User, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, AlertCircle
+    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown
 } from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
 
@@ -40,6 +40,20 @@ function extractCoordinates(url) {
     const matchDir = url.match(/\/dir\/.*\/([-0-9.]+),([-0-9.]+)/)
     if (matchDir) return { lat: parseFloat(matchDir[1]), lon: parseFloat(matchDir[2]) }
     return null
+}
+
+function convertToEmbedUrl(url) {
+    if (!url) return null
+
+    // Extract coordinates from the URL
+    const coords = extractCoordinates(url)
+    if (coords) {
+        // Create Google Maps embed URL with coordinates
+        return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${coords.lat},${coords.lon}&zoom=15`
+    }
+
+    // If no coordinates found, try to use the URL directly (might not work)
+    return url
 }
 
 export default function OrderForm() {
@@ -92,6 +106,8 @@ export default function OrderForm() {
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
     const [activeSearchIndex, setActiveSearchIndex] = useState(null)
     const [searchResults, setSearchResults] = useState([])
+    const [showMapPopup, setShowMapPopup] = useState(false)
+    const [selectedMapLink, setSelectedMapLink] = useState('')
 
     // --- Effects ---
     useEffect(() => {
@@ -171,11 +187,13 @@ export default function OrderForm() {
 
         if (term.trim()) {
             const lowerTerm = term.toLowerCase()
-            const results = productsData.filter(p =>
-                p.id.toLowerCase().includes(lowerTerm) ||
-                p.name.toLowerCase().includes(lowerTerm) ||
-                (p.category && p.category.toLowerCase().includes(lowerTerm))
-            ).slice(0, 10)
+            const results = productsData.filter(p => {
+                // Deep search: Convert entire object to string to search everywhere (including nested props)
+                return JSON.stringify(p).toLowerCase().includes(lowerTerm)
+            }).slice(0, 10)
+
+            // Debugging
+            console.log(`Searching for: "${lowerTerm}", Found: ${results.length} items from ${productsData.length} total products`)
             setSearchResults(results)
         } else {
             setSearchResults([])
@@ -293,9 +311,9 @@ export default function OrderForm() {
                                 <User className="text-primary-600" />
                                 ข้อมูลลูกค้า
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div className="relative">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
+                                    <label className="block text-sm font-medium text-secondary-700 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                                         <input
@@ -306,14 +324,15 @@ export default function OrderForm() {
                                                 setShowCustomerDropdown(true)
                                             }}
                                             onFocus={() => setShowCustomerDropdown(true)}
+                                            onClick={() => setShowCustomerDropdown(true)}
                                             className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                            placeholder="ค้นหาลูกค้า..."
+                                            placeholder="คลิกเพื่อเลือกหรือพิมพ์เพื่อค้นหา..."
                                         />
                                     </div>
-                                    {showCustomerDropdown && customer.name && (
+                                    {showCustomerDropdown && (
                                         <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                             {customersData
-                                                .filter(c => c.name.toLowerCase().includes(customer.name.toLowerCase()))
+                                                .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()))
                                                 .map(c => (
                                                     <div
                                                         key={c.id}
@@ -333,24 +352,172 @@ export default function OrderForm() {
                                         </div>
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">เบอร์โทรศัพท์</label>
-                                    <input
-                                        type="text"
-                                        value={customer.phone}
-                                        onChange={e => setCustomer({ ...customer, phone: e.target.value })}
-                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
-                                {/* Social Media & Contacts can be added here similarly */}
+
+                                {/* Customer Details Card */}
+                                {customer.name && (
+                                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                        <div className="flex flex-col md:flex-row md:items-start gap-4">
+                                            {/* Main Info */}
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <User className="text-primary-600" size={20} />
+                                                    <h3 className="font-bold text-secondary-900 text-lg">{customer.name}</h3>
+                                                </div>
+                                                <div className="space-y-1 text-sm text-secondary-700">
+                                                    <div className="flex items-center gap-2">
+                                                        <Phone size={14} className="text-secondary-500" />
+                                                        <span>{customer.phone || '-'}</span>
+                                                    </div>
+                                                    {customer.email && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Mail size={14} className="text-secondary-500" />
+                                                            <span>{customer.email}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Social Media */}
+                                                <div className="flex items-center gap-3 mt-3">
+                                                    {customer.line && (
+                                                        <div className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                                            <MessageCircle size={12} /> Line: {customer.line}
+                                                        </div>
+                                                    )}
+                                                    {customer.facebook && (
+                                                        <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                                            <Facebook size={12} /> FB: {customer.facebook}
+                                                        </div>
+                                                    )}
+                                                    {customer.instagram && (
+                                                        <div className="flex items-center gap-1 text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded-full">
+                                                            <Instagram size={12} /> IG: {customer.instagram}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Contacts */}
+                                            {(customer.contact1?.name || customer.contact2?.name) && (
+                                                <div className="flex-1 md:border-l md:border-primary-200 md:pl-4 space-y-3">
+                                                    <h4 className="font-semibold text-secondary-900 text-sm mb-2">ผู้ติดต่อ</h4>
+                                                    {customer.contact1?.name && (
+                                                        <div className="bg-white p-2 rounded border border-secondary-200 text-sm">
+                                                            <div className="font-medium text-secondary-900">{customer.contact1.name}</div>
+                                                            <div className="text-secondary-500 text-xs">{customer.contact1.phone}</div>
+                                                        </div>
+                                                    )}
+                                                    {customer.contact2?.name && (
+                                                        <div className="bg-white p-2 rounded border border-secondary-200 text-sm">
+                                                            <div className="font-medium text-secondary-900">{customer.contact2.name}</div>
+                                                            <div className="text-secondary-500 text-xs">{customer.contact2.phone}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Job Info */}
+                        {/* Tax Invoice Selection - Show when customer has tax invoices */}
+                        {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                                <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+                                    <FileText className="text-primary-600" />
+                                    เลือกข้อมูลใบกำกับภาษี
+                                </h2>
+
+                                <div className="space-y-4">
+                                    {/* Dropdown */}
+                                    <div className="relative">
+                                        <select
+                                            value={customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
+                                                inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
+                                            ) !== -1
+                                                ? customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
+                                                    inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
+                                                )
+                                                : ''}
+                                            onChange={(e) => {
+                                                const idx = e.target.value;
+                                                if (idx !== '') {
+                                                    const invoice = customersData.find(c => c.name === customer.name).taxInvoices[idx];
+                                                    setTaxInvoice({
+                                                        companyName: invoice.companyName || '',
+                                                        taxId: invoice.taxId || '',
+                                                        address: invoice.address || '',
+                                                        branch: invoice.branch || 'สำนักงานใหญ่',
+                                                        phone: customer.phone || '',
+                                                        email: customer.email || '',
+                                                        deliveryAddress: invoice.address || ''
+                                                    });
+                                                }
+                                            }}
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                        >
+                                            <option value="">-- เลือกใบกำกับภาษี --</option>
+                                            {customersData.find(c => c.name === customer.name)?.taxInvoices?.map((inv, index) => (
+                                                <option key={index} value={index}>
+                                                    {inv.companyName} ({inv.taxId})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                    </div>
+
+                                    {/* Selected Details Card */}
+                                    {taxInvoice.companyName && (
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
+                                                    <FileText size={24} className="text-primary-600" />
+                                                </div>
+                                                <div className="flex-1 space-y-3">
+                                                    {/* Header: Company Name & Branch */}
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-bold text-secondary-900 text-lg leading-tight">
+                                                                {taxInvoice.companyName}
+                                                            </h3>
+                                                            <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
+                                                                {taxInvoice.branch || 'สำนักงานใหญ่'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
+                                                            <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
+                                                            <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Addresses */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-primary-200/50">
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
+                                                            <div className="text-sm text-secondary-800 leading-relaxed">
+                                                                {taxInvoice.address}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่จัดส่งเอกสาร</label>
+                                                            <div className="text-sm text-secondary-800 leading-relaxed">
+                                                                {taxInvoice.deliveryAddress || taxInvoice.address}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Master Job */}
                         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
                             <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                 <Wrench className="text-primary-600" />
-                                ข้อมูลงาน / การจัดส่ง
+                                ข้อมูลงานหลัก
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -362,7 +529,7 @@ export default function OrderForm() {
                                     >
                                         <option value="installation">งานติดตั้ง (Installation)</option>
                                         <option value="delivery">ส่งของ (Delivery)</option>
-                                        <option value="pickup">รับเอง (Pickup)</option>
+                                        <option value="separate">งานแยก (Separate)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -376,36 +543,114 @@ export default function OrderForm() {
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
-                                    <textarea
-                                        rows={2}
-                                        value={jobInfo.installAddress}
-                                        onChange={e => setJobInfo({ ...jobInfo, installAddress: e.target.value })}
-                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                        placeholder="ที่อยู่..."
-                                    />
+
+                                    {/* Address Dropdown */}
+                                    <div className="relative mb-3">
+                                        <select
+                                            value={customersData.find(c => c.name === customer.name)?.addresses?.findIndex(
+                                                addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
+                                            ) !== -1
+                                                ? customersData.find(c => c.name === customer.name)?.addresses?.findIndex(
+                                                    addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
+                                                )
+                                                : ''}
+                                            onChange={(e) => {
+                                                const idx = e.target.value;
+                                                if (idx !== '') {
+                                                    const addr = customersData.find(c => c.name === customer.name).addresses[idx];
+                                                    setJobInfo({
+                                                        ...jobInfo,
+                                                        installLocationName: addr.label || '',
+                                                        installAddress: addr.address || '',
+                                                        googleMapLink: addr.googleMapsLink || '',
+                                                        distance: addr.distance ? `${addr.distance.toFixed(2)} km` : '',
+                                                        inspector1: addr.inspector1 || { name: '', phone: '' },
+                                                        inspector2: addr.inspector2 || { name: '', phone: '' }
+                                                    });
+                                                }
+                                            }}
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                        >
+                                            <option value="">-- เลือกสถานที่ติดตั้ง / จัดส่ง --</option>
+                                            {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => (
+                                                <option key={index} value={index}>
+                                                    {addr.label} - {addr.address}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                    </div>
+
+                                    {/* Selected Address Details Card */}
+                                    {jobInfo.installAddress && (
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
+                                                    <MapPin size={24} className="text-primary-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                        <h3 className="font-bold text-secondary-900 text-lg">
+                                                            {jobInfo.installLocationName || 'สถานที่ติดตั้ง'}
+                                                        </h3>
+                                                        {jobInfo.distance && (
+                                                            <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                                📍 {jobInfo.distance}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm text-secondary-800 leading-relaxed mb-3">
+                                                        {jobInfo.installAddress}
+                                                    </div>
+
+                                                    {/* Inspectors */}
+                                                    {(jobInfo.inspector1?.name || jobInfo.inspector2?.name) && (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-primary-200/50">
+                                                            {jobInfo.inspector1?.name && (
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <User size={14} className="text-secondary-500" />
+                                                                    <span className="font-medium text-secondary-700">{jobInfo.inspector1.name}</span>
+                                                                    <span className="text-secondary-500">({jobInfo.inspector1.phone})</span>
+                                                                </div>
+                                                            )}
+                                                            {jobInfo.inspector2?.name && (
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <User size={14} className="text-secondary-500" />
+                                                                    <span className="font-medium text-secondary-700">{jobInfo.inspector2.name}</span>
+                                                                    <span className="text-secondary-500">({jobInfo.inspector2.phone})</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">Google Map Link</label>
+                                    <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                        Google Map Link
+                                    </label>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
+                                            readOnly
                                             value={jobInfo.googleMapLink}
-                                            onChange={e => setJobInfo({ ...jobInfo, googleMapLink: e.target.value })}
-                                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                            placeholder="https://maps.google.com/..."
+                                            onClick={() => {
+                                                if (jobInfo.googleMapLink) {
+                                                    window.open(jobInfo.googleMapLink, '_blank');
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 ${jobInfo.googleMapLink ? 'cursor-pointer text-primary-600 hover:bg-primary-50 hover:border-primary-300' : 'bg-secondary-50 text-secondary-400 cursor-not-allowed'}`}
+                                            placeholder="เลือกสถานที่เพื่อแสดง Google Map Link"
                                         />
-                                        {jobInfo.distance && (
-                                            <div className="flex-shrink-0 px-4 py-2 bg-secondary-100 rounded-lg text-secondary-700 font-medium">
-                                                {jobInfo.distance} km
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Items Table */}
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible">
                             <div className="p-6 border-b border-secondary-200 flex justify-between items-center">
                                 <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                     <FileText className="text-primary-600" />
@@ -418,13 +663,12 @@ export default function OrderForm() {
                                     + เพิ่มรายการ
                                 </button>
                             </div>
-                            <div className="overflow-x-auto">
+                            <div className="overflow-visible">
                                 <table className="w-full min-w-[800px]">
                                     <thead className="bg-secondary-50 border-b border-secondary-200">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase w-16">#</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase w-32">รหัสสินค้า</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">รายละเอียด</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">รหัสสินค้า / รายละเอียด</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-24">จำนวน</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-32">ราคา/หน่วย</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-32">รวม</th>
@@ -438,37 +682,53 @@ export default function OrderForm() {
                                                 <td className="px-4 py-3 relative">
                                                     <input
                                                         type="text"
-                                                        value={item._searchTerm || item.code}
+                                                        value={item._searchTerm !== undefined ? item._searchTerm : (item.code ? `${item.code} - ${item.name || item.description}` : '')}
                                                         onChange={e => handleSearchProduct(idx, e.target.value)}
-                                                        className="w-full px-2 py-1 border border-secondary-300 rounded focus:ring-2 focus:ring-primary-500 text-sm"
-                                                        placeholder="ค้นหา..."
+                                                        onFocus={() => handleSearchProduct(idx, item._searchTerm || '')}
+                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                                                        placeholder="ค้นหารหัสสินค้า หรือ ชื่อสินค้า..."
                                                     />
                                                     {activeSearchIndex === idx && searchResults.length > 0 && (
-                                                        <div className="absolute z-20 left-0 top-full mt-1 w-64 bg-white border border-secondary-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                                        <div className="absolute z-50 left-0 top-full mt-1 w-96 bg-white border border-secondary-200 rounded-xl shadow-xl max-h-80 overflow-y-auto ring-1 ring-black ring-opacity-5">
                                                             {searchResults.map(p => (
                                                                 <div
                                                                     key={p.id}
                                                                     onClick={() => selectProduct(idx, p)}
-                                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 text-sm"
+                                                                    className="px-4 py-3 hover:bg-primary-50 cursor-pointer border-b border-secondary-100 last:border-0 group transition-colors"
                                                                 >
-                                                                    <div className="font-bold text-primary-600">{p.id}</div>
-                                                                    <div className="text-secondary-600 truncate">{p.name}</div>
+                                                                    <div className="grid grid-cols-1 gap-0.5">
+                                                                        {/* Line 1: Code */}
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="font-bold text-primary-700 text-sm">{p.id}</span>
+                                                                            <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">{p.category || 'ทั่วไป'}</span>
+                                                                        </div>
+                                                                        {/* Line 2: Name */}
+                                                                        <div className="text-sm text-secondary-900 font-medium truncate" title={p.name}>
+                                                                            {p.name}
+                                                                        </div>
+                                                                        {/* Line 3: Price */}
+                                                                        <div className="text-xs text-secondary-600 flex items-center gap-2">
+                                                                            <span className="font-semibold text-success-600">{currency(p.price)}</span>
+                                                                            <span className="text-secondary-400">/ {p.unit || 'ชิ้น'}</span>
+                                                                        </div>
+                                                                        {/* Line 4: Stock/Details */}
+                                                                        <div className="text-[10px] text-secondary-400 flex items-center gap-2 truncate">
+                                                                            <span>คงเหลือ: {p.stock || 0}</span>
+                                                                            <span>•</span>
+                                                                            <span>{p.brand || '-'}</span>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             ))}
+                                                            <div
+                                                                className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer text-sm font-medium hover:bg-primary-50 flex items-center justify-center gap-2 border-t border-secondary-200 sticky bottom-0"
+                                                                onClick={() => window.open('/products', '_blank')}
+                                                            >
+                                                                <Plus size={16} />
+                                                                เพิ่มสินค้าใหม่
+                                                            </div>
                                                         </div>
                                                     )}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <input
-                                                        type="text"
-                                                        value={item.description}
-                                                        onChange={e => {
-                                                            const newItems = [...items]
-                                                            newItems[idx].description = e.target.value
-                                                            setItems(newItems)
-                                                        }}
-                                                        className="w-full px-2 py-1 border border-secondary-300 rounded focus:ring-2 focus:ring-primary-500 text-sm"
-                                                    />
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <input
@@ -625,6 +885,86 @@ export default function OrderForm() {
                     </div>
                 </div>
             </div>
+
+            {/* Map Popup Modal */}
+            {showMapPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
+                            <h3 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
+                                <MapPin className="text-primary-600" size={28} />
+                                ตำแหน่งที่อยู่
+                            </h3>
+                            <button
+                                onClick={() => setShowMapPopup(false)}
+                                className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 rounded-full transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Map Content */}
+                        <div className="p-8 flex flex-col items-center justify-center space-y-6">
+                            <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
+                                <MapPin size={48} className="text-primary-600" />
+                            </div>
+
+                            <div className="text-center space-y-2">
+                                <h4 className="text-xl font-bold text-secondary-900">เปิดดูแผนที่</h4>
+                                <p className="text-secondary-600">คลิกปุ่มด้านล่างเพื่อเปิดดูตำแหน่งใน Google Maps</p>
+                            </div>
+
+                            {(() => {
+                                const coords = extractCoordinates(selectedMapLink)
+                                if (coords) {
+                                    return (
+                                        <div className="bg-secondary-50 p-4 rounded-lg w-full">
+                                            <div className="text-sm text-secondary-600 space-y-1">
+                                                <div className="flex justify-between">
+                                                    <span className="font-medium">Latitude:</span>
+                                                    <span className="font-mono">{coords.lat}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="font-medium">Longitude:</span>
+                                                    <span className="font-mono">{coords.lon}</span>
+                                                </div>
+                                                {jobInfo.distance && (
+                                                    <div className="flex justify-between pt-2 border-t border-secondary-200">
+                                                        <span className="font-medium">ระยะทางจากร้าน:</span>
+                                                        <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                                return null
+                            })()}
+
+                            <a
+                                href={selectedMapLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30"
+                            >
+                                <MapPin size={20} />
+                                เปิดใน Google Maps
+                            </a>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 border-t border-secondary-200 bg-secondary-50 flex justify-end">
+                            <button
+                                onClick={() => setShowMapPopup(false)}
+                                className="px-6 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors font-medium"
+                            >
+                                ปิด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

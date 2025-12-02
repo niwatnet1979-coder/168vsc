@@ -11,15 +11,19 @@ import {
     Users,
     Phone,
     Mail,
-    Globe,
     MessageCircle,
     Facebook,
     Instagram,
-    MoreHorizontal,
     ChevronLeft,
     ChevronRight,
     X,
-    RotateCcw
+    RotateCcw,
+    User,
+    FileText,
+    MapPin,
+    Plus,
+    Building2,
+    Home
 } from 'lucide-react'
 
 export default function CustomersPage() {
@@ -28,10 +32,11 @@ export default function CustomersPage() {
     const [showModal, setShowModal] = useState(false)
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
+    const [activeTab, setActiveTab] = useState('customer')
     const itemsPerPage = 10
 
-    // Initial Form State
-    const initialFormState = {
+    // Customer Info
+    const [customerData, setCustomerData] = useState({
         name: '',
         phone: '',
         email: '',
@@ -41,17 +46,74 @@ export default function CustomersPage() {
         mediaSource: '',
         mediaSourceOther: '',
         contact1: { name: '', phone: '' },
-        contact2: { name: '', phone: '' },
-        // Tax Invoice Info
-        taxCompanyName: '',
-        taxId: '',
-        taxAddress: '',
-        // Shipping Address
-        shippingAddress: '',
-        shippingProvince: '',
-        shippingPostalCode: ''
+        contact2: { name: '', phone: '' }
+    })
+
+    // Tax Invoice Info (Multiple)
+    const [taxInvoices, setTaxInvoices] = useState([
+        { id: 1, companyName: '', taxId: '', address: '' }
+    ])
+
+    // Installation/Delivery Addresses (Multiple)
+    const [addresses, setAddresses] = useState([
+        {
+            id: 1,
+            label: '',
+            address: '',
+            province: '',
+            postalCode: '',
+            inspector1: { name: '', phone: '' },
+            inspector2: { name: '', phone: '' },
+            googleMapsLink: '',
+            distance: null
+        }
+    ])
+
+    // Helper function to extract coordinates from Google Maps link
+    const extractCoordinatesFromLink = (link) => {
+        if (!link) return null
+
+        // Pattern 1: https://maps.google.com/?q=13.7563,100.5018
+        const pattern1 = /q=(-?\d+\.?\d*),(-?\d+\.?\d*)/
+        const match1 = link.match(pattern1)
+        if (match1) {
+            return { lat: parseFloat(match1[1]), lon: parseFloat(match1[2]) }
+        }
+
+        // Pattern 2: https://www.google.com/maps/@13.7563,100.5018,17z
+        const pattern2 = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/
+        const match2 = link.match(pattern2)
+        if (match2) {
+            return { lat: parseFloat(match2[1]), lon: parseFloat(match2[2]) }
+        }
+
+        // Pattern 3: https://www.google.com/maps/place/.../@13.7563,100.5018
+        const pattern3 = /@(-?\d+\.?\d*),(-?\d+\.?\d*),/
+        const match3 = link.match(pattern3)
+        if (match3) {
+            return { lat: parseFloat(match3[1]), lon: parseFloat(match3[2]) }
+        }
+
+        return null
     }
-    const [formData, setFormData] = useState(initialFormState)
+
+    // Calculate distance using Haversine formula
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371 // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180
+        const dLon = (lon2 - lon1) * Math.PI / 180
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c
+    }
+
+    // Shop coordinates (from mockData.js)
+    const SHOP_LAT = 13.9647757
+    const SHOP_LON = 100.6203268
+
 
     // Load data
     useEffect(() => {
@@ -73,13 +135,61 @@ export default function CustomersPage() {
 
     const handleAdd = () => {
         setEditingCustomer(null)
-        setFormData(initialFormState)
+        setActiveTab('customer')
+        setCustomerData({
+            name: '',
+            phone: '',
+            email: '',
+            line: '',
+            facebook: '',
+            instagram: '',
+            mediaSource: '',
+            mediaSourceOther: '',
+            contact1: { name: '', phone: '' },
+            contact2: { name: '', phone: '' }
+        })
+        setTaxInvoices([{ id: 1, companyName: '', taxId: '', address: '' }])
+        setAddresses([{ id: 1, label: '', address: '', province: '', postalCode: '', contactName: '', contactPhone: '' }])
         setShowModal(true)
     }
 
     const handleEdit = (customer) => {
         setEditingCustomer(customer)
-        setFormData({ ...initialFormState, ...customer })
+        setActiveTab('customer')
+        setCustomerData({
+            name: customer.name || '',
+            phone: customer.phone || '',
+            email: customer.email || '',
+            line: customer.line || '',
+            facebook: customer.facebook || '',
+            instagram: customer.instagram || '',
+            mediaSource: customer.mediaSource || '',
+            mediaSourceOther: customer.mediaSourceOther || '',
+            contact1: customer.contact1 || { name: '', phone: '' },
+            contact2: customer.contact2 || { name: '', phone: '' }
+        })
+        setTaxInvoices(customer.taxInvoices && customer.taxInvoices.length > 0
+            ? customer.taxInvoices
+            : [{ id: 1, companyName: '', taxId: '', address: '' }])
+        setAddresses(customer.addresses && customer.addresses.length > 0
+            ? customer.addresses.map(addr => ({
+                ...addr,
+                inspector1: addr.inspector1 || { name: '', phone: '' },
+                inspector2: addr.inspector2 || { name: '', phone: '' },
+                googleMapsLink: addr.googleMapsLink || '',
+                distance: addr.distance || null
+            }))
+            : [{
+                id: 1,
+                label: '',
+                address: '',
+                province: '',
+                postalCode: '',
+                inspector1: { name: '', phone: '' },
+                inspector2: { name: '', phone: '' },
+                googleMapsLink: '',
+                distance: null
+            }])
         setShowModal(true)
     }
 
@@ -90,48 +200,160 @@ export default function CustomersPage() {
     }
 
     const handleSave = () => {
-        if (!formData.name || !formData.phone) {
+        if (!customerData.name || !customerData.phone) {
             alert('กรุณากรอกชื่อและเบอร์โทรศัพท์')
             return
         }
 
+        const customerToSave = {
+            ...customerData,
+            taxInvoices: taxInvoices.filter(t => t.companyName || t.taxId || t.address),
+            addresses: addresses.filter(a => a.address || a.label)
+        }
+
         if (editingCustomer) {
-            setCustomers(customers.map(c => c.id === editingCustomer.id ? { ...formData, id: c.id } : c))
+            setCustomers(customers.map(c => c.id === editingCustomer.id ? { ...customerToSave, id: c.id } : c))
         } else {
             const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1
-            setCustomers([...customers, { ...formData, id: newId }])
+            setCustomers([...customers, { ...customerToSave, id: newId }])
         }
         setShowModal(false)
     }
 
-    const handleFormChange = (field, value, parent = null) => {
-        if (parent) {
-            setFormData({
-                ...formData,
-                [parent]: { ...formData[parent], [field]: value }
-            })
-        } else {
-            setFormData({ ...formData, [field]: value })
+    // Tax Invoice Functions
+    const addTaxInvoice = () => {
+        const newId = taxInvoices.length > 0 ? Math.max(...taxInvoices.map(t => t.id)) + 1 : 1
+        setTaxInvoices([...taxInvoices, { id: newId, companyName: '', taxId: '', address: '' }])
+    }
+
+    const removeTaxInvoice = (id) => {
+        if (taxInvoices.length > 1) {
+            setTaxInvoices(taxInvoices.filter(t => t.id !== id))
         }
     }
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone.includes(searchTerm) ||
-        (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
+    // Helper to format address from granular fields
+    const formatAddress = (data, prefix = '') => {
+        const parts = []
+        if (data[`${prefix}addrNumber`]) parts.push(`เลขที่ ${data[`${prefix}addrNumber`]}`)
+        if (data[`${prefix}addrMoo`]) parts.push(`หมู่ ${data[`${prefix}addrMoo`]}`)
+        if (data[`${prefix}addrVillage`]) parts.push(`${data[`${prefix}addrVillage`]}`)
+        if (data[`${prefix}addrSoi`]) parts.push(`ซอย ${data[`${prefix}addrSoi`]}`)
+        if (data[`${prefix}addrRoad`]) parts.push(`ถนน ${data[`${prefix}addrRoad`]}`)
+        if (data[`${prefix}addrTambon`]) parts.push(`แขวง/ตำบล ${data[`${prefix}addrTambon`]}`)
+        if (data[`${prefix}addrAmphoe`]) parts.push(`เขต/อำเภอ ${data[`${prefix}addrAmphoe`]}`)
+        if (data[`${prefix}addrProvince`]) parts.push(`จังหวัด ${data[`${prefix}addrProvince`]}`)
+        if (data[`${prefix}addrZipcode`]) parts.push(`${data[`${prefix}addrZipcode`]}`)
+        return parts.join(' ')
+    }
 
-    // Pagination
+    const updateTaxInvoice = (id, field, value) => {
+        setTaxInvoices(taxInvoices.map(t => {
+            if (t.id === id) {
+                const updated = { ...t, [field]: value }
+
+                // Auto-update full address string if granular fields change
+                if (field.startsWith('addr')) {
+                    updated.address = formatAddress(updated)
+                }
+                // Auto-update delivery address string if granular fields change
+                if (field.startsWith('deliveryAddr')) {
+                    updated.deliveryAddress = formatAddress(updated, 'delivery')
+                }
+
+                return updated
+            }
+            return t
+        }))
+    }
+
+    // Address Functions
+    const addAddress = () => {
+        const newId = addresses.length > 0 ? Math.max(...addresses.map(a => a.id)) + 1 : 1
+        setAddresses([...addresses, {
+            id: newId,
+            label: '',
+            address: '',
+            // Granular fields
+            addrNumber: '', addrMoo: '', addrVillage: '', addrSoi: '', addrRoad: '',
+            addrTambon: '', addrAmphoe: '', addrProvince: '', addrZipcode: '',
+            province: '',
+            postalCode: '',
+            inspector1: { name: '', phone: '' },
+            inspector2: { name: '', phone: '' },
+            googleMapsLink: '',
+            distance: null
+        }])
+    }
+
+    const removeAddress = (id) => {
+        if (addresses.length > 1) {
+            setAddresses(addresses.filter(a => a.id !== id))
+        }
+    }
+
+    const updateAddress = (id, field, value) => {
+        setAddresses(addresses.map(a => {
+            if (a.id === id) {
+                const updated = { ...a, [field]: value }
+
+                // Auto-update full address string if granular fields change
+                if (field.startsWith('addr')) {
+                    updated.address = formatAddress(updated)
+                    // Also update legacy province/postalCode if available
+                    if (field === 'addrProvince') updated.province = value
+                    if (field === 'addrZipcode') updated.postalCode = value
+                }
+
+                // If updating Google Maps link, calculate distance
+                if (field === 'googleMapsLink') {
+                    const coords = extractCoordinatesFromLink(value)
+                    if (coords) {
+                        const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
+                        updated.distance = dist
+                    } else {
+                        updated.distance = null
+                    }
+                }
+
+                return updated
+            }
+            return a
+        }))
+    }
+
+    const handleResetData = () => {
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าทั้งหมดหรือไม่?')) {
+            setCustomers(MOCK_CUSTOMERS_DATA)
+            localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+        }
+    }
+
+    const filteredCustomers = customers.filter(c => {
+        const term = searchTerm.toLowerCase()
+        return (
+            (c.name && c.name.toLowerCase().includes(term)) ||
+            (c.phone && c.phone.toLowerCase().includes(term)) ||
+            (c.email && c.email.toLowerCase().includes(term))
+        )
+    })
+
     const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage)
     const paginatedCustomers = filteredCustomers.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     )
 
+    const tabs = [
+        { id: 'customer', label: 'ข้อมูลลูกค้า', icon: User },
+        { id: 'tax', label: 'ข้อมูลใบกำกับภาษี', icon: FileText },
+        { id: 'address', label: 'ที่อยู่ติดตั้ง/จัดส่ง', icon: MapPin }
+    ]
+
     return (
         <AppLayout>
             <Head>
-                <title>จัดการลูกค้า (Customers) - 168VSC System</title>
+                <title>จัดการลูกค้า - 168VSC System</title>
             </Head>
 
             <div className="space-y-6">
@@ -140,24 +362,17 @@ export default function CustomersPage() {
                     <div>
                         <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
                             <Users className="text-primary-600" size={32} />
-                            จัดการลูกค้า (Customers)
+                            จัดการลูกค้า
                         </h1>
-                        <p className="text-secondary-500 mt-1">จัดการรายชื่อลูกค้าและประวัติการติดต่อ</p>
+                        <p className="text-secondary-500 mt-1">ทั้งหมด {filteredCustomers.length} รายการ</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => {
-                                if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าเป็นค่าเริ่มต้นหรือไม่? ข้อมูลที่แก้ไขจะหายไปทั้งหมด')) {
-                                    localStorage.removeItem('customers_data');
-                                    setCustomers(MOCK_CUSTOMERS_DATA);
-                                    alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว');
-                                    window.location.reload();
-                                }
-                            }}
-                            className="px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                            onClick={handleResetData}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
                         >
                             <RotateCcw size={18} />
-                            รีเซ็ต
+                            Reset Data
                         </button>
                         <button
                             onClick={handleAdd}
@@ -170,17 +385,15 @@ export default function CustomersPage() {
                 </div>
 
                 {/* Search */}
-                <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <div className="relative flex-1 w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="ค้นหา ชื่อ, เบอร์โทร, อีเมล..."
-                            value={searchTerm}
-                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
-                        />
-                    </div>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
+                    <input
+                        type="text"
+                        placeholder="ค้นหาชื่อ, เบอร์โทร, หรืออีเมล..."
+                        value={searchTerm}
+                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }}
+                        className="w-full pl-11 pr-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                    />
                 </div>
 
                 {/* Table */}
@@ -189,21 +402,25 @@ export default function CustomersPage() {
                         <table className="w-full">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ชื่อลูกค้า/บริษัท</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">เบอร์โทรศัพท์</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ช่องทางติดต่อ</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ผู้ติดต่อ</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สื่อที่เห็น</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">#</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">ชื่อลูกค้า</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">เบอร์โทร</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">Social</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">ผู้ติดต่อ</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">สื่อ</th>
+                                    <th className="px-6 py-3 text-right text-xs font-semibold text-secondary-700 uppercase">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-100">
                                 {paginatedCustomers.length > 0 ? (
-                                    paginatedCustomers.map((customer) => (
+                                    paginatedCustomers.map((customer, index) => (
                                         <tr key={customer.id} className="hover:bg-secondary-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-secondary-900">{customer.name}</span>
+                                                <div>
+                                                    <div className="text-sm font-medium text-secondary-900">{customer.name}</div>
                                                     {customer.email && (
                                                         <span className="text-xs text-secondary-500 flex items-center gap-1 mt-1">
                                                             <Mail size={12} /> {customer.email}
@@ -273,7 +490,7 @@ export default function CustomersPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <Users size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลลูกค้า</p>
@@ -316,13 +533,13 @@ export default function CustomersPage() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Modal with Tabs */}
             {showModal && (
                 <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Modal Header */}
-                        <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-secondary-50">
-                            <h3 className="text-xl font-bold text-secondary-900">
+                        <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
+                            <h3 className="text-2xl font-bold text-secondary-900">
                                 {editingCustomer ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้าใหม่'}
                             </h3>
                             <button
@@ -333,239 +550,542 @@ export default function CustomersPage() {
                             </button>
                         </div>
 
+                        {/* Tabs */}
+                        <div className="border-b border-secondary-200 bg-white">
+                            <div className="flex overflow-x-auto">
+                                {tabs.map((tab) => {
+                                    const Icon = tab.icon
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`flex items-center gap-2 px-6 py-3 font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                                                ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                                                : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                                                }`}
+                                        >
+                                            <Icon size={18} />
+                                            {tab.label}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+
                         {/* Modal Body */}
                         <div className="p-6 overflow-y-auto flex-1">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={e => handleFormChange('name', e.target.value)}
-                                        placeholder="ระบุชื่อลูกค้า หรือ บริษัท"
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">เบอร์โทรศัพท์ <span className="text-danger-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={formData.phone}
-                                        onChange={e => handleFormChange('phone', e.target.value)}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">อีเมล</label>
-                                    <input
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={e => handleFormChange('email', e.target.value)}
-                                        placeholder="example@email.com"
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
+                            {/* Tab 1: Customer Info */}
+                            {activeTab === 'customer' && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-secondary-700 mb-2">
+                                                ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={customerData.name}
+                                                onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
+                                                placeholder="ระบุชื่อลูกค้า หรือ บริษัท ที่จดทะเบียนบริษัท จำกัด"
+                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
 
-                                <div className="sm:col-span-2 border-t border-secondary-200 pt-4 mt-2">
-                                    <h4 className="text-sm font-bold text-secondary-900 mb-3">ช่องทางติดต่อ Social Media</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">LINE ID</label>
+                                            <label className="block text-sm font-medium text-secondary-700 mb-2">
+                                                เบอร์โทรศัพท์ <span className="text-danger-500">*</span>
+                                            </label>
                                             <div className="relative">
-                                                <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-[#06c755]" size={16} />
+                                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                                                 <input
                                                     type="text"
-                                                    value={formData.line}
-                                                    onChange={e => handleFormChange('line', e.target.value)}
-                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    value={customerData.phone}
+                                                    onChange={(e) => setCustomerData({ ...customerData, phone: e.target.value })}
+                                                    placeholder="02-610-8000"
+                                                    className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                                 />
                                             </div>
                                         </div>
+
                                         <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">Facebook</label>
+                                            <label className="block text-sm font-medium text-secondary-700 mb-2">อีเมล</label>
                                             <div className="relative">
-                                                <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1877f2]" size={16} />
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                                                 <input
-                                                    type="text"
-                                                    value={formData.facebook}
-                                                    onChange={e => handleFormChange('facebook', e.target.value)}
-                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">Instagram</label>
-                                            <div className="relative">
-                                                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 text-[#e4405f]" size={16} />
-                                                <input
-                                                    type="text"
-                                                    value={formData.instagram}
-                                                    onChange={e => handleFormChange('instagram', e.target.value)}
-                                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    type="email"
+                                                    value={customerData.email}
+                                                    onChange={(e) => setCustomerData({ ...customerData, email: e.target.value })}
+                                                    placeholder="contact@siamparagon.co.th"
+                                                    className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                                 />
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="sm:col-span-2 border-t border-secondary-200 pt-4 mt-2">
-                                    <h4 className="text-sm font-bold text-secondary-900 mb-3">ข้อมูลผู้ติดต่อเพิ่มเติม</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ผู้ติดต่อ 1 (ชื่อ)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.contact1.name}
-                                                onChange={e => handleFormChange('name', e.target.value, 'contact1')}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ผู้ติดต่อ 1 (เบอร์โทร)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.contact1.phone}
-                                                onChange={e => handleFormChange('phone', e.target.value, 'contact1')}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ผู้ติดต่อ 2 (ชื่อ)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.contact2.name}
-                                                onChange={e => handleFormChange('name', e.target.value, 'contact2')}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ผู้ติดต่อ 2 (เบอร์โทร)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.contact2.phone}
-                                                onChange={e => handleFormChange('phone', e.target.value, 'contact2')}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="sm:col-span-2 border-t border-secondary-200 pt-4 mt-2">
-                                    <h4 className="text-sm font-bold text-secondary-900 mb-3">ข้อมูลใบกำกับภาษี</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="sm:col-span-2">
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ชื่อบริษัท (สำหรับใบกำกับภาษี)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.taxCompanyName}
-                                                onChange={e => handleFormChange('taxCompanyName', e.target.value)}
-                                                placeholder="ชื่อบริษัท จำกัด"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">เลขประจำตัวผู้เสียภาษี</label>
-                                            <input
-                                                type="text"
-                                                value={formData.taxId}
-                                                onChange={e => handleFormChange('taxId', e.target.value)}
-                                                placeholder="0-0000-00000-00-0"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ที่อยู่ใบกำกับภาษี</label>
-                                            <input
-                                                type="text"
-                                                value={formData.taxAddress}
-                                                onChange={e => handleFormChange('taxAddress', e.target.value)}
-                                                placeholder="ที่อยู่สำหรับออกใบกำกับภาษี"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="sm:col-span-2 border-t border-secondary-200 pt-4 mt-2">
-                                    <h4 className="text-sm font-bold text-secondary-900 mb-3">ข้อมูลจัดส่ง</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="sm:col-span-2">
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">ที่อยู่จัดส่ง</label>
-                                            <textarea
-                                                value={formData.shippingAddress}
-                                                onChange={e => handleFormChange('shippingAddress', e.target.value)}
-                                                placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ"
-                                                rows="2"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">จังหวัด</label>
-                                            <input
-                                                type="text"
-                                                value={formData.shippingProvince}
-                                                onChange={e => handleFormChange('shippingProvince', e.target.value)}
-                                                placeholder="กรุงเทพมหานคร"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1">รหัสไปรษณีย์</label>
-                                            <input
-                                                type="text"
-                                                value={formData.shippingPostalCode}
-                                                onChange={e => handleFormChange('shippingPostalCode', e.target.value)}
-                                                placeholder="10000"
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="sm:col-span-2 border-t border-secondary-200 pt-4 mt-2">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-secondary-700 mb-1">สื่อที่ลูกค้าเห็น</label>
-                                            <select
-                                                value={formData.mediaSource}
-                                                onChange={e => handleFormChange('mediaSource', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            >
-                                                <option value="">-- เลือกสื่อ --</option>
-                                                <option value="Facebook">Facebook</option>
-                                                <option value="Line@">Line@</option>
-                                                <option value="Google">Google</option>
-                                                <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
-                                                <option value="อื่นๆระบุ">อื่นๆระบุ</option>
-                                            </select>
-                                        </div>
-                                        {formData.mediaSource === 'อื่นๆระบุ' && (
+                                    <div className="border-t border-secondary-200 pt-6">
+                                        <h3 className="text-sm font-bold text-secondary-900 mb-4">ช่องทางติดต่อ Social Media</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-secondary-700 mb-1">ระบุสื่ออื่นๆ</label>
+                                                <label className="block text-xs font-medium text-secondary-600 mb-2">LINE ID</label>
+                                                <div className="relative">
+                                                    <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-[#06c755]" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={customerData.line}
+                                                        onChange={(e) => setCustomerData({ ...customerData, line: e.target.value })}
+                                                        placeholder="@siamparagon"
+                                                        className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-secondary-600 mb-2">Facebook</label>
+                                                <div className="relative">
+                                                    <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1877f2]" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={customerData.facebook}
+                                                        onChange={(e) => setCustomerData({ ...customerData, facebook: e.target.value })}
+                                                        placeholder="Siam Paragon"
+                                                        className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-secondary-600 mb-2">Instagram</label>
+                                                <div className="relative">
+                                                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 text-[#e4405f]" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={customerData.instagram}
+                                                        onChange={(e) => setCustomerData({ ...customerData, instagram: e.target.value })}
+                                                        placeholder="siamparagonshoppingcenter"
+                                                        className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-secondary-200 pt-6">
+                                        <h3 className="text-sm font-bold text-secondary-900 mb-4">ผู้ติดต่อเพิ่มเติม</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-3">
+                                                <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 1 (ชื่อ)</label>
                                                 <input
                                                     type="text"
-                                                    value={formData.mediaSourceOther}
-                                                    onChange={e => handleFormChange('mediaSourceOther', e.target.value)}
+                                                    value={customerData.contact1.name}
+                                                    onChange={(e) => setCustomerData({
+                                                        ...customerData,
+                                                        contact1: { ...customerData.contact1, name: e.target.value }
+                                                    })}
+                                                    placeholder="คุณสมชาย (จัดซื้อ)"
                                                     className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                                 />
                                             </div>
-                                        )}
+                                            <div className="space-y-3">
+                                                <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 1 (เบอร์โทร)</label>
+                                                <input
+                                                    type="text"
+                                                    value={customerData.contact1.phone}
+                                                    onChange={(e) => setCustomerData({
+                                                        ...customerData,
+                                                        contact1: { ...customerData.contact1, phone: e.target.value }
+                                                    })}
+                                                    placeholder="081-111-1111"
+                                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 2 (ชื่อ)</label>
+                                                <input
+                                                    type="text"
+                                                    value={customerData.contact2.name}
+                                                    onChange={(e) => setCustomerData({
+                                                        ...customerData,
+                                                        contact2: { ...customerData.contact2, name: e.target.value }
+                                                    })}
+                                                    placeholder="คุณมีนา (บัญชี)"
+                                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="block text-xs font-medium text-secondary-600">ผู้ติดต่อ 2 (เบอร์โทร)</label>
+                                                <input
+                                                    type="text"
+                                                    value={customerData.contact2.phone}
+                                                    onChange={(e) => setCustomerData({
+                                                        ...customerData,
+                                                        contact2: { ...customerData.contact2, phone: e.target.value }
+                                                    })}
+                                                    placeholder="082-222-2222"
+                                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="border-t border-secondary-200 pt-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-2">สื่อที่ลูกค้าเห็น</label>
+                                                <select
+                                                    value={customerData.mediaSource}
+                                                    onChange={(e) => setCustomerData({ ...customerData, mediaSource: e.target.value })}
+                                                    className="w-full px-3 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                >
+                                                    <option value="">-- เลือกสื่อ --</option>
+                                                    <option value="Facebook">Facebook</option>
+                                                    <option value="Line@">Line@</option>
+                                                    <option value="Google">Google</option>
+                                                    <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
+                                                    <option value="อื่นๆระบุ">อื่นๆระบุ</option>
+                                                </select>
+                                            </div>
+                                            {customerData.mediaSource === 'อื่นๆระบุ' && (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ระบุสื่ออื่นๆ</label>
+                                                    <input
+                                                        type="text"
+                                                        value={customerData.mediaSourceOther}
+                                                        onChange={(e) => setCustomerData({ ...customerData, mediaSourceOther: e.target.value })}
+                                                        className="w-full px-3 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Tab 2: Tax Invoice */}
+                            {activeTab === 'tax' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-secondary-900">ข้อมูลใบกำกับภาษี</h3>
+                                        <button
+                                            onClick={addTaxInvoice}
+                                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm shadow-sm"
+                                        >
+                                            <Plus size={16} />
+                                            เพิ่มข้อมูลใบกำกับภาษี
+                                        </button>
+                                    </div>
+
+                                    {taxInvoices.map((tax, index) => (
+                                        <div key={tax.id} className="p-6 border-2 border-primary-200 rounded-xl bg-primary-50/30 relative">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Building2 className="text-primary-600" size={20} />
+                                                    <h4 className="font-bold text-secondary-900">ใบกำกับภาษี #{index + 1}</h4>
+                                                </div>
+                                                {taxInvoices.length > 1 && (
+                                                    <button
+                                                        onClick={() => removeTaxInvoice(tax.id)}
+                                                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                                        title="ลบ"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อบริษัท</label>
+                                                    <input
+                                                        type="text"
+                                                        value={tax.companyName}
+                                                        onChange={(e) => updateTaxInvoice(tax.id, 'companyName', e.target.value)}
+                                                        placeholder="บริษัท สยามพารากอน จำกัด"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">สาขา</label>
+                                                    <input
+                                                        type="text"
+                                                        value={tax.branch || 'สำนักงานใหญ่'}
+                                                        onChange={(e) => updateTaxInvoice(tax.id, 'branch', e.target.value)}
+                                                        placeholder="สำนักงานใหญ่"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">เลขประจำตัวผู้เสียภาษี</label>
+                                                    <input
+                                                        type="text"
+                                                        value={tax.taxId}
+                                                        onChange={(e) => updateTaxInvoice(tax.id, 'taxId', e.target.value)}
+                                                        placeholder="0-1055-48148-53-1"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                {/* Tax Address Fields */}
+                                                <div className="md:col-span-2 mt-4">
+                                                    <h4 className="font-semibold text-secondary-900 mb-3 border-b pb-2">ที่อยู่ใบกำกับภาษี</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เลขที่</label>
+                                                            <input type="text" value={tax.addrNumber || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrNumber', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">หมู่</label>
+                                                            <input type="text" value={tax.addrMoo || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrMoo', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">อาคาร/หมู่บ้าน</label>
+                                                            <input type="text" value={tax.addrVillage || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrVillage', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ซอย</label>
+                                                            <input type="text" value={tax.addrSoi || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrSoi', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ถนน</label>
+                                                            <input type="text" value={tax.addrRoad || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrRoad', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">แขวง/ตำบล</label>
+                                                            <input type="text" value={tax.addrTambon || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrTambon', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เขต/อำเภอ</label>
+                                                            <input type="text" value={tax.addrAmphoe || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrAmphoe', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">จังหวัด</label>
+                                                            <input type="text" value={tax.addrProvince || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrProvince', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">รหัสไปรษณีย์</label>
+                                                            <input type="text" value={tax.addrZipcode || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrZipcode', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Delivery Address Fields */}
+                                                <div className="md:col-span-2 mt-4">
+                                                    <h4 className="font-semibold text-secondary-900 mb-3 border-b pb-2">ที่อยู่จัดส่งใบกำกับภาษี</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เลขที่</label>
+                                                            <input type="text" value={tax.deliveryAddrNumber || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrNumber', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">หมู่</label>
+                                                            <input type="text" value={tax.deliveryAddrMoo || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrMoo', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">อาคาร/หมู่บ้าน</label>
+                                                            <input type="text" value={tax.deliveryAddrVillage || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrVillage', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ซอย</label>
+                                                            <input type="text" value={tax.deliveryAddrSoi || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrSoi', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ถนน</label>
+                                                            <input type="text" value={tax.deliveryAddrRoad || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrRoad', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">แขวง/ตำบล</label>
+                                                            <input type="text" value={tax.deliveryAddrTambon || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrTambon', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เขต/อำเภอ</label>
+                                                            <input type="text" value={tax.deliveryAddrAmphoe || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrAmphoe', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">จังหวัด</label>
+                                                            <input type="text" value={tax.deliveryAddrProvince || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrProvince', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">รหัสไปรษณีย์</label>
+                                                            <input type="text" value={tax.deliveryAddrZipcode || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrZipcode', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Tab 3: Addresses */}
+                            {activeTab === 'address' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-secondary-900">ที่อยู่ติดตั้ง/จัดส่ง</h3>
+                                        <button
+                                            onClick={addAddress}
+                                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm shadow-sm"
+                                        >
+                                            <Plus size={16} />
+                                            เพิ่มที่อยู่
+                                        </button>
+                                    </div>
+
+                                    {addresses.map((addr, index) => (
+                                        <div key={addr.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Home className="text-primary-600" size={20} />
+                                                    <h4 className="font-bold text-secondary-900">ที่อยู่ #{index + 1}</h4>
+                                                </div>
+                                                {addresses.length > 1 && (
+                                                    <button
+                                                        onClick={() => removeAddress(addr.id)}
+                                                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                                        title="ลบ"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อที่อยู่ (Label)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.label}
+                                                        onChange={(e) => updateAddress(addr.id, 'label', e.target.value)}
+                                                        placeholder="สำนักงานใหญ่, โกดัง, สาขา 1, ฯลฯ"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ที่อยู่</label>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เลขที่</label>
+                                                            <input type="text" value={addr.addrNumber || ''} onChange={(e) => updateAddress(addr.id, 'addrNumber', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">หมู่</label>
+                                                            <input type="text" value={addr.addrMoo || ''} onChange={(e) => updateAddress(addr.id, 'addrMoo', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">อาคาร/หมู่บ้าน</label>
+                                                            <input type="text" value={addr.addrVillage || ''} onChange={(e) => updateAddress(addr.id, 'addrVillage', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ซอย</label>
+                                                            <input type="text" value={addr.addrSoi || ''} onChange={(e) => updateAddress(addr.id, 'addrSoi', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ถนน</label>
+                                                            <input type="text" value={addr.addrRoad || ''} onChange={(e) => updateAddress(addr.id, 'addrRoad', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">แขวง/ตำบล</label>
+                                                            <input type="text" value={addr.addrTambon || ''} onChange={(e) => updateAddress(addr.id, 'addrTambon', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เขต/อำเภอ</label>
+                                                            <input type="text" value={addr.addrAmphoe || ''} onChange={(e) => updateAddress(addr.id, 'addrAmphoe', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">จังหวัด</label>
+                                                            <input type="text" value={addr.province || ''} onChange={(e) => updateAddress(addr.id, 'province', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <label className="block text-xs font-medium text-secondary-700 mb-1">รหัสไปรษณีย์</label>
+                                                            <input type="text" value={addr.zipcode || ''} onChange={(e) => updateAddress(addr.id, 'zipcode', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน 1 (ชื่อ)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector1?.name || ''}
+                                                        onChange={(e) => {
+                                                            const updated = { ...addr.inspector1, name: e.target.value }
+                                                            updateAddress(addr.id, 'inspector1', updated)
+                                                        }}
+                                                        placeholder="คุณสมชาย"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน 1 (เบอร์โทร)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector1?.phone || ''}
+                                                        onChange={(e) => {
+                                                            const updated = { ...addr.inspector1, phone: e.target.value }
+                                                            updateAddress(addr.id, 'inspector1', updated)
+                                                        }}
+                                                        placeholder="081-111-1111"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน 2 (ชื่อ)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector2?.name || ''}
+                                                        onChange={(e) => {
+                                                            const updated = { ...addr.inspector2, name: e.target.value }
+                                                            updateAddress(addr.id, 'inspector2', updated)
+                                                        }}
+                                                        placeholder="คุณมานี"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน 2 (เบอร์โทร)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector2?.phone || ''}
+                                                        onChange={(e) => {
+                                                            const updated = { ...addr.inspector2, phone: e.target.value }
+                                                            updateAddress(addr.id, 'inspector2', updated)
+                                                        }}
+                                                        placeholder="082-222-2222"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                                                        Google Maps Link
+                                                        {addr.distance !== null && (
+                                                            <span className="ml-2 px-2 py-0.5 bg-success-100 text-success-700 text-xs font-semibold rounded-full">
+                                                                📍 {addr.distance.toFixed(2)} กม. จากร้าน
+                                                            </span>
+                                                        )}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.googleMapsLink}
+                                                        onChange={(e) => updateAddress(addr.id, 'googleMapsLink', e.target.value)}
+                                                        placeholder="https://maps.google.com/?q=13.7563,100.5018"
+                                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                                    />
+                                                    <p className="text-xs text-secondary-500 mt-1">
+                                                        วาง Google Maps Link เพื่อคำนวณระยะทางอัตโนมัติ
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Modal Footer */}
                         <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
+                                className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                                className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-lg shadow-primary-500/30"
                             >
                                 บันทึก
                             </button>

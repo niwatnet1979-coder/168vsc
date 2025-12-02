@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false)
   const [stats, setStats] = useState({
     todayRevenue: 0,
     pendingOrders: 0,
@@ -29,6 +30,12 @@ export default function Home() {
   const [recentOrders, setRecentOrders] = useState([])
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const loadDashboardData = () => {
       // 1. Load Orders
       const savedOrders = localStorage.getItem('orders_data')
@@ -74,7 +81,7 @@ export default function Home() {
     }
 
     loadDashboardData()
-  }, [])
+  }, [mounted])
 
   const menuItems = [
     {
@@ -238,8 +245,8 @@ export default function Home() {
                         <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.total || 0).toLocaleString()}</td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' ? 'bg-success-100 text-success-700' :
-                              order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :
-                                'bg-secondary-100 text-secondary-700'
+                            order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :
+                              'bg-secondary-100 text-secondary-700'
                             }`}>
                             {order.status}
                           </span>
