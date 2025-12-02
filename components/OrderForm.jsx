@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
+import {
+    Home,
+    ArrowLeft,
+    RefreshCw,
+    Save,
+    UserPlus,
+    Search,
+    MapPin,
+    Calendar,
+    X,
+    Plus,
+    Trash2
+} from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
 
 
@@ -214,7 +227,10 @@ export default function OrderForm() {
             // Full details
             storedItems: items, // Save actual items array
             customerDetails: customer,
-            taxInvoice: taxInvoice,
+            taxInvoice: {
+                ...taxInvoice,
+                deliveryAddress: taxInvoice.deliveryAddress || taxInvoice.address
+            },
             jobInfo: jobInfo,
             items: items,
             discount: discount,
@@ -330,6 +346,8 @@ export default function OrderForm() {
         (c.phone && c.phone.includes(customer.name)) ||
         customersData.some(saved => saved.name === customer.name)
     )
+    // Alias for JSX usage
+    const customerSearchResults = filteredCustomers
 
     // Filter products based on input (dynamic based on active row)
     const getFilteredProducts = (searchTerm) => {
@@ -363,6 +381,8 @@ export default function OrderForm() {
             line: selectedCustomer.line || '',
             facebook: selectedCustomer.facebook || '',
             instagram: selectedCustomer.instagram || '',
+            mediaSource: selectedCustomer.mediaSource || '',
+            mediaSourceOther: selectedCustomer.mediaSourceOther || '',
             contact1: selectedCustomer.contact1 || { name: '', phone: '' },
             contact2: selectedCustomer.contact2 || { name: '', phone: '' }
         })
@@ -428,6 +448,8 @@ export default function OrderForm() {
 
         setShowCustomerDropdown(false)
     }
+    // Alias for JSX usage
+    const selectCustomer = handleSelectCustomer
 
     // Modal State
     const [activeItemIndex, setActiveItemIndex] = useState(null)
@@ -706,18 +728,19 @@ export default function OrderForm() {
 
     // Calculations
     const subtotal = items.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0)
+    const shipping = Number(shippingFee || 0)
+    const subtotalPlusShipping = subtotal + shipping
 
     let discountAmount = 0
     if (discount.mode === 'percent') {
-        discountAmount = subtotal * (Number(discount.value || 0) / 100)
+        discountAmount = subtotalPlusShipping * (Number(discount.value || 0) / 100)
     } else {
         discountAmount = Number(discount.value || 0)
     }
 
-    const afterDiscount = Math.max(0, subtotal - discountAmount)
-    const subtotalWithShipping = afterDiscount + Number(shippingFee || 0)
-    const vatAmount = subtotalWithShipping * vatRate
-    const total = subtotalWithShipping + vatAmount
+    const afterDiscount = Math.max(0, subtotalPlusShipping - discountAmount)
+    const vatAmount = afterDiscount * vatRate
+    const total = afterDiscount + vatAmount
 
     let depositAmount = 0
     if (deposit.mode === 'percent') {
@@ -992,30 +1015,38 @@ export default function OrderForm() {
     }
 
     return (
-        <div className="order-page">
-            <header className="page-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <h1 style={{ margin: 0 }}>บันทึกข้อมูลสั่งซื้อ (Purchase Order Entry)</h1>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <label style={{ fontSize: 14, color: '#4a5568', whiteSpace: 'nowrap' }}>วันที่สั่งซื้อ:</label>
+        <div className="space-y-6">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-secondary-200">
+                <div className="flex flex-col gap-1">
+                    <h1 className="text-xl font-bold text-secondary-900">บันทึกข้อมูลสั่งซื้อ (Purchase Order Entry)</h1>
+                    <div className="flex items-center gap-2 text-sm text-secondary-500">
+                        <Calendar size={16} />
+                        <span>วันที่สั่งซื้อ:</span>
                         <input
                             type="date"
                             value={jobInfo.orderDate}
                             onChange={e => setJobInfo({ ...jobInfo, orderDate: e.target.value })}
-                            style={{ padding: '4px 8px' }}
+                            className="px-2 py-1 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                     </div>
                 </div>
-                <div className="actions">
-                    <button className="btn-icon" onClick={() => router.push('/')} title="กลับหน้าหลัก">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                    </button>
-                    <button className="btn-back" onClick={() => router.back()}>← ย้อนกลับ</button>
+                <div className="flex items-center gap-2">
                     <button
-                        className="btn-secondary"
+                        className="p-2 text-secondary-600 hover:bg-secondary-100 rounded-lg transition-colors"
+                        onClick={() => router.push('/')}
+                        title="กลับหน้าหลัก"
+                    >
+                        <Home size={20} />
+                    </button>
+                    <button
+                        className="flex items-center gap-2 px-3 py-2 text-secondary-700 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
+                        onClick={() => router.back()}
+                    >
+                        <ArrowLeft size={18} />
+                        <span>ย้อนกลับ</span>
+                    </button>
+                    <button
+                        className="flex items-center gap-2 px-3 py-2 text-secondary-700 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
                         onClick={() => {
                             const confirmed = confirm('รีโหลดข้อมูลสินค้าใหม่? (ใช้เมื่อค้นหาสินค้าไม่เจอ)')
                             if (confirmed) {
@@ -1032,192 +1063,202 @@ export default function OrderForm() {
                         }}
                         title="รีโหลดข้อมูลสินค้า"
                     >
-                        🔄 รีโหลดสินค้า
+                        <RefreshCw size={18} />
+                        <span className="hidden sm:inline">รีโหลดสินค้า</span>
                     </button>
-                    <button className="btn-primary" onClick={handleSaveOrder}>บันทึกข้อมูล</button>
+                    <button
+                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 shadow-sm transition-colors"
+                        onClick={handleSaveOrder}
+                    >
+                        <Save size={18} />
+                        <span>บันทึกข้อมูล</span>
+                    </button>
                 </div>
             </header>
 
-            <div className="top-layout">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 1. Customer Section */}
-                <div className="section-card customer-section">
-                    <h2>ข้อมูลลูกค้า (Customer)</h2>
-                    <div className="form-grid two-col">
-                        <div className="form-group full-width" style={{ position: 'relative' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                <label>ชื่อลูกค้า / บริษัท</label>
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <a href="/customers" target="_blank" style={{ fontSize: 12, color: '#0070f3', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                        <span>👥</span> จัดการลูกค้า
-                                    </a>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <div style={{ position: 'relative', flex: 1 }} ref={showCustomerDropdown ? customerDropdownRef : null}>
-                                    <input
-                                        type="text"
-                                        value={customer.name}
-                                        onChange={e => {
-                                            handleCustomerChange('name', e.target.value)
-                                            setShowCustomerDropdown(true)
-                                        }}
-                                        onFocus={() => setShowCustomerDropdown(true)}
-                                        placeholder="ระบุชื่อลูกค้า หรือ บริษัท"
-                                        style={{ width: '100%' }}
-                                    />
-                                    {showCustomerDropdown && (
-                                        <div className="dropdown-menu-absolute">
-                                            {filteredCustomers.length > 0 ? (
-                                                filteredCustomers.map(c => (
-                                                    <div
-                                                        key={c.id}
-                                                        className="dropdown-item"
-                                                        onClick={() => handleSelectCustomer(c)}
-                                                    >
-                                                        <div style={{ fontWeight: 600 }}>{c.name}</div>
-                                                        <div style={{ fontSize: 12, color: '#718096' }}>{c.phone} | {c.email}</div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="dropdown-item" style={{ color: '#718096', fontStyle: 'italic' }}>
-                                                    ไม่พบข้อมูลลูกค้า
-                                                </div>
-                                            )}
-                                            <div className="divider" style={{ margin: '4px 0' }}></div>
-                                            <div
-                                                className="dropdown-item"
-                                                onClick={() => {
-                                                    // Save temp state before navigating
-                                                    const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
-                                                    localStorage.setItem('order_form_temp', JSON.stringify(state));
-                                                    router.push('/customers/new?returnUrl=/order');
-                                                }}
-                                                style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
-                                            >
-                                                <span>+</span> เพิ่มลูกค้าใหม่
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label>เบอร์โทรศัพท์</label>
-                            <input
-                                type="text"
-                                value={customer.phone}
-                                onChange={e => handleCustomerChange('phone', e.target.value)}
-                                placeholder="ระบุเบอร์โทรศัพท์..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>อีเมล</label>
-                            <input
-                                type="email"
-                                value={customer.email}
-                                onChange={e => handleCustomerChange('email', e.target.value)}
-                                placeholder="example@email.com"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>LINE ID</label>
-                            <input
-                                type="text"
-                                value={customer.line}
-                                onChange={e => handleCustomerChange('line', e.target.value)}
-                                placeholder="@lineid"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Facebook</label>
-                            <input
-                                type="text"
-                                value={customer.facebook}
-                                onChange={e => handleCustomerChange('facebook', e.target.value)}
-                                placeholder="facebook.com/..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Instagram</label>
-                            <input
-                                type="text"
-                                value={customer.instagram}
-                                onChange={e => handleCustomerChange('instagram', e.target.value)}
-                                placeholder="@instagram"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>สื่อที่ลูกค้าเห็น</label>
-                            <select
-                                value={customer.mediaSource}
-                                onChange={e => handleCustomerChange('mediaSource', e.target.value)}
-                            >
-                                <option value="">-- เลือกสื่อ --</option>
-                                <option value="Facebook">Facebook</option>
-                                <option value="Line@">Line@</option>
-                                <option value="Google">Google</option>
-                                <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
-                                <option value="อื่นๆระบุ">อื่นๆระบุ</option>
-                            </select>
-                        </div>
-                        {customer.mediaSource === 'อื่นๆระบุ' && (
-                            <div className="form-group">
-                                <label>ระบุสื่ออื่นๆ</label>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-secondary-200 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-secondary-900 border-l-4 border-primary-500 pl-3">
+                            ข้อมูลลูกค้า (Customer)
+                        </h2>
+                        <a
+                            href="/customers"
+                            target="_blank"
+                            className="flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                        >
+                            <UserPlus size={14} />
+                            จัดการลูกค้า
+                        </a>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="space-y-1 relative" ref={customerDropdownRef}>
+                            <label className="text-sm font-medium text-secondary-700">ชื่อลูกค้า / บริษัท</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
                                 <input
                                     type="text"
-                                    value={customer.mediaSourceOther}
-                                    onChange={e => handleCustomerChange('mediaSourceOther', e.target.value)}
-                                    placeholder="ระบุสื่ออื่นๆ..."
+                                    placeholder="ระบุชื่อลูกค้า หรือ บริษัท"
+                                    value={customer.name}
+                                    onChange={e => {
+                                        handleCustomerChange('name', e.target.value)
+                                        setShowCustomerDropdown(true)
+                                    }}
+                                    onFocus={() => setShowCustomerDropdown(true)}
+                                    className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                                {/* Customer Dropdown */}
+                                {showCustomerDropdown && customerSearchResults.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                        {customerSearchResults.map((c, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                onClick={() => selectCustomer(c)}
+                                            >
+                                                <div className="font-medium text-secondary-900">{c.name}</div>
+                                                {c.taxInvoices && c.taxInvoices[0] && (
+                                                    <div className="text-xs text-secondary-500">Tax ID: {c.taxInvoices[0].taxId}</div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">เบอร์โทรศัพท์</label>
+                                <input
+                                    type="text"
+                                    value={customer.phone}
+                                    onChange={e => handleCustomerChange('phone', e.target.value)}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                             </div>
-                        )}
-                        <div className="form-group">
-                            <label>ผู้ติดต่อ 1</label>
-                            <input
-                                type="text"
-                                value={customer.contact1.name}
-                                onChange={e => handleCustomerChange('name', e.target.value, 'contact1')}
-                                placeholder="ระบุชื่อผู้ติดต่อ..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>&nbsp;</label>
-                            <input
-                                type="text"
-                                value={customer.contact1.phone}
-                                onChange={e => handleCustomerChange('phone', e.target.value, 'contact1')}
-                                placeholder="ระบุเบอร์โทร..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>ผู้ติดต่อ 2</label>
-                            <input
-                                type="text"
-                                value={customer.contact2.name}
-                                onChange={e => handleCustomerChange('name', e.target.value, 'contact2')}
-                                placeholder="ระบุชื่อผู้ติดต่อ..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>&nbsp;</label>
-                            <input
-                                type="text"
-                                value={customer.contact2.phone}
-                                onChange={e => handleCustomerChange('phone', e.target.value, 'contact2')}
-                                placeholder="ระบุเบอร์โทร..."
-                            />
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">Email</label>
+                                <input
+                                    type="email"
+                                    value={customer.email}
+                                    onChange={e => handleCustomerChange('email', e.target.value)}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+
+                            {/* Social Media Fields */}
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">LINE ID</label>
+                                <input
+                                    type="text"
+                                    value={customer.line}
+                                    onChange={e => handleCustomerChange('line', e.target.value)}
+                                    placeholder="@lineid"
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">Facebook</label>
+                                <input
+                                    type="text"
+                                    value={customer.facebook}
+                                    onChange={e => handleCustomerChange('facebook', e.target.value)}
+                                    placeholder="Facebook Name/Link"
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">Instagram</label>
+                                <input
+                                    type="text"
+                                    value={customer.instagram}
+                                    onChange={e => handleCustomerChange('instagram', e.target.value)}
+                                    placeholder="Instagram Name/Link"
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">ที่มา (Media Source)</label>
+                                <select
+                                    value={customer.mediaSource}
+                                    onChange={e => handleCustomerChange('mediaSource', e.target.value)}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                >
+                                    <option value="">-- เลือกที่มา --</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="Line">Line</option>
+                                    <option value="Google">Google</option>
+                                    <option value="Walk-in">Walk-in</option>
+                                    <option value="เพื่อนแนะนำ">เพื่อนแนะนำ</option>
+                                    <option value="อื่นๆ">อื่นๆ</option>
+                                </select>
+                            </div>
+                            {customer.mediaSource === 'อื่นๆ' && (
+                                <div className="space-y-1 sm:col-span-2">
+                                    <label className="text-sm font-medium text-secondary-700">ระบุที่มาอื่นๆ</label>
+                                    <input
+                                        type="text"
+                                        value={customer.mediaSourceOther}
+                                        onChange={e => handleCustomerChange('mediaSourceOther', e.target.value)}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Contact Persons */}
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">ผู้ติดต่อ 1 (ชื่อ)</label>
+                                <input
+                                    type="text"
+                                    value={customer.contact1?.name || ''}
+                                    onChange={e => handleCustomerChange('name', e.target.value, 'contact1')}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">ผู้ติดต่อ 1 (เบอร์โทร)</label>
+                                <input
+                                    type="text"
+                                    value={customer.contact1?.phone || ''}
+                                    onChange={e => handleCustomerChange('phone', e.target.value, 'contact1')}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">ผู้ติดต่อ 2 (ชื่อ)</label>
+                                <input
+                                    type="text"
+                                    value={customer.contact2?.name || ''}
+                                    onChange={e => handleCustomerChange('name', e.target.value, 'contact2')}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">ผู้ติดต่อ 2 (เบอร์โทร)</label>
+                                <input
+                                    type="text"
+                                    value={customer.contact2?.phone || ''}
+                                    onChange={e => handleCustomerChange('phone', e.target.value, 'contact2')}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Tax Invoice Section */}
-                <div className="section-card tax-section" ref={taxDropdownRef}>
-                    <h2>ข้อมูลใบกำกับภาษี (Tax Invoice)</h2>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-secondary-200 space-y-4" ref={taxDropdownRef}>
+                    <h2 className="text-lg font-semibold text-secondary-900 border-l-4 border-primary-500 pl-3">
+                        ข้อมูลใบกำกับภาษี (Tax Invoice)
+                    </h2>
 
-                    <div className="form-grid two-col">
-                        <div className="form-group full-width" style={{ position: 'relative' }}>
-                            <label>ชื่อบริษัท</label>
-                            <div style={{ position: 'relative' }}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2 space-y-1 relative">
+                            <label className="text-sm font-medium text-secondary-700">ชื่อบริษัท</label>
+                            <div className="relative">
                                 <input
                                     type="text"
                                     value={taxInvoice.companyName}
@@ -1227,10 +1268,10 @@ export default function OrderForm() {
                                     }}
                                     onFocus={() => setShowTaxDropdown(true)}
                                     placeholder="ระบุชื่อบริษัท..."
-                                    style={{ width: '100%' }}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                                 {showTaxDropdown && (
-                                    <div className="dropdown-menu-absolute">
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                         {savedTaxProfiles.length > 0 ? (
                                             <>
                                                 {savedTaxProfiles.filter(p =>
@@ -1240,26 +1281,27 @@ export default function OrderForm() {
                                                 ).map((profile, i) => (
                                                     <div
                                                         key={i}
-                                                        className="dropdown-item"
+                                                        className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                         onClick={() => handleSelectTaxProfile(profile)}
                                                     >
-                                                        <strong>{profile.companyName}</strong><br />
-                                                        <small>เลขที่: {profile.taxId || '-'}</small>
+                                                        <div className="font-medium text-secondary-900">{profile.companyName}</div>
+                                                        <div className="text-xs text-secondary-500">เลขที่: {profile.taxId || '-'}</div>
                                                     </div>
                                                 ))}
                                                 {taxInvoice.companyName && taxInvoice.taxId && !savedTaxProfiles.some(
                                                     p => p.companyName === taxInvoice.companyName && p.taxId === taxInvoice.taxId
                                                 ) && (
                                                         <div
-                                                            className="dropdown-item add-new"
+                                                            className="px-4 py-2 text-primary-600 hover:bg-primary-50 cursor-pointer font-medium flex items-center gap-2"
                                                             onClick={handleSaveTaxProfile}
                                                         >
-                                                            + บันทึกชุดข้อมูลปัจจุบัน
+                                                            <Plus size={14} />
+                                                            บันทึกชุดข้อมูลปัจจุบัน
                                                         </div>
                                                     )}
-                                                <div className="divider" style={{ margin: '4px 0' }}></div>
+                                                <div className="border-t border-secondary-100 my-1"></div>
                                                 <div
-                                                    className="dropdown-item"
+                                                    className="px-4 py-2 text-primary-600 hover:bg-primary-50 cursor-pointer flex items-center gap-2 justify-center"
                                                     onClick={() => {
                                                         // Save temp state
                                                         const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
@@ -1274,13 +1316,13 @@ export default function OrderForm() {
                                                             alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มข้อมูล')
                                                         }
                                                     }}
-                                                    style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
                                                 >
-                                                    <span>+</span> เพิ่มข้อมูลใบกำกับภาษี
+                                                    <Plus size={14} />
+                                                    เพิ่มข้อมูลใบกำกับภาษี
                                                 </div>
                                             </>
                                         ) : (
-                                            <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                            <div className="px-4 py-2 text-secondary-400 italic cursor-default text-center">
                                                 ไม่มีข้อมูลใบกำกับภาษีที่บันทึกไว้
                                             </div>
                                         )}
@@ -1288,72 +1330,84 @@ export default function OrderForm() {
                                 )}
                             </div>
                         </div>
-                        <div className="form-group">
-                            <label>สาขา</label>
+
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">สาขา</label>
                             <input
                                 type="text"
                                 value={taxInvoice.branch}
                                 onChange={e => handleTaxInvoiceChange('branch', e.target.value)}
                                 placeholder="ระบุสาขา..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>เลขที่ผู้เสียภาษี</label>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">เลขที่ผู้เสียภาษี</label>
                             <input
                                 type="text"
                                 value={taxInvoice.taxId}
                                 onChange={e => handleTaxInvoiceChange('taxId', e.target.value)}
                                 placeholder="ระบุเลขที่ผู้เสียภาษี..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
-                        <div className="form-group full-width">
-                            <label>ที่อยู่</label>
+                        <div className="sm:col-span-2 space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">ที่อยู่</label>
                             <textarea
                                 rows={2}
                                 value={taxInvoice.address}
                                 onChange={e => handleTaxInvoiceChange('address', e.target.value)}
                                 placeholder="ระบุที่อยู่..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>เบอร์โทรศัพท์</label>
+                        {/* Checkbox removed */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">เบอร์โทรศัพท์</label>
                             <input
                                 type="text"
                                 value={taxInvoice.phone}
                                 onChange={e => handleTaxInvoiceChange('phone', e.target.value)}
                                 placeholder="ระบุเบอร์โทรศัพท์..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
-                        <div className="form-group">
-                            <label>อีเมล</label>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">อีเมล</label>
                             <input
-                                type="text"
+                                type="email"
                                 value={taxInvoice.email}
                                 onChange={e => handleTaxInvoiceChange('email', e.target.value)}
                                 placeholder="ระบุอีเมล..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
-                        <div className="form-group full-width">
-                            <label>ที่อยู่จัดส่งใบกำกับภาษี</label>
+                        <div className="sm:col-span-2 space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">ที่อยู่จัดส่งใบกำกับภาษี</label>
                             <input
                                 type="text"
                                 value={taxInvoice.deliveryAddress}
                                 onChange={e => handleTaxInvoiceChange('deliveryAddress', e.target.value)}
                                 placeholder="ระบุที่อยู่จัดส่ง..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Job Section */}
-                <div className="section-card job-section">
-                    <h2>ข้อมูลงานหลัก(Master Job)</h2>
-                    <div className="form-grid one-col">
-                        <div className="form-group">
-                            <label>ประเภทงาน</label>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-secondary-200 space-y-4">
+                    <h2 className="text-lg font-semibold text-secondary-900 border-l-4 border-primary-500 pl-3">
+                        ข้อมูลงานหลัก (Master Job)
+                    </h2>
+
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">ประเภทงาน</label>
                             <select
                                 value={jobInfo.jobType}
                                 onChange={e => setJobInfo({ ...jobInfo, jobType: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                             >
                                 <option value="installation">งานติดตั้ง (Installation)</option>
                                 <option value="delivery">งานจัดส่ง (Delivery)</option>
@@ -1362,11 +1416,11 @@ export default function OrderForm() {
                         </div>
 
                         {/* Team and Appointment Date - Two Columns */}
-                        <div className="form-grid two-col">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Team Dropdown */}
-                            <div className="form-group" ref={teamDropdownRef}>
-                                <label>ทีม (Team)</label>
-                                <div style={{ position: 'relative' }}>
+                            <div className="space-y-1 relative" ref={teamDropdownRef}>
+                                <label className="text-sm font-medium text-secondary-700">ทีม (Team)</label>
+                                <div className="relative">
                                     <input
                                         type="text"
                                         value={jobInfo.team}
@@ -1376,10 +1430,10 @@ export default function OrderForm() {
                                         }}
                                         onFocus={() => setShowTeamDropdown(true)}
                                         placeholder="ระบุหรือเลือกทีม..."
-                                        style={{ width: '100%' }}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                     />
                                     {showTeamDropdown && (
-                                        <div className="dropdown-menu-absolute">
+                                        <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                             {availableTeams.length > 0 ? (
                                                 availableTeams.filter(t =>
                                                     !jobInfo.team ||
@@ -1387,37 +1441,40 @@ export default function OrderForm() {
                                                 ).map((team, i) => (
                                                     <div
                                                         key={i}
-                                                        className="dropdown-item"
+                                                        className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                         onClick={() => {
                                                             setJobInfo({ ...jobInfo, team: team.name })
                                                             setShowTeamDropdown(false)
                                                         }}
                                                     >
-                                                        {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
+                                                        <div className="font-medium text-secondary-900">{team.name}</div>
+                                                        <div className="text-xs text-secondary-500">({team.type === 'QC' ? 'QC' : 'ช่าง'})</div>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
+                                                <div className="px-4 py-2 text-secondary-400 italic cursor-default text-center">
+                                                    ไม่พบข้อมูลทีม
+                                                </div>
                                             )}
                                         </div>
                                     )}
                                 </div>
                             </div>
-
-                            <div className="form-group">
-                                <label>วัน-เวลาที่นัดหมาย</label>
+                            <div className="space-y-1">
+                                <label className="text-sm font-medium text-secondary-700">วัน-เวลาที่นัดหมาย</label>
                                 <input
                                     type="datetime-local"
                                     value={jobInfo.appointmentDate}
                                     onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                             </div>
                         </div>
 
                         {/* Location Name Combobox */}
-                        <div className="form-group" ref={locationNameDropdownRef}>
-                            <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
-                            <div style={{ position: 'relative' }}>
+                        <div className="space-y-1 relative" ref={locationNameDropdownRef}>
+                            <label className="text-sm font-medium text-secondary-700">ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
+                            <div className="relative">
                                 <input
                                     type="text"
                                     value={jobInfo.installLocationName}
@@ -1427,10 +1484,10 @@ export default function OrderForm() {
                                     }}
                                     onFocus={() => setShowLocationNameDropdown(true)}
                                     placeholder="เลือกหรือระบุชื่อสถานที่..."
-                                    style={{ width: '100%' }}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                                 {showLocationNameDropdown && (
-                                    <div className="dropdown-menu-absolute">
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                         {savedAddresses.length > 0 ? (
                                             <>
                                                 {savedAddresses.filter(item =>
@@ -1440,23 +1497,23 @@ export default function OrderForm() {
                                                 ).map((item, i) => (
                                                     <div
                                                         key={i}
-                                                        className="dropdown-item"
+                                                        className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                         onClick={() => handleSelectLocationName(item)}
                                                     >
-                                                        <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
-                                                        <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
-                                                        {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
+                                                        <div className="font-medium text-secondary-900 mb-0.5">{item.name}</div>
+                                                        <div className="text-xs text-secondary-500">{item.address}</div>
+                                                        {item.googleMapLink && <div className="text-xs text-primary-500 mt-0.5 flex items-center gap-1"><MapPin size={10} /> มีลิงก์แผนที่</div>}
                                                     </div>
                                                 ))}
                                             </>
                                         ) : (
-                                            <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
+                                            <div className="px-4 py-2 text-secondary-400 italic cursor-default text-center">
                                                 ไม่มีข้อมูลสถานที่ที่บันทึกไว้
                                             </div>
                                         )}
-                                        <div className="divider" style={{ margin: '4px 0' }}></div>
+                                        <div className="border-t border-secondary-100 my-1"></div>
                                         <div
-                                            className="dropdown-item"
+                                            className="px-4 py-2 text-primary-600 hover:bg-primary-50 cursor-pointer flex items-center gap-2 justify-center"
                                             onClick={() => {
                                                 // Save temp state
                                                 const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
@@ -1471,9 +1528,9 @@ export default function OrderForm() {
                                                     alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
                                                 }
                                             }}
-                                            style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
                                         >
-                                            <span>+</span> เพิ่มสถานที่ติดตั้ง
+                                            <Plus size={14} />
+                                            เพิ่มสถานที่ติดตั้ง
                                         </div>
                                     </div>
                                 )}
@@ -1481,109 +1538,124 @@ export default function OrderForm() {
                         </div>
 
                         {/* Address Combobox */}
-                        <div className="form-group" ref={addressDropdownRef}>
-                            <label>สถานที่ติดตั้ง / จัดส่ง</label>
-                            <div className="address-combobox">
+                        <div className="space-y-1 relative" ref={addressDropdownRef}>
+                            <label className="text-sm font-medium text-secondary-700">สถานที่ติดตั้ง / จัดส่ง</label>
+                            <div className="relative">
                                 <textarea
                                     rows={2}
                                     value={jobInfo.installAddress}
-                                    onChange={e => setJobInfo({ ...jobInfo, installAddress: e.target.value })}
+                                    onChange={e => {
+                                        setJobInfo({ ...jobInfo, installAddress: e.target.value })
+                                        setShowAddressDropdown(true)
+                                    }}
+                                    onFocus={() => setShowAddressDropdown(true)}
                                     placeholder="ระบุสถานที่..."
-                                    className="address-input"
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                             </div>
+                        </div>
 
-                            {/* Google Maps Link */}
-                            <div style={{ marginTop: 8 }}>
-                                <label>
-                                    {jobInfo.googleMapLink ? (
-                                        <a
-                                            href={jobInfo.googleMapLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                                        >
-                                            🗺️ Google Maps Link
-                                        </a>
-                                    ) : (
-                                        'Google Maps Link'
-                                    )}
-                                    {jobInfo.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({jobInfo.distance} km)</span>}
-                                </label>
+                        {/* Google Maps Link */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700 flex items-center gap-2">
+                                {jobInfo.googleMapLink ? (
+                                    <a
+                                        href={jobInfo.googleMapLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary-600 hover:text-primary-700 flex items-center gap-1 hover:underline"
+                                    >
+                                        <MapPin size={14} /> Google Maps Link
+                                    </a>
+                                ) : (
+                                    'Google Maps Link'
+                                )}
+                                {jobInfo.distance && <span className="text-xs text-primary-600">({jobInfo.distance} km)</span>}
+                            </label>
+                            <input
+                                type="text"
+                                value={jobInfo.googleMapLink}
+                                onChange={e => setJobInfo({ ...jobInfo, googleMapLink: e.target.value })}
+                                placeholder="https://maps.google.com/..."
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                            />
+                        </div>
+
+                        {/* Inspector 1 */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">ผู้ตรวจงาน 1</label>
+                            <div className="grid grid-cols-2 gap-2">
                                 <input
                                     type="text"
-                                    value={jobInfo.googleMapLink}
-                                    onChange={e => setJobInfo({ ...jobInfo, googleMapLink: e.target.value })}
-                                    placeholder="https://maps.google.com/..."
+                                    value={jobInfo.inspector1.name}
+                                    onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, name: e.target.value } })}
+                                    placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                                <input
+                                    type="text"
+                                    value={jobInfo.inspector1.phone}
+                                    onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, phone: e.target.value } })}
+                                    placeholder="ระบุเบอร์โทร..."
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                                 />
                             </div>
+                        </div>
 
-                            {/* Inspector 1 */}
-                            <div style={{ marginTop: 12 }}>
-                                <label>ผู้ตรวจงาน 1</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-                                    <input
-                                        type="text"
-                                        value={jobInfo.inspector1.name}
-                                        onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, name: e.target.value } })}
-                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
-                                    />
-                                    <input
-                                        type="text"
-                                        value={jobInfo.inspector1.phone}
-                                        onChange={e => setJobInfo({ ...jobInfo, inspector1: { ...jobInfo.inspector1, phone: e.target.value } })}
-                                        placeholder="ระบุเบอร์โทร..."
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Inspector 2 */}
-                            <div style={{ marginTop: 12 }}>
-                                <label>ผู้ตรวจงาน 2</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
-                                    <input
-                                        type="text"
-                                        value={jobInfo.inspector2.name}
-                                        onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, name: e.target.value } })}
-                                        placeholder="ระบุชื่อผู้ตรวจงาน..."
-                                    />
-                                    <input
-                                        type="text"
-                                        value={jobInfo.inspector2.phone}
-                                        onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, phone: e.target.value } })}
-                                        placeholder="ระบุเบอร์โทร..."
-                                    />
-                                </div>
+                        {/* Inspector 2 */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-secondary-700">ผู้ตรวจงาน 2</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <input
+                                    type="text"
+                                    value={jobInfo.inspector2.name}
+                                    onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, name: e.target.value } })}
+                                    placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
+                                <input
+                                    type="text"
+                                    value={jobInfo.inspector2.phone}
+                                    onChange={e => setJobInfo({ ...jobInfo, inspector2: { ...jobInfo.inspector2, phone: e.target.value } })}
+                                    placeholder="ระบุเบอร์โทร..."
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 4. Summary & Note Section */}
-                <div className="section-card summary-section">
-                    <h2>สรุปยอด (Summary)</h2>
-                    <div className="totals-wrapper">
-                        <div className="total-row">
-                            <span>รวมเป็นเงิน</span>
-                            <span>{currency(subtotal)}</span>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-secondary-200 space-y-4">
+                    <h2 className="text-lg font-semibold text-secondary-900 border-l-4 border-primary-500 pl-3">
+                        สรุปยอด (Summary)
+                    </h2>
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <span className="text-sm text-secondary-700">รวมเป็นเงิน</span>
+                            <span className="text-sm font-medium text-secondary-900">{currency(subtotal)}</span>
                         </div>
-                        <div className="total-row">
-                            <span>ค่าเดินทาง/จัดส่ง</span>
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <span className="text-sm text-secondary-700">ค่าเดินทาง/จัดส่ง</span>
                             <input
                                 type="number"
                                 min={0}
                                 value={shippingFee}
-                                onChange={e => setShippingFee(Number(e.target.value))}
+                                onChange={e => {
+                                    const val = e.target.value
+                                    setShippingFee(val === '' ? '' : Number(val))
+                                }}
                                 placeholder="0"
-                                style={{ width: 100, textAlign: 'right', padding: '2px 4px', border: '1px solid #e2e8f0', borderRadius: 4 }}
+                                className="w-24 px-2 py-1 text-right border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                             />
                         </div>
-                        <div className="total-row">
-                            <div className="discount-control">
-                                <span>ส่วนลด</span>
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-secondary-700">ส่วนลด</span>
                                 <select
                                     value={discount.mode}
                                     onChange={e => setDiscount({ ...discount, mode: e.target.value })}
+                                    className="px-2 py-1 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                                 >
                                     <option value="percent">%</option>
                                     <option value="amount">฿</option>
@@ -1592,31 +1664,33 @@ export default function OrderForm() {
                                     type="number"
                                     value={discount.value}
                                     onChange={e => setDiscount({ ...discount, value: Number(e.target.value) })}
+                                    className="w-20 px-2 py-1 text-right border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                                 />
                             </div>
-                            <span className="text-red">-{currency(discountAmount)}</span>
+                            <span className="text-sm font-medium text-red-600">-{currency(discountAmount)}</span>
                         </div>
-                        <div className="total-row">
-                            <span>หลังหักส่วนลด</span>
-                            <span>{currency(afterDiscount)}</span>
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <span className="text-sm text-secondary-700">หลังหักส่วนลด</span>
+                            <span className="text-sm font-medium text-secondary-900">{currency(afterDiscount)}</span>
                         </div>
-                        <div className="total-row">
-                            <span>VAT 7%</span>
-                            <span>{currency(vatAmount)}</span>
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <span className="text-sm text-secondary-700">VAT 7%</span>
+                            <span className="text-sm font-medium text-secondary-900">{currency(vatAmount)}</span>
                         </div>
-                        <div className="total-row grand-total">
-                            <span>ยอดรวมทั้งสิ้น</span>
-                            <span>{currency(total)}</span>
+                        <div className="flex justify-between items-center py-3 border-b-2 border-secondary-300 bg-secondary-50 -mx-6 px-6">
+                            <span className="text-base font-semibold text-secondary-900">ยอดรวมทั้งสิ้น</span>
+                            <span className="text-lg font-bold text-primary-600">{currency(total)}</span>
                         </div>
 
-                        <div className="divider"></div>
+                        <div className="border-t border-secondary-200 pt-3 mt-3"></div>
 
-                        <div className="total-row">
-                            <div className="discount-control">
-                                <span>มัดจำ</span>
+                        <div className="flex justify-between items-center py-2 border-b border-secondary-100">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-secondary-700">มัดจำ</span>
                                 <select
                                     value={deposit.mode}
                                     onChange={e => setDeposit({ ...deposit, mode: e.target.value })}
+                                    className="px-2 py-1 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                                 >
                                     <option value="percent">%</option>
                                     <option value="amount">฿</option>
@@ -1625,52 +1699,54 @@ export default function OrderForm() {
                                     type="number"
                                     value={deposit.value}
                                     onChange={e => setDeposit({ ...deposit, value: Number(e.target.value) })}
+                                    className="w-20 px-2 py-1 text-right border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                                 />
                             </div>
-                            <span>{currency(depositAmount)}</span>
+                            <span className="text-sm font-medium text-secondary-900">{currency(depositAmount)}</span>
                         </div>
-                        <div className="total-row outstanding">
-                            <span>ยอดคงค้าง</span>
-                            <span>{currency(outstanding)}</span>
+                        <div className="flex justify-between items-center py-3 bg-amber-50 -mx-6 px-6 rounded-b-lg">
+                            <span className="text-base font-semibold text-amber-900">ยอดคงค้าง</span>
+                            <span className="text-lg font-bold text-amber-600">{currency(outstanding)}</span>
                         </div>
                     </div>
 
-                    <div className="note-wrapper" style={{ marginTop: 16 }}>
-                        <label style={{ fontWeight: 600, display: 'block', marginBottom: 4 }}>หมายเหตุ (Note)</label>
+                    <div className="mt-4 space-y-1">
+                        <label className="text-sm font-medium text-secondary-700">หมายเหตุ (Note)</label>
                         <textarea
                             rows={3}
                             value={note}
                             onChange={e => setNote(e.target.value)}
                             placeholder="ระบุหมายเหตุ..."
-                            style={{ width: '100%', boxSizing: 'border-box' }}
+                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow resize-y"
                         />
                     </div>
                 </div>
             </div>
 
             {/* 5. Items Section (Full Width Bottom) */}
-            <div className="section-card items-section-full">
-                <h2>รายการสินค้า (Order Items)</h2>
-                <div className="items-table-container">
-                    <table className="items-table" style={{ tableLayout: 'fixed' }}>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-secondary-200 space-y-4">
+                <h2 className="text-lg font-semibold text-secondary-900 border-l-4 border-primary-500 pl-3">
+                    รายการสินค้า (Order Items)
+                </h2>
+                <div className="overflow-x-auto rounded-lg border border-secondary-200">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr>
-                                <th className="text-center" style={{ width: '50px' }}>#</th>
-                                <th className="text-center" style={{ width: '100px' }}>รูปภาพ</th>
-                                <th style={{ width: 'auto' }}>ข้อมูลสินค้า</th>
-                                <th style={{ width: '200px' }}>หมายเหตุ</th>
-                                <th className="text-center" style={{ width: '80px' }}>Job</th>
-                                <th className="text-center" style={{ width: '80px' }}>จำนวน</th>
-                                <th className="text-right" style={{ width: '120px' }}>ราคา/หน่วย</th>
-                                <th className="text-right" style={{ width: '120px' }}>รวม</th>
-                                <th style={{ width: '50px' }}></th>
+                            <tr className="bg-secondary-50 border-b border-secondary-200">
+                                <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider w-12">#</th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider w-24">รูปภาพ</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider min-w-[200px]">ข้อมูลสินค้า</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider w-48">หมายเหตุ</th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider w-20">Job</th>
+                                <th className="px-4 py-3 text-center text-xs font-medium text-secondary-500 uppercase tracking-wider w-20">จำนวน</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider w-32">ราคา/หน่วย</th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-secondary-500 uppercase tracking-wider w-32">รวม</th>
+                                <th className="px-4 py-3 w-12"></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white divide-y divide-secondary-100">
                             {items.map((item, idx) => {
                                 // Smart product info display (same as Product Management)
                                 const productInfo = [
-                                    item.code,
                                     item.category,
                                     item.subcategory,
                                     item.material,
@@ -1688,50 +1764,53 @@ export default function OrderForm() {
                                 ].filter(Boolean).join(' • ');
 
                                 return (
-                                    <tr key={idx}>
-                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{idx + 1}</td>
-                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                            <div className="image-cell" style={{ margin: '0 auto' }}>
+                                    <tr key={idx} className="hover:bg-secondary-50/50 transition-colors">
+                                        <td className="px-4 py-3 text-center text-sm text-secondary-500 align-top pt-4">{idx + 1}</td>
+                                        <td className="px-4 py-3 align-top">
+                                            <div className="flex justify-center">
                                                 {(item.images && item.images[0]) ? (
-                                                    <div className="image-preview">
-                                                        <img src={item.images[0]} alt="Product" />
-                                                        <button className="btn-remove-image" onClick={() => removeImage(idx)}>×</button>
+                                                    <div className="relative w-16 h-16 rounded-lg border border-secondary-200 overflow-hidden group">
+                                                        <img src={item.images[0]} alt="Product" className="w-full h-full object-cover" />
+                                                        <button
+                                                            className="absolute top-0.5 right-0.5 bg-black/50 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            onClick={() => removeImage(idx)}
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
                                                     </div>
                                                 ) : item.image ? (
-                                                    <div className="image-preview">
-                                                        <img src={item.image} alt="Product" />
-                                                        <button className="btn-remove-image" onClick={() => removeImage(idx)}>×</button>
+                                                    <div className="relative w-16 h-16 rounded-lg border border-secondary-200 overflow-hidden group">
+                                                        <img src={item.image} alt="Product" className="w-full h-full object-cover" />
+                                                        <button
+                                                            className="absolute top-0.5 right-0.5 bg-black/50 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            onClick={() => removeImage(idx)}
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <>
-                                                        <label htmlFor={`img-${idx}`} className="upload-placeholder">
-                                                            <span>+</span>
+                                                        <label htmlFor={`img-${idx}`} className="w-16 h-16 rounded-lg border-2 border-dashed border-secondary-300 flex items-center justify-center text-secondary-400 hover:text-primary-500 hover:border-primary-500 hover:bg-primary-50 cursor-pointer transition-colors">
+                                                            <Plus size={20} />
                                                         </label>
                                                         <input
                                                             id={`img-${idx}`}
                                                             type="file"
                                                             accept="image/*"
                                                             onChange={(e) => handleImageChange(idx, e)}
-                                                            style={{ display: 'none' }}
+                                                            className="hidden"
                                                         />
                                                     </>
                                                 )}
                                             </div>
                                         </td>
-                                        <td style={{ verticalAlign: 'top', padding: '8px' }}>
+                                        <td className="px-4 py-3 align-top">
                                             {!item.code ? (
-                                                <div className="search-container" style={{ position: 'relative', width: '100%' }}>
-                                                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#a0aec0', zIndex: 1 }}>🔍</span>
+                                                <div className="relative w-full">
+                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
                                                     <input
                                                         type="text"
-                                                        className="input-grid"
-                                                        style={{
-                                                            textAlign: 'left',
-                                                            paddingLeft: 35,
-                                                            width: '100%',
-                                                            boxSizing: 'border-box',
-                                                            height: '36px'
-                                                        }}
+                                                        className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow text-sm"
                                                         placeholder="ค้นหารหัสสินค้า..."
                                                         value={item._searchTerm !== undefined ? item._searchTerm : ''}
                                                         onChange={(e) => handleSearchProduct(idx, e.target.value)}
@@ -1739,81 +1818,68 @@ export default function OrderForm() {
                                                     />
                                                     {/* Dropdown Results */}
                                                     {activeSearchIndex === idx && searchResults.length > 0 && (
-                                                        <div className="search-dropdown" style={{
-                                                            position: 'absolute', top: '100%', left: 0, right: 0,
-                                                            background: 'white', border: '1px solid #e2e8f0',
-                                                            borderRadius: 4, zIndex: 100, maxHeight: 200, overflowY: 'auto',
-                                                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                                                        }}>
+                                                        <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                                             {searchResults.map(p => (
                                                                 <div
                                                                     key={p.id}
-                                                                    className="dropdown-item"
-                                                                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8, borderBottom: '1px solid #f7fafc', cursor: 'pointer' }}
+                                                                    className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 flex items-center gap-3"
                                                                     onClick={() => selectProduct(idx, p)}
                                                                 >
-                                                                    <div style={{ width: 30, height: 30, background: '#f7fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 4 }}>
-                                                                        {p.images && p.images[0] ? <img src={p.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '📷'}
+                                                                    <div className="w-10 h-10 bg-secondary-100 rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                                        {p.images && p.images[0] ? <img src={p.images[0]} className="w-full h-full object-cover" /> : <span className="text-lg">📷</span>}
                                                                     </div>
                                                                     <div>
-                                                                        <div style={{ fontWeight: 600, fontSize: 13 }}>{p.id}</div>
-                                                                        <div style={{ fontSize: 11, color: '#718096' }}>{currency(p.price)}</div>
+                                                                        <div className="font-semibold text-secondary-900 text-sm">{p.id}</div>
+                                                                        <div className="text-xs text-secondary-500">{currency(p.price)}</div>
                                                                     </div>
                                                                 </div>
                                                             ))}
-                                                            <div className="dropdown-item add-new" style={{ padding: 8, textAlign: 'center', fontSize: 12 }}>
-                                                                <a href="/products" target="_blank" style={{ color: '#0070f3', textDecoration: 'none' }}>+ เพิ่มสินค้าใหม่ (ไปหน้าจัดการสินค้า)</a>
+                                                            <div className="p-2 text-center text-xs bg-secondary-50 border-t border-secondary-100">
+                                                                <a href="/products" target="_blank" className="text-primary-600 hover:text-primary-700 hover:underline flex items-center justify-center gap-1">
+                                                                    <Plus size={12} /> เพิ่มสินค้าใหม่ (ไปหน้าจัดการสินค้า)
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div className="flex justify-between items-start gap-2">
                                                     <div>
-                                                        <div style={{ fontWeight: 600, color: '#2d3748' }}>{item.code}</div>
-                                                        <div style={{ fontSize: 13, lineHeight: 1.6, color: '#4a5568' }}>
+                                                        <div className="font-semibold text-secondary-900">{item.code}</div>
+                                                        <div className="text-xs text-secondary-600 leading-relaxed mt-0.5">
                                                             {productInfo || '-'}
                                                         </div>
                                                         {item.description && (
-                                                            <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 2 }}>
+                                                            <div className="text-xs text-secondary-400 mt-1 italic">
                                                                 {item.description}
                                                             </div>
                                                         )}
                                                     </div>
                                                     <button
-                                                        className="btn-icon-delete"
-                                                        style={{ fontSize: 14, color: '#cbd5e0' }}
+                                                        className="text-secondary-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors"
                                                         onClick={() => clearRowProduct(idx)}
                                                         title="เปลี่ยนสินค้า"
                                                     >
-                                                        ✕
+                                                        <RefreshCw size={14} />
                                                     </button>
                                                 </div>
                                             )}
                                         </td>
-                                        <td style={{ verticalAlign: 'top', padding: '8px' }}>
+                                        <td className="px-4 py-3 align-top">
                                             <textarea
-                                                className="input-grid"
+                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow text-sm min-h-[38px] resize-y"
                                                 value={item.note}
                                                 onChange={e => handleItemChange(idx, 'note', e.target.value)}
                                                 rows={2}
-                                                style={{
-                                                    textAlign: 'left',
-                                                    resize: 'vertical',
-                                                    minHeight: '36px',
-                                                    width: '100%',
-                                                    boxSizing: 'border-box',
-                                                    padding: '4px 8px'
-                                                }}
+                                                placeholder="ระบุหมายเหตุ..."
                                             />
                                         </td>
-                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                        <td className="px-4 py-3 align-top text-center pt-4">
                                             <button
-                                                className={`btn-sm ${jobInfo.jobType !== 'separate_job'
-                                                        ? 'btn-primary' // Master Job active
-                                                        : item.specificJob ? 'btn-primary' : 'btn-secondary' // Separate Job logic
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors w-full ${jobInfo.jobType !== 'separate_job'
+                                                    ? 'bg-primary-100 text-primary-700 hover:bg-primary-200' // Master Job active
+                                                    : item.specificJob ? 'bg-primary-100 text-primary-700 hover:bg-primary-200' : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200' // Separate Job logic
                                                     }`}
-                                                style={{ fontSize: 12, padding: '4px 8px', width: '100%' }}
                                                 onClick={() => openJobModal(idx)}
                                             >
                                                 {jobInfo.jobType !== 'separate_job' ? (
@@ -1827,301 +1893,321 @@ export default function OrderForm() {
                                                 )}
                                             </button>
                                         </td>
-                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                                        <td className="px-4 py-3 align-top pt-3">
                                             <input
                                                 type="number"
-                                                className="input-grid"
+                                                className="w-full px-2 py-1.5 text-center border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow text-sm"
                                                 min={1}
                                                 value={item.qty}
                                                 onChange={e => handleItemChange(idx, 'qty', Number(e.target.value))}
-                                                style={{ textAlign: 'center', width: '100%', boxSizing: 'border-box' }}
                                             />
                                         </td>
-                                        <td style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                                        <td className="px-4 py-3 align-top pt-3">
                                             <input
                                                 type="number"
-                                                className="input-grid"
+                                                className="w-full px-2 py-1.5 text-right border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow text-sm"
                                                 value={item.unitPrice}
                                                 onChange={e => handleItemChange(idx, 'unitPrice', Number(e.target.value))}
-                                                style={{ textAlign: 'right', width: '100%', boxSizing: 'border-box', paddingRight: '8px' }}
                                             />
                                         </td>
-                                        <td style={{ textAlign: 'right', verticalAlign: 'middle', paddingRight: '12px' }}>
+                                        <td className="px-4 py-3 align-top text-right text-sm font-medium text-secondary-900 pt-4">
                                             {currency(item.qty * item.unitPrice)}
                                         </td>
-                                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                                            <button className="btn-icon-delete" onClick={() => removeItem(idx)} tabIndex={-1} title="ลบรายการ">×</button>
+                                        <td className="px-4 py-3 align-top text-center pt-3">
+                                            <button
+                                                className="text-secondary-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                                                onClick={() => removeItem(idx)}
+                                                tabIndex={-1}
+                                                title="ลบรายการ"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
-                    <button className="btn-add-item" onClick={addItem}>+ เพิ่มรายการ</button>
+                    <button
+                        className="w-full py-3 border-2 border-dashed border-secondary-300 rounded-b-lg text-secondary-500 hover:text-primary-600 hover:border-primary-500 hover:bg-primary-50 transition-all flex items-center justify-center gap-2 font-medium text-sm"
+                        onClick={addItem}
+                    >
+                        <Plus size={16} /> เพิ่มรายการสินค้า
+                    </button>
                 </div>
             </div>
 
             {/* Job Detail Modal */}
-            {showJobModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3>รายละเอียดงาน (Job Details) - รายการที่ {activeItemIndex + 1}</h3>
-                            <button className="btn-close-modal" onClick={closeJobModal}>×</button>
-                        </div>
-                        <div className="modal-body">
-                            {/* Logic Check: Is Job Editable? */}
-                            {(() => {
-                                const isJobEditable = jobInfo.jobType === 'separate_job';
+            {
+                showJobModal && (
+                    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="px-6 py-4 border-b border-secondary-200 flex justify-between items-center bg-secondary-50">
+                                <h3 className="text-lg font-semibold text-secondary-900">รายละเอียดงาน (Job Details) - รายการที่ {activeItemIndex + 1}</h3>
+                                <button
+                                    className="text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 p-1 rounded-full transition-colors"
+                                    onClick={closeJobModal}
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                                {/* Logic Check: Is Job Editable? */}
+                                {(() => {
+                                    const isJobEditable = jobInfo.jobType === 'separate_job';
 
-                                return (<>
-                                    {!isJobEditable && (
-                                        <div style={{
-                                            background: '#ebf8ff',
-                                            color: '#2b6cb0',
-                                            padding: '8px 12px',
-                                            borderRadius: '6px',
-                                            fontSize: '13px',
-                                            marginBottom: '16px',
-                                            border: '1px solid #bee3f8'
-                                        }}>
-                                            ℹ️ ข้อมูลถูกอ้างอิงจากงานหลัก (Master Job) ไม่สามารถแก้ไขได้ หากต้องการแยกงาน กรุณาเลือกประเภทงานหลักเป็น "Job งานแยก"
+                                    return (<>
+                                        {!isJobEditable && (
+                                            <div className="bg-blue-50 text-blue-700 px-4 py-3 rounded-lg text-sm border border-blue-200 flex items-start gap-2">
+                                                <Info size={16} className="mt-0.5 flex-shrink-0" />
+                                                <span>ข้อมูลถูกอ้างอิงจากงานหลัก (Master Job) ไม่สามารถแก้ไขได้ หากต้องการแยกงาน กรุณาเลือกประเภทงานหลักเป็น "Job งานแยก"</span>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-secondary-700">ประเภทงาน</label>
+                                            <select
+                                                value={modalJobDetails.type}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, type: e.target.value })}
+                                                disabled={!isJobEditable}
+                                                className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                            >
+                                                <option value="installation">งานติดตั้ง (Installation)</option>
+                                                <option value="delivery">งานจัดส่ง (Delivery)</option>
+                                            </select>
                                         </div>
-                                    )}
+                                        {/* Team and Appointment Date - Two Columns */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* Team Dropdown */}
+                                            <div className="space-y-1 relative" ref={modalTeamDropdownRef}>
+                                                <label className="text-sm font-medium text-secondary-700">ทีม (Team)</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        value={modalJobDetails.team}
+                                                        onChange={e => {
+                                                            setModalJobDetails({ ...modalJobDetails, team: e.target.value })
+                                                            setModalShowTeamDropdown(true)
+                                                        }}
+                                                        onFocus={() => isJobEditable && setModalShowTeamDropdown(true)}
+                                                        placeholder="ระบุหรือเลือกทีม..."
+                                                        className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                        disabled={!isJobEditable}
+                                                    />
 
-                                    <div className="form-group">
-                                        <label>ประเภทงาน</label>
-                                        <select
-                                            value={modalJobDetails.type}
-                                            onChange={e => setModalJobDetails({ ...modalJobDetails, type: e.target.value })}
-                                            disabled={!isJobEditable}
-                                            style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                        >
-                                            <option value="installation">งานติดตั้ง (Installation)</option>
-                                            <option value="delivery">งานจัดส่ง (Delivery)</option>
-                                        </select>
-                                    </div>
-                                    {/* Team and Appointment Date - Two Columns */}
-                                    <div className="form-grid two-col">
-                                        {/* Team Dropdown */}
-                                        <div className="form-group" ref={modalTeamDropdownRef}>
-                                            <label>ทีม (Team)</label>
-                                            <div style={{ position: 'relative' }}>
+                                                    {isJobEditable && modalShowTeamDropdown && (
+                                                        <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                            {availableTeams.length > 0 ? (
+                                                                availableTeams.filter(t =>
+                                                                    !modalJobDetails.team ||
+                                                                    t.name.toLowerCase().includes(modalJobDetails.team.toLowerCase())
+                                                                ).map((team, i) => (
+                                                                    <div
+                                                                        key={i}
+                                                                        className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                        onClick={() => {
+                                                                            setModalJobDetails({ ...modalJobDetails, team: team.name })
+                                                                            setModalShowTeamDropdown(false)
+                                                                        }}
+                                                                    >
+                                                                        <div className="font-medium text-secondary-900">{team.name}</div>
+                                                                        <div className="text-xs text-secondary-500">({team.type === 'QC' ? 'QC' : 'ช่าง'})</div>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="px-4 py-2 text-secondary-400 italic cursor-default text-center">
+                                                                    ไม่พบข้อมูลทีม
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium text-secondary-700">วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
+                                                <input
+                                                    type="datetime-local"
+                                                    value={modalJobDetails.dateTime}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
+                                                    disabled={!isJobEditable}
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Modal Location Name Combobox */}
+                                        <div className="space-y-1 relative" ref={modalLocationNameDropdownRef}>
+                                            <label className="text-sm font-medium text-secondary-700">ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
+                                            <div className="relative">
                                                 <input
                                                     type="text"
-                                                    value={modalJobDetails.team}
+                                                    value={modalJobDetails.installLocationName}
                                                     onChange={e => {
-                                                        setModalJobDetails({ ...modalJobDetails, team: e.target.value })
-                                                        setModalShowTeamDropdown(true)
+                                                        setModalJobDetails({ ...modalJobDetails, installLocationName: e.target.value })
+                                                        setModalShowLocationNameDropdown(true)
                                                     }}
-                                                    onFocus={() => isJobEditable && setModalShowTeamDropdown(true)}
-                                                    placeholder="ระบุหรือเลือกทีม..."
-                                                    style={{ width: '100%', ...(!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}) }}
+                                                    onFocus={() => isJobEditable && setModalShowLocationNameDropdown(true)}
+                                                    placeholder="เลือกหรือระบุชื่อสถานที่..."
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
                                                     disabled={!isJobEditable}
                                                 />
-
-                                                {isJobEditable && modalShowTeamDropdown && (
-                                                    <div className="dropdown-menu-absolute">
-                                                        {availableTeams.length > 0 ? (
-                                                            availableTeams.filter(t =>
-                                                                !modalJobDetails.team ||
-                                                                t.name.toLowerCase().includes(modalJobDetails.team.toLowerCase())
-                                                            ).map((team, i) => (
-                                                                <div
-                                                                    key={i}
-                                                                    className="dropdown-item"
-                                                                    onClick={() => {
-                                                                        setModalJobDetails({ ...modalJobDetails, team: team.name })
-                                                                        setModalShowTeamDropdown(false)
-                                                                    }}
-                                                                >
-                                                                    {team.name} <span style={{ fontSize: 11, color: '#718096' }}>({team.type === 'QC' ? 'QC' : 'ช่าง'})</span>
-                                                                </div>
-                                                            ))
+                                                {isJobEditable && modalShowLocationNameDropdown && (
+                                                    <div className="absolute z-50 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                        {savedAddresses.length > 0 ? (
+                                                            <>
+                                                                {savedAddresses.filter(item =>
+                                                                    !modalJobDetails.installLocationName ||
+                                                                    item.name.toLowerCase().includes(modalJobDetails.installLocationName.toLowerCase()) ||
+                                                                    savedAddresses.some(saved => saved.name === modalJobDetails.installLocationName)
+                                                                ).map((item, i) => (
+                                                                    <div
+                                                                        key={i}
+                                                                        className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                        onClick={() => handleModalSelectLocationName(item)}
+                                                                    >
+                                                                        <div className="font-medium text-secondary-900 mb-0.5">{item.name}</div>
+                                                                        <div className="text-xs text-secondary-500">{item.address}</div>
+                                                                        {item.googleMapLink && <div className="text-xs text-primary-500 mt-0.5 flex items-center gap-1"><MapPin size={10} /> มีลิงก์แผนที่</div>}
+                                                                    </div>
+                                                                ))}
+                                                            </>
                                                         ) : (
-                                                            <div className="dropdown-item" style={{ color: '#94a3b8' }}>ไม่พบข้อมูลทีม (QC/ช่าง)</div>
+                                                            <div className="px-4 py-2 text-secondary-400 italic cursor-default text-center">
+                                                                ไม่มีข้อมูลสถานที่ที่บันทึกไว้
+                                                            </div>
                                                         )}
+                                                        <div className="border-t border-secondary-100 my-1"></div>
+                                                        <div
+                                                            className="px-4 py-2 text-primary-600 hover:bg-primary-50 cursor-pointer flex items-center gap-2 justify-center"
+                                                            onClick={() => {
+                                                                // Save temp state
+                                                                const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
+                                                                localStorage.setItem('order_form_temp', JSON.stringify(state));
+
+                                                                if (customer.id) {
+                                                                    router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
+                                                                } else if (customer.name) {
+                                                                    router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
+                                                                } else {
+                                                                    alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Plus size={14} />
+                                                            เพิ่มสถานที่ติดตั้ง
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="form-group">
-                                            <label>วัน-เวลาที่ติดตั้ง/จัดส่ง</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={modalJobDetails.dateTime}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, dateTime: e.target.value })}
-                                                disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                            />
+                                        <div className="space-y-1 relative" ref={modalAddressDropdownRef}>
+                                            <label className="text-sm font-medium text-secondary-700">สถานที่ติดตั้ง / จัดส่ง</label>
+                                            <div className="relative">
+                                                <textarea
+                                                    rows={3}
+                                                    value={modalJobDetails.address}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, address: e.target.value })}
+                                                    placeholder="ระบุสถานที่..."
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                    disabled={!isJobEditable}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Modal Location Name Combobox */}
-                                    <div className="form-group" ref={modalLocationNameDropdownRef}>
-                                        <label>ชื่อสถานที่ติดตั้ง / จัดส่ง</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                type="text"
-                                                value={modalJobDetails.installLocationName}
-                                                onChange={e => {
-                                                    setModalJobDetails({ ...modalJobDetails, installLocationName: e.target.value })
-                                                    setModalShowLocationNameDropdown(true)
-                                                }}
-                                                onFocus={() => isJobEditable && setModalShowLocationNameDropdown(true)}
-                                                placeholder="เลือกหรือระบุชื่อสถานที่..."
-                                                style={{ width: '100%', ...(!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}) }}
-                                                disabled={!isJobEditable}
-                                            />
-                                            {isJobEditable && modalShowLocationNameDropdown && (
-                                                <div className="dropdown-menu-absolute">
-                                                    {savedAddresses.length > 0 ? (
-                                                        <>
-                                                            {savedAddresses.filter(item =>
-                                                                !modalJobDetails.installLocationName ||
-                                                                item.name.toLowerCase().includes(modalJobDetails.installLocationName.toLowerCase()) ||
-                                                                savedAddresses.some(saved => saved.name === modalJobDetails.installLocationName)
-                                                            ).map((item, i) => (
-                                                                <div
-                                                                    key={i}
-                                                                    className="dropdown-item"
-                                                                    onClick={() => handleModalSelectLocationName(item)}
-                                                                >
-                                                                    <div style={{ fontWeight: 600, marginBottom: 2 }}>{item.name}</div>
-                                                                    <div style={{ fontSize: 12, color: '#718096' }}>{item.address}</div>
-                                                                    {item.googleMapLink && <small style={{ color: '#0070f3' }}>📍 มีลิงก์แผนที่</small>}
-                                                                </div>
-                                                            ))}
-                                                        </>
-                                                    ) : (
-                                                        <div className="dropdown-item" style={{ color: '#94a3b8', cursor: 'default' }}>
-                                                            ไม่มีข้อมูลสถานที่ที่บันทึกไว้
-                                                        </div>
-                                                    )}
-                                                    <div className="divider" style={{ margin: '4px 0' }}></div>
-                                                    <div
-                                                        className="dropdown-item"
-                                                        onClick={() => {
-                                                            // Save temp state
-                                                            const state = { customer, taxInvoice, jobInfo, items, shippingFee, discount, deposit };
-                                                            localStorage.setItem('order_form_temp', JSON.stringify(state));
-
-                                                            if (customer.id) {
-                                                                router.push(`/customers/${customer.id}?tab=address&returnUrl=/order`)
-                                                            } else if (customer.name) {
-                                                                router.push(`/customers/new?name=${encodeURIComponent(customer.name)}&returnUrl=/order`)
-                                                            } else {
-                                                                alert('กรุณาระบุชื่อลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
-                                                            }
-                                                        }}
-                                                        style={{ color: '#0070f3', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', cursor: 'pointer' }}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-secondary-700 flex items-center gap-2">
+                                                {modalJobDetails.googleMapLink ? (
+                                                    <a
+                                                        href={modalJobDetails.googleMapLink}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-primary-600 hover:text-primary-700 flex items-center gap-1 hover:underline"
                                                     >
-                                                        <span>+</span> เพิ่มสถานที่ติดตั้ง
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group" ref={modalAddressDropdownRef} style={{ position: 'relative' }}>
-                                        <label>สถานที่ติดตั้ง / จัดส่ง</label>
-                                        <div className="address-combobox">
-                                            <textarea
-                                                rows={3}
-                                                value={modalJobDetails.address}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, address: e.target.value })}
-                                                placeholder="ระบุสถานที่..."
-                                                className="address-input"
-                                                disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>
-                                            {modalJobDetails.googleMapLink ? (
-                                                <a
-                                                    href={modalJobDetails.googleMapLink}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    style={{ color: '#0070f3', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                                                >
-                                                    🗺️ Google Maps Link
-                                                </a>
-                                            ) : (
-                                                'Google Maps Link'
-                                            )}
-                                            {modalJobDetails.distance && <span style={{ marginLeft: 8, color: '#0070f3', fontSize: 12 }}>({modalJobDetails.distance} km)</span>}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={modalJobDetails.googleMapLink}
-                                            onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
-                                            placeholder="https://maps.google.com/..."
-                                            disabled={!isJobEditable}
-                                            style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                        />
-                                    </div>
-
-                                    {/* Inspector 1 */}
-                                    <div className="form-group">
-                                        <label>ผู้ตรวจงาน 1</label>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                        <MapPin size={14} /> Google Maps Link
+                                                    </a>
+                                                ) : (
+                                                    'Google Maps Link'
+                                                )}
+                                                {modalJobDetails.distance && <span className="text-xs text-primary-600">({modalJobDetails.distance} km)</span>}
+                                            </label>
                                             <input
                                                 type="text"
-                                                value={modalJobDetails.inspector1.name}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
-                                                placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                                value={modalJobDetails.googleMapLink}
+                                                onChange={e => setModalJobDetails({ ...modalJobDetails, googleMapLink: e.target.value })}
+                                                placeholder="https://maps.google.com/..."
                                                 disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                            />
-                                            <input
-                                                type="text"
-                                                value={modalJobDetails.inspector1.phone}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
-                                                placeholder="ระบุเบอร์โทร..."
-                                                disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
+                                                className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
                                             />
                                         </div>
-                                    </div>
 
-                                    {/* Inspector 2 */}
-                                    <div className="form-group">
-                                        <label>ผู้ตรวจงาน 2</label>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                            <input
-                                                type="text"
-                                                value={modalJobDetails.inspector2.name}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
-                                                placeholder="ระบุชื่อผู้ตรวจงาน..."
-                                                disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                            />
-                                            <input
-                                                type="text"
-                                                value={modalJobDetails.inspector2.phone}
-                                                onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
-                                                placeholder="ระบุเบอร์โทร..."
-                                                disabled={!isJobEditable}
-                                                style={!isJobEditable ? { background: '#f7fafc', cursor: 'not-allowed' } : {}}
-                                            />
+                                        {/* Inspector 1 */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-secondary-700">ผู้ตรวจงาน 1</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={modalJobDetails.inspector1.name}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, name: e.target.value } })}
+                                                    placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                                    disabled={!isJobEditable}
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={modalJobDetails.inspector1.phone}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, inspector1: { ...modalJobDetails.inspector1, phone: e.target.value } })}
+                                                    placeholder="ระบุเบอร์โทร..."
+                                                    disabled={!isJobEditable}
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
-                                );
-                            })()}
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn-secondary" onClick={closeJobModal}>ยกเลิก</button>
-                            <button className="btn-primary" onClick={saveJobModal}>บันทึก</button>
+
+                                        {/* Inspector 2 */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-secondary-700">ผู้ตรวจงาน 2</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={modalJobDetails.inspector2.name}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, name: e.target.value } })}
+                                                    placeholder="ระบุชื่อผู้ตรวจงาน..."
+                                                    disabled={!isJobEditable}
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={modalJobDetails.inspector2.phone}
+                                                    onChange={e => setModalJobDetails({ ...modalJobDetails, inspector2: { ...modalJobDetails.inspector2, phone: e.target.value } })}
+                                                    placeholder="ระบุเบอร์โทร..."
+                                                    disabled={!isJobEditable}
+                                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow ${!isJobEditable ? 'bg-secondary-100 cursor-not-allowed text-secondary-500' : ''}`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                    );
+                                })()}
+                            </div>
+                            <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
+                                <button
+                                    className="px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors font-medium"
+                                    onClick={closeJobModal}
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                                    onClick={saveJobModal}
+                                >
+                                    บันทึก
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-
+                )
+            }
 
             {/* Datalists for Auto-complete */}
             <datalist id="list-code">
@@ -2152,427 +2238,7 @@ export default function OrderForm() {
                 {[...new Set(productsData.map(p => p.remote).filter(Boolean))].map((v, i) => <option key={i} value={v} />)}
             </datalist>
 
-            <style jsx>{`
-        .order-page {
-          min-height: 100vh;
-          background: #f8f9fa;
-          padding: 20px;
-          font-family: 'Sarabun', sans-serif;
-          box-sizing: border-box;
-        }
-        .page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-          background: #fff;
-          padding: 20px 24px;
-          border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .page-header h1 { 
-          margin: 0; 
-          font-size: 22px; 
-          color: #1a202c;
-          font-weight: 600;
-        }
-        .actions { display: flex; gap: 12px; }
-        .btn-primary { 
-          background: #2563eb; 
-          color: white; 
-          border: none; 
-          padding: 10px 24px; 
-          border-radius: 8px; 
-          font-weight: 500; 
-          cursor: pointer;
-          font-size: 14px;
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
-        }
-        .btn-primary:hover { 
-          background: #1d4ed8;
-          box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-        }
-        .btn-back { 
-          background: white; 
-          color: #64748b; 
-          border: 1px solid #e2e8f0; 
-          padding: 10px 24px; 
-          border-radius: 8px; 
-          font-weight: 500; 
-          cursor: pointer; 
-          transition: all 0.2s;
-          font-size: 14px;
-        .btn-back {
-          background: white;
-          color: #64748b;
-          border: 1px solid #e2e8f0;
-          padding: 10px 24px;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-size: 14px;
-        }
-        .btn-back:hover {
-          background: #f8fafc;
-          border-color: #cbd5e0;
-        }
-        .btn-icon {
-          background: white;
-          color: #64748b;
-          border: 1px solid #e2e8f0;
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-icon:hover {
-          background: #f8fafc;
-          border-color: #cbd5e0;
-          color: #1e293b;
-        }
-          color: #64748b; 
-          border: 1px solid #e2e8f0; 
-          padding: 8px 16px; 
-          border-radius: 8px; 
-          font-weight: 500; 
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-secondary:hover {
-          background: #f8fafc;
-        }
-
-        /* Top Layout Grid - Updated to 4 equal columns */
-        .top-layout {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr); /* Equal width for all 4 cards */
-          gap: 12px;
-          margin-bottom: 16px;
-          align-items: stretch; /* Make them same height */
-        }
-
-        .section-card {
-          background: #fff;
-          padding: 16px;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-          border: 1px solid #e2e8f0;
-          height: 100%;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          transition: box-shadow 0.2s;
-        }
-        .section-card:hover {
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        h2 { 
-          margin: 0 0 16px 0; 
-          font-size: 15px; 
-          color: #1e293b; 
-          border-bottom: 2px solid #f1f5f9; 
-          padding-bottom: 10px;
-          font-weight: 600;
-        }
-        .sub-header { 
-          margin: 12px 0 10px 0; 
-          font-size: 13px; 
-          color: #475569; 
-          font-weight: 600; 
-        }
-
-        .form-grid { display: grid; gap: 12px; }
-        .form-grid.two-col { grid-template-columns: 1fr 1fr; }
-        .form-grid.one-col { grid-template-columns: 1fr; }
-        .full-width { grid-column: 1 / -1; }
-
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        label { 
-          font-size: 12px; 
-          font-weight: 500; 
-          color: #64748b; 
-        }
-        input, select, textarea { 
-          padding: 8px 10px; 
-          border: 1px solid #e2e8f0; 
-          border-radius: 6px; 
-          font-size: 13px; 
-          font-family: inherit;
-          transition: all 0.2s;
-          background: white;
-          box-sizing: border-box;
-          width: 100%;
-        }
-        input:focus, select:focus, textarea:focus { 
-          outline: none; 
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        /* Tax Invoice Dropdown */
-        .btn-dropdown-toggle-header {
-          background: #0070f3;
-          color: white;
-          border: none;
-          padding: 4px 12px;
-          border-radius: 4px;
-          font-size: 11px;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-        .btn-dropdown-toggle-header:hover { background: #0051cc; }
-        
-        .dropdown-menu-absolute {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 4px;
-          z-index: 10000;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          max-height: 300px;
-          overflow-y: auto;
-          min-width: 280px;
-        }
-
-        .dropdown-menu-modal {
-          position: fixed;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 4px;
-          z-index: 10001;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          max-height: 300px;
-          overflow-y: auto;
-          min-width: 280px;
-        }
-
-        /* Address Combobox */
-        .address-combobox {
-          position: relative;
-          display: flex;
-        }
-        .address-input {
-          flex: 1;
-          border-radius: 4px 0 0 4px;
-          resize: vertical;
-        }
-        .btn-dropdown-toggle {
-          width: 30px;
-          border: 1px solid #e2e8f0;
-          border-left: none;
-          background: #f7fafc;
-          border-radius: 0 4px 4px 0;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #4a5568;
-        }
-        .btn-dropdown-toggle:hover { background: #edf2f7; }
-        .dropdown-menu {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid #e2e8f0;
-          border-radius: 4px;
-          margin-top: 4px;
-          z-index: 10;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          max-height: 200px;
-          overflow-y: auto;
-        }
-        .dropdown-item {
-          padding: 8px 12px;
-          cursor: pointer;
-          border-bottom: 1px solid #f7fafc;
-          font-size: 13px;
-          color: #2d3748;
-        }
-        .dropdown-item:hover { background: #f7fafc; }
-        .dropdown-item.add-new {
-          color: #0070f3;
-          font-weight: 500;
-          border-top: 1px solid #e2e8f0;
-        }
-        .dropdown-item strong { display: block; margin-bottom: 2px; }
-        .dropdown-item small { color: #718096; }
-
-        /* Summary Section */
-        .totals-wrapper { font-size: 13px; }
-        .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .grand-total { font-size: 16px; font-weight: 700; color: #1a202c; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
-        .outstanding { font-size: 14px; font-weight: 700; color: #c53030; }
-        .divider { height: 1px; background: #e2e8f0; margin: 12px 0; }
-        .discount-control { display: flex; align-items: center; gap: 4px; }
-        .discount-control select { width: 50px; padding: 2px; }
-        .discount-control input { width: 70px; padding: 2px 4px; text-align: right; }
-        .text-red { color: #e53e3e; }
-
-        /* Items Section */
-        .items-section-full {
-            width: 100%;
-            overflow-x: visible;
-            padding-bottom: 150px; /* Add space for dropdown */
-        }
-        .items-table { width: 100%; border-collapse: collapse; min-width: 1400px; }
-        .items-table th { background: #f7fafc; padding: 8px; font-size: 12px; font-weight: 600; color: #4a5568; text-align: left; border-bottom: 2px solid #edf2f7; }
-        .items-table th.th-equal { width: 6%; }
-        .items-table td { padding: 6px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
-        .input-grid { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; font-size: 13px; text-align: center; }
-        .input-grid.text-left { text-align: left; }
-        .input-grid:hover { border-color: #e2e8f0; background: #fff; }
-        .input-grid:focus { border-color: #0070f3; background: #fff; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .btn-icon-delete { background: none; border: none; color: #e53e3e; font-size: 16px; cursor: pointer; }
-        .btn-add-item { width: 100%; padding: 8px; background: #f7fafc; border: 1px dashed #cbd5e0; color: #4a5568; border-radius: 6px; cursor: pointer; margin-top: 8px; font-size: 13px; }
-        .btn-add-item:hover { background: #edf2f7; }
-
-        /* Image Cell Styles */
-        .image-cell {
-          width: 75px;
-          height: 75px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f7fafc;
-          border: 1px solid #edf2f7;
-          border-radius: 4px;
-          overflow: hidden;
-          position: relative;
-        }
-        .btn-add-image {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #cbd5e0;
-          font-size: 24px;
-        }
-        .btn-add-image:hover { color: #a0aec0; background: #edf2f7; }
-        .image-preview {
-          width: 100%;
-          height: 100%;
-          position: relative;
-        }
-        .image-preview img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .btn-remove-image {
-          position: absolute;
-          top: 0;
-          right: 0;
-          background: rgba(0,0,0,0.5);
-          color: white;
-          border: none;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-size: 14px;
-        }
-        .btn-remove-image:hover { background: rgba(229, 62, 62, 0.8); }
-
-        /* Job Button */
-        .btn-job {
-            background: #edf2f7;
-            border: 1px solid #cbd5e0;
-            color: #4a5568;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            width: 100%;
-        }
-        .btn-job:hover { background: #e2e8f0; }
-        .btn-job.active {
-            background: #0070f3;
-            color: white;
-            border-color: #0070f3;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            width: 500px;
-            max-width: 90%;
-            max-height: 90vh;
-            overflow: visible;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-        }
-        .modal-header {
-            padding: 16px;
-            border-bottom: 1px solid #edf2f7;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h3 { margin: 0; font-size: 16px; color: #2d3748; }
-        .btn-close-modal {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #a0aec0;
-        }
-        .modal-body {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            max-height: calc(90vh - 120px);
-        }
-        .modal-footer {
-            padding: 16px;
-            border-top: 1px solid #edf2f7;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        @media (max-width: 1400px) {
-            .top-layout { grid-template-columns: 1fr 1fr; }
-            .summary-section { grid-column: span 2; }
-        }
-        @media (max-width: 900px) {
-            .top-layout { grid-template-columns: 1fr; }
-            .summary-section { grid-column: auto; }
-        }
-      `}</style>
-        </div>
+        </div >
     )
 }
+

@@ -1,6 +1,33 @@
-/* Basic global styles for 168VSC */
-html,body,#__next{height:100%}
-body{margin:0;background:#f6f7fb;color:#111;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
-h1,h2,h3,h4{margin:0 0 8px 0}
-p{margin:0 0 12px 0}
-a{color:inherit}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    @apply bg-secondary-50 text-secondary-900 antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Custom Scrollbar for a premium feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary-300 rounded-full hover:bg-secondary-400 transition-colors;
+  }
+}
+
+/* Utility for glassmorphism */
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+}
