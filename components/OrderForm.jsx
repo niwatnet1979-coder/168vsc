@@ -638,7 +638,7 @@ export default function OrderForm() {
                 (p.length && p.length.toString().includes(lowerTerm)) ||
                 (p.width && p.width.toString().includes(lowerTerm)) ||
                 (p.height && p.height.toString().includes(lowerTerm))
-            ); // Show all results (no limit)
+            ).slice(0, 50); // Show up to 50 results
             setSearchResults(results);
         } else {
             setSearchResults([]);
