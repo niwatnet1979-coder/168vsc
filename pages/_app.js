@@ -17,7 +17,7 @@ export default function App({ Component, pageProps }) {
         pointerEvents: 'none', // Click through
         opacity: 0.7
       }}>
-        v1.8
+        v1.9
       </div>
       <Component {...pageProps} />
     </>
