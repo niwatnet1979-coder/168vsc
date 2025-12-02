@@ -129,7 +129,7 @@ export default function OrderForm() {
         }
 
         // Load products for search
-        const savedProducts = localStorage.getItem('products_data_v2'); // Using v2 as per instruction
+        const savedProducts = localStorage.getItem('products_data_v3'); // Using v3 to match Product Management
         if (savedProducts) {
             setAllProducts(JSON.parse(savedProducts));
             setProductsData(JSON.parse(savedProducts)); // Keep existing productsData for compatibility if needed
@@ -854,8 +854,12 @@ export default function OrderForm() {
     }
 
     const removeItem = (index) => {
-        if (items.length > 1) {
-            setItems(items.filter((_, i) => i !== index))
+        const newItems = items.filter((_, i) => i !== index);
+        // If all items deleted, add one empty row
+        if (newItems.length === 0) {
+            setItems([{ code: '', description: '', quantity: 1, price: 0, image: null }]);
+        } else {
+            setItems(newItems);
         }
     }
 
