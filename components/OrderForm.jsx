@@ -443,7 +443,102 @@ export default function OrderForm() {
                         </div>
                     </div>
 
-                    {/* Row 1, Col 2: Master Job */}
+                    {/* Row 1, Col 2: Tax Invoice */}
+                    {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                            <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+                                <FileText className="text-primary-600" />
+                                ข้อมูลใบกำกับภาษี
+                            </h2>
+
+                            <div className="flex-1 space-y-4">
+                                {/* Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
+                                            inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
+                                        ) !== -1
+                                            ? customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
+                                                inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
+                                            )
+                                            : ''}
+                                        onChange={(e) => {
+                                            const idx = e.target.value;
+                                            if (idx !== '') {
+                                                const invoice = customersData.find(c => c.name === customer.name).taxInvoices[idx];
+                                                setTaxInvoice({
+                                                    companyName: invoice.companyName || '',
+                                                    taxId: invoice.taxId || '',
+                                                    address: invoice.address || '',
+                                                    branch: invoice.branch || 'สำนักงานใหญ่',
+                                                    phone: customer.phone || '',
+                                                    email: customer.email || '',
+                                                    deliveryAddress: invoice.address || ''
+                                                });
+                                            }
+                                        }}
+                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                    >
+                                        <option value="">-- เลือกใบกำกับภาษี --</option>
+                                        {customersData.find(c => c.name === customer.name)?.taxInvoices?.map((inv, index) => (
+                                            <option key={index} value={index}>
+                                                {inv.companyName} ({inv.taxId})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                </div>
+
+                                {/* Selected Details Card */}
+                                {taxInvoice.companyName && (
+                                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
+                                                <FileText size={24} className="text-primary-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                {/* Header: Company Name & Branch */}
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <h3 className="font-bold text-secondary-900 text-lg leading-tight">
+                                                            {taxInvoice.companyName}
+                                                        </h3>
+                                                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
+                                                            {taxInvoice.branch || 'สำนักงานใหญ่'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
+                                                        <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
+                                                        <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Addresses */}
+                                                <div className="grid grid-cols-1 gap-4 pt-3 border-t border-primary-200/50">
+                                                    <div>
+                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
+                                                        <div className="text-sm text-secondary-800 leading-relaxed">
+                                                            {typeof taxInvoice.address === 'string' ? taxInvoice.address : JSON.stringify(taxInvoice.address)}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่จัดส่งเอกสาร</label>
+                                                        <div className="text-sm text-secondary-800 leading-relaxed">
+                                                            {typeof (taxInvoice.deliveryAddress || taxInvoice.address) === 'string'
+                                                                ? (taxInvoice.deliveryAddress || taxInvoice.address)
+                                                                : JSON.stringify(taxInvoice.deliveryAddress || taxInvoice.address)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Row 2, Col 1: Master Job */}
                     <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
                         <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                             <Wrench className="text-primary-600" />
@@ -496,8 +591,16 @@ export default function OrderForm() {
                                                         installAddress: addr.address || '',
                                                         googleMapLink: addr.googleMapsLink || '',
                                                         distance: addr.distance ? `${addr.distance.toFixed(2)} km` : '',
-                                                        inspector1: addr.inspector1 || { name: '', phone: '' },
-                                                        inspector2: addr.inspector2 || { name: '', phone: '' }
+                                                        inspector1: addr.inspector1 ? {
+                                                            name: String(addr.inspector1.name || ''),
+                                                            phone: String(addr.inspector1.phone || ''),
+                                                            address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
+                                                        } : { name: '', phone: '', address: '' },
+                                                        inspector2: addr.inspector2 ? {
+                                                            name: String(addr.inspector2.name || ''),
+                                                            phone: String(addr.inspector2.phone || ''),
+                                                            address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
+                                                        } : { name: '', phone: '', address: '' }
                                                     });
                                                 }
                                             }}
@@ -598,100 +701,6 @@ export default function OrderForm() {
                         </div>
                     </div>
 
-                    {/* Row 2, Col 1: Tax Invoice */}
-                    {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
-                            <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                                <FileText className="text-primary-600" />
-                                ข้อมูลใบกำกับภาษี
-                            </h2>
-
-                            <div className="flex-1 space-y-4">
-                                {/* Dropdown */}
-                                <div className="relative">
-                                    <select
-                                        value={customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
-                                            inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
-                                        ) !== -1
-                                            ? customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
-                                                inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
-                                            )
-                                            : ''}
-                                        onChange={(e) => {
-                                            const idx = e.target.value;
-                                            if (idx !== '') {
-                                                const invoice = customersData.find(c => c.name === customer.name).taxInvoices[idx];
-                                                setTaxInvoice({
-                                                    companyName: invoice.companyName || '',
-                                                    taxId: invoice.taxId || '',
-                                                    address: invoice.address || '',
-                                                    branch: invoice.branch || 'สำนักงานใหญ่',
-                                                    phone: customer.phone || '',
-                                                    email: customer.email || '',
-                                                    deliveryAddress: invoice.address || ''
-                                                });
-                                            }
-                                        }}
-                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                    >
-                                        <option value="">-- เลือกใบกำกับภาษี --</option>
-                                        {customersData.find(c => c.name === customer.name)?.taxInvoices?.map((inv, index) => (
-                                            <option key={index} value={index}>
-                                                {inv.companyName} ({inv.taxId})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                </div>
-
-                                {/* Selected Details Card */}
-                                {taxInvoice.companyName && (
-                                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
-                                                <FileText size={24} className="text-primary-600" />
-                                            </div>
-                                            <div className="flex-1 space-y-3">
-                                                {/* Header: Company Name & Branch */}
-                                                <div>
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <h3 className="font-bold text-secondary-900 text-lg leading-tight">
-                                                            {taxInvoice.companyName}
-                                                        </h3>
-                                                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
-                                                            {taxInvoice.branch || 'สำนักงานใหญ่'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
-                                                        <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
-                                                        <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Addresses */}
-                                                <div className="grid grid-cols-1 gap-4 pt-3 border-t border-primary-200/50">
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
-                                                        <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {typeof taxInvoice.address === 'string' ? taxInvoice.address : JSON.stringify(taxInvoice.address)}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่จัดส่งเอกสาร</label>
-                                                        <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {typeof (taxInvoice.deliveryAddress || taxInvoice.address) === 'string'
-                                                                ? (taxInvoice.deliveryAddress || taxInvoice.address)
-                                                                : JSON.stringify(taxInvoice.deliveryAddress || taxInvoice.address)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Row 2, Col 2: Payment Summary */}
                     <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
