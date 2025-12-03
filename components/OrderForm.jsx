@@ -209,6 +209,47 @@ export default function OrderForm() {
         }
     }
 
+    // Quick Add Product State
+    const [showProductModal, setShowProductModal] = useState(false)
+    const [newProduct, setNewProduct] = useState({
+        id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
+        length: '', width: '', height: '', material: '', color: '', crystalColor: '',
+        bulbType: '', light: '', remote: '', images: []
+    })
+
+    const handleSaveNewProduct = (e) => {
+        e.preventDefault()
+        if (!newProduct.id) {
+            alert('กรุณากรอกรหัสสินค้า')
+            return
+        }
+
+        // Save to localStorage
+        const savedProducts = localStorage.getItem('products_data_v3')
+        let products = savedProducts ? JSON.parse(savedProducts) : []
+
+        // Check duplicate
+        if (products.some(p => p.id === newProduct.id)) {
+            alert('รหัสสินค้านี้มีอยู่แล้ว')
+            return
+        }
+
+        const updatedProducts = [...products, newProduct]
+        localStorage.setItem('products_data_v3', JSON.stringify(updatedProducts))
+
+        // Update local state
+        setProductsData(updatedProducts)
+
+        // Close modal and reset
+        setShowProductModal(false)
+        setNewProduct({
+            id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
+            length: '', width: '', height: '', material: '', color: '', crystalColor: '',
+            bulbType: '', light: '', remote: '', images: []
+        })
+        alert('เพิ่มสินค้าเรียบร้อยแล้ว')
+    }
+
     const selectProduct = (index, product) => {
         const newItems = [...items]
         newItems[index] = {
@@ -223,10 +264,10 @@ export default function OrderForm() {
             length: product.length, width: product.width, height: product.height,
             material: product.material, color: product.color,
             bulbType: product.bulbType, light: product.light,
-            _searchTerm: ''
+            _searchTerm: undefined,
+            showPopup: false
         }
         setItems(newItems)
-        setActiveSearchIndex(null)
     }
 
     const handleSaveOrder = () => {
@@ -847,53 +888,107 @@ export default function OrderForm() {
                                             </div>
                                             {/* Product Search Popup */}
                                             {item.showPopup && (
-                                                <div className="absolute left-0 top-full mt-1 w-[400px] bg-white border border-secondary-200 rounded-lg shadow-xl z-[9999] max-h-80 overflow-y-auto">
-                                                    {productsData
-                                                        .filter(p => {
-                                                            if (!item._searchTerm) return true;
-                                                            const lowerTerm = item._searchTerm.toLowerCase();
-                                                            // Deep search: Check all string properties
-                                                            return JSON.stringify(p).toLowerCase().includes(lowerTerm);
-                                                        })
-                                                        .slice(0, 20)
-                                                        .map(p => (
-                                                            <div
-                                                                key={p.id}
-                                                                onClick={() => selectProduct(idx, p)}
-                                                                className="px-4 py-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 group transition-colors"
-                                                            >
-                                                                <div className="grid grid-cols-1 gap-0.5">
-                                                                    {/* Line 1: Code */}
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="font-bold text-primary-700 text-sm">{p.id}</span>
-                                                                        <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">{p.category || 'ทั่วไป'}</span>
-                                                                    </div>
-                                                                    {/* Line 2: Name */}
-                                                                    <div className="text-sm text-secondary-900 font-medium truncate" title={p.name}>
-                                                                        {p.name}
-                                                                    </div>
-                                                                    {/* Line 3: Price */}
-                                                                    <div className="text-xs text-secondary-600 flex items-center gap-2">
-                                                                        <span className="font-semibold text-success-600">{currency(p.price)}</span>
-                                                                        <span className="text-secondary-400">/ {p.unit || 'ชิ้น'}</span>
-                                                                    </div>
-                                                                    {/* Line 4: Stock/Details */}
-                                                                    <div className="text-[10px] text-secondary-400 flex items-center gap-2 truncate">
-                                                                        <span>คงเหลือ: {p.stock || 0}</span>
-                                                                        <span>•</span>
-                                                                        <span>{p.brand || '-'}</span>
+                                                <>
+                                                    <div className="fixed inset-0 z-[9998]" onClick={() => {
+                                                        const newItems = [...items];
+                                                        newItems[idx].showPopup = false;
+                                                        setItems(newItems);
+                                                    }}></div>
+                                                    <div className="absolute left-0 top-full mt-1 w-[400px] bg-white border border-secondary-200 rounded-lg shadow-xl z-[9999] max-h-80 overflow-y-auto">
+                                                        {productsData
+                                                            .filter(p => {
+                                                                if (!item._searchTerm) return true;
+                                                                const lowerTerm = item._searchTerm.toLowerCase();
+                                                                // Deep search: Check all string properties
+                                                                return JSON.stringify(p).toLowerCase().includes(lowerTerm);
+                                                            })
+                                                            .map(p => (
+                                                                <div
+                                                                    key={p.id}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        selectProduct(idx, p);
+                                                                    }}
+                                                                    className="px-4 py-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 group transition-colors"
+                                                                >
+                                                                    <div className="grid grid-cols-1 gap-1">
+                                                                        {/* Line 1: Code + Category */}
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="font-bold text-primary-700 text-sm">{String(p.id || '')}</span>
+                                                                            <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">
+                                                                                {String(p.category || 'ทั่วไป')}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        {/* Line 2: Description */}
+                                                                        {p.description && typeof p.description === 'string' && (
+                                                                            <div className="text-xs text-secondary-900 font-medium line-clamp-2" title={p.description}>
+                                                                                {p.description}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Line 3: Dimensions + Material + Color */}
+                                                                        <div className="text-[11px] text-secondary-600 flex flex-wrap items-center gap-1.5">
+                                                                            {(p.length || p.width || p.height) && (
+                                                                                <>
+                                                                                    <span className="font-medium">
+                                                                                        📏 {[
+                                                                                            typeof p.length === 'string' || typeof p.length === 'number' ? String(p.length) : null,
+                                                                                            typeof p.width === 'string' || typeof p.width === 'number' ? String(p.width) : null,
+                                                                                            typeof p.height === 'string' || typeof p.height === 'number' ? String(p.height) : null
+                                                                                        ].filter(Boolean).join(' × ')} cm
+                                                                                    </span>
+                                                                                    <span className="text-secondary-300">•</span>
+                                                                                </>
+                                                                            )}
+                                                                            {p.material && typeof p.material === 'string' && (
+                                                                                <>
+                                                                                    <span>🔧 {p.material}</span>
+                                                                                    <span className="text-secondary-300">•</span>
+                                                                                </>
+                                                                            )}
+                                                                            {p.color && typeof p.color === 'string' && (
+                                                                                <span>🎨 {p.color}</span>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Line 4: Price + Stock */}
+                                                                        <div className="flex items-center justify-between pt-1 border-t border-secondary-100">
+                                                                            <div className="text-xs text-secondary-600 flex items-center gap-2">
+                                                                                <span className="font-bold text-success-600 text-sm">{currency(p.price)}</span>
+                                                                                <span className="text-secondary-400">/ {String(p.unit || 'ชิ้น')}</span>
+                                                                            </div>
+                                                                            <div className="text-[10px] text-secondary-500 flex items-center gap-2">
+                                                                                <span className={`font-medium ${p.stock > 0 ? 'text-success-600' : 'text-error-600'}`}>
+                                                                                    คงเหลือ: {p.stock || 0}
+                                                                                </span>
+                                                                                {p.brand && typeof p.brand === 'string' && (
+                                                                                    <>
+                                                                                        <span className="text-secondary-300">•</span>
+                                                                                        <span>{p.brand}</span>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
-                                                    <div
-                                                        className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer text-sm font-medium hover:bg-primary-50 flex items-center justify-center gap-2 border-t border-secondary-200 sticky bottom-0"
-                                                        onClick={() => window.open('/products', '_blank')}
-                                                    >
-                                                        <Plus size={16} />
-                                                        เพิ่มสินค้าใหม่
+                                                            ))}
+                                                        <div
+                                                            className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer text-sm font-medium hover:bg-primary-100 flex items-center justify-center gap-2 border-t border-secondary-200 sticky bottom-0"
+                                                            onClick={() => {
+                                                                setNewProduct({
+                                                                    id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
+                                                                    length: '', width: '', height: '', material: '', color: '', crystalColor: '',
+                                                                    bulbType: '', light: '', remote: '', images: []
+                                                                })
+                                                                setShowProductModal(true)
+                                                            }}
+                                                        >
+                                                            <Plus size={16} />
+                                                            เพิ่มสินค้าใหม่
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </>
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
@@ -1025,6 +1120,83 @@ export default function OrderForm() {
                     </div>
                 )
             }
+            {/* Quick Add Product Modal */}
+            {showProductModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" onClick={() => setShowProductModal(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white border-b border-secondary-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                            <h2 className="text-2xl font-bold text-secondary-900">เพิ่มสินค้าใหม่</h2>
+                            <button onClick={() => setShowProductModal(false)} className="p-2 hover:bg-secondary-100 rounded-lg">
+                                <X size={24} className="text-secondary-500" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveNewProduct} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">รหัสสินค้า *</label>
+                                    <input type="text" value={newProduct.id} onChange={e => setNewProduct({ ...newProduct, id: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทหลัก *</label>
+                                    <input type="text" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
+                                    <input type="text" value={newProduct.length} onChange={e => setNewProduct({ ...newProduct, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
+                                    <input type="text" value={newProduct.width} onChange={e => setNewProduct({ ...newProduct, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
+                                    <input type="text" value={newProduct.height} onChange={e => setNewProduct({ ...newProduct, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">วัสดุ</label>
+                                    <input type="text" value={newProduct.material} onChange={e => setNewProduct({ ...newProduct, material: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สี</label>
+                                    <input type="text" value={newProduct.color} onChange={e => setNewProduct({ ...newProduct, color: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ราคา (บาท)</label>
+                                    <input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">คงเหลือ</label>
+                                    <input type="number" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">หมายเหตุ</label>
+                                <textarea value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
+                                <button type="button" onClick={() => setShowProductModal(false)} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
+                                    ยกเลิก
+                                </button>
+                                <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
+                                    บันทึก
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div >
     )
 }

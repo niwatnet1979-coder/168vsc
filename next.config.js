@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Force restart server
 const nextConfig = {
     output: 'export',
     images: {
