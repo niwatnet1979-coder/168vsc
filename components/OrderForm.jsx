@@ -603,7 +603,7 @@ export default function OrderForm() {
 
                                     <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         value={jobInfo.appointmentDate}
                                         onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
                                         className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
@@ -854,7 +854,7 @@ export default function OrderForm() {
                             <Plus size={18} /> เพิ่มรายการ
                         </button>
                     </div>
-                    <div className="overflow-visible">
+                    <div className="overflow-x-auto">
                         <table className="w-full min-w-[800px]">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
@@ -894,7 +894,7 @@ export default function OrderForm() {
                                                         newItems[idx].showPopup = false;
                                                         setItems(newItems);
                                                     }}></div>
-                                                    <div className="absolute left-0 top-full mt-1 w-[400px] bg-white border border-secondary-200 rounded-lg shadow-xl z-[9999] max-h-80 overflow-y-auto">
+                                                    <div className="fixed md:absolute left-0 md:left-0 top-0 md:top-full md:mt-1 w-full md:w-[400px] h-full md:h-auto bg-white border-0 md:border border-secondary-200 md:rounded-lg shadow-xl z-[9999] max-h-full md:max-h-80 overflow-y-auto">
                                                         {productsData
                                                             .filter(p => {
                                                                 if (!item._searchTerm) return true;
