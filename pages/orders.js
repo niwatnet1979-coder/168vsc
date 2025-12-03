@@ -266,11 +266,7 @@ export default function OrdersListPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link href={`/order?id=${order.id}`}>
-                                                        <button className="p-2 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="ดูรายละเอียด">
-                                                            <Eye size={18} />
-                                                        </button>
-                                                    </Link>
+
                                                     <button
                                                         onClick={() => handleDeleteOrder(order.id)}
                                                         className="p-2 text-secondary-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"

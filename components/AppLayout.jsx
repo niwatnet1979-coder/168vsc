@@ -62,7 +62,7 @@ const AppLayout = ({ children }) => {
                                 168
                             </div>
                             <span className="font-bold text-xl text-secondary-900 tracking-tight">VSC System</span>
-                            <span className="ml-2 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-bold rounded-full">v3.0.5</span>
+                            <span className="ml-2 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-bold rounded-full">v3.0.8</span>
                         </div>
                         <button
                             className="ml-auto lg:hidden text-secondary-500 hover:text-secondary-900"

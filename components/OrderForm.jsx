@@ -941,7 +941,9 @@ export default function OrderForm() {
                                                     className={`flex justify-center w-full hover:bg-secondary-100 p-1 rounded transition-colors ${item.subJob ? 'text-primary-600' : 'text-secondary-400'}`}
                                                     title={item.subJob ? "แก้ไขข้อมูลงานย่อย" : "เพิ่มข้อมูลงานย่อย"}
                                                 >
-                                                    {item.subJob ? <Wrench size={18} /> : <HelpCircle size={18} />}
+                                                    {item.subJob ? (
+                                                        item.subJob.jobType === 'delivery' ? <Truck size={18} /> : <Wrench size={18} />
+                                                    ) : <HelpCircle size={18} />}
                                                 </button>
                                             )}
                                         </td>
