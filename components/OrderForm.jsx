@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import CustomerModal from './CustomerModal'
 import {
-    Home, ArrowLeft, Save, UserPlus, Search, MapPin, Calendar,
-    X, Plus, Trash2, Truck, Wrench, FileText, CreditCard,
-    User, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown, Edit2, FileEdit, Camera, HelpCircle
+    Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
+    ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
+    CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle
 } from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
@@ -69,7 +70,7 @@ export default function OrderForm() {
 
     // --- Form States ---
     const [customer, setCustomer] = useState({
-        name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
+        id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
         mediaSource: '', mediaSourceOther: ''
     })
@@ -111,6 +112,8 @@ export default function OrderForm() {
     const [searchResults, setSearchResults] = useState([])
     const [showMapPopup, setShowMapPopup] = useState(false)
     const [selectedMapLink, setSelectedMapLink] = useState('')
+    const [showEditCustomerModal, setShowEditCustomerModal] = useState(false)
+    const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
 
     // --- Effects ---
     useEffect(() => {
@@ -133,6 +136,27 @@ export default function OrderForm() {
 
     // Load Existing Order
     useEffect(() => {
+        const generateOrderId = () => {
+            const savedOrders = localStorage.getItem('orders_data')
+            let newId = 'OD0000001' // Default starting ID
+
+            if (savedOrders) {
+                const orders = JSON.parse(savedOrders)
+                if (orders.length > 0) {
+                    // Extract numbers from existing IDs to find the max
+                    const maxId = orders.reduce((max, order) => {
+                        // Handle both old format (ORD-XXX) and new format (ODXXXXXXX)
+                        const numStr = order.id.replace(/\D/g, '')
+                        const num = parseInt(numStr, 10)
+                        return num > max ? num : max
+                    }, 0)
+
+                    // Generate new ID with OD prefix and 7-digit padding
+                    newId = `OD${(maxId + 1).toString().padStart(7, '0')}`
+                }
+            }
+            return newId
+        }
         if (router.query.id) {
             const savedOrders = localStorage.getItem('orders_data')
             if (savedOrders) {
@@ -188,6 +212,43 @@ export default function OrderForm() {
                 googleMapLink: addr.mapLink || ''
             }))
         }
+    }
+
+    const handleUpdateCustomer = (updatedCustomer) => {
+        // Update local state
+        setCustomer(prev => ({ ...prev, ...updatedCustomer }))
+
+        // Update customers list in localStorage
+        const updatedCustomersList = customersData.map(c =>
+            c.id === updatedCustomer.id ? { ...c, ...updatedCustomer } : c
+        )
+        setCustomersData(updatedCustomersList)
+        localStorage.setItem('customers_data', JSON.stringify(updatedCustomersList))
+
+        setShowEditCustomerModal(false)
+    }
+
+    const handleAddNewCustomer = (newCustomerData) => {
+        // Generate new customer ID
+        const newId = 'CUST' + Date.now()
+        const newCustomer = {
+            ...newCustomerData,
+            id: newId
+        }
+
+        // Add to customers list
+        const updatedCustomersList = [...customersData, newCustomer]
+        setCustomersData(updatedCustomersList)
+        localStorage.setItem('customers_data', JSON.stringify(updatedCustomersList))
+
+        // Auto-select the new customer
+        setCustomer({
+            ...newCustomer,
+            contact1: newCustomer.contact1 || { name: '', phone: '' },
+            contact2: newCustomer.contact2 || { name: '', phone: '' }
+        })
+
+        setShowAddCustomerModal(false)
     }
 
     const handleSearchProduct = (index, term) => {
@@ -301,14 +362,83 @@ export default function OrderForm() {
         const savedOrders = localStorage.getItem('orders_data')
         const orders = savedOrders ? JSON.parse(savedOrders) : []
 
-        const orderId = router.query.id || `ORD-${String(orders.length + 1).padStart(3, '0')}`
+        // Generate Order ID using the new format (OD0000001)
+        const generateOrderId = () => {
+            let newId = 'OD0000001' // Default starting ID
+
+            if (savedOrders) {
+                const existingOrders = JSON.parse(savedOrders)
+                if (existingOrders.length > 0) {
+                    // Extract numbers from existing IDs to find the max
+                    const maxId = existingOrders.reduce((max, order) => {
+                        // Handle both old format (ORD-XXX) and new format (ODXXXXXXX)
+                        const numStr = order.id.replace(/\D/g, '')
+                        const num = parseInt(numStr, 10)
+                        return num > max ? num : max
+                    }, 0)
+
+                    // Generate new ID with OD prefix and 7-digit padding
+                    newId = `OD${(maxId + 1).toString().padStart(7, '0')}`
+                }
+            }
+            return newId
+        }
+
+        const orderId = router.query.id || generateOrderId()
+
+        // Generate Job IDs for each item
+        let lastJobNum = 0
+
+        if (savedOrders) {
+            const existingOrders = JSON.parse(savedOrders)
+            existingOrders.forEach(o => {
+                if (o.items) {
+                    o.items.forEach(i => {
+                        // Check subJob.jobId
+                        if (i.subJob && i.subJob.jobId) {
+                            const num = parseInt(i.subJob.jobId.replace(/\D/g, '') || '0', 10)
+                            if (num > lastJobNum) lastJobNum = num
+                        }
+                    })
+                }
+            })
+        }
+
+        const itemsWithJobIds = items.map((item, index) => {
+            // If item already has a jobId (e.g., when editing an existing order), keep it.
+            // Otherwise, generate a new one.
+            if (item.subJob && item.subJob.jobId) {
+                return item;
+            }
+
+            lastJobNum++
+            const newJobId = `JB${lastJobNum.toString().padStart(7, '0')}`
+
+            // Ensure subJob object exists
+            const subJob = item.subJob || {}
+
+            return {
+                ...item,
+                subJob: {
+                    ...subJob,
+                    jobId: newJobId, // Assign permanent Job ID
+                    // Inherit other props or set defaults if missing
+                    jobType: subJob.jobType || 'installation',
+                    appointmentDate: subJob.appointmentDate || '',
+                    team: subJob.team || '',
+                    description: subJob.description || '',
+                    inspector1: subJob.inspector1 || null,
+                    installAddress: subJob.installAddress || ''
+                }
+            }
+        })
 
         const newOrder = {
             id: orderId,
             date: jobInfo.orderDate,
             customer: customer.name,
             customerDetails: customer,
-            items: items,
+            items: itemsWithJobIds, // Use items with Job IDs
             total: total,
             deposit: depositAmount,
             status: 'Pending',
@@ -329,8 +459,8 @@ export default function OrderForm() {
         }
 
         localStorage.setItem('orders_data', JSON.stringify(orders))
-        alert('บันทึกออเดอร์เรียบร้อย')
-        router.push('/orders')
+        // Use window.location.href for reliable navigation in static export mode
+        window.location.href = '/orders'
     }
 
     // --- Calculations ---
@@ -382,12 +512,13 @@ export default function OrderForm() {
                                 ข้อมูลลูกค้า
                             </h2>
                             {customer.id && (
-                                <Link href={`/customers?edit=${customer.id}`} target="_blank">
-                                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors">
-                                        <Edit2 size={14} />
-                                        แก้ไข
-                                    </button>
-                                </Link>
+                                <button
+                                    onClick={() => setShowEditCustomerModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
+                                >
+                                    <Edit2 size={14} />
+                                    แก้ไข
+                                </button>
                             )}
                         </div>
                         <div className="flex-1 space-y-4">
@@ -423,7 +554,7 @@ export default function OrderForm() {
                                                 </div>
                                             ))}
                                         <div
-                                            onClick={() => router.push(`/customers/new?returnUrl=${router.asPath}`)}
+                                            onClick={() => setShowAddCustomerModal(true)}
                                             className="px-4 py-2 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100"
                                         >
                                             <UserPlus size={16} /> เพิ่มลูกค้าใหม่
@@ -1202,6 +1333,22 @@ export default function OrderForm() {
                 onClose={() => setShowProductModal(false)}
                 product={newProduct}
                 onSave={handleSaveNewProduct}
+            />
+
+            {/* Customer Edit Modal */}
+            <CustomerModal
+                isOpen={showEditCustomerModal}
+                onClose={() => setShowEditCustomerModal(false)}
+                customer={customer}
+                onSave={handleUpdateCustomer}
+            />
+
+            {/* Customer Add Modal */}
+            <CustomerModal
+                isOpen={showAddCustomerModal}
+                onClose={() => setShowAddCustomerModal(false)}
+                customer={null}
+                onSave={handleAddNewCustomer}
             />
 
             {/* Sub Job Modal */}

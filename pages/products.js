@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
@@ -30,6 +30,7 @@ export default function ProductManagement() {
     const [viewMode, setViewMode] = useState('table')
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
+    const isResetting = useRef(false) // Prevent multiple resets
 
     useEffect(() => {
         const savedProducts = localStorage.getItem('products_data_v3')
@@ -137,10 +138,14 @@ export default function ProductManagement() {
     }
 
     const handleResetData = () => {
+        if (isResetting.current) return // Prevent multiple clicks
+
         if (confirm('คุณต้องการรีเซ็ตข้อมูลสินค้าทั้งหมดหรือไม่?')) {
+            isResetting.current = true
             setProducts(MOCK_PRODUCTS_DATA)
             localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
-            alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว')
+            // Reload page to show fresh data
+            window.location.reload()
         }
     }
 

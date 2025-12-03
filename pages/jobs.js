@@ -35,9 +35,9 @@ export default function JobQueuePage() {
                 orders.forEach(order => {
                     if (order.items && order.items.length > 0) {
                         order.items.forEach((item, index) => {
-                            // Determine job details: use specific job if available, otherwise fallback to master job
-                            const hasSpecificJob = item.specificJob && item.specificJob.type;
-                            const jobSource = hasSpecificJob ? item.specificJob : order.jobInfo;
+                            // Determine job details: use subJob if available, otherwise fallback to master job
+                            const hasSubJob = item.subJob && item.subJob.jobType;
+                            const jobSource = hasSubJob ? item.subJob : order.jobInfo;
 
                             // If no job info found at all, skip (or use defaults)
                             if (!jobSource) return;
@@ -46,20 +46,43 @@ export default function JobQueuePage() {
                             let status = order.status || 'Pending';
 
                             // Map job type to display label
-                            const jobTypeLabel = jobSource.type === 'installation' ? 'ติดตั้ง' :
-                                jobSource.type === 'delivery' ? 'ส่งของ' : jobSource.type;
+                            const jobTypeLabel = jobSource.jobType === 'installation' ? 'ติดตั้ง' :
+                                jobSource.jobType === 'delivery' ? 'ส่งของ' :
+                                    jobSource.type === 'installation' ? 'ติดตั้ง' : // Fallback for master job structure
+                                        jobSource.type === 'delivery' ? 'ส่งของ' :
+                                            jobSource.jobType || jobSource.type || '-';
+
+                            // Handle customer name (could be object or string)
+                            let customerName = 'Unknown';
+                            if (order.customer) {
+                                if (typeof order.customer === 'object') {
+                                    customerName = order.customer.name || 'Unknown';
+                                } else {
+                                    customerName = order.customer;
+                                }
+                            }
+
+                            // Use persistent Job ID if available, otherwise fallback to generated (safety)
+                            let jobId = item.subJob?.jobId;
+
+                            if (!jobId) {
+                                // Fallback logic for old data without Job IDs
+                                const orderIdNum = parseInt(order.id.replace(/\D/g, '') || '0', 10);
+                                const jobNum = (orderIdNum * 100) + (index + 1);
+                                jobId = `JB${jobNum.toString().padStart(7, '0')}`;
+                            }
 
                             allJobs.push({
-                                uniqueId: `${order.id}-${index + 1}`,
+                                uniqueId: jobId,
                                 orderId: order.id,
-                                customer: order.customer ? order.customer.name : 'Unknown',
+                                customer: customerName,
                                 product: item,
                                 jobType: jobTypeLabel,
-                                rawJobType: jobSource.type,
-                                appointmentDate: jobSource.dateTime || '-',
+                                rawJobType: jobSource.jobType || jobSource.type,
+                                appointmentDate: jobSource.appointmentDate || jobSource.dateTime || '-',
                                 team: jobSource.team || '-',
                                 inspector: jobSource.inspector1?.name || '-',
-                                address: jobSource.installAddress || '-',
+                                address: jobSource.installAddress || jobSource.installLocationName || '-',
                                 status: status,
                                 priority: 'Medium'
                             })
@@ -87,6 +110,7 @@ export default function JobQueuePage() {
     const filteredJobs = jobs.filter(job => {
         // Search filter
         const matchesSearch =
+            job.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (job.product.name && job.product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -218,7 +242,7 @@ export default function JobQueuePage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
                         <input
                             type="text"
-                            placeholder="ค้นหา Order ID, ลูกค้า, สินค้า, ทีม..."
+                            placeholder="ค้นหา Job ID, Order ID, ลูกค้า, สินค้า, ทีม..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                             className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
@@ -242,7 +266,7 @@ export default function JobQueuePage() {
                         <table className="w-full">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">Order ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">JOB ID</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สินค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
@@ -257,8 +281,8 @@ export default function JobQueuePage() {
                                     paginatedJobs.map((job, i) => (
                                         <tr key={i} className="hover:bg-secondary-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Link href={`/order?id=${job.orderId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                    {job.orderId}
+                                                <Link href={`/job?id=${job.uniqueId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                    {job.uniqueId}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

@@ -16,7 +16,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
             })
         } else {
             setFormData({
-                id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
+                id: '', category: '', name: '', subcategory: '', price: '', stock: '', description: '',
                 length: '', width: '', height: '', material: '', color: '', crystalColor: '',
                 bulbType: '', light: '', remote: '', images: []
             })
@@ -27,7 +27,11 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        onSave(formData)
+        onSave({
+            ...formData,
+            price: Number(formData.price) || 0,
+            stock: Number(formData.stock) || 0
+        })
     }
 
     return (
@@ -114,11 +118,21 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">ราคา (บาท)</label>
-                            <input type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <input
+                                type="number"
+                                value={formData.price}
+                                onChange={e => setFormData({ ...formData, price: e.target.value === '' ? '' : Number(e.target.value) })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">สต้อคคงเหลือ</label>
-                            <input type="number" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <input
+                                type="number"
+                                value={formData.stock}
+                                onChange={e => setFormData({ ...formData, stock: e.target.value === '' ? '' : Number(e.target.value) })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            />
                         </div>
                     </div>
 

@@ -33,7 +33,17 @@ export default function OrdersListPage() {
     useEffect(() => {
         const savedData = localStorage.getItem('orders_data')
         if (savedData) {
-            setOrders(JSON.parse(savedData))
+            let parsedData = JSON.parse(savedData)
+
+            // HOTFIX: Force delete stubborn 'ORD-001' if present
+            const hasStubbornData = parsedData.some(o => o.id === 'ORD-001')
+            if (hasStubbornData) {
+                parsedData = parsedData.filter(o => o.id !== 'ORD-001')
+                localStorage.setItem('orders_data', JSON.stringify(parsedData))
+                console.log('Force deleted ORD-001')
+            }
+
+            setOrders(parsedData)
         }
     }, [])
 
@@ -63,17 +73,27 @@ export default function OrdersListPage() {
 
     const handleDeleteOrder = (orderId) => {
         if (confirm('คุณต้องการลบคำสั่งซื้อนี้ใช่หรือไม่?')) {
-            const updatedOrders = orders.filter(o => o.id !== orderId)
-            setOrders(updatedOrders)
-            localStorage.setItem('orders_data', JSON.stringify(updatedOrders))
+            // Read fresh data from localStorage to ensure we don't overwrite with stale state
+            const currentData = localStorage.getItem('orders_data')
+            if (currentData) {
+                const currentOrders = JSON.parse(currentData)
+                const updatedOrders = currentOrders.filter(o => o.id !== orderId)
+
+                localStorage.setItem('orders_data', JSON.stringify(updatedOrders))
+                setOrders(updatedOrders) // Update state for immediate feedback
+
+                // Optional: Reload to ensure clean state if needed, but state update should be enough
+                // window.location.reload() 
+            }
         }
     }
 
     const handleResetData = () => {
         if (confirm('คุณต้องการรีเซ็ตข้อมูลคำสั่งซื้อทั้งหมดหรือไม่?')) {
+            localStorage.removeItem('orders_data')
             setOrders([])
-            localStorage.setItem('orders_data', JSON.stringify([]))
-            alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว')
+            // Use window.location.href for reliable navigation
+            window.location.href = '/'
         }
     }
 

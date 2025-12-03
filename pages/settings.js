@@ -42,10 +42,17 @@ export default function SettingsPage() {
     }
 
     const handleClearData = () => {
-        if (confirm('คำเตือน: การกระทำนี้จะลบข้อมูลทั้งหมดในระบบ (Orders, Products, Customers) คุณแน่ใจหรือไม่?')) {
-            if (confirm('ยืนยันอีกครั้ง: ข้อมูลจะหายไปถาวร!')) {
-                localStorage.clear()
-                alert('ล้างข้อมูลเรียบร้อยแล้ว ระบบจะรีโหลด')
+        if (confirm('คำเตือน: การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ\n\n(ใช้สำหรับเริ่มระบบใหม่ หรือล้างข้อมูลเก่าเพื่อรองรับ Format ID แบบใหม่)')) {
+            if (confirm('ยืนยันอีกครั้ง: ข้อมูลจะหายไปถาวร! คุณแน่ใจหรือไม่?')) {
+                // Remove specific data keys but keep settings
+                localStorage.removeItem('orders_data')
+                localStorage.removeItem('products_data')
+                localStorage.removeItem('customers_data')
+
+                // Optional: Clear other temporary keys if any
+                // localStorage.removeItem('temp_key')
+
+                alert('ล้างข้อมูลเรียบร้อยแล้ว ระบบพร้อมสำหรับเริ่มใช้งานใหม่')
                 window.location.reload()
             }
         }
@@ -92,10 +99,10 @@ export default function SettingsPage() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                                ? tab.danger
-                                                    ? 'bg-danger-50 text-danger-700'
-                                                    : 'bg-primary-50 text-primary-700'
-                                                : 'text-secondary-600 hover:bg-secondary-50'
+                                            ? tab.danger
+                                                ? 'bg-danger-50 text-danger-700'
+                                                : 'bg-primary-50 text-primary-700'
+                                            : 'text-secondary-600 hover:bg-secondary-50'
                                             }`}
                                     >
                                         <tab.icon size={18} />
@@ -232,11 +239,23 @@ export default function SettingsPage() {
                                             <span className="font-bold">ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้!</span>
                                         </p>
                                         <button
-                                            onClick={handleClearData}
-                                            className="px-4 py-2 bg-white border border-danger-300 text-danger-600 rounded-lg hover:bg-danger-600 hover:text-white transition-colors font-medium flex items-center gap-2 shadow-sm"
+                                            onClick={() => {
+                                                if (confirm('คำเตือน: การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ\n\n(ใช้สำหรับเริ่มระบบใหม่ หรือล้างข้อมูลเก่าเพื่อรองรับ Format ID แบบใหม่)')) {
+                                                    if (confirm('ยืนยันอีกครั้ง: ข้อมูลจะหายไปถาวร! คุณแน่ใจหรือไม่?')) {
+                                                        // Remove specific data keys
+                                                        localStorage.removeItem('orders_data')
+                                                        localStorage.removeItem('products_data')
+                                                        localStorage.removeItem('customers_data')
+
+                                                        alert('ล้างข้อมูลเรียบร้อยแล้ว กำลังพาท่านไปที่หน้า Dashboard...')
+                                                        window.location.href = '/'
+                                                    }
+                                                }
+                                            }}
+                                            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 shadow-md hover:shadow-lg"
                                         >
-                                            <Trash2 size={18} />
-                                            ล้างข้อมูลทั้งหมด
+                                            <Trash2 size={20} />
+                                            ยืนยันการล้างข้อมูลทั้งหมด
                                         </button>
                                     </div>
                                 </div>
