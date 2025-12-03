@@ -5,9 +5,10 @@ import {
     Home, ArrowLeft, Save, UserPlus, Search, MapPin, Calendar,
     X, Plus, Trash2, Truck, Wrench, FileText, CreditCard,
     User, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown, Edit2, FileEdit
+    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown, Edit2, FileEdit, Camera
 } from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import ProductModal from './ProductModal'
 
 // --- Helper Functions ---
 function currency(n) {
@@ -191,18 +192,26 @@ export default function OrderForm() {
     const handleSearchProduct = (index, term) => {
         const newItems = [...items]
         newItems[index]._searchTerm = term
+        newItems[index].showPopup = true  // Auto-show popup when typing
         setItems(newItems)
         setActiveSearchIndex(index)
+
+        // Debug logging
+        console.log('=== SEARCH DEBUG ===')
+        console.log('Search term:', term)
+        console.log('Products data length:', productsData.length)
+        console.log('Popup should show:', newItems[index].showPopup)
 
         if (term.trim()) {
             const lowerTerm = term.toLowerCase()
             const results = productsData.filter(p => {
                 // Deep search: Convert entire object to string to search everywhere (including nested props)
                 return JSON.stringify(p).toLowerCase().includes(lowerTerm)
-            }).slice(0, 10)
+            })
 
             // Debugging
             console.log(`Searching for: "${lowerTerm}", Found: ${results.length} items from ${productsData.length} total products`)
+            console.log('First 3 results:', results.slice(0, 3))
             setSearchResults(results)
         } else {
             setSearchResults([])
@@ -212,14 +221,13 @@ export default function OrderForm() {
     // Quick Add Product State
     const [showProductModal, setShowProductModal] = useState(false)
     const [newProduct, setNewProduct] = useState({
-        id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
+        id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
         length: '', width: '', height: '', material: '', color: '', crystalColor: '',
         bulbType: '', light: '', remote: '', images: []
     })
 
-    const handleSaveNewProduct = (e) => {
-        e.preventDefault()
-        if (!newProduct.id) {
+    const handleSaveNewProduct = (productData) => {
+        if (!productData.id) {
             alert('กรุณากรอกรหัสสินค้า')
             return
         }
@@ -229,12 +237,12 @@ export default function OrderForm() {
         let products = savedProducts ? JSON.parse(savedProducts) : []
 
         // Check duplicate
-        if (products.some(p => p.id === newProduct.id)) {
+        if (products.some(p => p.id === productData.id)) {
             alert('รหัสสินค้านี้มีอยู่แล้ว')
             return
         }
 
-        const updatedProducts = [...products, newProduct]
+        const updatedProducts = [...products, productData]
         localStorage.setItem('products_data_v3', JSON.stringify(updatedProducts))
 
         // Update local state
@@ -659,7 +667,7 @@ export default function OrderForm() {
 
                                     {/* Selected Address Details Card */}
                                     {jobInfo.installAddress && (
-                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-4">
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
                                                     <MapPin size={24} className="text-primary-600" />
@@ -679,25 +687,50 @@ export default function OrderForm() {
                                                         {jobInfo.installAddress}
                                                     </div>
 
+                                                    {/* Google Map Link */}
+                                                    <div className="mb-3">
+                                                        <label className="block text-xs font-medium text-primary-700 mb-1">
+                                                            Google Map Link
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            readOnly
+                                                            value={jobInfo.googleMapLink}
+                                                            onClick={() => {
+                                                                if (jobInfo.googleMapLink) {
+                                                                    window.open(jobInfo.googleMapLink, '_blank');
+                                                                }
+                                                            }}
+                                                            className={`w-full px-3 py-2 text-sm border border-primary-200 rounded-md focus:ring-2 focus:ring-primary-500 ${jobInfo.googleMapLink ? 'cursor-pointer text-primary-700 bg-white hover:bg-primary-50 hover:border-primary-300' : 'bg-primary-50/50 text-primary-400 cursor-not-allowed'}`}
+                                                            placeholder="ไม่มีลิงก์ Google Map"
+                                                        />
+                                                    </div>
+
                                                     {/* Inspectors */}
                                                     {(jobInfo.inspector1?.name || jobInfo.inspector2?.name) && (
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-primary-200/50">
                                                             {jobInfo.inspector1?.name && (
-                                                                <div className="flex items-center gap-2 text-sm">
-                                                                    <User size={14} className="text-secondary-500" />
-                                                                    <span className="font-medium text-secondary-700">{String(jobInfo.inspector1.name)}</span>
-                                                                    {jobInfo.inspector1.phone && (
-                                                                        <span className="text-secondary-500">({String(jobInfo.inspector1.phone)})</span>
-                                                                    )}
+                                                                <div className="flex flex-col gap-1 text-sm">
+                                                                    <span className="text-xs font-semibold text-primary-700">ผู้ติดต่อ 1</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <User size={14} className="text-primary-500" />
+                                                                        <span className="font-medium text-secondary-900">{String(jobInfo.inspector1.name)}</span>
+                                                                        {jobInfo.inspector1.phone && (
+                                                                            <span className="text-secondary-600">({String(jobInfo.inspector1.phone)})</span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                             {jobInfo.inspector2?.name && (
-                                                                <div className="flex items-center gap-2 text-sm">
-                                                                    <User size={14} className="text-secondary-500" />
-                                                                    <span className="font-medium text-secondary-700">{String(jobInfo.inspector2.name)}</span>
-                                                                    {jobInfo.inspector2.phone && (
-                                                                        <span className="text-secondary-500">({String(jobInfo.inspector2.phone)})</span>
-                                                                    )}
+                                                                <div className="flex flex-col gap-1 text-sm">
+                                                                    <span className="text-xs font-semibold text-primary-700">ผู้ติดต่อ 2</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <User size={14} className="text-primary-500" />
+                                                                        <span className="font-medium text-secondary-900">{String(jobInfo.inspector2.name)}</span>
+                                                                        {jobInfo.inspector2.phone && (
+                                                                            <span className="text-secondary-600">({String(jobInfo.inspector2.phone)})</span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -707,30 +740,11 @@ export default function OrderForm() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">
-                                        Google Map Link
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            readOnly
-                                            value={jobInfo.googleMapLink}
-                                            onClick={() => {
-                                                if (jobInfo.googleMapLink) {
-                                                    window.open(jobInfo.googleMapLink, '_blank');
-                                                }
-                                            }}
-                                            className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 ${jobInfo.googleMapLink ? 'cursor-pointer text-primary-600 hover:bg-primary-50 hover:border-primary-300' : 'bg-secondary-50 text-secondary-400 cursor-not-allowed'}`}
-                                            placeholder="เลือกสถานที่เพื่อแสดง Google Map Link"
-                                        />
-                                    </div>
-                                </div>
                             </div>
 
                             {/* Notes Section */}
                             <div className="pt-4 border-t border-secondary-200">
-                                <label className="block text-sm font-medium text-secondary-700 mb-2">หมายเหตุ</label>
+                                <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
                                 <textarea
                                     rows={6}
                                     value={note}
@@ -876,7 +890,10 @@ export default function OrderForm() {
                                                 <input
                                                     type="text"
                                                     value={item._searchTerm !== undefined ? item._searchTerm : (item.code ? `${item.code} - ${item.description}` : '')}
-                                                    onChange={(e) => handleSearchProduct(idx, e.target.value)}
+                                                    onChange={(e) => {
+                                                        console.log('onChange triggered! Value:', e.target.value);
+                                                        handleSearchProduct(idx, e.target.value);
+                                                    }}
                                                     onFocus={() => {
                                                         const newItems = [...items];
                                                         newItems[idx].showPopup = true;
@@ -888,107 +905,103 @@ export default function OrderForm() {
                                             </div>
                                             {/* Product Search Popup */}
                                             {item.showPopup && (
-                                                <>
-                                                    <div className="fixed inset-0 z-[9998]" onClick={() => {
-                                                        const newItems = [...items];
-                                                        newItems[idx].showPopup = false;
-                                                        setItems(newItems);
-                                                    }}></div>
-                                                    <div className="fixed md:absolute left-0 md:left-0 top-0 md:top-full md:mt-1 w-full md:w-[400px] h-full md:h-auto bg-white border-0 md:border border-secondary-200 md:rounded-lg shadow-xl z-[9999] max-h-full md:max-h-80 overflow-y-auto">
-                                                        {productsData
-                                                            .filter(p => {
-                                                                if (!item._searchTerm) return true;
-                                                                const lowerTerm = item._searchTerm.toLowerCase();
-                                                                // Deep search: Check all string properties
-                                                                return JSON.stringify(p).toLowerCase().includes(lowerTerm);
-                                                            })
-                                                            .map(p => (
-                                                                <div
-                                                                    key={p.id}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        selectProduct(idx, p);
+                                                <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4" onClick={() => {
+                                                    const newItems = [...items];
+                                                    newItems[idx].showPopup = false;
+                                                    setItems(newItems);
+                                                }}>
+                                                    <div
+                                                        className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {/* Header */}
+                                                        <div className="px-4 py-3 border-b border-secondary-200 bg-primary-50">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <h3 className="font-bold text-secondary-900">เลือกสินค้า</h3>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const newItems = [...items];
+                                                                        newItems[idx].showPopup = false;
+                                                                        setItems(newItems);
                                                                     }}
-                                                                    className="px-4 py-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 group transition-colors"
+                                                                    className="text-secondary-500 hover:text-secondary-700"
                                                                 >
-                                                                    <div className="grid grid-cols-1 gap-1">
-                                                                        {/* Line 1: Code + Category */}
-                                                                        <div className="flex items-center justify-between">
-                                                                            <span className="font-bold text-primary-700 text-sm">{String(p.id || '')}</span>
-                                                                            <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">
-                                                                                {String(p.category || 'ทั่วไป')}
-                                                                            </span>
-                                                                        </div>
+                                                                    <X size={20} />
+                                                                </button>
+                                                            </div>
+                                                            {/* Search input inside popup */}
+                                                            <div className="relative">
+                                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    value={item._searchTerm || ''}
+                                                                    onChange={(e) => {
+                                                                        const newItems = [...items];
+                                                                        newItems[idx]._searchTerm = e.target.value;
+                                                                        setItems(newItems);
+                                                                    }}
+                                                                    placeholder="ค้นหารหัสสินค้า หรือ ชื่อสินค้า..."
+                                                                    className="w-full pl-9 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                        </div>
 
-                                                                        {/* Line 2: Description */}
-                                                                        {p.description && typeof p.description === 'string' && (
-                                                                            <div className="text-xs text-secondary-900 font-medium line-clamp-2" title={p.description}>
-                                                                                {p.description}
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Line 3: Dimensions + Material + Color */}
-                                                                        <div className="text-[11px] text-secondary-600 flex flex-wrap items-center gap-1.5">
-                                                                            {(p.length || p.width || p.height) && (
-                                                                                <>
-                                                                                    <span className="font-medium">
-                                                                                        📏 {[
-                                                                                            typeof p.length === 'string' || typeof p.length === 'number' ? String(p.length) : null,
-                                                                                            typeof p.width === 'string' || typeof p.width === 'number' ? String(p.width) : null,
-                                                                                            typeof p.height === 'string' || typeof p.height === 'number' ? String(p.height) : null
-                                                                                        ].filter(Boolean).join(' × ')} cm
-                                                                                    </span>
-                                                                                    <span className="text-secondary-300">•</span>
-                                                                                </>
-                                                                            )}
-                                                                            {p.material && typeof p.material === 'string' && (
-                                                                                <>
-                                                                                    <span>🔧 {p.material}</span>
-                                                                                    <span className="text-secondary-300">•</span>
-                                                                                </>
-                                                                            )}
-                                                                            {p.color && typeof p.color === 'string' && (
-                                                                                <span>🎨 {p.color}</span>
-                                                                            )}
-                                                                        </div>
-
-                                                                        {/* Line 4: Price + Stock */}
-                                                                        <div className="flex items-center justify-between pt-1 border-t border-secondary-100">
-                                                                            <div className="text-xs text-secondary-600 flex items-center gap-2">
-                                                                                <span className="font-bold text-success-600 text-sm">{currency(p.price)}</span>
-                                                                                <span className="text-secondary-400">/ {String(p.unit || 'ชิ้น')}</span>
-                                                                            </div>
-                                                                            <div className="text-[10px] text-secondary-500 flex items-center gap-2">
-                                                                                <span className={`font-medium ${p.stock > 0 ? 'text-success-600' : 'text-error-600'}`}>
-                                                                                    คงเหลือ: {p.stock || 0}
+                                                        {/* Product List */}
+                                                        <div className="flex-1 overflow-y-auto">
+                                                            {productsData
+                                                                .filter(p => {
+                                                                    if (!item._searchTerm) return true;
+                                                                    const lowerTerm = item._searchTerm.toLowerCase();
+                                                                    return JSON.stringify(p).toLowerCase().includes(lowerTerm);
+                                                                })
+                                                                .map(p => (
+                                                                    <div
+                                                                        key={p.id}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            selectProduct(idx, p);
+                                                                        }}
+                                                                        className="px-4 py-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                    >
+                                                                        <div className="grid grid-cols-1 gap-1">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <span className="font-bold text-primary-700 text-sm">{String(p.id || '')}</span>
+                                                                                <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">
+                                                                                    {String(p.category || 'ทั่วไป')}
                                                                                 </span>
-                                                                                {p.brand && typeof p.brand === 'string' && (
-                                                                                    <>
-                                                                                        <span className="text-secondary-300">•</span>
-                                                                                        <span>{p.brand}</span>
-                                                                                    </>
-                                                                                )}
+                                                                            </div>
+                                                                            {p.description && typeof p.description === 'string' && (
+                                                                                <div className="text-xs text-secondary-900 font-medium line-clamp-2">
+                                                                                    {p.description}
+                                                                                </div>
+                                                                            )}
+                                                                            <div className="flex items-center justify-between pt-1">
+                                                                                <span className="font-bold text-success-600 text-sm">{currency(p.price)}</span>
+                                                                                <span className="text-xs text-secondary-500">คงเหลือ: {p.stock || 0}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                ))}
+                                                        </div>
+
+                                                        {/* Footer - Add New Product */}
                                                         <div
-                                                            className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer text-sm font-medium hover:bg-primary-100 flex items-center justify-center gap-2 border-t border-secondary-200 sticky bottom-0"
+                                                            className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer font-medium flex items-center justify-center gap-2 border-t border-secondary-200 hover:bg-primary-100"
                                                             onClick={() => {
                                                                 setNewProduct({
                                                                     id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
                                                                     length: '', width: '', height: '', material: '', color: '', crystalColor: '',
                                                                     bulbType: '', light: '', remote: '', images: []
-                                                                })
-                                                                setShowProductModal(true)
+                                                                });
+                                                                setShowProductModal(true);
                                                             }}
                                                         >
                                                             <Plus size={16} />
                                                             เพิ่มสินค้าใหม่
                                                         </div>
                                                     </div>
-                                                </>
+                                                </div>
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
@@ -1121,82 +1134,12 @@ export default function OrderForm() {
                 )
             }
             {/* Quick Add Product Modal */}
-            {showProductModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" onClick={() => setShowProductModal(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white border-b border-secondary-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-                            <h2 className="text-2xl font-bold text-secondary-900">เพิ่มสินค้าใหม่</h2>
-                            <button onClick={() => setShowProductModal(false)} className="p-2 hover:bg-secondary-100 rounded-lg">
-                                <X size={24} className="text-secondary-500" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSaveNewProduct} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">รหัสสินค้า *</label>
-                                    <input type="text" value={newProduct.id} onChange={e => setNewProduct({ ...newProduct, id: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทหลัก *</label>
-                                    <input type="text" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
-                                    <input type="text" value={newProduct.length} onChange={e => setNewProduct({ ...newProduct, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
-                                    <input type="text" value={newProduct.width} onChange={e => setNewProduct({ ...newProduct, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
-                                    <input type="text" value={newProduct.height} onChange={e => setNewProduct({ ...newProduct, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">วัสดุ</label>
-                                    <input type="text" value={newProduct.material} onChange={e => setNewProduct({ ...newProduct, material: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สี</label>
-                                    <input type="text" value={newProduct.color} onChange={e => setNewProduct({ ...newProduct, color: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ราคา (บาท)</label>
-                                    <input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">คงเหลือ</label>
-                                    <input type="number" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">หมายเหตุ</label>
-                                <textarea value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
-                                <button type="button" onClick={() => setShowProductModal(false)} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
-                                    ยกเลิก
-                                </button>
-                                <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
-                                    บันทึก
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <ProductModal
+                isOpen={showProductModal}
+                onClose={() => setShowProductModal(false)}
+                product={newProduct}
+                onSave={handleSaveNewProduct}
+            />
         </div >
     )
 }

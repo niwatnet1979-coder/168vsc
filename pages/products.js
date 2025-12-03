@@ -18,6 +18,7 @@ import {
     Image as ImageIcon,
     Package
 } from 'lucide-react'
+import ProductModal from '../components/ProductModal'
 
 export default function ProductManagement() {
     const [products, setProducts] = useState([])
@@ -110,26 +111,25 @@ export default function ProductManagement() {
 
     const handleAdd = () => {
         setCurrentProduct({
-            id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
+            id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
             length: '', width: '', height: '', material: '', color: '', crystalColor: '',
             bulbType: '', light: '', remote: '', images: []
         })
         setShowModal(true)
     }
 
-    const handleSave = (e) => {
-        e.preventDefault()
-        if (!currentProduct.id) {
+    const handleSave = (productData) => {
+        if (!productData.id) {
             alert('กรุณากรอกรหัสสินค้า')
             return
         }
-        const existingIndex = products.findIndex(p => p.id === currentProduct.id)
+        const existingIndex = products.findIndex(p => p.id === productData.id)
         if (existingIndex >= 0) {
             const updatedProducts = [...products]
-            updatedProducts[existingIndex] = currentProduct
+            updatedProducts[existingIndex] = productData
             setProducts(updatedProducts)
         } else {
-            setProducts([...products, currentProduct])
+            setProducts([...products, productData])
         }
         setShowModal(false)
         setCurrentProduct(null)
@@ -371,84 +371,12 @@ export default function ProductManagement() {
             </div>
 
             {/* Simple Modal */}
-            {showModal && currentProduct && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white border-b border-secondary-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                            <h2 className="text-2xl font-bold text-secondary-900">
-                                {products.some(p => p.id === currentProduct.id) ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}
-                            </h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-secondary-100 rounded-lg">
-                                <X size={24} className="text-secondary-500" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">รหัสสินค้า *</label>
-                                    <input type="text" value={currentProduct.id || ''} onChange={e => setCurrentProduct({ ...currentProduct, id: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทหลัก *</label>
-                                    <input type="text" value={currentProduct.category || ''} onChange={e => setCurrentProduct({ ...currentProduct, category: e.target.value })} required className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
-                                    <input type="text" value={currentProduct.length || ''} onChange={e => setCurrentProduct({ ...currentProduct, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
-                                    <input type="text" value={currentProduct.width || ''} onChange={e => setCurrentProduct({ ...currentProduct, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
-                                    <input type="text" value={currentProduct.height || ''} onChange={e => setCurrentProduct({ ...currentProduct, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">วัสดุ</label>
-                                    <input type="text" value={currentProduct.material || ''} onChange={e => setCurrentProduct({ ...currentProduct, material: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">สี</label>
-                                    <input type="text" value={currentProduct.color || ''} onChange={e => setCurrentProduct({ ...currentProduct, color: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">ราคา (บาท)</label>
-                                    <input type="number" value={currentProduct.price || 0} onChange={e => setCurrentProduct({ ...currentProduct, price: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-secondary-700 mb-2">คงเหลือ</label>
-                                    <input type="number" value={currentProduct.stock || 0} onChange={e => setCurrentProduct({ ...currentProduct, stock: Number(e.target.value) })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">หมายเหตุ</label>
-                                <textarea value={currentProduct.description || ''} onChange={e => setCurrentProduct({ ...currentProduct, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
-                                    ยกเลิก
-                                </button>
-                                <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
-                                    บันทึก
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <ProductModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                product={currentProduct}
+                onSave={handleSave}
+            />
         </AppLayout>
     )
 }
