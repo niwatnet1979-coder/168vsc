@@ -5,10 +5,11 @@ import {
     Home, ArrowLeft, Save, UserPlus, Search, MapPin, Calendar,
     X, Plus, Trash2, Truck, Wrench, FileText, CreditCard,
     User, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown, Edit2, FileEdit, Camera
+    MoreHorizontal, CheckCircle, AlertCircle, ChevronDown, Edit2, FileEdit, Camera, HelpCircle
 } from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
+import SubJobModal from './SubJobModal'
 
 // --- Helper Functions ---
 function currency(n) {
@@ -220,6 +221,8 @@ export default function OrderForm() {
 
     // Quick Add Product State
     const [showProductModal, setShowProductModal] = useState(false)
+    const [showSubJobModal, setShowSubJobModal] = useState(false)
+    const [currentSubJobItemIndex, setCurrentSubJobItemIndex] = useState(null)
     const [newProduct, setNewProduct] = useState({
         id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
         length: '', width: '', height: '', material: '', color: '', crystalColor: '',
@@ -276,6 +279,19 @@ export default function OrderForm() {
             showPopup: false
         }
         setItems(newItems)
+    }
+
+    const handleSaveSubJob = (subJobData) => {
+        if (currentSubJobItemIndex !== null) {
+            const newItems = [...items]
+            newItems[currentSubJobItemIndex] = {
+                ...newItems[currentSubJobItemIndex],
+                subJob: subJobData
+            }
+            setItems(newItems)
+            setShowSubJobModal(false)
+            setCurrentSubJobItemIndex(null)
+        }
     }
 
     const handleSaveOrder = () => {
@@ -706,6 +722,8 @@ export default function OrderForm() {
                                                         />
                                                     </div>
 
+
+
                                                     {/* Inspectors */}
                                                     {(jobInfo.inspector1?.name || jobInfo.inspector2?.name) && (
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-primary-200/50">
@@ -752,6 +770,24 @@ export default function OrderForm() {
                                     className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none"
                                     placeholder="รายละเอียดเพิ่มเติม..."
                                 />
+                            </div>
+
+                            {/* Team Selection */}
+                            <div className="pt-4">
+                                <label className="block text-sm font-medium text-secondary-700 mb-2">ทีม</label>
+                                <div className="relative">
+                                    <select
+                                        value={jobInfo.team}
+                                        onChange={(e) => setJobInfo({ ...jobInfo, team: e.target.value })}
+                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                    >
+                                        <option value="">-- เลือกทีม --</option>
+                                        {availableTeams.map((team, idx) => (
+                                            <option key={idx} value={team}>{team}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -873,6 +909,7 @@ export default function OrderForm() {
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase w-16">#</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-secondary-600 uppercase w-20">งานย่อย</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">สินค้า / รายละเอียด</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-24">จำนวน</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-32">ราคา/หน่วย</th>
@@ -884,6 +921,30 @@ export default function OrderForm() {
                                 {items.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-secondary-50/50">
                                         <td className="px-4 py-3 text-center text-secondary-500">{idx + 1}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            {jobInfo.jobType === 'installation' && (
+                                                <div className="flex justify-center" title="งานติดตั้ง">
+                                                    <Wrench size={18} className="text-secondary-400" />
+                                                </div>
+                                            )}
+                                            {jobInfo.jobType === 'delivery' && (
+                                                <div className="flex justify-center" title="จัดส่ง">
+                                                    <Truck size={18} className="text-secondary-400" />
+                                                </div>
+                                            )}
+                                            {jobInfo.jobType === 'separate' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setCurrentSubJobItemIndex(idx)
+                                                        setShowSubJobModal(true)
+                                                    }}
+                                                    className={`flex justify-center w-full hover:bg-secondary-100 p-1 rounded transition-colors ${item.subJob ? 'text-primary-600' : 'text-secondary-400'}`}
+                                                    title={item.subJob ? "แก้ไขข้อมูลงานย่อย" : "เพิ่มข้อมูลงานย่อย"}
+                                                >
+                                                    {item.subJob ? <Wrench size={18} /> : <HelpCircle size={18} />}
+                                                </button>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-3 relative">
                                             <div className="flex items-center gap-2">
                                                 <Search size={16} className="text-secondary-400 absolute left-7 top-1/2 -translate-y-1/2 z-10" />
@@ -1139,6 +1200,17 @@ export default function OrderForm() {
                 onClose={() => setShowProductModal(false)}
                 product={newProduct}
                 onSave={handleSaveNewProduct}
+            />
+
+            {/* Sub Job Modal */}
+            <SubJobModal
+                isOpen={showSubJobModal}
+                onClose={() => setShowSubJobModal(false)}
+                item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
+                onSave={handleSaveSubJob}
+                customersData={customersData}
+                customerName={customer.name}
+                availableTeams={availableTeams}
             />
         </div >
     )

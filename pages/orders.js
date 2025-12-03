@@ -17,7 +17,8 @@ import {
     Truck,
     Wrench,
     Package,
-    MoreHorizontal
+    MoreHorizontal,
+    RotateCcw
 } from 'lucide-react'
 
 export default function OrdersListPage() {
@@ -68,6 +69,14 @@ export default function OrdersListPage() {
         }
     }
 
+    const handleResetData = () => {
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลคำสั่งซื้อทั้งหมดหรือไม่?')) {
+            setOrders([])
+            localStorage.setItem('orders_data', JSON.stringify([]))
+            alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว')
+        }
+    }
+
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'pending': return 'bg-secondary-100 text-secondary-700'
@@ -110,13 +119,22 @@ export default function OrdersListPage() {
                         </h1>
                         <p className="text-secondary-500 mt-1">จัดการคำสั่งซื้อทั้งหมด {orders.length} รายการ</p>
                     </div>
-                    <button
-                        onClick={() => router.push('/order')}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
-                    >
-                        <Plus size={18} />
-                        สร้างคำสั่งซื้อใหม่
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleResetData}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                        >
+                            <RotateCcw size={18} />
+                            Reset Data
+                        </button>
+                        <button
+                            onClick={() => router.push('/order')}
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
+                        >
+                            <Plus size={18} />
+                            สร้างคำสั่งซื้อใหม่
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}

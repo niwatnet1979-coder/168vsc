@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
-import MOCK_PRODUCTS from '../products_data_v3.json'
+import { MOCK_PRODUCTS_DATA } from '../lib/mockData'
 import * as XLSX from 'xlsx'
 import {
     Search,
@@ -16,7 +16,8 @@ import {
     ChevronDown,
     X,
     Image as ImageIcon,
-    Package
+    Package,
+    RotateCcw
 } from 'lucide-react'
 import ProductModal from '../components/ProductModal'
 
@@ -35,8 +36,8 @@ export default function ProductManagement() {
         if (savedProducts) {
             setProducts(JSON.parse(savedProducts))
         } else {
-            setProducts(MOCK_PRODUCTS)
-            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS))
+            setProducts(MOCK_PRODUCTS_DATA)
+            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
         }
     }, [])
 
@@ -135,6 +136,14 @@ export default function ProductManagement() {
         setCurrentProduct(null)
     }
 
+    const handleResetData = () => {
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลสินค้าทั้งหมดหรือไม่?')) {
+            setProducts(MOCK_PRODUCTS_DATA)
+            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+            alert('รีเซ็ตข้อมูลเรียบร้อยแล้ว')
+        }
+    }
+
     const getSortIcon = (key) => {
         if (sortConfig.key !== key) return null
         return sortConfig.direction === 'ascending' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
@@ -157,6 +166,13 @@ export default function ProductManagement() {
                         <p className="text-secondary-500 mt-1">ทั้งหมด {filteredProducts.length} รายการ</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleResetData}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                        >
+                            <RotateCcw size={18} />
+                            Reset Data
+                        </button>
                         <button onClick={handleExportExcel} className="px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium">
                             <Download size={18} />
                             Export Excel
