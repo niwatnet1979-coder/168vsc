@@ -67,39 +67,9 @@ export default function TeamPage() {
         if (savedData) {
             setTeamMembers(JSON.parse(savedData))
         } else {
-            // Initial mock data if empty
-            const mockData = [
-                {
-                    id: 1,
-                    eid: 'EID0000',
-                    nickname: 'สาเล็ง',
-                    fullname: 'สาเล็ง',
-                    team: 'ทีมบริหาร',
-                    teamType: 'บริหาร',
-                    job: 'Manager',
-                    level: 'L5',
-                    userType: 'Admin',
-                    email: 'saseng1981@gmail.com',
-                    phone1: '081-111-1111',
-                    status: 'current'
-                },
-                {
-                    id: 2,
-                    eid: 'EID0001',
-                    nickname: 'สา',
-                    fullname: 'วันวิสาข์ สุขสอาด',
-                    team: 'ทีมบริหาร',
-                    teamType: 'บริหาร',
-                    job: 'HR',
-                    level: 'L4',
-                    userType: 'User',
-                    email: 'katoon2444@gmail.com',
-                    phone1: '082-222-2222',
-                    status: 'current'
-                }
-            ]
-            setTeamMembers(mockData)
-            localStorage.setItem('team_data', JSON.stringify(mockData))
+            // Initialize with empty array
+            setTeamMembers([])
+            localStorage.setItem('team_data', JSON.stringify([]))
         }
     }, [])
 
