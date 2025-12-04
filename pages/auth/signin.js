@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -6,9 +7,48 @@ import { Chrome, AlertCircle } from 'lucide-react'
 export default function SignIn() {
     const router = useRouter()
     const { error } = router.query
+    const [showForgotPass, setShowForgotPass] = useState(false)
+    const [otpStep, setOtpStep] = useState('email') // email, otp
+    const [selectedEmail, setSelectedEmail] = useState('')
+    const [otpInput, setOtpInput] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleGoogleSignIn = async () => {
         await signIn('google', { callbackUrl: '/' })
+    }
+
+    const handleSendOTP = async () => {
+        if (!selectedEmail) {
+            alert('กรุณาเลือกอีเมล')
+            return
+        }
+        setIsLoading(true)
+        // Simulate sending OTP
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        setIsLoading(false)
+        setOtpStep('otp')
+        alert(`ส่งรหัส OTP ไปยัง ${selectedEmail} แล้ว (รหัสทดสอบ: 123456)`)
+    }
+
+    const handleOTPLogin = async () => {
+        if (otpInput.length !== 6) {
+            alert('กรุณากรอกรหัส OTP 6 หลัก')
+            return
+        }
+        setIsLoading(true)
+        const result = await signIn('credentials', {
+            redirect: false,
+            email: selectedEmail,
+            otp: otpInput,
+            callbackUrl: '/'
+        })
+
+        if (result.error) {
+            setIsLoading(false)
+            alert('รหัส OTP ไม่ถูกต้อง')
+        } else {
+            router.push('/')
+        }
     }
 
     return (
@@ -84,6 +124,20 @@ export default function SignIn() {
                             <span className="text-lg">เข้าสู่ระบบด้วย Google</span>
                         </button>
 
+                        <div className="mt-4 text-center">
+                            <button
+                                onClick={() => {
+                                    setShowForgotPass(true)
+                                    setOtpStep('email')
+                                    setSelectedEmail('')
+                                    setOtpInput('')
+                                }}
+                                className="text-sm text-secondary-500 hover:text-primary-600 hover:underline"
+                            >
+                                ลืมรหัสผ่าน / เข้าสู่ระบบด้วย OTP
+                            </button>
+                        </div>
+
                         <div className="mt-6 text-center">
                             <p className="text-sm text-secondary-500">
                                 โดยการเข้าสู่ระบบ คุณยอมรับ
@@ -103,6 +157,81 @@ export default function SignIn() {
                     </div>
                 </div>
             </div>
+
+            {/* OTP Modal */}
+            {showForgotPass && (
+                <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-secondary-900">
+                                {otpStep === 'email' ? 'ลืมรหัสผ่าน / ขอรหัส OTP' : 'กรอกรหัส OTP'}
+                            </h3>
+                            <button
+                                onClick={() => setShowForgotPass(false)}
+                                className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded-full transition-colors"
+                            >
+                                <Chrome size={20} className="rotate-45" /> {/* Using Chrome icon as X for now or import X */}
+                            </button>
+                        </div>
+
+                        {otpStep === 'email' ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-secondary-700 mb-1">เลือกอีเมลของคุณ</label>
+                                    <select
+                                        value={selectedEmail}
+                                        onChange={(e) => setSelectedEmail(e.target.value)}
+                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    >
+                                        <option value="">-- เลือกอีเมล --</option>
+                                        <option value="niwatnet1979@gmail.com">niwatnet1979@gmail.com</option>
+                                        <option value="saseng1981@gmail.com">saseng1981@gmail.com</option>
+                                        <option value="katoon2444@gmail.com">katoon2444@gmail.com</option>
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={handleSendOTP}
+                                    disabled={isLoading}
+                                    className="w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50"
+                                >
+                                    {isLoading ? 'กำลังส่ง...' : 'ขอรหัส OTP'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="text-center mb-4">
+                                    <p className="text-sm text-secondary-600">ส่งรหัส OTP ไปยัง</p>
+                                    <p className="font-medium text-secondary-900">{selectedEmail}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-secondary-700 mb-1">รหัส OTP (6 หลัก)</label>
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        value={otpInput}
+                                        onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-center text-2xl tracking-widest"
+                                        placeholder="000000"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleOTPLogin}
+                                    disabled={isLoading}
+                                    className="w-full py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50"
+                                >
+                                    {isLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
+                                </button>
+                                <button
+                                    onClick={() => setOtpStep('email')}
+                                    className="w-full py-2 text-secondary-500 hover:text-secondary-700 text-sm"
+                                >
+                                    เปลี่ยนอีเมล / ขอรหัสใหม่
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </>
     )
 }

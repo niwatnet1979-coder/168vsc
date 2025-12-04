@@ -1,11 +1,36 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import CredentialsProvider from 'next-auth/providers/credentials'
 
 export const authOptions = {
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || '',
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        }),
+        CredentialsProvider({
+            name: 'OTP',
+            credentials: {
+                email: { label: "Email", type: "text" },
+                otp: { label: "OTP", type: "text" }
+            },
+            async authorize(credentials) {
+                const allowedEmails = [
+                    'niwatnet1979@gmail.com',
+                    'saseng1981@gmail.com',
+                    'katoon2444@gmail.com'
+                ]
+
+                if (allowedEmails.includes(credentials.email) && credentials.otp === '123456') {
+                    return {
+                        id: credentials.email,
+                        email: credentials.email,
+                        name: credentials.email.split('@')[0],
+                        image: null
+                    }
+                }
+                return null
+            }
         }),
     ],
     callbacks: {
