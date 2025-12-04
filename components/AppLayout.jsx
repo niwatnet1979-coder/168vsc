@@ -29,6 +29,12 @@ const AppLayout = ({ children }) => {
         }
     };
 
+    const handleSwitchAccount = async () => {
+        if (confirm('คุณต้องการสลับบัญชีหรือไม่?')) {
+            await signOut({ callbackUrl: '/auth/signin' });
+        }
+    };
+
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { name: 'Order Entry', icon: ShoppingCart, path: '/order' },
@@ -99,6 +105,7 @@ const AppLayout = ({ children }) => {
                                             : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
                                         }
                   `}
+                                    onClick={() => setIsSidebarOpen(false)}
                                 >
                                     <item.icon
                                         size={20}
@@ -108,7 +115,7 @@ const AppLayout = ({ children }) => {
                     `}
                                     />
                                     <span className="flex-1">{item.name}</span>
-                                    {active && <ChevronRight size={16} className="text-primary-400" />}
+                                    {active && <ChevronRight size={16} className="text-primary-500" />}
                                 </Link>
                             );
                         })}
@@ -116,33 +123,50 @@ const AppLayout = ({ children }) => {
 
                     {/* User Profile (Bottom) */}
                     <div className="p-4 border-t border-secondary-100">
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary-50 border border-secondary-100">
-                            {session?.user?.image ? (
-                                <img
-                                    src={session.user.image}
-                                    alt={session.user.name || 'User'}
-                                    className="w-10 h-10 rounded-full"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                                    {session?.user?.name?.charAt(0) || 'U'}
+                        <div className="flex flex-col gap-2">
+                            {/* User Info */}
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary-50 border border-secondary-100">
+                                {session?.user?.image ? (
+                                    <img
+                                        src={session.user.image}
+                                        alt={session.user.name || 'User'}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                                        {session?.user?.name?.charAt(0) || 'U'}
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-secondary-900 truncate">
+                                        {session?.user?.name || 'User'}
+                                    </p>
+                                    <p className="text-xs text-secondary-500 truncate">
+                                        {session?.user?.email || ''}
+                                    </p>
                                 </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-secondary-900 truncate">
-                                    {session?.user?.name || 'User'}
-                                </p>
-                                <p className="text-xs text-secondary-500 truncate">
-                                    {session?.user?.email || ''}
-                                </p>
                             </div>
-                            <button
-                                onClick={handleLogout}
-                                className="text-secondary-400 hover:text-danger-500 transition-colors"
-                                title="ออกจากระบบ"
-                            >
-                                <LogOut size={18} />
-                            </button>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleSwitchAccount}
+                                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                                    title="สลับบัญชี"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                    <span>สลับบัญชี</span>
+                                </button>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center justify-center px-3 py-2 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
+                                    title="ออกจากระบบ"
+                                >
+                                    <LogOut size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
