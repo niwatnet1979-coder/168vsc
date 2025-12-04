@@ -75,7 +75,14 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
     const addAddress = () => {
         setFormData(prev => ({
             ...prev,
-            addresses: [...prev.addresses, { id: Date.now(), label: '', address: '', googleMapsLink: '' }]
+            addresses: [...prev.addresses, {
+                id: Date.now(),
+                label: '',
+                address: '',
+                googleMapsLink: '',
+                inspector1: { name: '', phone: '' },
+                inspector2: { name: '', phone: '' }
+            }]
         }))
     }
 
@@ -253,6 +260,39 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                     </div>
                                 </div>
                             </div>
+                            {/* Media Source */}
+                            <div className="mt-6 border-t border-secondary-200 pt-6">
+                                <h4 className="font-semibold text-secondary-900 mb-4">ที่มาของลูกค้า</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">สื่อที่ลูกค้าเห็น</label>
+                                        <select
+                                            value={formData.mediaSource}
+                                            onChange={e => setFormData({ ...formData, mediaSource: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        >
+                                            <option value="">ระบุสื่อที่ลูกค้าเห็น</option>
+                                            <option value="FB">FB</option>
+                                            <option value="LINE@">LINE@</option>
+                                            <option value="GOOGLE">GOOGLE</option>
+                                            <option value="OFFLINE">OFFLINE</option>
+                                            <option value="FREND">FREND</option>
+                                            <option value="OTHER">OTHER</option>
+                                        </select>
+                                    </div>
+                                    {formData.mediaSource === 'OTHER' && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-secondary-700 mb-2">ระบุอื่นๆ</label>
+                                            <input
+                                                type="text"
+                                                value={formData.mediaSourceOther}
+                                                onChange={e => setFormData({ ...formData, mediaSourceOther: e.target.value })}
+                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -394,6 +434,49 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                             <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อที่อยู่ (Label)</label>
                                             <input type="text" value={addr.label} onChange={e => updateAddress(addr.id, 'label', e.target.value)} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-white" />
                                         </div>
+
+                                        {/* Inspectors */}
+                                        <div className="md:col-span-2 bg-secondary-50 p-4 rounded-xl border border-secondary-200">
+                                            <h5 className="font-medium text-secondary-900 mb-3 text-sm">ผู้ตรวจงาน (หน้างาน)</h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 1 (ชื่อ)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector1?.name || ''}
+                                                        onChange={e => updateAddress(addr.id, 'inspector1', { ...addr.inspector1, name: e.target.value })}
+                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 1 (เบอร์โทร)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector1?.phone || ''}
+                                                        onChange={e => updateAddress(addr.id, 'inspector1', { ...addr.inspector1, phone: e.target.value })}
+                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 2 (ชื่อ)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector2?.name || ''}
+                                                        onChange={e => updateAddress(addr.id, 'inspector2', { ...addr.inspector2, name: e.target.value })}
+                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 2 (เบอร์โทร)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={addr.inspector2?.phone || ''}
+                                                        onChange={e => updateAddress(addr.id, 'inspector2', { ...addr.inspector2, phone: e.target.value })}
+                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-secondary-700 mb-2">ที่อยู่</label>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -452,6 +535,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                     <button onClick={handleSave} className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-lg shadow-primary-500/30">บันทึก</button>
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
