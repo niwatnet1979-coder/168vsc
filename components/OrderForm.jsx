@@ -945,7 +945,7 @@ export default function OrderForm() {
                                     </div>
 
                                     {/* Selected Address Details Card */}
-                                    {jobInfo.installAddress && (
+                                    {(jobInfo.installAddress || jobInfo.installLocationName) && (
                                         <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-4">
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
@@ -962,9 +962,86 @@ export default function OrderForm() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="text-sm text-secondary-800 leading-relaxed mb-3">
-                                                        {jobInfo.installAddress}
-                                                    </div>
+
+                                                    {/* Full Address Display */}
+                                                    {jobInfo.installAddress && (
+                                                        <div className="text-sm text-secondary-800 leading-relaxed mb-3 bg-white/70 rounded-lg p-3 border border-primary-100">
+                                                            <div className="font-medium text-primary-700 mb-2 text-xs uppercase tracking-wide">ที่อยู่เต็ม</div>
+                                                            <p className="text-secondary-900">{jobInfo.installAddress}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Address Components Grid */}
+                                                    {(() => {
+                                                        const selectedAddr = customersData.find(c => c.name === customer.name)?.addresses?.find(
+                                                            addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
+                                                        );
+
+                                                        if (selectedAddr && (selectedAddr.addrNumber || selectedAddr.province || selectedAddr.zipcode)) {
+                                                            return (
+                                                                <div className="bg-white/70 rounded-lg p-3 border border-primary-100 mb-3">
+                                                                    <div className="font-medium text-primary-700 mb-2 text-xs uppercase tracking-wide">รายละเอียดที่อยู่</div>
+                                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                                                        {selectedAddr.addrNumber && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">เลขที่:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrNumber}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrMoo && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">หมู่:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrMoo}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrVillage && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">หมู่บ้าน:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrVillage}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrSoi && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">ซอย:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrSoi}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrRoad && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">ถนน:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrRoad}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrTambon && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">ตำบล:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrTambon}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.addrAmphoe && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">อำเภอ:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrAmphoe}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.province && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">จังหวัด:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.province}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedAddr.zipcode && (
+                                                                            <div>
+                                                                                <span className="text-secondary-500">รหัสไปรษณีย์:</span>
+                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.zipcode}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
 
                                                     {/* Google Map Link */}
                                                     <div className="mb-3">
@@ -984,8 +1061,6 @@ export default function OrderForm() {
                                                             placeholder="ไม่มีลิงก์ Google Map"
                                                         />
                                                     </div>
-
-
 
                                                     {/* Inspectors */}
                                                     {(jobInfo.inspector1?.name || jobInfo.inspector2?.name) && (
