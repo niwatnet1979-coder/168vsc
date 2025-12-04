@@ -62,7 +62,7 @@ export default function SettingsPage() {
                     phone: '081-234-5678',
                     teamType: 'ช่างติดตั้ง',
                     teamName: 'ทีม A',
-                    role: 'ช่าง'
+                    role: 'user'
                 },
                 {
                     id: 3,
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                     phone: '082-345-6789',
                     teamType: 'ช่างติดตั้ง',
                     teamName: 'ทีม B',
-                    role: 'ช่าง'
+                    role: 'user'
                 },
                 {
                     id: 4,
@@ -82,7 +82,7 @@ export default function SettingsPage() {
                     phone: '083-456-7890',
                     teamType: 'QC',
                     teamName: 'ทีม QC',
-                    role: 'qc'
+                    role: 'user'
                 }
             ]
             setUsers(defaultUsers)
@@ -295,11 +295,9 @@ export default function SettingsPage() {
                                                                 <td className="py-3 px-4">
                                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
                                                                         ? 'bg-purple-100 text-purple-800'
-                                                                        : user.role === 'qc'
-                                                                            ? 'bg-blue-100 text-blue-800'
-                                                                            : 'bg-green-100 text-green-800'
+                                                                        : 'bg-green-100 text-green-800'
                                                                         }`}>
-                                                                        {user.role === 'admin' ? 'Admin' : user.role === 'qc' ? 'QC' : 'User'}
+                                                                        {user.role === 'admin' ? 'Admin' : 'User'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="py-3 px-4">
