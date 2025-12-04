@@ -14,7 +14,10 @@ export default function SignIn() {
     const [isLoading, setIsLoading] = useState(false)
 
     const handleGoogleSignIn = async () => {
-        await signIn('google', { callbackUrl: '/' })
+        await signIn('google', {
+            callbackUrl: '/',
+            prompt: 'select_account' // Force account selection every time
+        })
     }
 
     const [otpHash, setOtpHash] = useState('')
