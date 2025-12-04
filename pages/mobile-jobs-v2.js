@@ -12,7 +12,9 @@ import {
     MapPin,
     Calendar,
     Clock,
-    User
+    User,
+    Phone,
+    UserCheck
 } from 'lucide-react'
 
 export default function MobileJobsV2() {
@@ -86,10 +88,12 @@ export default function MobileJobsV2() {
 
     // Format date/time
     const formatDateTime = (date, time) => {
+        if (!date) return '-'
         const d = new Date(date)
-        const day = d.getDate()
-        const month = d.toLocaleDateString('th-TH', { month: 'short' })
-        return `${day} ${month} | ${time}`
+        const day = d.getDate().toString().padStart(2, '0')
+        const month = (d.getMonth() + 1).toString().padStart(2, '0')
+        const year = d.getFullYear()
+        return `${day}/${month}/${year} ${time || ''}`
     }
 
     // Calculate distance (placeholder - will use actual calculation)
@@ -168,29 +172,61 @@ export default function MobileJobsV2() {
 
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
-                                                {/* Line 1: Date/Time, Location, Distance */}
-                                                <div className="flex items-center gap-2 text-xs text-secondary-600 mb-1">
+                                                {/* Row 1: Job Type, Date, Customer, Inspector */}
+                                                <div className="flex items-center gap-2 text-xs text-secondary-900 mb-1 flex-wrap">
+                                                    {/* Job Icon */}
+                                                    {getJobIcon(job.jobType)}
+
+                                                    {/* Date */}
                                                     <div className="flex items-center gap-1">
-                                                        {getJobIcon(job.jobType)}
                                                         <Calendar size={12} />
                                                         <span className="font-medium">{formatDateTime(job.jobDate, job.jobTime)}</span>
                                                     </div>
-                                                    <span>•</span>
+
+                                                    {/* Customer Phone */}
+                                                    {job.customer?.phone && (
+                                                        <div className="flex items-center gap-1">
+                                                            <Phone size={12} />
+                                                            <a href={`tel:${job.customer.phone}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{job.customer.phone}</a>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Customer Name */}
                                                     <div className="flex items-center gap-1">
-                                                        <MapPin size={12} />
-                                                        <span>{location.district}, {location.province}</span>
+                                                        <User size={12} />
+                                                        <span className="truncate max-w-[100px]">{job.customerName}</span>
                                                     </div>
-                                                    <span>•</span>
-                                                    <span className="text-primary-600 font-medium">{distance} กม.</span>
+
+                                                    {/* Inspector (Try to find) */}
+                                                    {(() => {
+                                                        const addr = job.customer?.addresses?.find(a => a.address === job.address)
+                                                        const inspector = addr?.inspector1
+                                                        if (inspector?.name) {
+                                                            return (
+                                                                <div className="flex items-center gap-1 text-secondary-600 border-l border-secondary-300 pl-2 ml-1">
+                                                                    <Phone size={12} />
+                                                                    {inspector.phone && (
+                                                                        <a href={`tel:${inspector.phone}`} className="hover:underline mr-1" onClick={(e) => e.stopPropagation()}>{inspector.phone}</a>
+                                                                    )}
+                                                                    <UserCheck size={12} />
+                                                                    <span>{inspector.name}</span>
+                                                                </div>
+                                                            )
+                                                        }
+                                                        return null
+                                                    })()}
                                                 </div>
 
-                                                {/* Line 2: Customer Name */}
-                                                <div className="flex items-center gap-1 text-sm font-medium text-secondary-900 mb-1">
-                                                    <User size={14} />
-                                                    <span className="truncate">{job.customerName}</span>
+                                                {/* Row 2: Location, Distance */}
+                                                <div className="flex items-center gap-2 text-xs text-secondary-600 mb-1">
+                                                    <MapPin size={12} className="flex-shrink-0" />
+                                                    <span className="truncate">{job.address || '-'}</span>
+                                                    <span className="flex-shrink-0 text-primary-600 font-medium whitespace-nowrap">
+                                                        {distance} กม.
+                                                    </span>
                                                 </div>
 
-                                                {/* Line 3-4: Product Details */}
+                                                {/* Row 3: Product Details */}
                                                 <div className="text-xs text-secondary-700 leading-tight space-y-1 mt-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-bold text-secondary-900 truncate">{job.productName}</span>
@@ -208,13 +244,6 @@ export default function MobileJobsV2() {
                                                         {job.product?.material && <span> • {job.product.material}</span>}
                                                         {job.product?.color && <span> • {job.product.color}</span>}
                                                     </div>
-
-                                                    {/* Description */}
-                                                    {job.product?.description && (
-                                                        <p className="line-clamp-2 text-secondary-500 mt-1 italic">
-                                                            {job.product.description}
-                                                        </p>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -225,6 +254,6 @@ export default function MobileJobsV2() {
                     </div>
                 </div>
             </AppLayout>
-        </ProtectedRoute>
+        </ProtectedRoute >
     )
 }
