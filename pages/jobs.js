@@ -12,7 +12,11 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
-    Briefcase
+    Briefcase,
+    Wrench,
+    Truck,
+    Search,
+    User
 } from 'lucide-react'
 
 export default function JobQueuePage() {
