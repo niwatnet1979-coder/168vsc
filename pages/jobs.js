@@ -29,33 +29,36 @@ export default function JobQueuePage() {
     // Load data from localStorage
     useEffect(() => {
         const loadJobs = () => {
-            const savedJobs = localStorage.getItem('jobs_data')
             try {
-                // Use DataManager to get normalized jobs with joined data
+                // Get fresh data
+                const savedOrders = localStorage.getItem('orders_data')
+                const orders = savedOrders ? JSON.parse(savedOrders) : []
+                const orderIds = new Set(orders.map(o => o.id))
+
+                // Use DataManager to get normalized jobs
                 const allJobs = DataManager.getJobs()
 
-                // Transform to component format (if needed) or use directly
-                // The DataManager already provides customerName, productName, etc.
-                const formattedJobs = allJobs.map(job => ({
-                    uniqueId: job.id, // Changed from 'id' to 'uniqueId' to match component's expectation
-                    orderId: job.orderId, // Assuming DataManager provides orderId
+                // Filter out orphaned jobs (jobs with no matching order)
+                const validJobs = allJobs.filter(job => orderIds.has(job.orderId))
+
+                const formattedJobs = validJobs.map(job => ({
+                    uniqueId: job.id,
+                    orderId: job.orderId,
                     customer: job.customerName,
                     product: {
-                        id: job.productId, // Assuming DataManager provides productId
-                        name: job.productName,
-                        image: job.productImage || null // Use image from DataManager or null
+                        id: job.productId,
+                        name: job.productName || 'สินค้าไม่ระบุ',
+                        image: job.productImage || null
                     },
                     jobType: job.jobType,
-                    rawJobType: job.jobType === 'ติดตั้ง' ? 'installation' :
-                        job.jobType === 'ซ่อมแซม' ? 'repair' :
-                            job.jobType === 'ตรวจสอบ' ? 'inspection' : 'delivery',
-                    appointmentDate: `${job.jobDate}T${job.jobTime}:00`,
-                    team: job.assignedTeam,
-                    inspector: job.inspectorName || '-', // Assuming DataManager provides inspectorName
+                    rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
+                    appointmentDate: job.jobDate ? `${job.jobDate}T${job.jobTime || '09:00'}` : '-',
+                    team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'), // Fix 'Team A' display if still present
+                    inspector: job.inspectorName || '-',
                     address: job.address,
-                    status: job.status === 'เสร็จสิ้น' ? 'Completed' :
-                        job.status === 'กำลังดำเนินการ' ? 'Processing' : 'Pending',
-                    priority: job.priority || 'Medium' // Assuming DataManager provides priority
+                    status: job.status === 'Completed' ? 'เสร็จสิ้น' :
+                        job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
+                    priority: job.priority || 'Medium'
                 }))
 
                 // Sort by appointment date
@@ -92,11 +95,11 @@ export default function JobQueuePage() {
         // Status/Type filter
         switch (filter) {
             case 'pending-install':
-                return job.rawJobType === 'installation' && job.status !== 'Completed'
+                return job.rawJobType === 'installation' && job.status !== 'เสร็จสิ้น'
             case 'pending-delivery':
-                return job.rawJobType === 'delivery' && job.status !== 'Completed'
+                return job.rawJobType === 'delivery' && job.status !== 'เสร็จสิ้น'
             case 'completed':
-                return job.status === 'Completed'
+                return job.status === 'เสร็จสิ้น'
             case 'all':
             default:
                 return true
@@ -112,9 +115,9 @@ export default function JobQueuePage() {
 
     // Count statistics
     const stats = {
-        pendingInstall: jobs.filter(j => j.rawJobType === 'installation' && j.status !== 'Completed').length,
-        pendingDelivery: jobs.filter(j => j.rawJobType === 'delivery' && j.status !== 'Completed').length,
-        completed: jobs.filter(j => j.status === 'Completed').length,
+        pendingInstall: jobs.filter(j => j.rawJobType === 'installation' && j.status !== 'เสร็จสิ้น').length,
+        pendingDelivery: jobs.filter(j => j.rawJobType === 'delivery' && j.status !== 'เสร็จสิ้น').length,
+        completed: jobs.filter(j => j.status === 'เสร็จสิ้น').length,
         total: jobs.length
     }
 
@@ -127,9 +130,9 @@ export default function JobQueuePage() {
     }
 
     const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'completed': return 'bg-success-100 text-success-700'
-            case 'processing': return 'bg-primary-100 text-primary-700'
+        switch (status) {
+            case 'เสร็จสิ้น': return 'bg-success-100 text-success-700'
+            case 'กำลังดำเนินการ': return 'bg-primary-100 text-primary-700'
             default: return 'bg-secondary-100 text-secondary-700'
         }
     }
@@ -237,7 +240,7 @@ export default function JobQueuePage() {
                         <table className="w-full">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">JOB ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">รหัสงาน</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สินค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>

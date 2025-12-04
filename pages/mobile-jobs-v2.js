@@ -31,14 +31,22 @@ export default function MobileJobsV2() {
 
     const loadJobs = () => {
         try {
+            // Get fresh orders to check for orphans
+            const savedOrders = localStorage.getItem('orders_data')
+            const orders = savedOrders ? JSON.parse(savedOrders) : []
+            const orderIds = new Set(orders.map(o => o.id))
+
             // Get all jobs from DataManager
             const allJobs = DataManager.getJobs()
 
+            // Filter orphans first
+            let validJobs = allJobs.filter(job => orderIds.has(job.orderId))
+
             // Filter by role
-            let filteredJobs = allJobs
+            let filteredJobs = validJobs
             if (userRole !== 'admin') {
                 // Non-admin users only see their team's jobs
-                filteredJobs = allJobs.filter(job => job.assignedTeam === userTeam)
+                filteredJobs = validJobs.filter(job => job.assignedTeam === userTeam)
             }
 
             // Sort by date (nearest first)
