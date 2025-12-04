@@ -23,7 +23,7 @@ export const authOptions = {
                 // TODO: Replace with actual role lookup from database
                 const email = token.email?.toLowerCase() || ''
 
-                if (email.includes('admin')) {
+                if (email.includes('admin') || email === 'niwatnet1979@gmail.com') {
                     session.user.role = 'admin'
                     session.user.team = 'All Teams'
                 } else if (email.includes('qc')) {

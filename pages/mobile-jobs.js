@@ -14,8 +14,20 @@ import {
     CheckCircle,
     AlertCircle,
     Filter,
-    LogOut
+    LogOut,
+    Menu,
+    X,
+    LayoutDashboard,
+    ShoppingCart,
+    FileText,
+    Settings,
+    BarChart3,
+    Briefcase,
+    Smartphone,
+    ChevronRight,
+    Users
 } from 'lucide-react'
+import Link from 'next/link'
 
 export default function MobileJobsPage() {
     const router = useRouter()
@@ -24,6 +36,19 @@ export default function MobileJobsPage() {
     const [filteredJobs, setFilteredJobs] = useState([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState('all')
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+    const menuItems = [
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+        { name: 'Order Entry', icon: ShoppingCart, path: '/order' },
+        { name: 'Orders List', icon: FileText, path: '/orders' },
+        { name: 'Products', icon: Package, path: '/products' },
+        { name: 'Customers', icon: Users, path: '/customers' },
+        { name: 'Jobs', icon: Briefcase, path: '/jobs' },
+        { name: 'Mobile Job', icon: Smartphone, path: '/mobile-jobs' },
+        { name: 'Reports', icon: BarChart3, path: '/reports' },
+        { name: 'Settings', icon: Settings, path: '/settings' },
+    ]
 
     // Get role and team from session
     const userRole = session?.user?.role || 'admin'
@@ -84,8 +109,8 @@ export default function MobileJobsPage() {
             })
 
             setJobs(allJobs)
-            setLoading(false)
         }
+        setLoading(false)
     }
 
     const applyFilters = () => {
@@ -196,11 +221,19 @@ export default function MobileJobsPage() {
                 <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white sticky top-0 z-10 shadow-lg">
                     <div className="px-4 py-4">
                         <div className="flex items-center justify-between mb-2">
-                            <div>
-                                <h1 className="text-2xl font-bold mb-1">งานของฉัน</h1>
-                                <p className="text-primary-100 text-sm">
-                                    {userRole === 'admin' ? 'ผู้ดูแลระบบ' : `${userTeam} - ${userRole === 'ช่าง' ? 'ช่างติดตั้ง' : 'QC'}`}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setIsMenuOpen(true)}
+                                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                                >
+                                    <Menu size={24} />
+                                </button>
+                                <div>
+                                    <h1 className="text-2xl font-bold mb-1">งานของฉัน</h1>
+                                    <p className="text-primary-100 text-sm">
+                                        {userRole === 'admin' ? 'ผู้ดูแลระบบ' : `${userTeam} - ${userRole === 'ช่าง' ? 'ช่างติดตั้ง' : 'QC'}`}
+                                    </p>
+                                </div>
                             </div>
                             {session && (
                                 <div className="flex items-center gap-2">
@@ -334,6 +367,69 @@ export default function MobileJobsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Sidebar Drawer */}
+            {isMenuOpen && (
+                <div className="fixed inset-0 z-50 flex">
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+                        onClick={() => setIsMenuOpen(false)}
+                    />
+
+                    {/* Sidebar */}
+                    <div className="relative w-64 bg-white h-full shadow-xl flex flex-col animate-in slide-in-from-left duration-200">
+                        {/* Sidebar Header */}
+                        <div className="h-16 flex items-center justify-between px-4 border-b border-secondary-100">
+                            <span className="font-bold text-xl text-secondary-900">เมนูหลัก</span>
+                            <button
+                                onClick={() => setIsMenuOpen(false)}
+                                className="p-2 text-secondary-500 hover:bg-secondary-50 rounded-lg"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                            {menuItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    href={item.path}
+                                    className={`
+                                        flex items-center gap-3 px-3 py-3 rounded-lg transition-all
+                                        ${router.pathname === item.path
+                                            ? 'bg-primary-50 text-primary-700 font-medium'
+                                            : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                                        }
+                                    `}
+                                >
+                                    <item.icon size={20} className={router.pathname === item.path ? 'text-primary-600' : 'text-secondary-400'} />
+                                    <span className="flex-1">{item.name}</span>
+                                    {router.pathname === item.path && <ChevronRight size={16} className="text-primary-400" />}
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* User Profile */}
+                        <div className="p-4 border-t border-secondary-100 bg-secondary-50">
+                            <div className="flex items-center gap-3">
+                                {session?.user?.image ? (
+                                    <img src={session.user.image} alt="User" className="w-10 h-10 rounded-full" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                                        {session?.user?.name?.[0] || 'U'}
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-secondary-900 truncate">{session?.user?.name || 'User'}</p>
+                                    <p className="text-xs text-secondary-500 truncate">{session?.user?.email}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     )
 
