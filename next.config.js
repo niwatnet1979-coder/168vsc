@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 // Force restart server
 const nextConfig = {
-    output: 'export',
+    // Removed 'output: export' to enable API Routes for NextAuth
     images: {
         unoptimized: true,
     },
