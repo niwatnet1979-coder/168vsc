@@ -191,11 +191,31 @@ export default function MobileJobsV2() {
                                                 </div>
 
                                                 {/* Line 3-4: Product Details */}
-                                                <div className="text-xs text-secondary-700 leading-tight">
-                                                    <p className="truncate font-medium">{job.productName}</p>
-                                                    <p className="truncate text-secondary-500">
-                                                        {job.product?.description || 'รายละเอียดสินค้า'}
-                                                    </p>
+                                                <div className="text-xs text-secondary-700 leading-tight space-y-1 mt-1">
+                                                    <p className="truncate font-bold text-secondary-900">{job.productName}</p>
+
+                                                    {/* Specs Line 1 */}
+                                                    <div className="flex flex-wrap gap-x-2 gap-y-1 text-secondary-600">
+                                                        {job.product?.category && <span>{job.product.category}</span>}
+                                                        {job.product?.subcategory && <span>• {job.product.subcategory}</span>}
+                                                        {(job.product?.width || job.product?.length || job.product?.height) && (
+                                                            <span>• {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Specs Line 2 */}
+                                                    <div className="flex flex-wrap gap-x-2 gap-y-1 text-secondary-500">
+                                                        {job.product?.material && <span>{job.product.material}</span>}
+                                                        {job.product?.color && <span>• สี{job.product.color}</span>}
+                                                        {job.product?.bulbType && <span>• {job.product.bulbType}</span>}
+                                                    </div>
+
+                                                    {/* Description */}
+                                                    {job.product?.description && (
+                                                        <p className="line-clamp-2 text-secondary-500 mt-1 italic">
+                                                            {job.product.description}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
