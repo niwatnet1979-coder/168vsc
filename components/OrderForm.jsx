@@ -459,6 +459,58 @@ export default function OrderForm() {
         }
 
         localStorage.setItem('orders_data', JSON.stringify(orders))
+
+        // Create Jobs in jobs_data
+        const savedJobs = localStorage.getItem('jobs_data')
+        const jobs = savedJobs ? JSON.parse(savedJobs) : []
+
+        // Create a job for each item in the order
+        itemsWithJobIds.forEach((item, index) => {
+            if (!item.subJob || !item.subJob.jobId) return
+
+            // Check if job already exists (for edit mode)
+            const existingJobIndex = jobs.findIndex(j => j.id === item.subJob.jobId)
+
+            const newJob = {
+                id: item.subJob.jobId,
+                orderId: orderId,
+                customerId: customer.id || null,
+                customerName: customer.name,
+                productId: item.code,
+                productName: item.name,
+                productImage: item.image || null,
+                product: {
+                    code: item.code,
+                    name: item.name,
+                    description: `${item.name} - จำนวน ${item.qty} ${item.unit || 'ชิ้น'}`,
+                    image: item.image
+                },
+                jobType: item.subJob.jobType || 'ติดตั้ง',
+                rawJobType: item.subJob.jobType || 'installation',
+                jobDate: item.subJob.appointmentDate || jobInfo.orderDate,
+                jobTime: '09:00', // Default time
+                address: item.subJob.installAddress || customer.address || '',
+                assignedTeam: item.subJob.team || 'ทีม A',
+                status: 'รอดำเนินการ',
+                completionDate: null,
+                signatureImage: null,
+                installationPhotos: [],
+                paymentSlipPhoto: null,
+                notes: item.subJob.description || '',
+                createdAt: new Date().toISOString()
+            }
+
+            if (existingJobIndex !== -1) {
+                // Update existing job
+                jobs[existingJobIndex] = newJob
+            } else {
+                // Add new job
+                jobs.push(newJob)
+            }
+        })
+
+        localStorage.setItem('jobs_data', JSON.stringify(jobs))
+
         // Use window.location.href for reliable navigation in static export mode
         window.location.href = '/orders'
     }
