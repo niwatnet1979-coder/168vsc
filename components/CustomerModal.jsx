@@ -366,49 +366,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Delivery Address Fields */}
-                                        <div className="md:col-span-2 mt-4">
-                                            <h4 className="font-semibold text-secondary-900 mb-3 border-b pb-2">ที่อยู่จัดส่งใบกำกับภาษี</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                <div className="col-span-1">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">เลขที่</label>
-                                                    <input type="text" value={tax.deliveryAddrNumber || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrNumber', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-1">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">หมู่</label>
-                                                    <input type="text" value={tax.deliveryAddrMoo || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrMoo', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">อาคาร/หมู่บ้าน</label>
-                                                    <input type="text" value={tax.deliveryAddrVillage || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrVillage', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ซอย</label>
-                                                    <input type="text" value={tax.deliveryAddrSoi || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrSoi', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ถนน</label>
-                                                    <input type="text" value={tax.deliveryAddrRoad || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrRoad', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">แขวง/ตำบล</label>
-                                                    <input type="text" value={tax.deliveryAddrTambon || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrTambon', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">เขต/อำเภอ</label>
-                                                    <input type="text" value={tax.deliveryAddrAmphoe || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrAmphoe', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">จังหวัด</label>
-                                                    <input type="text" value={tax.deliveryAddrProvince || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrProvince', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">รหัสไปรษณีย์</label>
-                                                    <input type="text" value={tax.deliveryAddrZipcode || ''} onChange={(e) => updateTaxInvoice(tax.id, 'deliveryAddrZipcode', e.target.value)} className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm" />
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -437,10 +394,10 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
                                         {/* Inspectors */}
                                         <div className="md:col-span-2 bg-secondary-50 p-4 rounded-xl border border-secondary-200">
-                                            <h5 className="font-medium text-secondary-900 mb-3 text-sm">ผู้ตรวจงาน (หน้างาน)</h5>
+                                            <h5 className="font-medium text-secondary-900 mb-3 text-sm">ผู้ตรวจ/ผู้รับ (หน้างาน)</h5>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 1 (ชื่อ)</label>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 1 (ชื่อ)</label>
                                                     <input
                                                         type="text"
                                                         value={addr.inspector1?.name || ''}
@@ -449,7 +406,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 1 (เบอร์โทร)</label>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 1 (เบอร์โทร)</label>
                                                     <input
                                                         type="text"
                                                         value={addr.inspector1?.phone || ''}
@@ -458,7 +415,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 2 (ชื่อ)</label>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 2 (ชื่อ)</label>
                                                     <input
                                                         type="text"
                                                         value={addr.inspector2?.name || ''}
@@ -467,7 +424,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจงาน 2 (เบอร์โทร)</label>
+                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 2 (เบอร์โทร)</label>
                                                     <input
                                                         type="text"
                                                         value={addr.inspector2?.phone || ''}
