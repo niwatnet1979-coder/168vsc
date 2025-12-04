@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
     X,
     User,
@@ -46,6 +46,15 @@ export default function TeamMemberModal({
 
     const [formData, setFormData] = useState(member || initialFormState)
 
+    // Update form data when member prop changes
+    useEffect(() => {
+        if (member) {
+            setFormData(member)
+        } else {
+            setFormData(initialFormState)
+        }
+    }, [member])
+
     const handleSave = () => {
         if (!formData.nickname) {
             alert('กรุณากรอกชื่อเล่น')
@@ -89,8 +98,8 @@ export default function TeamMemberModal({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`pb-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                                    ? 'border-primary-500 text-primary-600'
-                                    : 'border-transparent text-secondary-500 hover:text-secondary-700'
+                                ? 'border-primary-500 text-primary-600'
+                                : 'border-transparent text-secondary-500 hover:text-secondary-700'
                                 }`}
                         >
                             <tab.icon size={16} />
