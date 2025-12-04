@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -18,8 +19,15 @@ import {
 } from 'lucide-react';
 
 const AppLayout = ({ children }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const router = useRouter();
+    const { data: session } = useSession();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const handleLogout = async () => {
+        if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+            await signOut({ callbackUrl: '/auth/signin' });
+        }
+    };
 
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
@@ -109,14 +117,30 @@ const AppLayout = ({ children }) => {
                     {/* User Profile (Bottom) */}
                     <div className="p-4 border-t border-secondary-100">
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary-50 border border-secondary-100">
-                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                                AD
-                            </div>
+                            {session?.user?.image ? (
+                                <img
+                                    src={session.user.image}
+                                    alt={session.user.name || 'User'}
+                                    className="w-10 h-10 rounded-full"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                                    {session?.user?.name?.charAt(0) || 'U'}
+                                </div>
+                            )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-secondary-900 truncate">Admin User</p>
-                                <p className="text-xs text-secondary-500 truncate">admin@168vsc.com</p>
+                                <p className="text-sm font-medium text-secondary-900 truncate">
+                                    {session?.user?.name || 'User'}
+                                </p>
+                                <p className="text-xs text-secondary-500 truncate">
+                                    {session?.user?.email || ''}
+                                </p>
                             </div>
-                            <button className="text-secondary-400 hover:text-danger-500 transition-colors">
+                            <button
+                                onClick={handleLogout}
+                                className="text-secondary-400 hover:text-danger-500 transition-colors"
+                                title="ออกจากระบบ"
+                            >
                                 <LogOut size={18} />
                             </button>
                         </div>
