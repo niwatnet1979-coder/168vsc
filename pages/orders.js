@@ -53,12 +53,12 @@ export default function OrdersListPage() {
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
             (order.id && order.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (order.customer && order.customer.toLowerCase().includes(searchTerm.toLowerCase()))
+            (order.customerName && order.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
 
         const matchesStatus = statusFilter === 'all' || (order.status && order.status.toLowerCase() === statusFilter.toLowerCase())
 
         return matchesSearch && matchesStatus
-    }).sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date desc
+    }).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt)) // Sort by date desc
 
     // Pagination
     const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
@@ -262,16 +262,16 @@ export default function OrdersListPage() {
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-                                                {order.date}
+                                                {order.orderDate || order.createdAt?.split('T')[0] || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-secondary-900">{order.customer}</div>
+                                                <div className="text-sm font-medium text-secondary-900">{order.customerName || '-'}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
                                                 {Array.isArray(order.items) ? order.items.length : order.items}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm font-bold text-primary-700">฿{(order.total || 0).toLocaleString()}</div>
+                                                <div className="text-sm font-bold text-primary-700">฿{(order.totalAmount || order.total || 0).toLocaleString()}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="text-sm text-secondary-600">฿{(order.deposit || 0).toLocaleString()}</div>
