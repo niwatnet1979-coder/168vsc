@@ -15,7 +15,8 @@ import {
     ChevronRight,
     BarChart3,
     Briefcase,
-    Smartphone
+    Smartphone,
+    UserCog
 } from 'lucide-react';
 
 const AppLayout = ({ children }) => {
@@ -54,6 +55,7 @@ const AppLayout = ({ children }) => {
         { name: 'Orders List', icon: FileText, path: '/orders' },
         { name: 'Products', icon: Package, path: '/products' },
         { name: 'Customers', icon: Users, path: '/customers' },
+        { name: 'Team', icon: UserCog, path: '/team' },
         { name: 'Jobs', icon: Briefcase, path: '/jobs' },
         { name: 'Mobile Job', icon: Smartphone, path: '/mobile-jobs' },
         { name: 'Reports', icon: BarChart3, path: '/reports' },
