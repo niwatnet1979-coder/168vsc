@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import CustomerModal from '../components/CustomerModal'
-import { MOCK_CUSTOMERS_DATA } from '../lib/mockData'
+
 import {
     Search,
     UserPlus,
@@ -122,8 +122,8 @@ export default function CustomersPage() {
         if (savedData) {
             setCustomers(JSON.parse(savedData))
         } else {
-            setCustomers(MOCK_CUSTOMERS_DATA)
-            localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+            setCustomers([])
+            localStorage.setItem('customers_data', JSON.stringify([]))
         }
     }, [])
 
@@ -324,9 +324,10 @@ export default function CustomersPage() {
     }
 
     const handleResetData = () => {
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าทั้งหมดหรือไม่?')) {
-            setCustomers(MOCK_CUSTOMERS_DATA)
-            localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+            setCustomers([])
+            localStorage.setItem('customers_data', JSON.stringify([]))
+            alert('รีเซ็ตข้อมูลลูกค้าเรียบร้อยแล้ว')
         }
     }
 

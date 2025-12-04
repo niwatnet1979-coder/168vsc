@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
-import { MOCK_PRODUCTS_DATA } from '../lib/mockData'
 import * as XLSX from 'xlsx'
 import {
     Search,
@@ -37,8 +36,8 @@ export default function ProductManagement() {
         if (savedProducts) {
             setProducts(JSON.parse(savedProducts))
         } else {
-            setProducts(MOCK_PRODUCTS_DATA)
-            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+            setProducts([])
+            localStorage.setItem('products_data_v3', JSON.stringify([]))
         }
     }, [])
 
@@ -140,12 +139,10 @@ export default function ProductManagement() {
     const handleResetData = () => {
         if (isResetting.current) return // Prevent multiple clicks
 
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลสินค้าทั้งหมดหรือไม่?')) {
-            isResetting.current = true
-            setProducts(MOCK_PRODUCTS_DATA)
-            localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
-            // Reload page to show fresh data
-            window.location.reload()
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลสินค้าทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+            setProducts([])
+            localStorage.setItem('products_data_v3', JSON.stringify([]))
+            alert('รีเซ็ตข้อมูลสินค้าเรียบร้อยแล้ว')
         }
     }
 

@@ -8,7 +8,7 @@ import {
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
     MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle
 } from 'lucide-react'
-import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA, SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
 import SubJobModal from './SubJobModal'
 
@@ -119,11 +119,11 @@ export default function OrderForm() {
     useEffect(() => {
         // Load Customers
         const savedCustomers = localStorage.getItem('customers_data')
-        setCustomersData(savedCustomers ? JSON.parse(savedCustomers) : MOCK_CUSTOMERS_DATA)
+        setCustomersData(savedCustomers ? JSON.parse(savedCustomers) : [])
 
         // Load Products
         const savedProducts = localStorage.getItem('products_data_v3') || localStorage.getItem('products_data')
-        setProductsData(savedProducts ? JSON.parse(savedProducts) : MOCK_PRODUCTS_DATA)
+        setProductsData(savedProducts ? JSON.parse(savedProducts) : [])
 
         // Load Teams
         const savedTeams = localStorage.getItem('team_data')
