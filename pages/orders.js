@@ -85,8 +85,13 @@ export default function OrdersListPage() {
                 localStorage.setItem('orders_data', JSON.stringify(updatedOrders))
                 setOrders(updatedOrders) // Update state for immediate feedback
 
-                // Optional: Reload to ensure clean state if needed, but state update should be enough
-                // window.location.reload() 
+                // Also delete associated jobs
+                const jobsData = localStorage.getItem('jobs_data')
+                if (jobsData) {
+                    const jobs = JSON.parse(jobsData)
+                    const updatedJobs = jobs.filter(j => j.orderId !== orderId)
+                    localStorage.setItem('jobs_data', JSON.stringify(updatedJobs))
+                }
             }
         }
     }

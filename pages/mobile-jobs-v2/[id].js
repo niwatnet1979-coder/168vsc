@@ -149,8 +149,8 @@ export default function MobileJobDetail() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id
-                                                ? 'border-primary-600 text-primary-600 bg-primary-50'
-                                                : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                                            ? 'border-primary-600 text-primary-600 bg-primary-50'
+                                            : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                                             }`}
                                     >
                                         <div className="flex items-center justify-center gap-2">
@@ -233,9 +233,10 @@ export default function MobileJobDetail() {
 
                             {/* Tab 2: Product Details */}
                             {activeTab === 'product' && (
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-secondary-900 mb-4">ข้อมูลสินค้า</h2>
+                                <div className="space-y-6">
+                                    <h2 className="text-lg font-bold text-secondary-900">ข้อมูลสินค้า</h2>
 
+                                    {/* Main Info */}
                                     <div className="flex gap-4">
                                         <div className="w-24 h-24 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0">
                                             {job.productImage ? (
@@ -249,23 +250,73 @@ export default function MobileJobDetail() {
                                         <div className="flex-1">
                                             <h3 className="text-lg font-bold text-secondary-900 mb-1">{job.productName}</h3>
                                             <p className="text-sm text-secondary-500 font-mono mb-2">{job.productId}</p>
-                                            {product && product.description && (
-                                                <p className="text-sm text-secondary-700">{product.description}</p>
-                                            )}
+                                            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                                {product?.category || 'ไม่ระบุหมวดหมู่'}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {job.product?.description && (
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">รายละเอียด</label>
-                                            <div className="text-secondary-900">{job.product.description}</div>
+                                    {/* Detailed Specs */}
+                                    {product && (
+                                        <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100">
+                                            <h3 className="text-sm font-semibold text-secondary-900 mb-2">คุณสมบัติสินค้า</h3>
+
+                                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">หมวดหมู่ย่อย</span>
+                                                    <span className="text-secondary-900 font-medium">{product.subcategory || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">ราคา</span>
+                                                    <span className="text-secondary-900 font-medium">฿{product.price?.toLocaleString() || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">ขนาด (กxยxส)</span>
+                                                    <span className="text-secondary-900 font-medium">
+                                                        {(product.width || product.length || product.height)
+                                                            ? `${product.width || '-'} x ${product.length || '-'} x ${product.height || '-'} cm`
+                                                            : '-'}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">วัสดุ</span>
+                                                    <span className="text-secondary-900 font-medium">{product.material || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">สีโครงสร้าง</span>
+                                                    <span className="text-secondary-900 font-medium">{product.color || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">สีคริสตัล</span>
+                                                    <span className="text-secondary-900 font-medium">{product.crystalColor || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">ประเภทหลอดไฟ</span>
+                                                    <span className="text-secondary-900 font-medium">{product.bulbType || '-'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-secondary-500 text-xs mb-1">แสงไฟ</span>
+                                                    <span className="text-secondary-900 font-medium">{product.light || '-'}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
+                                    {/* Description */}
+                                    {(job.product?.description || product?.description) && (
+                                        <div>
+                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">รายละเอียดเพิ่มเติม</label>
+                                            <div className="text-sm text-secondary-700 leading-relaxed bg-white p-3 rounded-lg border border-secondary-200">
+                                                {product?.description || job.product?.description}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Job Notes */}
                                     {job.notes && (
                                         <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">หมายเหตุ</label>
-                                            <div className="p-3 bg-secondary-50 rounded-lg text-secondary-700 border border-secondary-100">
+                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">หมายเหตุงาน</label>
+                                            <div className="p-3 bg-warning-50 rounded-lg text-warning-800 border border-warning-100 text-sm">
                                                 {job.notes}
                                             </div>
                                         </div>
