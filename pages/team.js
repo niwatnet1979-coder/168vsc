@@ -19,7 +19,8 @@ import {
     X,
     Users,
     UserCheck,
-    UserX
+    UserX,
+    RotateCcw
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
@@ -119,6 +120,14 @@ export default function TeamPage() {
             (m.team && m.team.toLowerCase().includes(searchTerm.toLowerCase())))
     )
 
+    const handleResetData = () => {
+        if (confirm('คุณต้องการรีเซ็ตข้อมูลทีมงานทั้งหมดหรือไม่?')) {
+            localStorage.setItem('team_data', JSON.stringify([]))
+            setTeamMembers([])
+            alert('รีเซ็ตข้อมูลทีมงานเรียบร้อยแล้ว')
+        }
+    }
+
     return (
         <AppLayout>
             <Head>
@@ -135,13 +144,22 @@ export default function TeamPage() {
                         </h1>
                         <p className="text-secondary-500 mt-1">จัดการข้อมูลพนักงานและทีมงานทั้งหมด</p>
                     </div>
-                    <button
-                        onClick={handleAdd}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
-                    >
-                        <Plus size={18} />
-                        เพิ่มทีมงานใหม่
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleResetData}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                        >
+                            <RotateCcw size={18} />
+                            Reset Data
+                        </button>
+                        <button
+                            onClick={handleAdd}
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
+                        >
+                            <Plus size={18} />
+                            เพิ่มทีมงานใหม่
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs & Search */}
