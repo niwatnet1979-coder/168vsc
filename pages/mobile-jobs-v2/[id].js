@@ -248,8 +248,33 @@ export default function MobileJobDetail() {
 
                                         <div>
                                             <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">ทีมงาน</label>
-                                            <div className="text-secondary-900">{job.assignedTeam || '-'}</div>
+                                            <div className="text-secondary-900">{job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-')}</div>
                                         </div>
+
+                                        {/* Additional Customer Info */}
+                                        {customer && (
+                                            <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100 mt-4">
+                                                <h3 className="text-sm font-semibold text-secondary-900 mb-2">ข้อมูลเพิ่มเติม</h3>
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">ประเภทลูกค้า</span>
+                                                        <span className="text-secondary-900 font-medium">{customer.customerType || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">เลขผู้เสียภาษี</span>
+                                                        <span className="text-secondary-900 font-medium">{customer.taxId || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">ผู้ติดต่อ</span>
+                                                        <span className="text-secondary-900 font-medium">{customer.contactPerson || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">Line ID</span>
+                                                        <span className="text-secondary-900 font-medium">{customer.lineId || '-'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
