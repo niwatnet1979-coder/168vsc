@@ -51,7 +51,7 @@ const AppLayout = ({ children }) => {
             {/* Sidebar */}
             <aside
                 className={`
-          fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-secondary-200 
+          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-secondary-200 
           transform transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
@@ -125,7 +125,7 @@ const AppLayout = ({ children }) => {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden lg:ml-64">
                 {/* Top Header */}
                 <header className="h-16 bg-white border-b border-secondary-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
                     <div className="flex items-center gap-4">
