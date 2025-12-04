@@ -4,7 +4,6 @@ import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
 import {
-    Briefcase,
     Calendar,
     CheckCircle,
     Clock,
