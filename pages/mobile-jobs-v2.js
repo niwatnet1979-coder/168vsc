@@ -150,8 +150,13 @@ export default function MobileJobsV2() {
                             </div>
                         ) : (
                             jobs.map((job) => {
-                                const location = getLocation(job.address)
-                                const distance = getDistance(job.address)
+                                const displayAddress = job.address ||
+                                    job.order?.address ||
+                                    job.customer?.address ||
+                                    (job.customer?.addresses?.[0]?.address) ||
+                                    '-'
+                                const location = getLocation(displayAddress)
+                                const distance = getDistance(displayAddress)
 
                                 return (
                                     <Link
@@ -199,7 +204,7 @@ export default function MobileJobsV2() {
 
                                                     {/* Inspector (Try to find) */}
                                                     {(() => {
-                                                        const addr = job.customer?.addresses?.find(a => a.address === job.address)
+                                                        const addr = job.customer?.addresses?.find(a => a.address === displayAddress)
                                                         const inspector = addr?.inspector1
                                                         if (inspector?.name) {
                                                             return (
@@ -220,7 +225,7 @@ export default function MobileJobsV2() {
                                                 {/* Row 2: Location, Distance */}
                                                 <div className="flex items-center gap-2 text-xs text-secondary-600 mb-1">
                                                     <MapPin size={12} className="flex-shrink-0" />
-                                                    <span className="truncate">{job.address || '-'}</span>
+                                                    <span className="truncate">{displayAddress}</span>
                                                     <span className="flex-shrink-0 text-primary-600 font-medium whitespace-nowrap">
                                                         {distance} กม.
                                                     </span>
