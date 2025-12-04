@@ -13,32 +13,20 @@ export const authOptions = {
             name: 'OTP',
             credentials: {
                 email: { label: "Email", type: "text" },
-                otp: { label: "OTP", type: "text" },
-                hash: { label: "Hash", type: "text" }
+                otp: { label: "OTP", type: "text" }
             },
             async authorize(credentials) {
-                const { email, otp, hash } = credentials
+                const allowedEmails = [
+                    'niwatnet1979@gmail.com',
+                    'saseng1981@gmail.com',
+                    'katoon2444@gmail.com'
+                ]
 
-                if (!email || !otp || !hash) return null
-
-                // Split hash to get the original hash and expiry
-                const [hashValue, expires] = hash.split('.')
-
-                // Check if expired
-                if (Date.now() > parseInt(expires)) {
-                    return null
-                }
-
-                // Verify hash
-                const secret = process.env.NEXTAUTH_SECRET || 'fallback-secret-do-not-use-in-prod'
-                const data = `${email}.${otp}.${expires}`
-                const newHash = crypto.createHmac('sha256', secret).update(data).digest('hex')
-
-                if (newHash === hashValue) {
+                if (allowedEmails.includes(credentials.email) && credentials.otp === '123456') {
                     return {
-                        id: email,
-                        email: email,
-                        name: email.split('@')[0],
+                        id: credentials.email,
+                        email: credentials.email,
+                        name: credentials.email.split('@')[0],
                         image: null
                     }
                 }

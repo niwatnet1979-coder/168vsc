@@ -25,28 +25,11 @@ export default function SignIn() {
             return
         }
         setIsLoading(true)
-
-        try {
-            const res = await fetch('/api/auth/send-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: selectedEmail })
-            })
-
-            const data = await res.json()
-
-            if (data.success) {
-                setOtpHash(data.hash)
-                setOtpStep('otp')
-                alert(`ส่งรหัส OTP ไปยัง ${selectedEmail} แล้ว กรุณาตรวจสอบอีเมล`)
-            } else {
-                alert(data.message || 'ไม่สามารถส่ง OTP ได้')
-            }
-        } catch (error) {
-            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ')
-        } finally {
-            setIsLoading(false)
-        }
+        // Simulate sending OTP
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        setIsLoading(false)
+        setOtpStep('otp')
+        alert(`ส่งรหัส OTP ไปยัง ${selectedEmail} แล้ว (รหัสทดสอบ: 123456)`)
     }
 
     const handleOTPLogin = async () => {
@@ -59,13 +42,12 @@ export default function SignIn() {
             redirect: false,
             email: selectedEmail,
             otp: otpInput,
-            hash: otpHash, // Send hash for verification
             callbackUrl: '/'
         })
 
         if (result.error) {
             setIsLoading(false)
-            alert('รหัส OTP ไม่ถูกต้องหรือหมดอายุ')
+            alert('รหัส OTP ไม่ถูกต้อง')
         } else {
             router.push('/')
         }
