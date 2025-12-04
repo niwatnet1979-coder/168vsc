@@ -359,6 +359,38 @@ export default function OrderForm() {
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
         if (items.length === 0 || !items[0].code) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
 
+        // Auto-create customer if not exists (no ID)
+        if (!customer.id) {
+            const savedCustomers = localStorage.getItem('customers_data')
+            const customers = savedCustomers ? JSON.parse(savedCustomers) : []
+
+            // Generate new customer ID
+            const newCustomerId = `CUST${Date.now()}`
+            const newCustomer = {
+                id: newCustomerId,
+                name: customer.name,
+                phone: customer.phone || '',
+                email: customer.email || '',
+                line: customer.line || '',
+                facebook: customer.facebook || '',
+                instagram: customer.instagram || '',
+                address: customer.address || '',
+                contact1: { name: '', phone: '' },
+                contact2: { name: '', phone: '' },
+                mediaSource: '',
+                mediaSourceOther: '',
+                taxInvoices: [],
+                addresses: [],
+                createdAt: new Date().toISOString()
+            }
+
+            customers.push(newCustomer)
+            localStorage.setItem('customers_data', JSON.stringify(customers))
+
+            // Update customer state with new ID
+            setCustomer({ ...customer, id: newCustomerId })
+        }
+
         const savedOrders = localStorage.getItem('orders_data')
         const orders = savedOrders ? JSON.parse(savedOrders) : []
 
@@ -680,6 +712,54 @@ export default function OrderForm() {
                                                     <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
                                                         <Instagram size={14} />
                                                         <span>IG: {String(customer.instagram)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Address */}
+                                    {customer.address && (
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่อยู่</h4>
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <MapPin size={16} className="text-primary-600" />
+                                                </div>
+                                                <p className="text-sm text-secondary-700 leading-relaxed">{customer.address}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Additional Contacts */}
+                                    {((customer.contact1?.name || customer.contact1?.phone) || (customer.contact2?.name || customer.contact2?.phone)) && (
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ผู้ติดต่อเพิ่มเติม</h4>
+                                            <div className="space-y-2">
+                                                {(customer.contact1?.name || customer.contact1?.phone) && (
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        <User size={12} className="text-secondary-400" />
+                                                        <span className="font-medium text-secondary-700">{customer.contact1.name || '-'}</span>
+                                                        {customer.contact1.phone && (
+                                                            <>
+                                                                <span className="text-secondary-400">•</span>
+                                                                <Phone size={12} className="text-secondary-400" />
+                                                                <span className="text-secondary-600">{customer.contact1.phone}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {(customer.contact2?.name || customer.contact2?.phone) && (
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        <User size={12} className="text-secondary-400" />
+                                                        <span className="font-medium text-secondary-700">{customer.contact2.name || '-'}</span>
+                                                        {customer.contact2.phone && (
+                                                            <>
+                                                                <span className="text-secondary-400">•</span>
+                                                                <Phone size={12} className="text-secondary-400" />
+                                                                <span className="text-secondary-600">{customer.contact2.phone}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
