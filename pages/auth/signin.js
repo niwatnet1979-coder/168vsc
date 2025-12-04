@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -6,12 +6,19 @@ import { Chrome, AlertCircle } from 'lucide-react'
 
 export default function SignIn() {
     const router = useRouter()
-    const { error } = router.query
+    const { error, autoTrigger } = router.query
     const [showForgotPass, setShowForgotPass] = useState(false)
     const [otpStep, setOtpStep] = useState('email') // email, otp
     const [selectedEmail, setSelectedEmail] = useState('')
     const [otpInput, setOtpInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+
+    // Auto-trigger Google sign-in when redirected from "Switch Account"
+    useEffect(() => {
+        if (autoTrigger === 'true') {
+            handleGoogleSignIn()
+        }
+    }, [autoTrigger])
 
     const handleGoogleSignIn = async () => {
         await signIn('google', {

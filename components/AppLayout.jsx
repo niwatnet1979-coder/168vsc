@@ -31,7 +31,7 @@ const AppLayout = ({ children }) => {
 
     const handleSwitchAccount = async () => {
         if (confirm('คุณต้องการสลับบัญชีหรือไม่?')) {
-            await signOut({ callbackUrl: '/auth/signin' });
+            await signOut({ callbackUrl: '/auth/signin?autoTrigger=true' });
         }
     };
 
