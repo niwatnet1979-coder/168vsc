@@ -28,77 +28,45 @@ export default function JobDetailPage() {
         if (!id) return
 
         const loadJobDetails = () => {
-            const savedOrders = localStorage.getItem('orders_data')
-            if (savedOrders) {
-                const orders = JSON.parse(savedOrders)
-                // Parse Job ID (Format: ORD-XXX-XX)
-                // Assuming format is OrderID-Index (padded)
-                // We need to find the order that contains this job
-
-                let foundJob = null;
-
-                // Simple search through all orders and items to match the unique ID logic
-                for (const order of orders) {
-                    if (order.items && order.items.length > 0) {
-                        for (let i = 0; i < order.items.length; i++) {
-                            const item = order.items[i];
-
-                            // Check persistent Job ID first
-                            let uniqueId = item.subJob?.jobId;
-
-                            // Fallback reconstruction if missing
-                            if (!uniqueId) {
-                                const orderIdNum = parseInt(order.id.replace(/\D/g, '') || '0', 10);
-                                const jobNum = (orderIdNum * 100) + (i + 1);
-                                uniqueId = `JB${jobNum.toString().padStart(7, '0')}`;
-                            }
-
-                            if (uniqueId === id) {
-                                // Found the job!
-                                const hasSubJob = item.subJob && item.subJob.jobType;
-                                const jobSource = hasSubJob ? item.subJob : order.jobInfo;
-
-                                // Handle customer name
-                                let customerName = 'Unknown';
-                                let customerPhone = '-';
-                                let customerAddress = '-';
-
-                                if (order.customer) {
-                                    if (typeof order.customer === 'object') {
-                                        customerName = order.customer.name || 'Unknown';
-                                        customerPhone = order.customer.phone || '-';
-                                        // Try to find address from customer data if not in job source
-                                    } else {
-                                        customerName = order.customer;
-                                    }
-                                }
-
-                                foundJob = {
-                                    uniqueId: uniqueId,
-                                    orderId: order.id,
-                                    customer: {
-                                        name: customerName,
-                                        phone: customerPhone,
-                                        address: jobSource?.installAddress || jobSource?.installLocationName || '-'
-                                    },
-                                    product: item,
-                                    jobType: jobSource?.jobType || jobSource?.type || 'Unknown',
-                                    appointmentDate: jobSource?.appointmentDate || jobSource?.dateTime || '-',
-                                    team: jobSource?.team || '-',
-                                    inspector: jobSource?.inspector1?.name || '-',
-                                    description: jobSource?.description || '-',
-                                    status: order.status || 'Pending' // Currently status is at order level, might need job level status later
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    if (foundJob) break;
-                }
-
-                setJob(foundJob)
+            // Read from jobs_data instead of orders_data
+            const savedJobs = localStorage.getItem('jobs_data')
+            if (!savedJobs) {
+                setJob(null)
                 setLoading(false)
+                return
             }
+
+            const jobs = JSON.parse(savedJobs)
+            const foundJob = jobs.find(j => j.id === id)
+
+            if (foundJob) {
+                // Transform to match expected structure
+                setJob({
+                    uniqueId: foundJob.id,
+                    orderId: foundJob.orderId,
+                    customer: {
+                        name: foundJob.customerName || 'Unknown',
+                        phone: '-', // Will be fetched from customers_data if needed
+                        address: foundJob.address || '-'
+                    },
+                    product: {
+                        id: foundJob.productId,
+                        name: foundJob.productName,
+                        image: foundJob.productImage,
+                        price: 0 // Can be fetched from products_data if needed
+                    },
+                    jobType: foundJob.rawJobType || foundJob.jobType,
+                    appointmentDate: foundJob.jobDate ? `${foundJob.jobDate}T${foundJob.jobTime || '09:00'}` : '-',
+                    team: foundJob.assignedTeam || '-',
+                    inspector: '-', // Can be added to jobs_data later
+                    description: foundJob.notes || '-',
+                    status: foundJob.status || 'Pending'
+                })
+            } else {
+                setJob(null)
+            }
+
+            setLoading(false)
         }
 
         loadJobDetails()
