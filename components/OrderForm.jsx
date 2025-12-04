@@ -490,7 +490,7 @@ export default function OrderForm() {
                 jobDate: item.subJob.appointmentDate || jobInfo.orderDate,
                 jobTime: '09:00', // Default time
                 address: item.subJob.installAddress || customer.address || '',
-                assignedTeam: item.subJob.team || 'ทีม A',
+                assignedTeam: item.subJob.team || '-',
                 status: 'รอดำเนินการ',
                 completionDate: null,
                 signatureImage: null,
@@ -1012,7 +1012,7 @@ export default function OrderForm() {
                                         type="number"
                                         value={discount.value}
                                         onChange={e => setDiscount({ ...discount, value: Number(e.target.value) })}
-                                        className="w-20 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                                        className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
                                     />
                                 </div>
                             </div>
