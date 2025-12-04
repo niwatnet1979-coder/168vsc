@@ -194,21 +194,34 @@ export default function MobileJobDetail() {
                                                     <div>
                                                         <label className="block text-xs font-medium text-secondary-500 uppercase mb-0.5">ที่อยู่ติดตั้ง/จัดส่ง</label>
                                                         <div className="text-secondary-900">
-                                                            {job.address && job.address !== '-' ? job.address : (job.order?.address || job.customer?.address || '-')}
+                                                            {(() => {
+                                                                if (job.address && job.address !== '-') return job.address
+                                                                if (job.order?.address && job.order.address !== '-') return job.order.address
+                                                                if (job.customer?.address && job.customer.address !== '-') return job.customer.address
+                                                                if (job.customer?.addresses?.length > 0) return job.customer.addresses[0].address
+                                                                return '-'
+                                                            })()}
                                                         </div>
                                                         {/* Google Maps Link */}
-                                                        {(job.address && job.address !== '-') || job.order?.address || job.customer?.address ? (
-                                                            <a
-                                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                                                    job.address && job.address !== '-' ? job.address : (job.order?.address || job.customer?.address || '')
-                                                                )}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-1 text-xs text-primary-600 mt-1 hover:underline"
-                                                            >
-                                                                เปิดในแผนที่
-                                                            </a>
-                                                        ) : null}
+                                                        {(() => {
+                                                            const addr = job.address && job.address !== '-' ? job.address :
+                                                                (job.order?.address && job.order.address !== '-' ? job.order.address :
+                                                                    (job.customer?.address && job.customer.address !== '-' ? job.customer.address :
+                                                                        (job.customer?.addresses?.length > 0 ? job.customer.addresses[0].address : null)))
+
+                                                            if (!addr) return null
+
+                                                            return (
+                                                                <a
+                                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1 text-xs text-primary-600 mt-1 hover:underline"
+                                                                >
+                                                                    เปิดในแผนที่
+                                                                </a>
+                                                            )
+                                                        })()}
                                                     </div>
                                                 </div>
 
@@ -220,14 +233,6 @@ export default function MobileJobDetail() {
                                                 )}
                                             </>
                                         )}
-
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">ที่อยู่ติดตั้ง/จัดส่ง</label>
-                                            <div className="flex items-start gap-2 text-secondary-900">
-                                                <MapPin size={16} className="text-secondary-400 mt-0.5 flex-shrink-0" />
-                                                <span className="leading-relaxed">{job.address || '-'}</span>
-                                            </div>
-                                        </div>
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
@@ -286,7 +291,7 @@ export default function MobileJobDetail() {
 
                                     {/* Main Info */}
                                     <div className="flex gap-4">
-                                        <div className="w-24 h-24 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0">
+                                        <div className="w-20 h-20 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0">
                                             {job.productImage ? (
                                                 <img src={job.productImage} alt={job.productName} className="w-full h-full object-cover" />
                                             ) : (
@@ -305,50 +310,53 @@ export default function MobileJobDetail() {
                                     </div>
 
                                     {/* Detailed Specs */}
-                                    {product && (
-                                        <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100">
-                                            <h3 className="text-sm font-semibold text-secondary-900 mb-2">คุณสมบัติสินค้า</h3>
+                                    {(() => {
+                                        const displayProduct = product || { name: job.productName, id: job.productId }
+                                        return (
+                                            <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100">
+                                                <h3 className="text-sm font-semibold text-secondary-900 mb-2">คุณสมบัติสินค้า</h3>
 
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">หมวดหมู่ย่อย</span>
-                                                    <span className="text-secondary-900 font-medium">{product.subcategory || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">ราคา</span>
-                                                    <span className="text-secondary-900 font-medium">฿{product.price?.toLocaleString() || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">ขนาด (กxยxส)</span>
-                                                    <span className="text-secondary-900 font-medium">
-                                                        {(product.width || product.length || product.height)
-                                                            ? `${product.width || '-'} x ${product.length || '-'} x ${product.height || '-'} cm`
-                                                            : '-'}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">วัสดุ</span>
-                                                    <span className="text-secondary-900 font-medium">{product.material || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">สีโครงสร้าง</span>
-                                                    <span className="text-secondary-900 font-medium">{product.color || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">สีคริสตัล</span>
-                                                    <span className="text-secondary-900 font-medium">{product.crystalColor || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">ประเภทหลอดไฟ</span>
-                                                    <span className="text-secondary-900 font-medium">{product.bulbType || '-'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-secondary-500 text-xs mb-1">แสงไฟ</span>
-                                                    <span className="text-secondary-900 font-medium">{product.light || '-'}</span>
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">หมวดหมู่ย่อย</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.subcategory || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">ราคา</span>
+                                                        <span className="text-secondary-900 font-medium">฿{displayProduct.price?.toLocaleString() || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">ขนาด (กxยxส)</span>
+                                                        <span className="text-secondary-900 font-medium">
+                                                            {(displayProduct.width || displayProduct.length || displayProduct.height)
+                                                                ? `${displayProduct.width || '-'} x ${displayProduct.length || '-'} x ${displayProduct.height || '-'} cm`
+                                                                : '-'}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">วัสดุ</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.material || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">สีโครงสร้าง</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.color || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">สีคริสตัล</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.crystalColor || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">ประเภทหลอดไฟ</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.bulbType || '-'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-secondary-500 text-xs mb-1">แสงไฟ</span>
+                                                        <span className="text-secondary-900 font-medium">{displayProduct.light || '-'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )
+                                    })()}
 
                                     {/* Description */}
                                     {(job.product?.description || product?.description) && (
