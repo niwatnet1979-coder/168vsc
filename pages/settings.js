@@ -241,101 +241,87 @@ export default function SettingsPage() {
                                 <div className="space-y-6">
                                     <div className="border-b border-secondary-200 pb-4">
                                         <h2 className="text-xl font-bold text-secondary-900">ผู้ใช้งาน & สิทธิ์</h2>
-                                        <p className="text-secondary-500 text-sm mt-1">จัดการสิทธิ์การเข้าถึงระบบ (เฉพาะ Admin เท่านั้น)</p>
+                                        <p className="text-secondary-500 text-sm mt-1">จัดการสิทธิ์การเข้าถึงระบบ (เข้าถึงได้ทุกคน)</p>
                                     </div>
 
-                                    {/* Admin Check */}
-                                    {session?.user?.role !== 'admin' ? (
-                                        <div className="flex flex-col items-center justify-center py-12 text-center">
-                                            <Shield size={48} className="text-danger-300 mb-4" />
-                                            <h3 className="text-lg font-semibold text-danger-700 mb-2">ไม่มีสิทธิ์เข้าถึง</h3>
-                                            <p className="text-secondary-600 mb-4">คุณต้องมีสิทธิ์ Admin เท่านั้นจึงจะเข้าถึงหน้านี้ได้</p>
-                                            <p className="text-sm text-secondary-500">
-                                                สิทธิ์ปัจจุบันของคุณ: <span className="font-semibold">{session?.user?.role || 'User'}</span>
+                                    {/* User Table */}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="border-b border-secondary-200">
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">รูป</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">ชื่อเล่น</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Email</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">เบอร์โทร</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Type</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Name</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">สิทธิ์</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">จัดการ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {users.map((user) => (
+                                                    <tr key={user.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
+                                                        <td className="py-3 px-4">
+                                                            {user.image ? (
+                                                                <img
+                                                                    src={user.image}
+                                                                    alt={user.nickname}
+                                                                    className="w-10 h-10 rounded-full"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
+                                                                    {user.nickname.charAt(0)}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-3 px-4 text-sm font-medium text-secondary-900">{user.nickname}</td>
+                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.email}</td>
+                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.phone}</td>
+                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.teamType}</td>
+                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
+                                                        <td className="py-3 px-4">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
+                                                                ? 'bg-purple-100 text-purple-800'
+                                                                : 'bg-green-100 text-green-800'
+                                                                }`}>
+                                                                {user.role === 'admin' ? 'Admin' : 'User'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-3 px-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <a
+                                                                    href={`/team?user=${user.id}`}
+                                                                    className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
+                                                                >
+                                                                    แก้ไข
+                                                                </a>
+                                                                <button
+                                                                    onClick={() => handleDeleteUser(user.id)}
+                                                                    className="text-danger-600 hover:text-danger-700 p-1 hover:bg-danger-50 rounded transition-colors"
+                                                                    title="ลบผู้ใช้งาน"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Info Box */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+                                        <Shield size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-sm font-medium text-blue-900">หมายเหตุ</p>
+                                            <p className="text-sm text-blue-700 mt-1">
+                                                คลิก "แก้ไข" เพื่อไปยังหน้าจัดการทีมของผู้ใช้งานแต่ละคน
+                                                สามารถเปลี่ยนสิทธิ์ ทีม และข้อมูลส่วนตัวได้ที่นั่น
                                             </p>
                                         </div>
-                                    ) : (
-                                        <>
-                                            {/* User Table */}
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full">
-                                                    <thead>
-                                                        <tr className="border-b border-secondary-200">
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">รูป</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">ชื่อเล่น</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Email</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">เบอร์โทร</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Type</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Name</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">สิทธิ์</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">จัดการ</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {users.map((user) => (
-                                                            <tr key={user.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
-                                                                <td className="py-3 px-4">
-                                                                    {user.image ? (
-                                                                        <img
-                                                                            src={user.image}
-                                                                            alt={user.nickname}
-                                                                            className="w-10 h-10 rounded-full"
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
-                                                                            {user.nickname.charAt(0)}
-                                                                        </div>
-                                                                    )}
-                                                                </td>
-                                                                <td className="py-3 px-4 text-sm font-medium text-secondary-900">{user.nickname}</td>
-                                                                <td className="py-3 px-4 text-sm text-secondary-600">{user.email}</td>
-                                                                <td className="py-3 px-4 text-sm text-secondary-600">{user.phone}</td>
-                                                                <td className="py-3 px-4 text-sm text-secondary-600">{user.teamType}</td>
-                                                                <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
-                                                                <td className="py-3 px-4">
-                                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
-                                                                        ? 'bg-purple-100 text-purple-800'
-                                                                        : 'bg-green-100 text-green-800'
-                                                                        }`}>
-                                                                        {user.role === 'admin' ? 'Admin' : 'User'}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3 px-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <a
-                                                                            href={`/team?user=${user.id}`}
-                                                                            className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
-                                                                        >
-                                                                            แก้ไข
-                                                                        </a>
-                                                                        <button
-                                                                            onClick={() => handleDeleteUser(user.id)}
-                                                                            className="text-danger-600 hover:text-danger-700 p-1 hover:bg-danger-50 rounded transition-colors"
-                                                                            title="ลบผู้ใช้งาน"
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            {/* Info Box */}
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                                                <Shield size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
-                                                <div>
-                                                    <p className="text-sm font-medium text-blue-900">หมายเหตุ</p>
-                                                    <p className="text-sm text-blue-700 mt-1">
-                                                        คลิก "แก้ไข" เพื่อไปยังหน้าจัดการทีมของผู้ใช้งานแต่ละคน
-                                                        สามารถเปลี่ยนสิทธิ์ ทีม และข้อมูลส่วนตัวได้ที่นั่น
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
+                                    </div>
                                 </div>
                             )}
 
