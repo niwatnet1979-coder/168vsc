@@ -522,6 +522,13 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
-        </AppLayout>
+
+            <TeamMemberModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                member={editingMember}
+                onSave={handleSaveUser}
+            />
+        </AppLayout >
     )
 }
