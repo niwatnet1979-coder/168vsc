@@ -63,52 +63,28 @@ export default function MobileJobsPage() {
     }, [jobs, statusFilter, userRole, userTeam])
 
     const loadJobs = () => {
-        const savedOrders = localStorage.getItem('orders_data')
-        if (savedOrders) {
-            const orders = JSON.parse(savedOrders)
-            const allJobs = []
+        const savedJobs = localStorage.getItem('jobs_data')
+        if (savedJobs) {
+            const jobsData = JSON.parse(savedJobs)
 
-            orders.forEach(order => {
-                if (order.items && order.items.length > 0) {
-                    order.items.forEach((item, index) => {
-                        const hasSubJob = item.subJob && item.subJob.jobType
-                        const jobSource = hasSubJob ? item.subJob : order.jobInfo
+            // Transform jobs data to match expected format
+            const transformedJobs = jobsData.map(job => ({
+                id: job.id,
+                orderId: job.orderId,
+                customerName: job.customerName,
+                location: job.address,
+                productName: job.products && job.products.length > 0 ? job.products[0].productName : '-',
+                productImage: null,
+                jobType: job.jobType === 'ติดตั้ง' ? 'installation' :
+                    job.jobType === 'ซ่อมแซม' ? 'repair' :
+                        job.jobType === 'ตรวจสอบ' ? 'inspection' : 'delivery',
+                appointmentDate: `${job.jobDate}T${job.jobTime}:00`,
+                team: job.assignedTeam,
+                status: job.status,
+                completion: null
+            }))
 
-                        // Generate unique Job ID
-                        let uniqueId = item.subJob?.jobId
-                        if (!uniqueId) {
-                            const orderIdNum = parseInt(order.id.replace(/\D/g, '') || '0', 10)
-                            const jobNum = (orderIdNum * 100) + (index + 1)
-                            uniqueId = `JB${jobNum.toString().padStart(7, '0')}`
-                        }
-
-                        // Extract customer info
-                        let customerName = 'Unknown'
-                        if (order.customer) {
-                            customerName = typeof order.customer === 'object'
-                                ? order.customer.name || 'Unknown'
-                                : order.customer
-                        }
-
-                        allJobs.push({
-                            id: uniqueId,
-                            orderId: order.id,
-                            customerName,
-                            location: jobSource?.installLocationName || jobSource?.installAddress || '-',
-                            productName: item.name,
-                            productImage: item.image,
-                            jobType: jobSource?.jobType || jobSource?.type || 'unknown',
-                            appointmentDate: jobSource?.appointmentDate || jobSource?.dateTime || null,
-                            team: jobSource?.team || '-',
-                            status: order.status || 'รอดำเนินการ',
-                            // Add completion data if exists
-                            completion: item.completion || null
-                        })
-                    })
-                }
-            })
-
-            setJobs(allJobs)
+            setJobs(transformedJobs)
         }
         setLoading(false)
     }
