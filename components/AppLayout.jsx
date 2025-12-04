@@ -57,6 +57,7 @@ const AppLayout = ({ children }) => {
         { name: 'Customers', icon: Users, path: '/customers' },
         { name: 'Team', icon: UserCog, path: '/team' },
         { name: 'Jobs', icon: Briefcase, path: '/jobs' },
+        { name: 'Mobile Jobs', icon: Smartphone, path: '/mobile-jobs-v2' },
         { name: 'Reports', icon: BarChart3, path: '/reports' },
         { name: 'Settings', icon: Settings, path: '/settings' },
     ];
