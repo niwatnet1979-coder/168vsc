@@ -37,56 +37,116 @@ export default function SettingsPage() {
             setShopSettings(JSON.parse(savedSettings))
         }
 
-        // Load users from localStorage or use default data
-        const savedUsers = localStorage.getItem('users_data')
+        // Load users from team_data (same as Team page)
+        const savedUsers = localStorage.getItem('team_data')
         if (savedUsers) {
-            setUsers(JSON.parse(savedUsers))
+            const teamData = JSON.parse(savedUsers)
+            // Convert team data to users format
+            const usersData = teamData.map(member => ({
+                id: member.id,
+                image: member.image || null,
+                nickname: member.nickname,
+                email: member.email,
+                phone: member.phone1 || member.phone,
+                teamType: member.teamType || member.team,
+                teamName: member.team || member.teamName,
+                role: member.userType?.toLowerCase() === 'admin' ? 'admin' : 'user'
+            }))
+            setUsers(usersData)
         } else {
-            // Default users
+            // Default users - will also be saved to team_data
             const defaultUsers = [
                 {
                     id: 1,
+                    eid: 'EID0000',
                     image: '/logo-192.png',
                     nickname: 'Admin',
+                    firstname: '',
+                    lastname: '',
+                    fullname: 'Admin',
                     email: 'niwatnet1979@gmail.com',
                     phone: '084-282-9465',
+                    phone1: '084-282-9465',
                     teamType: 'ผู้ดูแลระบบ',
+                    team: 'All Teams',
                     teamName: 'All Teams',
-                    role: 'admin'
+                    job: 'Manager',
+                    userType: 'Admin',
+                    role: 'admin',
+                    status: 'current'
                 },
                 {
                     id: 2,
+                    eid: 'EID0001',
                     image: null,
                     nickname: 'ช่างเอ',
+                    firstname: '',
+                    lastname: '',
+                    fullname: 'ช่างเอ',
                     email: 'technician.a@168vsc.com',
                     phone: '081-234-5678',
+                    phone1: '081-234-5678',
                     teamType: 'ช่างติดตั้ง',
+                    team: 'ทีม A',
                     teamName: 'ทีม A',
-                    role: 'user'
+                    job: 'Technician',
+                    userType: 'User',
+                    role: 'user',
+                    status: 'current'
                 },
                 {
                     id: 3,
+                    eid: 'EID0002',
                     image: null,
                     nickname: 'ช่างบี',
+                    firstname: '',
+                    lastname: '',
+                    fullname: 'ช่างบี',
                     email: 'technician.b@168vsc.com',
                     phone: '082-345-6789',
+                    phone1: '082-345-6789',
                     teamType: 'ช่างติดตั้ง',
+                    team: 'ทีม B',
                     teamName: 'ทีม B',
-                    role: 'user'
+                    job: 'Technician',
+                    userType: 'User',
+                    role: 'user',
+                    status: 'current'
                 },
                 {
                     id: 4,
+                    eid: 'EID0003',
                     image: null,
                     nickname: 'QC1',
+                    firstname: '',
+                    lastname: '',
+                    fullname: 'QC1',
                     email: 'qc1@168vsc.com',
                     phone: '083-456-7890',
+                    phone1: '083-456-7890',
                     teamType: 'QC',
+                    team: 'ทีม QC',
                     teamName: 'ทีม QC',
-                    role: 'user'
+                    job: 'QC',
+                    userType: 'User',
+                    role: 'user',
+                    status: 'current'
                 }
             ]
-            setUsers(defaultUsers)
-            localStorage.setItem('users_data', JSON.stringify(defaultUsers))
+            localStorage.setItem('team_data', JSON.stringify(defaultUsers))
+
+            // Convert to users format for display
+            const usersData = defaultUsers.map(member => ({
+                id: member.id,
+                image: member.image,
+                nickname: member.nickname,
+                email: member.email,
+                phone: member.phone,
+                teamType: member.teamType,
+                teamName: member.teamName,
+                role: member.role
+            }))
+            setUsers(usersData)
         }
     }, [])
 
@@ -98,9 +158,17 @@ export default function SettingsPage() {
 
     const handleDeleteUser = (userId) => {
         if (confirm('คุณต้องการลบผู้ใช้งานนี้หรือไม่?')) {
+            // Load team_data
+            const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
+            // Remove user from team_data
+            const updatedTeamData = teamData.filter(member => member.id !== userId)
+            // Save back to team_data
+            localStorage.setItem('team_data', JSON.stringify(updatedTeamData))
+
+            // Update local users state
             const updatedUsers = users.filter(user => user.id !== userId)
             setUsers(updatedUsers)
-            localStorage.setItem('users_data', JSON.stringify(updatedUsers))
+
             alert('ลบผู้ใช้งานเรียบร้อยแล้ว')
         }
     }
