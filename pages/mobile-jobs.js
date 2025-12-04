@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import Head from 'next/head'
 import ProtectedRoute from '../components/ProtectedRoute'
+import { DataManager } from '../lib/dataManager'
 import {
     Calendar,
     MapPin,
@@ -63,30 +65,32 @@ export default function MobileJobsPage() {
     }, [jobs, statusFilter, userRole, userTeam])
 
     const loadJobs = () => {
-        const savedJobs = localStorage.getItem('jobs_data')
-        if (savedJobs) {
-            const jobsData = JSON.parse(savedJobs)
+        try {
+            // Use DataManager to get normalized jobs with joined data
+            const allJobs = DataManager.getJobs()
 
-            // Transform jobs data to match expected format
-            const transformedJobs = jobsData.map(job => ({
+            // Transform to component format
+            const formattedJobs = allJobs.map(job => ({
                 id: job.id,
-                orderId: job.orderId,
                 customerName: job.customerName,
-                location: job.address,
-                productName: job.products && job.products.length > 0 ? job.products[0].productName : '-',
-                productImage: null,
+                productName: job.productName,
                 jobType: job.jobType === 'ติดตั้ง' ? 'installation' :
                     job.jobType === 'ซ่อมแซม' ? 'repair' :
                         job.jobType === 'ตรวจสอบ' ? 'inspection' : 'delivery',
-                appointmentDate: `${job.jobDate}T${job.jobTime}:00`,
+                appointmentDate: `${job.jobDate}T${job.jobTime}:00`, // Reconstruct for consistency
+                status: job.status === 'เสร็จสิ้น' ? 'เสร็จสิ้น' :
+                    job.status === 'กำลังดำเนินการ' ? 'กำลังทำ' : 'รอดำเนินการ', // Map to Thai status
+                location: job.address,
                 team: job.assignedTeam,
-                status: job.status,
-                completion: null
+                productImage: job.productImage || 'https://images.unsplash.com/photo-1513506003013-d5316327a3d8?auto=format&fit=crop&q=80&w=300&h=300',
+                notes: job.notes
             }))
 
-            setJobs(transformedJobs)
+            setJobs(formattedJobs)
+        } catch (error) {
+            console.error('Error loading jobs:', error)
+            setJobs([])
         }
-        setLoading(false)
     }
 
     const applyFilters = () => {
@@ -147,7 +151,7 @@ export default function MobileJobsPage() {
         const badge = badges[status] || badges['รอดำเนินการ']
 
         return (
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
+            <span className={`inline - flex items - center gap - 1.5 px - 3 py - 1.5 rounded - full text - sm font - medium border ${badge.bg} ${badge.text} ${badge.border} `}>
                 {badge.icon}
                 {status}
             </span>
@@ -207,7 +211,7 @@ export default function MobileJobsPage() {
                                 <div>
                                     <h1 className="text-2xl font-bold mb-1">งานของฉัน</h1>
                                     <p className="text-primary-100 text-sm">
-                                        {userRole === 'admin' ? 'ผู้ดูแลระบบ' : `${userTeam} - ${userRole === 'ช่าง' ? 'ช่างติดตั้ง' : 'QC'}`}
+                                        {userRole === 'admin' ? 'ผู้ดูแลระบบ' : `${userTeam} - ${userRole === 'ช่าง' ? 'ช่างติดตั้ง' : 'QC'} `}
                                     </p>
                                 </div>
                             </div>
@@ -229,37 +233,37 @@ export default function MobileJobsPage() {
                     <div className="px-4 pb-4 flex gap-2 overflow-x-auto">
                         <button
                             onClick={() => setStatusFilter('all')}
-                            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${statusFilter === 'all'
-                                ? 'bg-white text-primary-700 shadow-md'
-                                : 'bg-primary-500 text-white hover:bg-primary-400'
-                                }`}
+                            className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'all'
+                                    ? 'bg-white text-primary-700 shadow-md'
+                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                } `}
                         >
                             ทั้งหมด ({jobs.length})
                         </button>
                         <button
                             onClick={() => setStatusFilter('รอดำเนินการ')}
-                            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${statusFilter === 'รอดำเนินการ'
-                                ? 'bg-white text-primary-700 shadow-md'
-                                : 'bg-primary-500 text-white hover:bg-primary-400'
-                                }`}
+                            className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'รอดำเนินการ'
+                                    ? 'bg-white text-primary-700 shadow-md'
+                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                } `}
                         >
                             รอดำเนินการ
                         </button>
                         <button
                             onClick={() => setStatusFilter('กำลังทำ')}
-                            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${statusFilter === 'กำลังทำ'
-                                ? 'bg-white text-primary-700 shadow-md'
-                                : 'bg-primary-500 text-white hover:bg-primary-400'
-                                }`}
+                            className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'กำลังทำ'
+                                    ? 'bg-white text-primary-700 shadow-md'
+                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                } `}
                         >
                             กำลังทำ
                         </button>
                         <button
                             onClick={() => setStatusFilter('เสร็จสิ้น')}
-                            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${statusFilter === 'เสร็จสิ้น'
-                                ? 'bg-white text-primary-700 shadow-md'
-                                : 'bg-primary-500 text-white hover:bg-primary-400'
-                                }`}
+                            className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'เสร็จสิ้น'
+                                    ? 'bg-white text-primary-700 shadow-md'
+                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                } `}
                         >
                             เสร็จสิ้น
                         </button>
@@ -277,7 +281,7 @@ export default function MobileJobsPage() {
                         filteredJobs.map(job => (
                             <div
                                 key={job.id}
-                                onClick={() => router.push(`/mobile-jobs/${job.id}`)}
+                                onClick={() => router.push(`/ mobile - jobs / ${job.id} `)}
                                 className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden active:scale-98 transition-transform cursor-pointer"
                             >
                                 {/* Time Badge */}
@@ -373,12 +377,12 @@ export default function MobileJobsPage() {
                                     key={item.path}
                                     href={item.path}
                                     className={`
-                                        flex items-center gap-3 px-3 py-3 rounded-lg transition-all
+                                        flex items - center gap - 3 px - 3 py - 3 rounded - lg transition - all
                                         ${router.pathname === item.path
                                             ? 'bg-primary-50 text-primary-700 font-medium'
                                             : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
                                         }
-                                    `}
+`}
                                 >
                                     <item.icon size={20} className={router.pathname === item.path ? 'text-primary-600' : 'text-secondary-400'} />
                                     <span className="flex-1">{item.name}</span>

@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import {
-    Search,
-    Wrench,
-    Truck,
-    CheckCircle,
+    Briefcase,
     Calendar,
-    User,
+    CheckCircle,
+    Clock,
     MapPin,
     Package,
     Filter,
@@ -28,40 +27,45 @@ export default function JobQueuePage() {
     useEffect(() => {
         const loadJobs = () => {
             const savedJobs = localStorage.getItem('jobs_data')
-            if (savedJobs) {
-                const jobsData = JSON.parse(savedJobs)
+            try {
+                // Use DataManager to get normalized jobs with joined data
+                const allJobs = DataManager.getJobs()
 
-                // Transform jobs data to match expected format
-                const transformedJobs = jobsData.map(job => ({
-                    uniqueId: job.id,
-                    orderId: job.orderId,
+                // Transform to component format (if needed) or use directly
+                // The DataManager already provides customerName, productName, etc.
+                const formattedJobs = allJobs.map(job => ({
+                    uniqueId: job.id, // Changed from 'id' to 'uniqueId' to match component's expectation
+                    orderId: job.orderId, // Assuming DataManager provides orderId
                     customer: job.customerName,
-                    product: job.products && job.products.length > 0 ? {
-                        id: job.products[0].productId,
-                        name: job.products[0].productName,
-                        image: null
-                    } : { id: '-', name: '-', image: null },
+                    product: {
+                        id: job.productId, // Assuming DataManager provides productId
+                        name: job.productName,
+                        image: job.productImage || null // Use image from DataManager or null
+                    },
                     jobType: job.jobType,
                     rawJobType: job.jobType === 'ติดตั้ง' ? 'installation' :
                         job.jobType === 'ซ่อมแซม' ? 'repair' :
                             job.jobType === 'ตรวจสอบ' ? 'inspection' : 'delivery',
                     appointmentDate: `${job.jobDate}T${job.jobTime}:00`,
                     team: job.assignedTeam,
-                    inspector: '-',
+                    inspector: job.inspectorName || '-', // Assuming DataManager provides inspectorName
                     address: job.address,
                     status: job.status === 'เสร็จสิ้น' ? 'Completed' :
                         job.status === 'กำลังดำเนินการ' ? 'Processing' : 'Pending',
-                    priority: 'Medium'
+                    priority: job.priority || 'Medium' // Assuming DataManager provides priority
                 }))
 
                 // Sort by appointment date
-                transformedJobs.sort((a, b) => {
+                formattedJobs.sort((a, b) => {
                     if (a.appointmentDate === '-') return 1
                     if (b.appointmentDate === '-') return -1
                     return new Date(a.appointmentDate) - new Date(b.appointmentDate)
                 })
 
-                setJobs(transformedJobs)
+                setJobs(formattedJobs)
+            } catch (error) {
+                console.error('Error loading jobs:', error)
+                setJobs([])
             }
         }
 

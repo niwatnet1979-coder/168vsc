@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import {
     Search,
     Plus,
@@ -30,21 +31,23 @@ export default function OrdersListPage() {
     const itemsPerPage = 15
 
     // Load data from LocalStorage on mount
-    useEffect(() => {
-        const savedData = localStorage.getItem('orders_data')
-        if (savedData) {
-            let parsedData = JSON.parse(savedData)
+    const loadOrders = () => {
+        try {
+            // Use DataManager to get normalized orders with joined customer data
+            const allOrders = DataManager.getOrders()
 
-            // HOTFIX: Force delete stubborn 'ORD-001' if present
-            const hasStubbornData = parsedData.some(o => o.id === 'ORD-001')
-            if (hasStubbornData) {
-                parsedData = parsedData.filter(o => o.id !== 'ORD-001')
-                localStorage.setItem('orders_data', JSON.stringify(parsedData))
-                console.log('Force deleted ORD-001')
-            }
+            // Sort by date (newest first)
+            const sortedOrders = allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-            setOrders(parsedData)
+            setOrders(sortedOrders)
+        } catch (error) {
+            console.error('Error loading orders:', error)
+            setOrders([])
         }
+    }
+
+    useEffect(() => {
+        loadOrders()
     }, [])
 
     const filteredOrders = orders.filter(order => {
