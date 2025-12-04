@@ -22,9 +22,12 @@ export default function SignIn() {
                 <div className="w-full max-w-md">
                     {/* Logo/Brand */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full shadow-lg mb-4">
-                            <span className="text-3xl font-bold text-primary-600">168</span>
-                        </div>
+                        {/* Logo */}
+                        <img
+                            src="/logo-192.png"
+                            alt="168VSC Logo"
+                            className="w-20 h-20 mx-auto mb-4 rounded-2xl shadow-lg"
+                        />
                         <h1 className="text-3xl font-bold text-white mb-2">168VSC System</h1>
                         <p className="text-primary-100">ระบบจัดการงานติดตั้งและขนส่ง</p>
                     </div>

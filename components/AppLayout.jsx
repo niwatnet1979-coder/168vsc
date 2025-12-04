@@ -60,9 +60,11 @@ const AppLayout = ({ children }) => {
                     {/* Logo Area */}
                     <div className="h-16 flex items-center px-6 border-b border-secondary-100">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary-500/30">
-                                168
-                            </div>
+                            <img
+                                src="/logo-192.png"
+                                alt="168VSC Logo"
+                                className="w-8 h-8 rounded-lg shadow-lg shadow-primary-500/30"
+                            />
                             <span className="font-bold text-xl text-secondary-900 tracking-tight">VSC System</span>
                             <span className="ml-2 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-bold rounded-full">v3.1.0</span>
                         </div>
