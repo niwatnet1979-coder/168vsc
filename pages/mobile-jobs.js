@@ -87,9 +87,11 @@ export default function MobileJobsPage() {
             }))
 
             setJobs(formattedJobs)
+            setLoading(false)
         } catch (error) {
             console.error('Error loading jobs:', error)
             setJobs([])
+            setLoading(false)
         }
     }
 
@@ -234,8 +236,8 @@ export default function MobileJobsPage() {
                         <button
                             onClick={() => setStatusFilter('all')}
                             className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'all'
-                                    ? 'bg-white text-primary-700 shadow-md'
-                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                ? 'bg-white text-primary-700 shadow-md'
+                                : 'bg-primary-500 text-white hover:bg-primary-400'
                                 } `}
                         >
                             ทั้งหมด ({jobs.length})
@@ -243,8 +245,8 @@ export default function MobileJobsPage() {
                         <button
                             onClick={() => setStatusFilter('รอดำเนินการ')}
                             className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'รอดำเนินการ'
-                                    ? 'bg-white text-primary-700 shadow-md'
-                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                ? 'bg-white text-primary-700 shadow-md'
+                                : 'bg-primary-500 text-white hover:bg-primary-400'
                                 } `}
                         >
                             รอดำเนินการ
@@ -252,8 +254,8 @@ export default function MobileJobsPage() {
                         <button
                             onClick={() => setStatusFilter('กำลังทำ')}
                             className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'กำลังทำ'
-                                    ? 'bg-white text-primary-700 shadow-md'
-                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                ? 'bg-white text-primary-700 shadow-md'
+                                : 'bg-primary-500 text-white hover:bg-primary-400'
                                 } `}
                         >
                             กำลังทำ
@@ -261,8 +263,8 @@ export default function MobileJobsPage() {
                         <button
                             onClick={() => setStatusFilter('เสร็จสิ้น')}
                             className={`px - 4 py - 2 rounded - lg font - medium whitespace - nowrap transition - all ${statusFilter === 'เสร็จสิ้น'
-                                    ? 'bg-white text-primary-700 shadow-md'
-                                    : 'bg-primary-500 text-white hover:bg-primary-400'
+                                ? 'bg-white text-primary-700 shadow-md'
+                                : 'bg-primary-500 text-white hover:bg-primary-400'
                                 } `}
                         >
                             เสร็จสิ้น
