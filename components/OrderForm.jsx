@@ -359,8 +359,10 @@ export default function OrderForm() {
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
         if (items.length === 0 || !items[0].code) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
 
-        // Auto-create customer if not exists (no ID)
-        if (!customer.id) {
+        // Determine customer ID (create new if needed)
+        let actualCustomerId = customer.id
+
+        if (!actualCustomerId) {
             const savedCustomers = localStorage.getItem('customers_data')
             const customers = savedCustomers ? JSON.parse(savedCustomers) : []
 
@@ -389,6 +391,9 @@ export default function OrderForm() {
 
             // Update customer state with new ID
             setCustomer({ ...customer, id: newCustomerId })
+
+            // Use the new ID for this save operation
+            actualCustomerId = newCustomerId
         }
 
         const savedOrders = localStorage.getItem('orders_data')
@@ -506,7 +511,7 @@ export default function OrderForm() {
             const newJob = {
                 id: item.subJob.jobId,
                 orderId: orderId,
-                customerId: customer.id || null,
+                customerId: actualCustomerId || null,
                 customerName: customer.name,
                 productId: item.code,
                 productName: item.name,
