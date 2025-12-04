@@ -18,6 +18,7 @@ import {
 export default function SettingsPage() {
     const { data: session } = useSession()
     const [activeTab, setActiveTab] = useState('general')
+    const [users, setUsers] = useState([])
     const [shopSettings, setShopSettings] = useState({
         name: '168 อินทีเรีย ไลท์ติ้ง',
         address: '168/166 หมู่ 1 หมู่บ้านเซนโทร พหล-วิภาวดี2 ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
@@ -29,11 +30,63 @@ export default function SettingsPage() {
     })
     const [isSaved, setIsSaved] = useState(false)
 
-    // Load settings
+    // Load settings and users
     useEffect(() => {
         const savedSettings = localStorage.getItem('shop_settings')
         if (savedSettings) {
             setShopSettings(JSON.parse(savedSettings))
+        }
+
+        // Load users from localStorage or use default data
+        const savedUsers = localStorage.getItem('users_data')
+        if (savedUsers) {
+            setUsers(JSON.parse(savedUsers))
+        } else {
+            // Default users
+            const defaultUsers = [
+                {
+                    id: 1,
+                    image: '/logo-192.png',
+                    nickname: 'Admin',
+                    email: 'niwatnet1979@gmail.com',
+                    phone: '084-282-9465',
+                    teamType: 'ผู้ดูแลระบบ',
+                    teamName: 'All Teams',
+                    role: 'admin'
+                },
+                {
+                    id: 2,
+                    image: null,
+                    nickname: 'ช่างเอ',
+                    email: 'technician.a@168vsc.com',
+                    phone: '081-234-5678',
+                    teamType: 'ช่างติดตั้ง',
+                    teamName: 'ทีม A',
+                    role: 'ช่าง'
+                },
+                {
+                    id: 3,
+                    image: null,
+                    nickname: 'ช่างบี',
+                    email: 'technician.b@168vsc.com',
+                    phone: '082-345-6789',
+                    teamType: 'ช่างติดตั้ง',
+                    teamName: 'ทีม B',
+                    role: 'ช่าง'
+                },
+                {
+                    id: 4,
+                    image: null,
+                    nickname: 'QC1',
+                    email: 'qc1@168vsc.com',
+                    phone: '083-456-7890',
+                    teamType: 'QC',
+                    teamName: 'ทีม QC',
+                    role: 'qc'
+                }
+            ]
+            setUsers(defaultUsers)
+            localStorage.setItem('users_data', JSON.stringify(defaultUsers))
         }
     }, [])
 
@@ -41,6 +94,15 @@ export default function SettingsPage() {
         localStorage.setItem('shop_settings', JSON.stringify(shopSettings))
         setIsSaved(true)
         setTimeout(() => setIsSaved(false), 3000)
+    }
+
+    const handleDeleteUser = (userId) => {
+        if (confirm('คุณต้องการลบผู้ใช้งานนี้หรือไม่?')) {
+            const updatedUsers = users.filter(user => user.id !== userId)
+            setUsers(updatedUsers)
+            localStorage.setItem('users_data', JSON.stringify(updatedUsers))
+            alert('ลบผู้ใช้งานเรียบร้อยแล้ว')
+        }
     }
 
     const handleClearData = () => {
@@ -206,52 +268,11 @@ export default function SettingsPage() {
                                                             <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Type</th>
                                                             <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Name</th>
                                                             <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">สิทธิ์</th>
-                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">แก้ไข</th>
+                                                            <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">จัดการ</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {[
-                                                            {
-                                                                id: 1,
-                                                                image: '/logo-192.png',
-                                                                nickname: 'Admin',
-                                                                email: 'niwatnet1979@gmail.com',
-                                                                phone: '084-282-9465',
-                                                                teamType: 'ผู้ดูแลระบบ',
-                                                                teamName: 'All Teams',
-                                                                role: 'admin'
-                                                            },
-                                                            {
-                                                                id: 2,
-                                                                image: null,
-                                                                nickname: 'ช่างเอ',
-                                                                email: 'technician.a@168vsc.com',
-                                                                phone: '081-234-5678',
-                                                                teamType: 'ช่างติดตั้ง',
-                                                                teamName: 'ทีม A',
-                                                                role: 'ช่าง'
-                                                            },
-                                                            {
-                                                                id: 3,
-                                                                image: null,
-                                                                nickname: 'ช่างบี',
-                                                                email: 'technician.b@168vsc.com',
-                                                                phone: '082-345-6789',
-                                                                teamType: 'ช่างติดตั้ง',
-                                                                teamName: 'ทีม B',
-                                                                role: 'ช่าง'
-                                                            },
-                                                            {
-                                                                id: 4,
-                                                                image: null,
-                                                                nickname: 'QC1',
-                                                                email: 'qc1@168vsc.com',
-                                                                phone: '083-456-7890',
-                                                                teamType: 'QC',
-                                                                teamName: 'ทีม QC',
-                                                                role: 'qc'
-                                                            }
-                                                        ].map((user) => (
+                                                        {users.map((user) => (
                                                             <tr key={user.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
                                                                 <td className="py-3 px-4">
                                                                     {user.image ? (
@@ -273,21 +294,30 @@ export default function SettingsPage() {
                                                                 <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
                                                                 <td className="py-3 px-4">
                                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
-                                                                            ? 'bg-purple-100 text-purple-800'
-                                                                            : user.role === 'qc'
-                                                                                ? 'bg-blue-100 text-blue-800'
-                                                                                : 'bg-green-100 text-green-800'
+                                                                        ? 'bg-purple-100 text-purple-800'
+                                                                        : user.role === 'qc'
+                                                                            ? 'bg-blue-100 text-blue-800'
+                                                                            : 'bg-green-100 text-green-800'
                                                                         }`}>
                                                                         {user.role === 'admin' ? 'Admin' : user.role === 'qc' ? 'QC' : 'User'}
                                                                     </span>
                                                                 </td>
                                                                 <td className="py-3 px-4">
-                                                                    <a
-                                                                        href={`/team?user=${user.id}`}
-                                                                        className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
-                                                                    >
-                                                                        แก้ไข
-                                                                    </a>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <a
+                                                                            href={`/team?user=${user.id}`}
+                                                                            className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
+                                                                        >
+                                                                            แก้ไข
+                                                                        </a>
+                                                                        <button
+                                                                            onClick={() => handleDeleteUser(user.id)}
+                                                                            className="text-danger-600 hover:text-danger-700 p-1 hover:bg-danger-50 rounded transition-colors"
+                                                                            title="ลบผู้ใช้งาน"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </div>
                                                                 </td>
                                                             </tr>
                                                         ))}
