@@ -27,77 +27,41 @@ export default function JobQueuePage() {
     // Load data from localStorage
     useEffect(() => {
         const loadJobs = () => {
-            const savedOrders = localStorage.getItem('orders_data')
-            if (savedOrders) {
-                const orders = JSON.parse(savedOrders)
-                const allJobs = []
+            const savedJobs = localStorage.getItem('jobs_data')
+            if (savedJobs) {
+                const jobsData = JSON.parse(savedJobs)
 
-                orders.forEach(order => {
-                    if (order.items && order.items.length > 0) {
-                        order.items.forEach((item, index) => {
-                            // Determine job details: use subJob if available, otherwise fallback to master job
-                            const hasSubJob = item.subJob && item.subJob.jobType;
-                            const jobSource = hasSubJob ? item.subJob : order.jobInfo;
-
-                            // If no job info found at all, skip (or use defaults)
-                            if (!jobSource) return;
-
-                            // Determine status
-                            let status = order.status || 'Pending';
-
-                            // Map job type to display label
-                            const jobTypeLabel = jobSource.jobType === 'installation' ? 'ติดตั้ง' :
-                                jobSource.jobType === 'delivery' ? 'ส่งของ' :
-                                    jobSource.type === 'installation' ? 'ติดตั้ง' : // Fallback for master job structure
-                                        jobSource.type === 'delivery' ? 'ส่งของ' :
-                                            jobSource.jobType || jobSource.type || '-';
-
-                            // Handle customer name (could be object or string)
-                            let customerName = 'Unknown';
-                            if (order.customer) {
-                                if (typeof order.customer === 'object') {
-                                    customerName = order.customer.name || 'Unknown';
-                                } else {
-                                    customerName = order.customer;
-                                }
-                            }
-
-                            // Use persistent Job ID if available, otherwise fallback to generated (safety)
-                            let jobId = item.subJob?.jobId;
-
-                            if (!jobId) {
-                                // Fallback logic for old data without Job IDs
-                                const orderIdNum = parseInt(order.id.replace(/\D/g, '') || '0', 10);
-                                const jobNum = (orderIdNum * 100) + (index + 1);
-                                jobId = `JB${jobNum.toString().padStart(7, '0')}`;
-                            }
-
-                            allJobs.push({
-                                uniqueId: jobId,
-                                orderId: order.id,
-                                customer: customerName,
-                                product: item,
-                                jobType: jobTypeLabel,
-                                rawJobType: jobSource.jobType || jobSource.type,
-                                appointmentDate: jobSource.appointmentDate || jobSource.dateTime || '-',
-                                team: jobSource.team || '-',
-                                inspector: jobSource.inspector1?.name || '-',
-                                address: jobSource.installAddress || jobSource.installLocationName || '-',
-                                status: status,
-                                priority: 'Medium'
-                            })
-                        })
-                    }
-                })
+                // Transform jobs data to match expected format
+                const transformedJobs = jobsData.map(job => ({
+                    uniqueId: job.id,
+                    orderId: job.orderId,
+                    customer: job.customerName,
+                    product: job.products && job.products.length > 0 ? {
+                        id: job.products[0].productId,
+                        name: job.products[0].productName,
+                        image: null
+                    } : { id: '-', name: '-', image: null },
+                    jobType: job.jobType,
+                    rawJobType: job.jobType === 'ติดตั้ง' ? 'installation' :
+                        job.jobType === 'ซ่อมแซม' ? 'repair' :
+                            job.jobType === 'ตรวจสอบ' ? 'inspection' : 'delivery',
+                    appointmentDate: `${job.jobDate}T${job.jobTime}:00`,
+                    team: job.assignedTeam,
+                    inspector: '-',
+                    address: job.address,
+                    status: job.status === 'เสร็จสิ้น' ? 'Completed' :
+                        job.status === 'กำลังดำเนินการ' ? 'Processing' : 'Pending',
+                    priority: 'Medium'
+                }))
 
                 // Sort by appointment date
-                allJobs.sort((a, b) => {
-                    if (a.appointmentDate === '-') return 1;
-                    if (b.appointmentDate === '-') return -1;
-                    return new Date(a.appointmentDate) - new Date(b.appointmentDate);
+                transformedJobs.sort((a, b) => {
+                    if (a.appointmentDate === '-') return 1
+                    if (b.appointmentDate === '-') return -1
+                    return new Date(a.appointmentDate) - new Date(b.appointmentDate)
                 })
 
-                setJobs(allJobs)
+                setJobs(transformedJobs)
             }
         }
 
