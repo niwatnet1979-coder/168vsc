@@ -189,6 +189,29 @@ export default function MobileJobDetail() {
                                                     </div>
                                                 )}
 
+                                                <div className="flex gap-3">
+                                                    <MapPin className="text-secondary-400 mt-0.5 flex-shrink-0" size={18} />
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-secondary-500 uppercase mb-0.5">ที่อยู่ติดตั้ง/จัดส่ง</label>
+                                                        <div className="text-secondary-900">
+                                                            {job.address && job.address !== '-' ? job.address : (job.order?.address || job.customer?.address || '-')}
+                                                        </div>
+                                                        {/* Google Maps Link */}
+                                                        {(job.address && job.address !== '-') || job.order?.address || job.customer?.address ? (
+                                                            <a
+                                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                                                    job.address && job.address !== '-' ? job.address : (job.order?.address || job.customer?.address || '')
+                                                                )}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 text-xs text-primary-600 mt-1 hover:underline"
+                                                            >
+                                                                เปิดในแผนที่
+                                                            </a>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+
                                                 {customer.email && (
                                                     <div>
                                                         <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">อีเมล</label>
