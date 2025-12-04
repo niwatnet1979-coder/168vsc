@@ -963,80 +963,88 @@ export default function OrderForm() {
                                                         )}
                                                     </div>
 
-                                                    {/* Full Address Display */}
-                                                    {jobInfo.installAddress && (
-                                                        <div className="text-sm text-secondary-800 leading-relaxed mb-3 bg-white/70 rounded-lg p-3 border border-primary-100">
-                                                            <div className="font-medium text-primary-700 mb-2 text-xs uppercase tracking-wide">ที่อยู่เต็ม</div>
-                                                            <p className="text-secondary-900">{jobInfo.installAddress}</p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Address Components Grid */}
+                                                    {/* Unified Address Display */}
                                                     {(() => {
                                                         const selectedAddr = customersData.find(c => c.name === customer.name)?.addresses?.find(
                                                             addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
                                                         );
 
-                                                        if (selectedAddr && (selectedAddr.addrNumber || selectedAddr.province || selectedAddr.zipcode)) {
+                                                        const hasAddressDetails = selectedAddr && (selectedAddr.addrNumber || selectedAddr.province || selectedAddr.zipcode);
+
+                                                        if (jobInfo.installAddress || hasAddressDetails) {
                                                             return (
-                                                                <div className="bg-white/70 rounded-lg p-3 border border-primary-100 mb-3">
-                                                                    <div className="font-medium text-primary-700 mb-2 text-xs uppercase tracking-wide">รายละเอียดที่อยู่</div>
-                                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                                                        {selectedAddr.addrNumber && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">เลขที่:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrNumber}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrMoo && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">หมู่:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrMoo}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrVillage && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">หมู่บ้าน:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrVillage}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrSoi && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">ซอย:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrSoi}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrRoad && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">ถนน:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrRoad}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrTambon && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">ตำบล:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrTambon}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.addrAmphoe && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">อำเภอ:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrAmphoe}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.province && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">จังหวัด:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.province}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedAddr.zipcode && (
-                                                                            <div>
-                                                                                <span className="text-secondary-500">รหัสไปรษณีย์:</span>
-                                                                                <span className="ml-1 font-medium text-secondary-900">{selectedAddr.zipcode}</span>
-                                                                            </div>
-                                                                        )}
+                                                                <div className="bg-white/70 rounded-lg p-4 border border-primary-100 mb-3">
+                                                                    <div className="font-medium text-primary-700 mb-3 text-xs uppercase tracking-wide flex items-center gap-2">
+                                                                        <MapPin size={14} />
+                                                                        ที่อยู่ติดตั้ง/จัดส่ง
                                                                     </div>
+
+                                                                    {/* Full Address */}
+                                                                    {jobInfo.installAddress && (
+                                                                        <p className="text-sm text-secondary-900 leading-relaxed mb-3 pb-3 border-b border-primary-100">
+                                                                            {jobInfo.installAddress}
+                                                                        </p>
+                                                                    )}
+
+                                                                    {/* Address Components */}
+                                                                    {hasAddressDetails && (
+                                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                                                                            {selectedAddr.addrNumber && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">เลขที่:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrNumber}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrMoo && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">หมู่:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrMoo}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrVillage && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">หมู่บ้าน:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrVillage}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrSoi && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">ซอย:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrSoi}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrRoad && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">ถนน:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrRoad}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrTambon && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">ตำบล:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrTambon}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.addrAmphoe && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">อำเภอ:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrAmphoe}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.province && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">จังหวัด:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.province}</span>
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedAddr.zipcode && (
+                                                                                <div>
+                                                                                    <span className="text-secondary-500">รหัสไปรษณีย์:</span>
+                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.zipcode}</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         }
@@ -1102,7 +1110,7 @@ export default function OrderForm() {
                             <div className="pt-4 border-t border-secondary-200">
                                 <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
                                 <textarea
-                                    rows={6}
+                                    rows={2}
                                     value={note}
                                     onChange={e => setNote(e.target.value)}
                                     className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none"
