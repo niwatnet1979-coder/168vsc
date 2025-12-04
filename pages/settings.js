@@ -361,7 +361,7 @@ export default function SettingsPage() {
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">รูป</th>
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">ชื่อเล่น</th>
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Email</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">เบอร์โทร</th>
+
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Type</th>
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Name</th>
                                                     <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">สิทธิ์</th>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
                                                         </td>
                                                         <td className="py-3 px-4 text-sm font-medium text-secondary-900">{user.nickname}</td>
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.email}</td>
-                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.phone}</td>
+
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.teamType}</td>
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
                                                         <td className="py-3 px-4">
