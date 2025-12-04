@@ -36,7 +36,8 @@ export const authOptions = {
     ],
     callbacks: {
         async signIn({ user, account, profile }) {
-            // Allow all Google sign-ins
+            // Note: Disabled user check is done client-side in AppLayout
+            // because NextAuth callbacks run server-side and can't access localStorage
             return true
         },
         async session({ session, token }) {
@@ -45,19 +46,14 @@ export const authOptions = {
                 session.user.id = token.sub
                 session.user.email = token.email
 
-                // Determine role based on email or database
-                // TODO: Replace with actual role lookup from database
+                // Basic role assignment (will be overridden by client-side team_data)
                 const email = token.email?.toLowerCase() || ''
-
                 if (email.includes('admin') || email === 'niwatnet1979@gmail.com') {
                     session.user.role = 'admin'
                     session.user.team = 'All Teams'
-                } else if (email.includes('qc')) {
-                    session.user.role = 'qc'
-                    session.user.team = 'ทีม A' // TODO: Get from database
                 } else {
-                    session.user.role = 'ช่าง'
-                    session.user.team = 'ทีม A' // TODO: Get from database
+                    session.user.role = 'user'
+                    session.user.team = 'ทีม A'
                 }
             }
             return session

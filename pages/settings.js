@@ -390,29 +390,20 @@ export default function SettingsPage() {
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.teamType}</td>
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
                                                         <td className="py-3 px-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin'
-                                                                ? 'bg-purple-100 text-purple-800'
-                                                                : 'bg-green-100 text-green-800'
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                                                                    user.role === 'disabled' ? 'bg-gray-100 text-gray-600' :
+                                                                        'bg-green-100 text-green-800'
                                                                 }`}>
-                                                                {user.role === 'admin' ? 'Admin' : 'User'}
+                                                                {user.role === 'admin' ? 'Admin' : user.role === 'disabled' ? 'Disabled' : 'User'}
                                                             </span>
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    onClick={() => handleEditUser(user)}
-                                                                    className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
-                                                                >
-                                                                    แก้ไข
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteUser(user.id)}
-                                                                    className="text-danger-600 hover:text-danger-700 p-1 hover:bg-danger-50 rounded transition-colors"
-                                                                    title="ลบผู้ใช้งาน"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
+                                                            <button
+                                                                onClick={() => handleEditUser(user)}
+                                                                className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
+                                                            >
+                                                                แก้ไข
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}

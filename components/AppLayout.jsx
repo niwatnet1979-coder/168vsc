@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
@@ -22,6 +22,19 @@ const AppLayout = ({ children }) => {
     const router = useRouter();
     const { data: session } = useSession();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // Check if user is disabled
+    useEffect(() => {
+        if (session?.user?.email) {
+            const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
+            const userRecord = teamData.find(member => member.email === session.user.email)
+
+            if (userRecord && userRecord.userType === 'Disabled') {
+                alert('บัญชีของคุณถูกปิดการใช้งาน กรุณาติดต่อผู้ดูแลระบบ')
+                signOut({ callbackUrl: '/auth/signin' })
+            }
+        }
+    }, [session])
 
     const handleLogout = async () => {
         if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {

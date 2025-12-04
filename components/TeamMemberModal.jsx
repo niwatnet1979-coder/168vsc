@@ -185,7 +185,7 @@ export default function TeamMemberModal({
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-secondary-700 mb-1">User Type</label>
+                                <label className="block text-sm font-medium text-secondary-700 mb-1">User Type / สิทธิ์</label>
                                 <select
                                     value={formData.userType}
                                     onChange={e => setFormData({ ...formData, userType: e.target.value })}
@@ -193,7 +193,7 @@ export default function TeamMemberModal({
                                 >
                                     <option value="User">User</option>
                                     <option value="Admin">Admin</option>
-                                    <option value="Manager">Manager</option>
+                                    <option value="Disabled">Disabled (ไม่สามารถเข้าสู่ระบบได้)</option>
                                 </select>
                             </div>
                         </div>
