@@ -192,27 +192,21 @@ export default function MobileJobsV2() {
 
                                                 {/* Line 3-4: Product Details */}
                                                 <div className="text-xs text-secondary-700 leading-tight space-y-1 mt-1">
-                                                    <div className="flex items-center gap-2 mb-1">
+                                                    <div className="flex items-center gap-2">
                                                         <span className="font-bold text-secondary-900 truncate">{job.productName}</span>
                                                         <span className="text-[10px] font-mono text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded border border-secondary-200 flex-shrink-0">
                                                             {job.productId}
                                                         </span>
                                                     </div>
 
-                                                    {/* Specs Line 1 */}
-                                                    <div className="flex flex-wrap gap-x-2 gap-y-1 text-secondary-600">
-                                                        {job.product?.category && <span>{job.product.category}</span>}
-                                                        {job.product?.subcategory && <span>• {job.product.subcategory}</span>}
+                                                    {/* Specs Combined Line */}
+                                                    <div className="text-secondary-600 truncate">
+                                                        <span>{job.product?.category || '-'}</span>
                                                         {(job.product?.width || job.product?.length || job.product?.height) && (
-                                                            <span>• {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
+                                                            <span> • {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
                                                         )}
-                                                    </div>
-
-                                                    {/* Specs Line 2 */}
-                                                    <div className="flex flex-wrap gap-x-2 gap-y-1 text-secondary-500">
-                                                        {job.product?.material && <span>{job.product.material}</span>}
-                                                        {job.product?.color && <span>• สี{job.product.color}</span>}
-                                                        {job.product?.bulbType && <span>• {job.product.bulbType}</span>}
+                                                        {job.product?.material && <span> • {job.product.material}</span>}
+                                                        {job.product?.color && <span> • {job.product.color}</span>}
                                                     </div>
 
                                                     {/* Description */}
