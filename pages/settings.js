@@ -15,6 +15,8 @@ import {
     Globe
 } from 'lucide-react'
 
+import TeamMemberModal from '../components/TeamMemberModal'
+
 export default function SettingsPage() {
     const { data: session } = useSession()
     const [activeTab, setActiveTab] = useState('general')
@@ -29,6 +31,11 @@ export default function SettingsPage() {
         vatRate: 7
     })
     const [isSaved, setIsSaved] = useState(false)
+
+    // Modal state
+    const [showModal, setShowModal] = useState(false)
+    const [editingMember, setEditingMember] = useState(null)
+    const [formData, setFormData] = useState(null)
 
     // Load settings and users
     useEffect(() => {
@@ -154,6 +161,40 @@ export default function SettingsPage() {
         localStorage.setItem('shop_settings', JSON.stringify(shopSettings))
         setIsSaved(true)
         setTimeout(() => setIsSaved(false), 3000)
+    }
+
+    const handleEditUser = (user) => {
+        // Load full team data to get all fields
+        const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
+        const member = teamData.find(m => m.id === user.id)
+
+        if (member) {
+            setEditingMember(member)
+            setFormData(member)
+            setShowModal(true)
+        }
+    }
+
+    const handleSaveUser = (data) => {
+        // Update team_data in localStorage
+        const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
+        const updatedTeamData = teamData.map(m => m.id === data.id ? data : m)
+        localStorage.setItem('team_data', JSON.stringify(updatedTeamData))
+
+        // Update local users state
+        const usersData = updatedTeamData.map(member => ({
+            id: member.id,
+            image: member.image || null,
+            nickname: member.nickname,
+            email: member.email,
+            phone: member.phone1 || member.phone,
+            teamType: member.teamType || member.team,
+            teamName: member.team || member.teamName,
+            role: member.userType?.toLowerCase() === 'admin' ? 'admin' : 'user'
+        }))
+        setUsers(usersData)
+
+        setShowModal(false)
     }
 
     const handleDeleteUser = (userId) => {
@@ -358,12 +399,12 @@ export default function SettingsPage() {
                                                         </td>
                                                         <td className="py-3 px-4">
                                                             <div className="flex items-center gap-2">
-                                                                <a
-                                                                    href={`/team?user=${user.id}`}
+                                                                <button
+                                                                    onClick={() => handleEditUser(user)}
                                                                     className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
                                                                 >
                                                                     แก้ไข
-                                                                </a>
+                                                                </button>
                                                                 <button
                                                                     onClick={() => handleDeleteUser(user.id)}
                                                                     className="text-danger-600 hover:text-danger-700 p-1 hover:bg-danger-50 rounded transition-colors"
@@ -401,28 +442,53 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="flex items-center gap-2 mb-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={shopSettings.vatRegistered}
-                                                    onChange={e => setShopSettings({ ...shopSettings, vatRegistered: e.target.checked })}
-                                                    className="w-4 h-4 text-primary-600 rounded border-secondary-300 focus:ring-primary-500"
-                                                />
-                                                <span className="text-sm font-medium text-secondary-700">จดทะเบียนภาษีมูลค่าเพิ่ม (VAT)</span>
-                                            </label>
-                                            <p className="text-xs text-secondary-500 ml-6">หากเปิดใช้งาน ระบบจะคำนวณ VAT ในใบเสนอราคาและใบเสร็จ</p>
+                                        <div className="md:col-span-2">
+                                            <div className="flex items-center justify-between p-4 border border-secondary-200 rounded-lg">
+                                                <div>
+                                                    <h3 className="font-medium text-secondary-900">จดทะเบียนภาษีมูลค่าเพิ่ม (VAT)</h3>
+                                                    <p className="text-sm text-secondary-500">เปิดใช้งานหากร้านค้าของคุณจดทะเบียน VAT</p>
+                                                </div>
+                                                <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="vatRegistered"
+                                                        id="vatRegistered"
+                                                        checked={shopSettings.vatRegistered}
+                                                        onChange={e => setShopSettings({ ...shopSettings, vatRegistered: e.target.checked })}
+                                                        className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                                        style={{ right: shopSettings.vatRegistered ? '0' : 'auto', left: shopSettings.vatRegistered ? 'auto' : '0' }}
+                                                    />
+                                                    <label
+                                                        htmlFor="vatRegistered"
+                                                        className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${shopSettings.vatRegistered ? 'bg-primary-500' : 'bg-secondary-300'}`}
+                                                    ></label>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-secondary-700 mb-1">อัตราภาษีมูลค่าเพิ่ม (%)</label>
                                             <input
                                                 type="number"
                                                 value={shopSettings.vatRate}
-                                                onChange={e => setShopSettings({ ...shopSettings, vatRate: Number(e.target.value) })}
-                                                disabled={!shopSettings.vatRegistered}
-                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-secondary-100 disabled:text-secondary-400"
+                                                onChange={e => setShopSettings({ ...shopSettings, vatRate: parseFloat(e.target.value) })}
+                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             />
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'notifications' && (
+                                <div className="space-y-6">
+                                    <div className="border-b border-secondary-200 pb-4">
+                                        <h2 className="text-xl font-bold text-secondary-900">การแจ้งเตือน</h2>
+                                        <p className="text-secondary-500 text-sm mt-1">ตั้งค่าการแจ้งเตือนผ่าน LINE Notify และ Email</p>
+                                    </div>
+
+                                    <div className="p-8 text-center border-2 border-dashed border-secondary-200 rounded-xl">
+                                        <Bell className="mx-auto h-12 w-12 text-secondary-300 mb-4" />
+                                        <h3 className="text-lg font-medium text-secondary-900">ยังไม่เปิดให้บริการ</h3>
+                                        <p className="text-secondary-500 mt-1">ฟีเจอร์นี้จะเปิดให้ใช้งานในเวอร์ชันถัดไป</p>
                                     </div>
                                 </div>
                             )}
@@ -430,47 +496,26 @@ export default function SettingsPage() {
                             {activeTab === 'database' && (
                                 <div className="space-y-6">
                                     <div className="border-b border-secondary-200 pb-4">
-                                        <h2 className="text-xl font-bold text-danger-600 flex items-center gap-2">
-                                            <Database size={24} />
-                                            จัดการฐานข้อมูล
-                                        </h2>
-                                        <p className="text-secondary-500 text-sm mt-1">เครื่องมือสำหรับจัดการข้อมูลในระบบ (สำหรับผู้ดูแลระบบเท่านั้น)</p>
+                                        <h2 className="text-xl font-bold text-danger-700">จัดการฐานข้อมูล</h2>
+                                        <p className="text-secondary-500 text-sm mt-1">จัดการข้อมูลในระบบ (พื้นที่อันตราย)</p>
                                     </div>
 
                                     <div className="bg-danger-50 border border-danger-200 rounded-xl p-6">
-                                        <h3 className="text-lg font-bold text-danger-700 mb-2">ล้างข้อมูลทั้งหมด (Factory Reset)</h3>
-                                        <p className="text-danger-600 mb-4 text-sm">
-                                            การกระทำนี้จะลบข้อมูล Orders, Products, Customers และ Settings ทั้งหมดออกจาก LocalStorage
-                                            <br />
-                                            <span className="font-bold">ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้!</span>
+                                        <h3 className="text-lg font-bold text-danger-800 mb-2">ล้างข้อมูลระบบ (Factory Reset)</h3>
+                                        <p className="text-danger-700 mb-6">
+                                            การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ
+                                            แต่จะเก็บการตั้งค่าร้านค้าและผู้ใช้งานไว้
+                                            <br /><br />
+                                            <strong>คำเตือน:</strong> ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้!
                                         </p>
                                         <button
-                                            onClick={() => {
-                                                if (confirm('คำเตือน: การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ\n\n(ใช้สำหรับเริ่มระบบใหม่ หรือล้างข้อมูลเก่าเพื่อรองรับ Format ID แบบใหม่)')) {
-                                                    if (confirm('ยืนยันอีกครั้ง: ข้อมูลจะหายไปถาวร! คุณแน่ใจหรือไม่?')) {
-                                                        // Remove specific data keys
-                                                        localStorage.removeItem('orders_data')
-                                                        localStorage.removeItem('products_data')
-                                                        localStorage.removeItem('customers_data')
-
-                                                        alert('ล้างข้อมูลเรียบร้อยแล้ว กำลังพาท่านไปที่หน้า Dashboard...')
-                                                        window.location.href = '/'
-                                                    }
-                                                }
-                                            }}
-                                            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 shadow-md hover:shadow-lg"
+                                            onClick={handleClearData}
+                                            className="px-6 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-danger-500/30"
                                         >
-                                            <Trash2 size={20} />
-                                            ยืนยันการล้างข้อมูลทั้งหมด
+                                            <RefreshCw size={18} />
+                                            ล้างข้อมูลทั้งหมด
                                         </button>
                                     </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'notifications' && (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                    <Bell size={48} className="text-secondary-300 mb-4" />
-                                    <p className="text-secondary-600">ยังไม่มีการแจ้งเตือนในขณะนี้</p>
                                 </div>
                             )}
                         </div>
