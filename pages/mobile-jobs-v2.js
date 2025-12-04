@@ -161,8 +161,8 @@ export default function MobileJobsV2() {
                                                 <img
                                                     src={job.productImage || 'https://images.unsplash.com/photo-1513506003013-d5316327a3d8?auto=format&fit=crop&q=80&w=60&h=60'}
                                                     alt={job.productName}
-                                                    className="w-14 h-14 rounded object-cover border border-secondary-200"
-                                                    style={{ width: '1.5cm', height: '1.5cm' }}
+                                                    className="w-20 h-20 rounded object-cover border border-secondary-200"
+                                                    style={{ width: '2cm', height: '2cm' }}
                                                 />
                                             </div>
 
