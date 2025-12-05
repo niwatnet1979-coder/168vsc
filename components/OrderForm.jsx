@@ -928,11 +928,17 @@ export default function OrderForm() {
                                                 )}
 
                                                 {/* Options: Customer addresses */}
-                                                {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => (
-                                                    <option key={index} value={`custom:${addr.label}`}>
-                                                        {addr.label} ({addr.address?.substring(0, 30)}...)
-                                                    </option>
-                                                ))}
+                                                {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => {
+                                                    const addressText = typeof addr.address === 'string'
+                                                        ? addr.address
+                                                        : (addr.address || '');
+                                                    const preview = addressText.substring(0, 30);
+                                                    return (
+                                                        <option key={index} value={`custom:${addr.label}`}>
+                                                            {addr.label} {addressText && `(${preview}...)`}
+                                                        </option>
+                                                    );
+                                                })}
                                             </select>
                                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
                                         </div>
