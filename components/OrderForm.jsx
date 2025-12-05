@@ -860,10 +860,13 @@ export default function OrderForm() {
                                                                 console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
                                                                 console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
                                                                 console.log('Address Type:', typeof addr);
-                                                                if (typeof addr === 'string') {
+
+                                                                // Try string address first
+                                                                if (typeof addr === 'string' && addr) {
                                                                     return addr;
-                                                                } else if (addr && typeof addr === 'object') {
-                                                                    // Build from components
+                                                                }
+                                                                // Try address object
+                                                                else if (addr && typeof addr === 'object') {
                                                                     const p = [];
                                                                     if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
                                                                     if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
@@ -874,11 +877,21 @@ export default function OrderForm() {
                                                                     if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
                                                                     if (addr.province) p.push(`จังหวัด ${addr.province}`);
                                                                     if (addr.zipcode) p.push(addr.zipcode);
-                                                                    const result = p.join(' ') || '-';
-                                                                    console.log('Built Address String:', result);
-                                                                    return result;
+                                                                    const result = p.join(' ');
+                                                                    if (result) return result;
                                                                 }
-                                                                return '-';
+                                                                // Fallback: read from taxInvoice root level
+                                                                const p = [];
+                                                                if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
+                                                                if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
+                                                                if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
+                                                                if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
+                                                                if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
+                                                                if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
+                                                                if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
+                                                                if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
+                                                                if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
+                                                                return p.join(' ') || '-';
                                                             })()}
                                                         </div>
                                                     </div>
