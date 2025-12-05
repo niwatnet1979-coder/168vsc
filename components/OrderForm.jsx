@@ -857,9 +857,9 @@ export default function OrderForm() {
                                                         <div className="text-sm text-secondary-800 leading-relaxed">
                                                             {(() => {
                                                                 const addr = taxInvoice.address;
-                                                                console.log('Tax Invoice Address:', addr);
-                                                                console.log('Tax Invoice Full:', taxInvoice);
-
+                                                                console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
+                                                                console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
+                                                                console.log('Address Type:', typeof addr);
                                                                 if (typeof addr === 'string') {
                                                                     return addr;
                                                                 } else if (addr && typeof addr === 'object') {
