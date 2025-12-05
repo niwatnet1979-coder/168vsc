@@ -1103,6 +1103,68 @@ export default function OrderForm() {
                                         )}
                                     </div>
                                 )}
+
+                                {/* Contact Selector */}
+                                {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                    <div className="space-y-3 pt-4 border-t border-secondary-200">
+                                        <label className="block text-sm font-medium text-secondary-700">
+                                            ผู้ติดต่อรับเอกสาร
+                                        </label>
+
+                                        {/* Dropdown */}
+                                        <div className="relative">
+                                            <select
+                                                value={selectedContact?.id || ''}
+                                                onChange={(e) => {
+                                                    const contactId = e.target.value
+                                                    if (contactId) {
+                                                        const contact = customersData.find(c => c.name === customer.name)?.contacts?.find(ct => ct.id === contactId)
+                                                        setSelectedContact(contact || null)
+                                                    } else {
+                                                        setSelectedContact(null)
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                            >
+                                                <option value="">-- เลือกผู้ติดต่อ --</option>
+                                                {customersData.find(c => c.name === customer.name)?.contacts?.map((contact) => (
+                                                    <option key={contact.id} value={contact.id}>
+                                                        {contact.name}{contact.position ? ` (${contact.position})` : ''}{contact.phone ? ` - ${contact.phone}` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                        </div>
+
+                                        {/* Selected Contact Display */}
+                                        {selectedContact && (
+                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-white rounded-lg border border-blue-100 mt-1">
+                                                        <User size={20} className="text-blue-600" />
+                                                    </div>
+                                                    <div className="flex-1 space-y-1">
+                                                        <div className="font-bold text-secondary-900 text-sm">
+                                                            {selectedContact.name}
+                                                            {selectedContact.position && <span className="text-secondary-600 font-normal ml-2">({selectedContact.position})</span>}
+                                                        </div>
+                                                        {selectedContact.phone && (
+                                                            <div className="flex items-center gap-2 text-sm text-secondary-700">
+                                                                <Phone size={14} className="text-blue-500" />
+                                                                <span>{selectedContact.phone}</span>
+                                                            </div>
+                                                        )}
+                                                        {selectedContact.note && (
+                                                            <div className="text-sm text-secondary-600 italic mt-1 bg-white/50 p-2 rounded border border-blue-100">
+                                                                {selectedContact.note}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
