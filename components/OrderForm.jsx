@@ -85,6 +85,8 @@ export default function OrderForm() {
         address: ''
     })
 
+    const [selectedContact, setSelectedContact] = useState(null)
+
     const [jobInfo, setJobInfo] = useState({
         jobType: 'installation',
         orderDate: new Date().toISOString().split('T')[0],
@@ -139,6 +141,12 @@ export default function OrderForm() {
             setAvailableTeams(teams)
         }
     }, [])
+
+    // Reset selectedContact when customer changes
+    useEffect(() => {
+        setSelectedContact(null)
+    }, [customer])
+
 
     // Load Existing Order
     useEffect(() => {
@@ -488,6 +496,13 @@ export default function OrderForm() {
             jobInfo: jobInfo,
             taxInvoice: taxInvoice,
             taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
+            selectedContact: selectedContact ? {
+                id: selectedContact.id,
+                name: selectedContact.name,
+                position: selectedContact.position || '',
+                phone: selectedContact.phone || '',
+                note: selectedContact.note || ''
+            } : null,
             discount: discount,
             shippingFee: shippingFee,
             note: note,
@@ -782,6 +797,73 @@ export default function OrderForm() {
 
                         </div>
                     </div>
+
+
+                    {/* Contact Selector */}
+                    {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                            <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+                                <User className="text-primary-600" />
+                                ผู้ติดต่อ
+                            </h2>
+
+                            <div className="space-y-4">
+                                {/* Contact Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={selectedContact?.id || ''}
+                                        onChange={(e) => {
+                                            const contactId = e.target.value
+                                            if (contactId) {
+                                                const contact = customersData.find(c => c.name === customer.name)?.contacts?.find(ct => ct.id === contactId)
+                                                setSelectedContact(contact || null)
+                                            } else {
+                                                setSelectedContact(null)
+                                            }
+                                        }}
+                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                    >
+                                        <option value="">-- เลือกผู้ติดต่อ --</option>
+                                        {customersData.find(c => c.name === customer.name)?.contacts?.map((contact) => (
+                                            <option key={contact.id} value={contact.id}>
+                                                {contact.name}{contact.position ? ` (${contact.position})` : ''}{contact.phone ? ` - ${contact.phone}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Selected Contact Card */}
+                                {selectedContact && (
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-green-100 rounded-lg">
+                                                <User className="text-green-600" size={20} />
+                                            </div>
+                                            <div className="flex-1 space-y-2">
+                                                <div>
+                                                    <div className="font-semibold text-green-900 text-lg">{selectedContact.name}</div>
+                                                    {selectedContact.position && (
+                                                        <div className="text-sm text-green-700">{selectedContact.position}</div>
+                                                    )}
+                                                </div>
+                                                {selectedContact.phone && (
+                                                    <div className="flex items-center gap-2 text-sm text-green-800">
+                                                        <Phone size={14} className="text-green-600" />
+                                                        <span>{selectedContact.phone}</span>
+                                                    </div>
+                                                )}
+                                                {selectedContact.note && (
+                                                    <div className="text-sm text-green-700 bg-white/50 p-2 rounded">
+                                                        <span className="font-medium">หมายเหตุ:</span> {selectedContact.note}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Row 1, Col 2: Tax Invoice */}
                     {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
