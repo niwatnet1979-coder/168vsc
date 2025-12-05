@@ -79,6 +79,12 @@ export default function OrderForm() {
         companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: ''
     })
 
+    const [taxInvoiceDeliveryAddress, setTaxInvoiceDeliveryAddress] = useState({
+        type: '', // 'same' | 'custom'
+        label: '',
+        address: ''
+    })
+
     const [jobInfo, setJobInfo] = useState({
         jobType: 'installation',
         orderDate: new Date().toISOString().split('T')[0],
@@ -481,6 +487,7 @@ export default function OrderForm() {
             status: 'Pending',
             jobInfo: jobInfo,
             taxInvoice: taxInvoice,
+            taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
             discount: discount,
             shippingFee: shippingFee,
             note: note,
@@ -865,6 +872,96 @@ export default function OrderForm() {
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* Tax Invoice Delivery Address Selection */}
+                                {taxInvoice.companyName && (
+                                    <div className="space-y-3 pt-4 border-t border-secondary-200">
+                                        <label className="block text-sm font-medium text-secondary-700">
+                                            ที่อยู่จัดส่งใบกำกับภาษี
+                                        </label>
+
+                                        {/* Dropdown */}
+                                        <div className="relative">
+                                            <select
+                                                value={taxInvoiceDeliveryAddress.type ? `${taxInvoiceDeliveryAddress.type}:${taxInvoiceDeliveryAddress.label}` : ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (!value) {
+                                                        setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '' });
+                                                        return;
+                                                    }
+
+                                                    const [type, label] = value.split(':');
+
+                                                    if (type === 'same') {
+                                                        // Use installation/delivery address
+                                                        setTaxInvoiceDeliveryAddress({
+                                                            type: 'same',
+                                                            label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง',
+                                                            address: jobInfo.installAddress || ''
+                                                        });
+                                                    } else if (type === 'custom') {
+                                                        // Use customer address
+                                                        const customerData = customersData.find(c => c.name === customer.name);
+                                                        const selectedAddress = customerData?.addresses?.find(addr => addr.label === label);
+
+                                                        if (selectedAddress) {
+                                                            setTaxInvoiceDeliveryAddress({
+                                                                type: 'custom',
+                                                                label: selectedAddress.label || '',
+                                                                address: selectedAddress.address || ''
+                                                            });
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                            >
+                                                <option value="">-- เลือกที่อยู่ --</option>
+
+                                                {/* Option: Same as installation address */}
+                                                {jobInfo.installAddress && (
+                                                    <option value={`same:${jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง'}`}>
+                                                        ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/จัดส่ง
+                                                    </option>
+                                                )}
+
+                                                {/* Options: Customer addresses */}
+                                                {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => (
+                                                    <option key={index} value={`custom:${addr.label}`}>
+                                                        {addr.label} ({addr.address?.substring(0, 30)}...)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                        </div>
+
+                                        {/* Selected Address Display Card */}
+                                        {taxInvoiceDeliveryAddress.address && (
+                                            <div className="bg-success-50 border border-success-200 rounded-lg p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-white rounded-lg border border-success-100 mt-1">
+                                                        <MapPin size={20} className="text-success-600" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <h4 className="font-bold text-secondary-900 text-sm">
+                                                                {taxInvoiceDeliveryAddress.label}
+                                                            </h4>
+                                                            {taxInvoiceDeliveryAddress.type === 'same' && (
+                                                                <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                                    ที่อยู่เดียวกัน
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-secondary-800 leading-relaxed">
+                                                            {taxInvoiceDeliveryAddress.address}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
