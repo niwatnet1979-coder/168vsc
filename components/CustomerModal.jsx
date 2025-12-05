@@ -169,9 +169,9 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1" style={{ minHeight: 0, maxHeight: 'calc(85vh - 200px)' }}>
+                <div className="overflow-y-auto flex-1" style={{ minHeight: 0, maxHeight: 'calc(85vh - 200px)' }}>
                     {activeTab === 'customer' && (
-                        <div className="space-y-6">
+                        <div className="p-6 space-y-6">
                             {/* Basic Information Card */}
                             <div className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50">
                                 <h4 className="font-semibold text-secondary-900 mb-4">ข้อมูลพื้นฐาน</h4>
@@ -292,7 +292,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                     )}
 
                     {activeTab === 'tax' && (
-                        <div className="space-y-6">
+                        <div className="p-6 space-y-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-bold text-secondary-900">ข้อมูลใบกำกับภาษี</h3>
                                 <button onClick={addTaxInvoice} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm shadow-sm">
@@ -368,7 +368,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                     )}
 
                     {activeTab === 'address' && (
-                        <div className="space-y-6">
+                        <div className="p-6 space-y-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-bold text-secondary-900">ที่อยู่ติดตั้ง/จัดส่ง</h3>
                                 <button onClick={addAddress} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm shadow-sm">
@@ -442,7 +442,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
                 {/* Tab 4: Contacts */}
                 {activeTab === 'contacts' && (
-                    <div className="space-y-4">
+                    <div className="p-6 space-y-4">
                         {formData.contacts.map((contact, index) => (
                             <div key={contact.id} className="bg-white p-5 rounded-lg border border-secondary-200 hover:border-secondary-300 transition-colors">
                                 <div className="flex items-center justify-between mb-4">
