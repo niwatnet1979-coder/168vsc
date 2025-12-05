@@ -383,48 +383,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                             <input type="text" value={addr.label} onChange={e => updateAddress(addr.id, 'label', e.target.value)} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-white" />
                                         </div>
 
-                                        {/* Inspectors */}
-                                        <div className="md:col-span-2 bg-secondary-50 p-4 rounded-xl border border-secondary-200">
-                                            <h5 className="font-medium text-secondary-900 mb-3 text-sm">ผู้ตรวจ/ผู้รับ (หน้างาน)</h5>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 1 (ชื่อ)</label>
-                                                    <input
-                                                        type="text"
-                                                        value={addr.inspector1?.name || ''}
-                                                        onChange={e => updateAddress(addr.id, 'inspector1', { ...addr.inspector1, name: e.target.value })}
-                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 1 (เบอร์โทร)</label>
-                                                    <input
-                                                        type="text"
-                                                        value={addr.inspector1?.phone || ''}
-                                                        onChange={e => updateAddress(addr.id, 'inspector1', { ...addr.inspector1, phone: e.target.value })}
-                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 2 (ชื่อ)</label>
-                                                    <input
-                                                        type="text"
-                                                        value={addr.inspector2?.name || ''}
-                                                        onChange={e => updateAddress(addr.id, 'inspector2', { ...addr.inspector2, name: e.target.value })}
-                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-secondary-700 mb-1">ผู้ตรวจ/ผู้รับ 2 (เบอร์โทร)</label>
-                                                    <input
-                                                        type="text"
-                                                        value={addr.inspector2?.phone || ''}
-                                                        onChange={e => updateAddress(addr.id, 'inspector2', { ...addr.inspector2, phone: e.target.value })}
-                                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-secondary-700 mb-2">ที่อยู่</label>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -478,76 +436,76 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 </div>
 
 
-                    {/* Tab 4: Contacts */}
-                    {activeTab === 'contacts' && (
-                        <div className="space-y-4">
-                            {formData.contacts.map((contact, index) => (
-                                <div key={contact.id} className="bg-secondary-50 p-6 rounded-xl border border-secondary-200">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeContact(contact.id)}
-                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                {/* Tab 4: Contacts */}
+                {activeTab === 'contacts' && (
+                    <div className="space-y-4">
+                        {formData.contacts.map((contact, index) => (
+                            <div key={contact.id} className="bg-secondary-50 p-6 rounded-xl border border-secondary-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeContact(contact.id)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-700 mb-1">ชื่อผู้ติดต่อ *</label>
+                                        <input
+                                            type="text"
+                                            value={contact.name}
+                                            onChange={e => updateContact(contact.id, 'name', e.target.value)}
+                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            placeholder="ชื่อ-นามสกุล"
+                                        />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ชื่อผู้ติดต่อ *</label>
-                                            <input
-                                                type="text"
-                                                value={contact.name}
-                                                onChange={e => updateContact(contact.id, 'name', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                placeholder="ชื่อ-นามสกุล"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-700 mb-1">ตำแหน่ง</label>
-                                            <input
-                                                type="text"
-                                                value={contact.position}
-                                                onChange={e => updateContact(contact.id, 'position', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                placeholder="เช่น ผู้จัดการ, เจ้าของ"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-700 mb-1">เบอร์โทร</label>
-                                            <input
-                                                type="text"
-                                                value={contact.phone}
-                                                onChange={e => updateContact(contact.id, 'phone', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
-                                                placeholder="0xx-xxx-xxxx"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-700 mb-1">หมายเหตุ</label>
-                                            <textarea
-                                                value={contact.note}
-                                                onChange={e => updateContact(contact.id, 'note', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white resize-none"
-                                                rows={2}
-                                                placeholder="ข้อมูลเพิ่มเติม"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-700 mb-1">ตำแหน่ง</label>
+                                        <input
+                                            type="text"
+                                            value={contact.position}
+                                            onChange={e => updateContact(contact.id, 'position', e.target.value)}
+                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            placeholder="เช่น ผู้จัดการ, เจ้าของ"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-700 mb-1">เบอร์โทร</label>
+                                        <input
+                                            type="text"
+                                            value={contact.phone}
+                                            onChange={e => updateContact(contact.id, 'phone', e.target.value)}
+                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            placeholder="0xx-xxx-xxxx"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-700 mb-1">หมายเหตุ</label>
+                                        <textarea
+                                            value={contact.note}
+                                            onChange={e => updateContact(contact.id, 'note', e.target.value)}
+                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white resize-none"
+                                            rows={2}
+                                            placeholder="ข้อมูลเพิ่มเติม"
+                                        />
                                     </div>
                                 </div>
-                            ))}
-                            
-                            <button
-                                type="button"
-                                onClick={addContact}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-secondary-300 text-secondary-600 rounded-xl hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all font-medium"
-                            >
-                                <Plus size={20} />
-                                เพิ่มผู้ติดต่อ
-                            </button>
-                        </div>
-                    )}
+                            </div>
+                        ))}
+
+                        <button
+                            type="button"
+                            onClick={addContact}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-secondary-300 text-secondary-600 rounded-xl hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all font-medium"
+                        >
+                            <Plus size={20} />
+                            เพิ่มผู้ติดต่อ
+                        </button>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
