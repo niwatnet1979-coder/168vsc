@@ -444,7 +444,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 {activeTab === 'contacts' && (
                     <div className="space-y-6">
                         {formData.contacts.map((contact, index) => (
-                            <div key={contact.id} className="bg-secondary-50 p-6 rounded-xl border-2 border-secondary-200">
+                            <div key={contact.id} className="bg-secondary-50 p-4 rounded-xl border-2 border-secondary-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
                                     <button
