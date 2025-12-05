@@ -908,12 +908,15 @@ export default function OrderForm() {
                                                         const selectedAddress = customerData?.addresses?.find(addr => addr.label === label);
 
                                                         if (selectedAddress) {
-                                                            // Convert address to string if it's an object
+                                                            // Convert address to string
                                                             let addressStr = '';
-                                                            if (typeof selectedAddress.address === 'string') {
+
+                                                            // Try to use address field first
+                                                            if (selectedAddress.address && typeof selectedAddress.address === 'string') {
                                                                 addressStr = selectedAddress.address;
-                                                            } else {
-                                                                // Build from components
+                                                            }
+                                                            // Otherwise build from components
+                                                            else {
                                                                 const p = [];
                                                                 if (selectedAddress.addrNumber) p.push(`เลขที่ ${selectedAddress.addrNumber}`);
                                                                 if (selectedAddress.addrMoo) p.push(`หมู่ ${selectedAddress.addrMoo}`);
@@ -926,6 +929,9 @@ export default function OrderForm() {
                                                                 if (selectedAddress.zipcode) p.push(selectedAddress.zipcode);
                                                                 addressStr = p.join(' ');
                                                             }
+
+                                                            console.log('Selected Address:', selectedAddress);
+                                                            console.log('Address String:', addressStr);
 
                                                             setTaxInvoiceDeliveryAddress({
                                                                 type: 'custom',
