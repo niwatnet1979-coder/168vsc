@@ -135,7 +135,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
                     <h3 className="text-2xl font-bold text-secondary-900">
@@ -169,7 +169,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1">
+                <div className="p-6 overflow-y-auto flex-1 min-h-0">
                     {activeTab === 'customer' && (
                         <div className="space-y-6">
                             {/* Basic Information Card */}
