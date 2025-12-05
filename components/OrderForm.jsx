@@ -859,20 +859,21 @@ export default function OrderForm() {
                                                         <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
                                                         <div className="text-sm text-secondary-800 leading-relaxed">
                                                             {(() => {
-                                                                if (typeof taxInvoice.address === 'string') {
-                                                                    return taxInvoice.address;
-                                                                } else if (taxInvoice.address) {
+                                                                const addr = taxInvoice.address;
+                                                                if (typeof addr === 'string') {
+                                                                    return addr;
+                                                                } else if (addr && typeof addr === 'object') {
                                                                     // Build from components
                                                                     const p = [];
-                                                                    if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
-                                                                    if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
-                                                                    if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
-                                                                    if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
-                                                                    if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
-                                                                    if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
-                                                                    if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
-                                                                    if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
-                                                                    if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
+                                                                    if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                                    if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                                    if (addr.addrVillage) p.push(addr.addrVillage);
+                                                                    if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                                    if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                                    if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                                    if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                                    if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                                    if (addr.zipcode) p.push(addr.zipcode);
                                                                     return p.join(' ') || '-';
                                                                 }
                                                                 return '-';
