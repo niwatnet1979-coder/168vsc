@@ -443,14 +443,24 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 {/* Tab 4: Contacts */}
                 {activeTab === 'contacts' && (
                     <div className="space-y-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-secondary-900">ผู้ติดต่อ</h3>
+                            <button
+                                type="button"
+                                onClick={addContact}
+                                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium text-sm shadow-sm"
+                            >
+                                <Plus size={16} /> เพิ่มผู้ติดต่อ
+                            </button>
+                        </div>
                         {formData.contacts.map((contact, index) => (
-                            <div key={contact.id} className="bg-secondary-50 p-4 rounded-xl border-2 border-secondary-200">
+                            <div key={contact.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
+                                    <h4 className="font-bold text-secondary-900">ผู้ติดต่อ #{index + 1}</h4>
                                     <button
                                         type="button"
                                         onClick={() => removeContact(contact.id)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={18} />
                                     </button>
@@ -489,15 +499,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                 </div>
                             </div>
                         ))}
-
-                        <button
-                            type="button"
-                            onClick={addContact}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-secondary-300 text-secondary-600 rounded-xl hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50 transition-all font-medium"
-                        >
-                            <Plus size={20} />
-                            เพิ่มผู้ติดต่อ
-                        </button>
                     </div>
                 )}
 
