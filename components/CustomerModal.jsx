@@ -456,33 +456,33 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-secondary-700 mb-1">ชื่อผู้ติดต่อ *</label>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อผู้ติดต่อ *</label>
                                         <input
                                             type="text"
                                             value={contact.name}
                                             onChange={e => updateContact(contact.id, 'name', e.target.value)}
-                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                             placeholder="ชื่อ-นามสกุล"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-secondary-700 mb-1">ตำแหน่ง</label>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">ตำแหน่ง</label>
                                         <input
                                             type="text"
                                             value={contact.position}
                                             onChange={e => updateContact(contact.id, 'position', e.target.value)}
-                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                             placeholder="เช่น ผู้จัดการ, เจ้าของ"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-secondary-700 mb-1">เบอร์โทร</label>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">เบอร์โทร</label>
                                         <input
                                             type="text"
                                             value={contact.phone}
                                             onChange={e => updateContact(contact.id, 'phone', e.target.value)}
-                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white"
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                             placeholder="0xx-xxx-xxxx"
                                         />
                                     </div>
