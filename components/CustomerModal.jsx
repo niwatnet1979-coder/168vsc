@@ -486,16 +486,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                             placeholder="0xx-xxx-xxxx"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-secondary-700 mb-1">หมายเหตุ</label>
-                                        <textarea
-                                            value={contact.note}
-                                            onChange={e => updateContact(contact.id, 'note', e.target.value)}
-                                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg text-sm bg-white resize-none"
-                                            rows={2}
-                                            placeholder="ข้อมูลเพิ่มเติม"
-                                        />
-                                    </div>
                                 </div>
                             </div>
                         ))}
