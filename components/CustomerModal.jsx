@@ -437,71 +437,70 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                             ))}
                         </div>
                     )}
+
+                    {/* Tab 4: Contacts */}
+                    {activeTab === 'contacts' && (
+                        <div className="p-6 space-y-4">
+                            {formData.contacts.map((contact, index) => (
+                                <div key={contact.id} className="bg-white p-5 rounded-lg border border-secondary-200 hover:border-secondary-300 transition-colors">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeContact(contact.id)}
+                                            className="p-1.5 text-danger-500 hover:bg-danger-50 rounded-md transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-secondary-600 mb-1.5">ชื่อผู้ติดต่อ *</label>
+                                            <input
+                                                type="text"
+                                                value={contact.name}
+                                                onChange={e => updateContact(contact.id, 'name', e.target.value)}
+                                                className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                                placeholder="ชื่อ-นามสกุล"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-medium text-secondary-600 mb-1.5">ตำแหน่ง</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.position}
+                                                    onChange={e => updateContact(contact.id, 'position', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                                    placeholder="เช่น ผู้จัดการ, เจ้าของ"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-secondary-600 mb-1.5">เบอร์โทร</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.phone}
+                                                    onChange={e => updateContact(contact.id, 'phone', e.target.value)}
+                                                    className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                                    placeholder="0xx-xxx-xxxx"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addContact}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-dashed border-secondary-300 text-secondary-600 rounded-lg hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50/50 transition-all text-sm font-medium"
+                            >
+                                <Plus size={18} />
+                                เพิ่มผู้ติดต่อ
+                            </button>
+                        </div>
+                    )}
                 </div>
-
-
-                {/* Tab 4: Contacts */}
-                {activeTab === 'contacts' && (
-                    <div className="p-6 space-y-4">
-                        {formData.contacts.map((contact, index) => (
-                            <div key={contact.id} className="bg-white p-5 rounded-lg border border-secondary-200 hover:border-secondary-300 transition-colors">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeContact(contact.id)}
-                                        className="p-1.5 text-danger-500 hover:bg-danger-50 rounded-md transition-colors"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-xs font-medium text-secondary-600 mb-1.5">ชื่อผู้ติดต่อ *</label>
-                                        <input
-                                            type="text"
-                                            value={contact.name}
-                                            onChange={e => updateContact(contact.id, 'name', e.target.value)}
-                                            className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                                            placeholder="ชื่อ-นามสกุล"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1.5">ตำแหน่ง</label>
-                                            <input
-                                                type="text"
-                                                value={contact.position}
-                                                onChange={e => updateContact(contact.id, 'position', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                                                placeholder="เช่น ผู้จัดการ, เจ้าของ"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-600 mb-1.5">เบอร์โทร</label>
-                                            <input
-                                                type="text"
-                                                value={contact.phone}
-                                                onChange={e => updateContact(contact.id, 'phone', e.target.value)}
-                                                className="w-full px-3 py-2 border border-secondary-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                                                placeholder="0xx-xxx-xxxx"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        <button
-                            type="button"
-                            onClick={addContact}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-dashed border-secondary-300 text-secondary-600 rounded-lg hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50/50 transition-all text-sm font-medium"
-                        >
-                            <Plus size={18} />
-                            เพิ่มผู้ติดต่อ
-                        </button>
-                    </div>
-                )}
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
