@@ -807,13 +807,10 @@ export default function OrderForm() {
                                             if (idx !== '') {
                                                 const invoice = customersData.find(c => c.name === customer.name).taxInvoices[idx];
                                                 setTaxInvoice({
-                                                    companyName: invoice.companyName || '',
-                                                    taxId: invoice.taxId || '',
-                                                    address: invoice.address || '',
+                                                    ...invoice,  // Copy all invoice properties
                                                     branch: invoice.branch || 'สำนักงานใหญ่',
                                                     phone: customer.phone || '',
-                                                    email: customer.email || '',
-                                                    deliveryAddress: invoice.address || ''
+                                                    email: customer.email || ''
                                                 });
                                             }
                                         }}
