@@ -908,10 +908,29 @@ export default function OrderForm() {
                                                         const selectedAddress = customerData?.addresses?.find(addr => addr.label === label);
 
                                                         if (selectedAddress) {
+                                                            // Convert address to string if it's an object
+                                                            let addressStr = '';
+                                                            if (typeof selectedAddress.address === 'string') {
+                                                                addressStr = selectedAddress.address;
+                                                            } else {
+                                                                // Build from components
+                                                                const p = [];
+                                                                if (selectedAddress.addrNumber) p.push(`เลขที่ ${selectedAddress.addrNumber}`);
+                                                                if (selectedAddress.addrMoo) p.push(`หมู่ ${selectedAddress.addrMoo}`);
+                                                                if (selectedAddress.addrVillage) p.push(selectedAddress.addrVillage);
+                                                                if (selectedAddress.addrSoi) p.push(`ซอย ${selectedAddress.addrSoi}`);
+                                                                if (selectedAddress.addrRoad) p.push(`ถนน ${selectedAddress.addrRoad}`);
+                                                                if (selectedAddress.addrTambon) p.push(`ตำบล ${selectedAddress.addrTambon}`);
+                                                                if (selectedAddress.addrAmphoe) p.push(`อำเภอ ${selectedAddress.addrAmphoe}`);
+                                                                if (selectedAddress.province) p.push(`จังหวัด ${selectedAddress.province}`);
+                                                                if (selectedAddress.zipcode) p.push(selectedAddress.zipcode);
+                                                                addressStr = p.join(' ');
+                                                            }
+
                                                             setTaxInvoiceDeliveryAddress({
                                                                 type: 'custom',
                                                                 label: selectedAddress.label || '',
-                                                                address: selectedAddress.address || ''
+                                                                address: addressStr
                                                             });
                                                         }
                                                     }
