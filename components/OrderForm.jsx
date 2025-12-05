@@ -860,6 +860,9 @@ export default function OrderForm() {
                                                         <div className="text-sm text-secondary-800 leading-relaxed">
                                                             {(() => {
                                                                 const addr = taxInvoice.address;
+                                                                console.log('Tax Invoice Address:', addr);
+                                                                console.log('Tax Invoice Full:', taxInvoice);
+
                                                                 if (typeof addr === 'string') {
                                                                     return addr;
                                                                 } else if (addr && typeof addr === 'object') {
@@ -874,7 +877,9 @@ export default function OrderForm() {
                                                                     if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
                                                                     if (addr.province) p.push(`จังหวัด ${addr.province}`);
                                                                     if (addr.zipcode) p.push(addr.zipcode);
-                                                                    return p.join(' ') || '-';
+                                                                    const result = p.join(' ') || '-';
+                                                                    console.log('Built Address String:', result);
+                                                                    return result;
                                                                 }
                                                                 return '-';
                                                             })()}
