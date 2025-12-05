@@ -861,14 +861,6 @@ export default function OrderForm() {
                                                             {typeof taxInvoice.address === 'string' ? taxInvoice.address : JSON.stringify(taxInvoice.address)}
                                                         </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่จัดส่งเอกสาร</label>
-                                                        <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {typeof (taxInvoice.deliveryAddress || taxInvoice.address) === 'string'
-                                                                ? (taxInvoice.deliveryAddress || taxInvoice.address)
-                                                                : JSON.stringify(taxInvoice.deliveryAddress || taxInvoice.address)}
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
