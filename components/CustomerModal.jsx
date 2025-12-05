@@ -169,7 +169,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto flex-1 min-h-0">
+                <div className="p-6 overflow-y-auto flex-1" style={{ minHeight: 0, maxHeight: 'calc(85vh - 200px)' }}>
                     {activeTab === 'customer' && (
                         <div className="space-y-6">
                             {/* Basic Information Card */}
