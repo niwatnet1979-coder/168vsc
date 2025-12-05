@@ -172,44 +172,48 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 <div className="p-6 overflow-y-auto flex-1">
                     {activeTab === 'customer' && (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
-                                    <input
-                                        type="text"
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-2">เบอร์โทรศัพท์ <span className="text-danger-500">*</span></label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
+                            {/* Basic Information Card */}
+                            <div className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50">
+                                <h4 className="font-semibold text-secondary-900 mb-4">ข้อมูลพื้นฐาน</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">ชื่อลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
                                         <input
                                             type="text"
-                                            value={formData.phone}
-                                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                         />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-2">อีเมล</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
-                                        <input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                        />
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">เบอร์โทรศัพท์ <span className="text-danger-500">*</span></label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
+                                            <input
+                                                type="text"
+                                                value={formData.phone}
+                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">อีเมล</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
+                                            <input
+                                                type="email"
+                                                value={formData.email}
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Social Media */}
-                            <div>
+                            {/* Social Media Card */}
+                            <div className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50">
                                 <h4 className="font-semibold text-secondary-900 mb-4">ช่องทางติดต่อ Social Media</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
@@ -220,7 +224,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                 type="text"
                                                 value={formData.line}
                                                 onChange={e => setFormData({ ...formData, line: e.target.value })}
-                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#06c755]"
+                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#06c755] bg-white"
                                             />
                                         </div>
                                     </div>
@@ -232,7 +236,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                 type="text"
                                                 value={formData.facebook}
                                                 onChange={e => setFormData({ ...formData, facebook: e.target.value })}
-                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1877f2]"
+                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1877f2] bg-white"
                                             />
                                         </div>
                                     </div>
@@ -244,15 +248,15 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                 type="text"
                                                 value={formData.instagram}
                                                 onChange={e => setFormData({ ...formData, instagram: e.target.value })}
-                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e4405f]"
+                                                className="w-full pl-9 pr-3 py-2 border border-secondary-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#e4405f] bg-white"
                                             />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Media Source */}
-                            <div className="mt-6 border-t border-secondary-200 pt-6">
+                            {/* Media Source Card */}
+                            <div className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50">
                                 <h4 className="font-semibold text-secondary-900 mb-4">ที่มาของลูกค้า</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -278,7 +282,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                                 type="text"
                                                 value={formData.mediaSourceOther}
                                                 onChange={e => setFormData({ ...formData, mediaSourceOther: e.target.value })}
-                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                             />
                                         </div>
                                     )}
@@ -440,7 +444,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 {activeTab === 'contacts' && (
                     <div className="space-y-4">
                         {formData.contacts.map((contact, index) => (
-                            <div key={contact.id} className="bg-secondary-50 p-6 rounded-xl border border-secondary-200">
+                            <div key={contact.id} className="bg-secondary-50 p-6 rounded-xl border-2 border-secondary-200">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-semibold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
                                     <button
