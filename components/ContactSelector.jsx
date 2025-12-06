@@ -6,7 +6,8 @@ export default function ContactSelector({
     contacts = [],
     value,
     onChange,
-    placeholder = "ค้นหาผู้ติดต่อ..."
+    placeholder = "ค้นหาผู้ติดต่อ...",
+    variant = "default"
 }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [showDropdown, setShowDropdown] = useState(false)
@@ -70,9 +71,9 @@ export default function ContactSelector({
                     )}
                 </div>
             ) : (
-                <div className="bg-secondary-50 border border-secondary-200 rounded-lg p-3 flex items-center justify-between">
+                <div className={`${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-3 flex items-center justify-between`}>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-full border border-secondary-200 flex items-center justify-center text-secondary-500">
+                        <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'} flex items-center justify-center`}>
                             <User size={16} />
                         </div>
                         <div className="text-sm">

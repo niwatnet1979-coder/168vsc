@@ -726,94 +726,31 @@ export default function OrderForm() {
                                         </div>
 
                                         {/* Contact Information */}
-                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 space-y-2.5">
-                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ข้อมูลติดต่อ</h4>
-                                            <div className="grid grid-cols-1 gap-2.5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                        <Phone size={16} className="text-primary-600" />
+
+                                        <div className="space-y-3">
+                                            {/* Row 1: Contact Info */}
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                                                <div className="flex items-center gap-2 text-secondary-600">
+                                                    <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
+                                                        <Phone size={14} className="text-primary-600" />
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs text-secondary-500">โทรศัพท์</p>
-                                                        <p className="text-sm font-medium text-secondary-900 truncate">{customer.phone || '-'}</p>
-                                                    </div>
+                                                    <span className="font-medium text-secondary-900">{customer.phone || '-'}</span>
                                                 </div>
                                                 {customer.email && (
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                            <Mail size={16} className="text-primary-600" />
+                                                    <div className="flex items-center gap-2 text-secondary-600">
+                                                        <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
+                                                            <Mail size={14} className="text-primary-600" />
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs text-secondary-500">อีเมล</p>
-                                                            <p className="text-sm font-medium text-secondary-900 truncate">{String(customer.email)}</p>
-                                                        </div>
+                                                        <span className="font-medium text-secondary-900 truncate max-w-[200px]">{String(customer.email)}</span>
                                                     </div>
                                                 )}
                                             </div>
+
                                         </div>
-
-                                        {/* Social Media */}
-                                        {(customer.line || customer.facebook || customer.instagram) && (
-                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                                                <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">โซเชียลมีเดีย</h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {customer.line && (
-                                                        <div className="flex items-center gap-2 bg-[#06c755] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                            <MessageCircle size={14} />
-                                                            <span>Line: {String(customer.line)}</span>
-                                                        </div>
-                                                    )}
-                                                    {customer.facebook && (
-                                                        <div className="flex items-center gap-2 bg-[#1877F2] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                            <Facebook size={14} />
-                                                            <span>FB: {String(customer.facebook)}</span>
-                                                        </div>
-                                                    )}
-                                                    {customer.instagram && (
-                                                        <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                            <Instagram size={14} />
-                                                            <span>IG: {String(customer.instagram)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Media Source */}
-                                        {/* Media Source Badge */}
-                                        {customer.mediaSource && (
-                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                                                <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่มาของลูกค้า</h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(() => {
-                                                        const options = [
-                                                            { id: 'FB', label: 'Facebook', icon: Facebook, color: 'text-[#1877F2]', bg: 'bg-[#1877F2]/10', border: 'border-[#1877F2]/20' },
-                                                            { id: 'LINE@', label: 'LINE@', icon: MessageCircle, color: 'text-[#06c755]', bg: 'bg-[#06c755]/10', border: 'border-[#06c755]/20' },
-                                                            { id: 'GOOGLE', label: 'Google', icon: Globe, color: 'text-[#DB4437]', bg: 'bg-[#DB4437]/10', border: 'border-[#DB4437]/20' },
-                                                            { id: 'OFFLINE', label: 'หน้าร้าน', icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-                                                            { id: 'FREND', label: 'เพื่อนแนะนำ', icon: User, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-                                                            { id: 'OTHER', label: 'อื่นๆ', icon: MoreHorizontal, color: 'text-gray-500', bg: 'bg-gray-500/10', border: 'border-gray-500/20' }
-                                                        ]
-                                                        const option = options.find(o => o.id === customer.mediaSource)
-                                                        if (!option) return null
-
-                                                        const Icon = option.icon
-                                                        const label = customer.mediaSource === 'OTHER' && customer.mediaSourceOther ? customer.mediaSourceOther : option.label
-
-                                                        return (
-                                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm border ${option.bg} ${option.border} ${option.color}`}>
-                                                                <Icon size={14} />
-                                                                <span>{label}</span>
-                                                            </div>
-                                                        )
-                                                    })()}
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {/* Address */}
                                         {customer.address && (
-                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 mt-3">
                                                 <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่อยู่</h4>
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -824,7 +761,34 @@ export default function OrderForm() {
                                             </div>
                                         )}
 
+                                        {/* Footer: Media Source */}
+                                        {customer.mediaSource && (
+                                            <div className="bg-primary-50/50 border-t border-primary-100 -mx-5 -mb-5 px-5 py-3 mt-4 rounded-b-xl flex items-center gap-3">
+                                                <span className="text-xs text-secondary-500 font-medium">รู้จักเราผ่าน:</span>
+                                                {(() => {
+                                                    const options = [
+                                                        { id: 'FB', label: 'Facebook', icon: Facebook, color: 'text-[#1877F2]', bg: 'bg-[#1877F2]/10', border: 'border-[#1877F2]/20' },
+                                                        { id: 'LINE@', label: 'LINE@', icon: MessageCircle, color: 'text-[#06c755]', bg: 'bg-[#06c755]/10', border: 'border-[#06c755]/20' },
+                                                        { id: 'GOOGLE', label: 'Google', icon: Globe, color: 'text-[#DB4437]', bg: 'bg-[#DB4437]/10', border: 'border-[#DB4437]/20' },
+                                                        { id: 'OFFLINE', label: 'หน้าร้าน', icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+                                                        { id: 'FREND', label: 'เพื่อนแนะนำ', icon: User, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                                                        { id: 'OTHER', label: 'อื่นๆ', icon: MoreHorizontal, color: 'text-gray-500', bg: 'bg-gray-500/10', border: 'border-gray-500/20' }
+                                                    ]
+                                                    const option = options.find(o => o.id === customer.mediaSource)
+                                                    if (!option) return null
 
+                                                    const Icon = option.icon
+                                                    const label = customer.mediaSource === 'OTHER' && customer.mediaSourceOther ? customer.mediaSourceOther : option.label
+
+                                                    return (
+                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${option.bg} ${option.border} ${option.color}`}>
+                                                            <Icon size={12} />
+                                                            <span>{label}</span>
+                                                        </div>
+                                                    )
+                                                })()}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -835,9 +799,9 @@ export default function OrderForm() {
                                         contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
                                         value={activeCustomerContact}
                                         onChange={setActiveCustomerContact}
+                                        variant="blue"
                                     />
                                 )}
-
                             </div>
                         </div>
 
@@ -1006,6 +970,7 @@ export default function OrderForm() {
                                         )}
                                         {/* Inspector Selection (From Customer Contacts) */}
                                         <ContactSelector
+                                            variant="blue"
                                             label="ผู้ตรวจงาน / รับสินค้า"
                                             contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
                                             value={jobInfo.inspector1}
@@ -1018,6 +983,7 @@ export default function OrderForm() {
                                                     } : { name: '', phone: '' }
                                                 }))
                                             }}
+
                                         />
                                     </div>
                                 </div>
@@ -1325,6 +1291,7 @@ export default function OrderForm() {
                                             contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
                                             value={selectedContact}
                                             onChange={setSelectedContact}
+                                            variant="blue"
                                         />
                                     )}
                                 </div>
