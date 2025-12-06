@@ -758,40 +758,7 @@ export default function OrderForm() {
                                         </div>
                                     )}
 
-                                    {/* Additional Contacts */}
-                                    {((customer.contact1?.name || customer.contact1?.phone) || (customer.contact2?.name || customer.contact2?.phone)) && (
-                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ผู้ติดต่อเพิ่มเติม</h4>
-                                            <div className="space-y-2">
-                                                {(customer.contact1?.name || customer.contact1?.phone) && (
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        <User size={12} className="text-secondary-400" />
-                                                        <span className="font-medium text-secondary-700">{customer.contact1.name || '-'}</span>
-                                                        {customer.contact1.phone && (
-                                                            <>
-                                                                <span className="text-secondary-400">•</span>
-                                                                <Phone size={12} className="text-secondary-400" />
-                                                                <span className="text-secondary-600">{customer.contact1.phone}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {(customer.contact2?.name || customer.contact2?.phone) && (
-                                                    <div className="flex items-center gap-2 text-xs">
-                                                        <User size={12} className="text-secondary-400" />
-                                                        <span className="font-medium text-secondary-700">{customer.contact2.name || '-'}</span>
-                                                        {customer.contact2.phone && (
-                                                            <>
-                                                                <span className="text-secondary-400">•</span>
-                                                                <Phone size={12} className="text-secondary-400" />
-                                                                <span className="text-secondary-600">{customer.contact2.phone}</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+
                                 </div>
                             )}
 
