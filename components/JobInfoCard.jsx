@@ -64,7 +64,7 @@ export default function JobInfoCard({
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
                                 </div>
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 overflow-hidden">
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
                                 <input
                                     type="datetime-local"
@@ -74,7 +74,7 @@ export default function JobInfoCard({
                                 />
                             </div>
                             {showCompletionDate && (
-                                <div className="min-w-0">
+                                <div className="min-w-0 overflow-hidden">
                                     <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่สำเร็จ</label>
                                     <input
                                         type="datetime-local"
