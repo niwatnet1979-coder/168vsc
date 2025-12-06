@@ -1323,35 +1323,7 @@ export default function OrderForm() {
                                                         />
                                                     </div>
 
-                                                    {/* Inspectors */}
-                                                    {(jobInfo.inspector1?.name || jobInfo.inspector2?.name) && (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-primary-200/50">
-                                                            {jobInfo.inspector1?.name && (
-                                                                <div className="flex flex-col gap-1 text-sm">
-                                                                    <span className="text-xs font-semibold text-primary-700">ผู้ติดต่อ 1</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <User size={14} className="text-primary-500" />
-                                                                        <span className="font-medium text-secondary-900">{String(jobInfo.inspector1.name)}</span>
-                                                                        {jobInfo.inspector1.phone && (
-                                                                            <span className="text-secondary-600">({String(jobInfo.inspector1.phone)})</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                            {jobInfo.inspector2?.name && (
-                                                                <div className="flex flex-col gap-1 text-sm">
-                                                                    <span className="text-xs font-semibold text-primary-700">ผู้ติดต่อ 2</span>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <User size={14} className="text-primary-500" />
-                                                                        <span className="font-medium text-secondary-900">{String(jobInfo.inspector2.name)}</span>
-                                                                        {jobInfo.inspector2.phone && (
-                                                                            <span className="text-secondary-600">({String(jobInfo.inspector2.phone)})</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
+
                                                 </div>
                                             </div>
                                         </div>
