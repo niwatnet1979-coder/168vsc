@@ -6,11 +6,14 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users
 } from 'lucide-react'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
 import SubJobModal from './SubJobModal'
+import AddressCard from './AddressCard'
+import ContactSelector from './ContactSelector'
+
 
 // --- Helper Functions ---
 function currency(n) {
@@ -43,6 +46,10 @@ function extractCoordinates(url) {
     if (matchSearch) return { lat: parseFloat(matchSearch[1]), lon: parseFloat(matchSearch[2]) }
     const matchDir = url.match(/\/dir\/.*\/([-0-9.]+),([-0-9.]+)/)
     if (matchDir) return { lat: parseFloat(matchDir[1]), lon: parseFloat(matchDir[2]) }
+    const matchEmbed = url.match(/!3d([-0-9.]+)!4d([-0-9.]+)/)
+    if (matchEmbed) return { lat: parseFloat(matchEmbed[1]), lon: parseFloat(matchEmbed[2]) }
+    const matchRaw = url.match(/^([-0-9.]+),\s*([-0-9.]+)$/)
+    if (matchRaw) return { lat: parseFloat(matchRaw[1]), lon: parseFloat(matchRaw[2]) }
     return null
 }
 
@@ -87,6 +94,15 @@ export default function OrderForm() {
 
     const [selectedContact, setSelectedContact] = useState(null)
     const [activeCustomerContact, setActiveCustomerContact] = useState(null)
+
+    const [showTaxInvoiceDropdown, setShowTaxInvoiceDropdown] = useState(false)
+    const [taxInvoiceSearchTerm, setTaxInvoiceSearchTerm] = useState('')
+    const [showTaxAddressDropdown, setShowTaxAddressDropdown] = useState(false)
+    const [taxAddressSearchTerm, setTaxAddressSearchTerm] = useState('')
+
+    const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
+    const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
+
 
     const [jobInfo, setJobInfo] = useState({
         jobType: 'installation',
@@ -614,291 +630,281 @@ export default function OrderForm() {
                 </div>
 
                 {/* 2x2 Grid Section - Flexible Height, Equal per Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
-                    {/* Row 1, Col 1: Customer Info */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                                <User className="text-primary-600" />
-                                ข้อมูลลูกค้า
-                            </h2>
-                            {customer.id && (
-                                <button
-                                    onClick={() => setShowEditCustomerModal(true)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
-                                >
-                                    <Edit2 size={14} />
-                                    แก้ไข
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex-1 space-y-4">
-                            <div className="relative">
-                                <label className="block text-sm font-medium text-secondary-700 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
-                                    <input
-                                        type="text"
-                                        value={customer.name}
-                                        onChange={e => {
-                                            setCustomer({ ...customer, name: e.target.value })
-                                            setShowCustomerDropdown(true)
-                                        }}
-                                        onFocus={() => setShowCustomerDropdown(true)}
-                                        onClick={() => setShowCustomerDropdown(true)}
-                                        className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                        placeholder="คลิกเพื่อเลือกหรือพิมพ์เพื่อค้นหา..."
-                                    />
-                                </div>
-                                {showCustomerDropdown && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                        {customersData
-                                            .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()))
-                                            .map(c => (
-                                                <div
-                                                    key={c.id}
-                                                    onClick={() => handleSelectCustomer(c)}
-                                                    className="px-4 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                >
-                                                    <div className="font-medium text-secondary-900">{c.name}</div>
-                                                    <div className="text-xs text-secondary-500">{c.phone}</div>
-                                                </div>
-                                            ))}
-                                        <div
-                                            onClick={() => setShowAddCustomerModal(true)}
-                                            className="px-4 py-2 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100"
-                                        >
-                                            <UserPlus size={16} /> เพิ่มลูกค้าใหม่
-                                        </div>
-                                    </div>
+                    {/* Left Column */}
+                    <div className="space-y-6">
+                        {/* Customer Info */}
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                                    <User className="text-primary-600" />
+                                    ข้อมูลลูกค้า
+                                </h2>
+                                {customer.id && (
+                                    <button
+                                        onClick={() => setShowEditCustomerModal(true)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
+                                    >
+                                        <Edit2 size={14} />
+                                        แก้ไข
+                                    </button>
                                 )}
                             </div>
-
-
-                            {/* Customer Details Card */}
-                            {customer.name && (
-                                <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-4">
-                                    {/* Header with Name */}
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
-                                                {String(customer.name).charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-secondary-900 text-xl leading-tight">{String(customer.name)}</h3>
-                                                <p className="text-xs text-secondary-500 mt-0.5">รหัสลูกค้า: {customer.id || '-'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Contact Information */}
-                                    <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 space-y-2.5">
-                                        <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ข้อมูลติดต่อ</h4>
-                                        <div className="grid grid-cols-1 gap-2.5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                    <Phone size={16} className="text-primary-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs text-secondary-500">โทรศัพท์</p>
-                                                    <p className="text-sm font-medium text-secondary-900 truncate">{customer.phone || '-'}</p>
-                                                </div>
-                                            </div>
-                                            {customer.email && (
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                        <Mail size={16} className="text-primary-600" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs text-secondary-500">อีเมล</p>
-                                                        <p className="text-sm font-medium text-secondary-900 truncate">{String(customer.email)}</p>
+                            <div className="flex-1 space-y-4">
+                                {!customer.id ? (
+                                    <div className="relative">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-3.5 text-secondary-400" size={18} />
+                                            <input
+                                                type="text"
+                                                value={customer.name || ''}
+                                                onChange={e => {
+                                                    setCustomer({ ...customer, name: e.target.value })
+                                                    setShowCustomerDropdown(true)
+                                                }}
+                                                onFocus={() => setShowCustomerDropdown(true)}
+                                                onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                                                className="w-full pl-10 pr-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50"
+                                                placeholder="ค้นหาชื่อ, เบอร์โทร..."
+                                            />
+                                            {showCustomerDropdown && (
+                                                <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                    {customersData
+                                                        .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()) || (c.phone && c.phone.includes(customer.name)))
+                                                        .map(c => (
+                                                            <div
+                                                                key={c.id}
+                                                                onClick={() => {
+                                                                    handleSelectCustomer(c)
+                                                                    setShowCustomerDropdown(false)
+                                                                }}
+                                                                className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                            >
+                                                                <div className="font-bold text-secondary-900">{c.name}</div>
+                                                                <div className="text-xs text-secondary-500">{c.phone} {c.email ? `| ${c.email}` : ''}</div>
+                                                            </div>
+                                                        ))}
+                                                    <div
+                                                        onClick={() => {
+                                                            setShowAddCustomerModal(true)
+                                                            setShowCustomerDropdown(false)
+                                                        }}
+                                                        className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
+                                                    >
+                                                        <UserPlus size={16} /> เพิ่มลูกค้าใหม่
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
+                                        <p className="text-xs text-secondary-400 mt-2 text-center">* คลิกที่ช่องค้นหาเพื่อเลือกข้อมูลหรือพิมพ์เพื่อค้นหา</p>
                                     </div>
+                                ) : null}
 
-                                    {/* Social Media */}
-                                    {(customer.line || customer.facebook || customer.instagram) && (
-                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">โซเชียลมีเดีย</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {customer.line && (
-                                                    <div className="flex items-center gap-2 bg-[#06c755] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                        <MessageCircle size={14} />
-                                                        <span>Line: {String(customer.line)}</span>
-                                                    </div>
-                                                )}
-                                                {customer.facebook && (
-                                                    <div className="flex items-center gap-2 bg-[#1877F2] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                        <Facebook size={14} />
-                                                        <span>FB: {String(customer.facebook)}</span>
-                                                    </div>
-                                                )}
-                                                {customer.instagram && (
-                                                    <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
-                                                        <Instagram size={14} />
-                                                        <span>IG: {String(customer.instagram)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
 
-                                    {/* Address */}
-                                    {customer.address && (
-                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่อยู่</h4>
-                                            <div className="flex items-start gap-3">
-                                                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                    <MapPin size={16} className="text-primary-600" />
+                                {/* Customer Details Card */}
+                                {customer.id && (
+                                    <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-4">
+                                        {/* Header with Name */}
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                                    {String(customer.name).charAt(0).toUpperCase()}
                                                 </div>
-                                                <p className="text-sm text-secondary-700 leading-relaxed">{customer.address}</p>
+                                                <div>
+                                                    <h3 className="font-bold text-secondary-900 text-xl leading-tight">{String(customer.name)}</h3>
+                                                    <p className="text-xs text-secondary-500 mt-0.5">รหัสลูกค้า: {customer.id || '-'}</p>
+                                                </div>
                                             </div>
+                                            <button
+                                                onClick={() => setCustomer({})}
+                                                className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
+                                            >
+                                                <X size={20} />
+                                            </button>
                                         </div>
-                                    )}
 
-
-                                </div>
-                            )}
-
-                            {/* Contact Person Selection */}
-                            {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
-                                <div className="pt-4 border-t border-secondary-200">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ติดต่อจัดซื้อ</label>
-                                    <div className="relative mb-3">
-                                        <select
-                                            value={activeCustomerContact?.id || ''}
-                                            onChange={(e) => {
-                                                const contactId = e.target.value;
-                                                if (contactId) {
-                                                    const contact = customersData.find(c => c.name === customer.name)?.contacts?.find(ct => ct.id === contactId);
-                                                    setActiveCustomerContact(contact || null);
-                                                } else {
-                                                    setActiveCustomerContact(null);
-                                                }
-                                            }}
-                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                        >
-                                            <option value="">-- เลือกผู้ติดต่อ --</option>
-                                            {customersData.find(c => c.name === customer.name)?.contacts?.map((contact) => (
-                                                <option key={contact.id} value={contact.id}>
-                                                    {contact.name}{contact.position ? ` (${contact.position})` : ''}{contact.phone ? ` - ${contact.phone}` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                    </div>
-
-                                    {/* Selected Contact Details */}
-                                    {activeCustomerContact && (
-                                        <div className="bg-secondary-50 border border-secondary-200 rounded-lg p-3 flex items-center gap-3">
-                                            <User size={16} className="text-secondary-500" />
-                                            <div className="flex items-center gap-3 text-sm text-secondary-700">
-                                                <span className="font-medium text-secondary-900">{activeCustomerContact.name}</span>
-                                                {activeCustomerContact.phone && (
-                                                    <>
-                                                        <span className="text-secondary-300">|</span>
-                                                        <div className="flex items-center gap-1">
-                                                            <Phone size={14} className="text-secondary-400" />
-                                                            <span>{activeCustomerContact.phone}</span>
+                                        {/* Contact Information */}
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 space-y-2.5">
+                                            <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ข้อมูลติดต่อ</h4>
+                                            <div className="grid grid-cols-1 gap-2.5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <Phone size={16} className="text-primary-600" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-secondary-500">โทรศัพท์</p>
+                                                        <p className="text-sm font-medium text-secondary-900 truncate">{customer.phone || '-'}</p>
+                                                    </div>
+                                                </div>
+                                                {customer.email && (
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <Mail size={16} className="text-primary-600" />
                                                         </div>
-                                                    </>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs text-secondary-500">อีเมล</p>
+                                                            <p className="text-sm font-medium text-secondary-900 truncate">{String(customer.email)}</p>
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
 
+                                        {/* Social Media */}
+                                        {(customer.line || customer.facebook || customer.instagram) && (
+                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                                <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">โซเชียลมีเดีย</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {customer.line && (
+                                                        <div className="flex items-center gap-2 bg-[#06c755] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                            <MessageCircle size={14} />
+                                                            <span>Line: {String(customer.line)}</span>
+                                                        </div>
+                                                    )}
+                                                    {customer.facebook && (
+                                                        <div className="flex items-center gap-2 bg-[#1877F2] text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                            <Facebook size={14} />
+                                                            <span>FB: {String(customer.facebook)}</span>
+                                                        </div>
+                                                    )}
+                                                    {customer.instagram && (
+                                                        <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm">
+                                                            <Instagram size={14} />
+                                                            <span>IG: {String(customer.instagram)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Media Source */}
+                                        {/* Media Source Badge */}
+                                        {customer.mediaSource && (
+                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                                <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่มาของลูกค้า</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(() => {
+                                                        const options = [
+                                                            { id: 'FB', label: 'Facebook', icon: Facebook, color: 'text-[#1877F2]', bg: 'bg-[#1877F2]/10', border: 'border-[#1877F2]/20' },
+                                                            { id: 'LINE@', label: 'LINE@', icon: MessageCircle, color: 'text-[#06c755]', bg: 'bg-[#06c755]/10', border: 'border-[#06c755]/20' },
+                                                            { id: 'GOOGLE', label: 'Google', icon: Globe, color: 'text-[#DB4437]', bg: 'bg-[#DB4437]/10', border: 'border-[#DB4437]/20' },
+                                                            { id: 'OFFLINE', label: 'หน้าร้าน', icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+                                                            { id: 'FREND', label: 'เพื่อนแนะนำ', icon: User, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                                                            { id: 'OTHER', label: 'อื่นๆ', icon: MoreHorizontal, color: 'text-gray-500', bg: 'bg-gray-500/10', border: 'border-gray-500/20' }
+                                                        ]
+                                                        const option = options.find(o => o.id === customer.mediaSource)
+                                                        if (!option) return null
+
+                                                        const Icon = option.icon
+                                                        const label = customer.mediaSource === 'OTHER' && customer.mediaSourceOther ? customer.mediaSourceOther : option.label
+
+                                                        return (
+                                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm border ${option.bg} ${option.border} ${option.color}`}>
+                                                                <Icon size={14} />
+                                                                <span>{label}</span>
+                                                            </div>
+                                                        )
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Address */}
+                                        {customer.address && (
+                                            <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
+                                                <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่อยู่</h4>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <MapPin size={16} className="text-primary-600" />
+                                                    </div>
+                                                    <p className="text-sm text-secondary-700 leading-relaxed">{customer.address}</p>
+                                                </div>
+                                            </div>
+                                        )}
+
+
+                                    </div>
+                                )}
+
+                                {/* Contact Person Selection */}
+                                {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                    <ContactSelector
+                                        label="ผู้ติดต่อจัดซื้อ"
+                                        contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                        value={activeCustomerContact}
+                                        onChange={setActiveCustomerContact}
+                                    />
+                                )}
+
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Row 1, Col 2: Tax Invoice */}
-                    {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
+                        {/* Master Job Info */}
                         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
                             <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                                <FileText className="text-primary-600" />
-                                ข้อมูลใบกำกับภาษี
+                                <Wrench className="text-primary-600" />
+                                ข้อมูลงานหลัก
                             </h2>
-
                             <div className="flex-1 space-y-4">
-                                {/* Dropdown */}
-                                <div className="relative">
-                                    <select
-                                        value={customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
-                                            inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
-                                        ) !== -1
-                                            ? customersData.find(c => c.name === customer.name)?.taxInvoices?.findIndex(
-                                                inv => inv.companyName === taxInvoice.companyName && inv.taxId === taxInvoice.taxId
-                                            )
-                                            : ''}
-                                        onChange={(e) => {
-                                            const idx = e.target.value;
-                                            if (idx !== '') {
-                                                const invoice = customersData.find(c => c.name === customer.name).taxInvoices[idx];
-                                                setTaxInvoice({
-                                                    ...invoice,  // Copy all invoice properties
-                                                    branch: invoice.branch || 'สำนักงานใหญ่',
-                                                    phone: customer.phone || '',
-                                                    email: customer.email || ''
-                                                });
-                                            }
-                                        }}
-                                        className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                    >
-                                        <option value="">-- เลือกใบกำกับภาษี --</option>
-                                        {customersData.find(c => c.name === customer.name)?.taxInvoices?.map((inv, index) => (
-                                            <option key={index} value={index}>
-                                                {inv.companyName} ({inv.taxId})
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทงาน</label>
+                                        <select
+                                            value={jobInfo.jobType}
+                                            onChange={e => setJobInfo({ ...jobInfo, jobType: e.target.value })}
+                                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                        >
+                                            <option value="installation">งานติดตั้ง (Installation)</option>
+                                            <option value="delivery">ส่งของ (Delivery)</option>
+                                            <option value="separate">งานแยก (Separate)</option>
+                                        </select>
+                                    </div>
+                                    <div>
 
-                                {/* Selected Details Card */}
-                                {taxInvoice.companyName && (
-                                    <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
-                                                <FileText size={24} className="text-primary-600" />
-                                            </div>
-                                            <div className="flex-1 space-y-3">
-                                                {/* Header: Company Name & Branch */}
-                                                <div>
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <h3 className="font-bold text-secondary-900 text-lg leading-tight">
-                                                            {taxInvoice.companyName}
-                                                        </h3>
-                                                        <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
-                                                            {taxInvoice.branch || 'สำนักงานใหญ่'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
-                                                        <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
-                                                        <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
-                                                    </div>
-                                                </div>
+                                        <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={jobInfo.appointmentDate}
+                                            onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
+                                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
 
-                                                {/* Addresses */}
-                                                <div className="grid grid-cols-1 gap-4 pt-3 border-t border-primary-200/50">
-                                                    <div>
-                                                        <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
-                                                        <div className="text-sm text-secondary-800 leading-relaxed">
-                                                            {(() => {
-                                                                const addr = taxInvoice.address;
-                                                                console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
-                                                                console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
-                                                                console.log('Address Type:', typeof addr);
+                                        {/* Address Dropdown */}
+                                        {!jobInfo.installLocationName ? (
+                                            <div className="relative mb-3">
+                                                <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    value={installLocationSearchTerm}
+                                                    onChange={(e) => {
+                                                        setInstallLocationSearchTerm(e.target.value)
+                                                        setShowInstallLocationDropdown(true)
+                                                    }}
+                                                    onFocus={() => setShowInstallLocationDropdown(true)}
+                                                    onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
+                                                    className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                    placeholder="ค้นหาสถานที่ติดตั้ง..."
+                                                />
+                                                {showInstallLocationDropdown && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                        {customersData.find(c => c.name === customer.name)?.addresses
+                                                            ?.filter(addr => {
+                                                                const addressText = typeof addr.address === 'string' ? addr.address : '';
+                                                                return addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase()) || addressText.includes(installLocationSearchTerm);
+                                                            })
+                                                            .map((addr, index) => {
+                                                                const addressText = typeof addr.address === 'string'
+                                                                    ? addr.address
+                                                                    : (addr.address || '');
 
-                                                                // Try string address first
-                                                                if (typeof addr === 'string' && addr) {
-                                                                    return addr;
-                                                                }
-                                                                // Try address object
-                                                                else if (addr && typeof addr === 'object') {
+                                                                // Helper to build address string if object
+                                                                let fullAddress = addressText;
+                                                                if (!fullAddress && typeof addr === 'object') {
                                                                     const p = [];
                                                                     if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
                                                                     if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
@@ -909,476 +915,110 @@ export default function OrderForm() {
                                                                     if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
                                                                     if (addr.province) p.push(`จังหวัด ${addr.province}`);
                                                                     if (addr.zipcode) p.push(addr.zipcode);
-                                                                    const result = p.join(' ');
-                                                                    if (result) return result;
+                                                                    fullAddress = p.join(' ');
                                                                 }
-                                                                // Fallback: read from taxInvoice root level
-                                                                const p = [];
-                                                                if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
-                                                                if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
-                                                                if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
-                                                                if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
-                                                                if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
-                                                                if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
-                                                                if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
-                                                                if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
-                                                                if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
-                                                                return p.join(' ') || '-';
-                                                            })()}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
 
-                                {/* Tax Invoice Delivery Address Selection */}
-                                {taxInvoice.companyName && (
-                                    <div className="space-y-3 pt-4 border-t border-secondary-200">
-                                        <label className="block text-sm font-medium text-secondary-700">
-                                            ที่อยู่จัดส่งใบกำกับภาษี
-                                        </label>
+                                                                return (
+                                                                    <div
+                                                                        key={index}
+                                                                        onClick={async () => {
+                                                                            // Calculate distance if not present
+                                                                            let distanceStr = '';
+                                                                            let finalMapLink = addr.googleMapsLink || '';
 
-                                        {/* Dropdown */}
-                                        <div className="relative">
-                                            <select
-                                                value={taxInvoiceDeliveryAddress.type ? `${taxInvoiceDeliveryAddress.type}:${taxInvoiceDeliveryAddress.label}` : ''}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    if (!value) {
-                                                        setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '' });
-                                                        return;
-                                                    }
+                                                                            if (addr.distance) {
+                                                                                distanceStr = `${addr.distance.toFixed(2)} km`;
+                                                                            } else if (addr.googleMapsLink) {
+                                                                                let coords = extractCoordinates(addr.googleMapsLink);
 
-                                                    const [type, label] = value.split(':');
+                                                                                // If coords not found, try to resolve short link via API
+                                                                                if (!coords) {
+                                                                                    try {
+                                                                                        const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
+                                                                                        if (res.ok) {
+                                                                                            const data = await res.json();
+                                                                                            if (data.url) {
+                                                                                                finalMapLink = data.url;
+                                                                                                coords = extractCoordinates(data.url);
+                                                                                            }
+                                                                                        }
+                                                                                    } catch (error) {
+                                                                                        console.error('Error resolving map link:', error);
+                                                                                    }
+                                                                                }
 
-                                                    if (type === 'same') {
-                                                        // Use installation/delivery address
-                                                        setTaxInvoiceDeliveryAddress({
-                                                            type: 'same',
-                                                            label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง',
-                                                            address: jobInfo.installAddress || ''
-                                                        });
-                                                    } else if (type === 'custom') {
-                                                        // Use customer address
-                                                        const customerData = customersData.find(c => c.name === customer.name);
-                                                        const selectedAddress = customerData?.addresses?.find(addr => addr.label === label);
+                                                                                if (coords) {
+                                                                                    const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
+                                                                                    distanceStr = `${dist} km`;
+                                                                                }
+                                                                            }
 
-                                                        if (selectedAddress) {
-                                                            // Convert address to string
-                                                            let addressStr = '';
-
-                                                            // Try to use address field first
-                                                            if (selectedAddress.address && typeof selectedAddress.address === 'string') {
-                                                                addressStr = selectedAddress.address;
-                                                            }
-                                                            // Otherwise build from components
-                                                            else {
-                                                                const p = [];
-                                                                if (selectedAddress.addrNumber) p.push(`เลขที่ ${selectedAddress.addrNumber}`);
-                                                                if (selectedAddress.addrMoo) p.push(`หมู่ ${selectedAddress.addrMoo}`);
-                                                                if (selectedAddress.addrVillage) p.push(selectedAddress.addrVillage);
-                                                                if (selectedAddress.addrSoi) p.push(`ซอย ${selectedAddress.addrSoi}`);
-                                                                if (selectedAddress.addrRoad) p.push(`ถนน ${selectedAddress.addrRoad}`);
-                                                                if (selectedAddress.addrTambon) p.push(`ตำบล ${selectedAddress.addrTambon}`);
-                                                                if (selectedAddress.addrAmphoe) p.push(`อำเภอ ${selectedAddress.addrAmphoe}`);
-                                                                if (selectedAddress.province) p.push(`จังหวัด ${selectedAddress.province}`);
-                                                                if (selectedAddress.zipcode) p.push(selectedAddress.zipcode);
-                                                                addressStr = p.join(' ');
-                                                            }
-
-                                                            console.log('Selected Address:', selectedAddress);
-                                                            console.log('Address String:', addressStr);
-
-                                                            setTaxInvoiceDeliveryAddress({
-                                                                type: 'custom',
-                                                                label: selectedAddress.label || '',
-                                                                address: addressStr
-                                                            });
-                                                        }
-                                                    }
-                                                }}
-                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                            >
-                                                <option value="">-- เลือกที่อยู่ --</option>
-
-                                                {/* Option: Same as installation address */}
-                                                {jobInfo.installAddress && (
-                                                    <option value={`same:${jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง'}`}>
-                                                        ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/จัดส่ง
-                                                    </option>
-                                                )}
-
-                                                {/* Options: Customer addresses */}
-                                                {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => {
-                                                    const addressText = typeof addr.address === 'string'
-                                                        ? addr.address
-                                                        : (addr.address || '');
-                                                    const preview = addressText.substring(0, 30);
-                                                    return (
-                                                        <option key={index} value={`custom:${addr.label}`}>
-                                                            {addr.label} {addressText && `(${preview}...)`}
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                        </div>
-
-                                        {/* Selected Address Display Card */}
-                                        {taxInvoiceDeliveryAddress.address && (
-                                            <div className="bg-success-50 border border-success-200 rounded-lg p-4">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 bg-white rounded-lg border border-success-100 mt-1">
-                                                        <MapPin size={20} className="text-success-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <h4 className="font-bold text-secondary-900 text-sm">
-                                                                {taxInvoiceDeliveryAddress.label}
-                                                            </h4>
-                                                            {taxInvoiceDeliveryAddress.type === 'same' && (
-                                                                <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                                    ที่อยู่เดียวกัน
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-sm text-secondary-800 leading-relaxed">
-                                                            {taxInvoiceDeliveryAddress.address}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Contact Selector */}
-                                {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
-                                    <div className="space-y-3 pt-4 border-t border-secondary-200">
-                                        <label className="block text-sm font-medium text-secondary-700">
-                                            ผู้ติดต่อรับเอกสาร
-                                        </label>
-
-                                        {/* Dropdown */}
-                                        <div className="relative">
-                                            <select
-                                                value={selectedContact?.id || ''}
-                                                onChange={(e) => {
-                                                    const contactId = e.target.value
-                                                    if (contactId) {
-                                                        const contact = customersData.find(c => c.name === customer.name)?.contacts?.find(ct => ct.id === contactId)
-                                                        setSelectedContact(contact || null)
-                                                    } else {
-                                                        setSelectedContact(null)
-                                                    }
-                                                }}
-                                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                            >
-                                                <option value="">-- เลือกผู้ติดต่อ --</option>
-                                                {customersData.find(c => c.name === customer.name)?.contacts?.map((contact) => (
-                                                    <option key={contact.id} value={contact.id}>
-                                                        {contact.name}{contact.position ? ` (${contact.position})` : ''}{contact.phone ? ` - ${contact.phone}` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                        </div>
-
-                                        {/* Selected Contact Display */}
-                                        {selectedContact && (
-                                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 bg-white rounded-lg border border-blue-100 mt-1">
-                                                        <User size={20} className="text-blue-600" />
-                                                    </div>
-                                                    <div className="flex-1 space-y-1">
-                                                        <div className="font-bold text-secondary-900 text-sm">
-                                                            {selectedContact.name}
-                                                            {selectedContact.position && <span className="text-secondary-600 font-normal ml-2">({selectedContact.position})</span>}
-                                                        </div>
-                                                        {selectedContact.phone && (
-                                                            <div className="flex items-center gap-2 text-sm text-secondary-700">
-                                                                <Phone size={14} className="text-blue-500" />
-                                                                <span>{selectedContact.phone}</span>
-                                                            </div>
-                                                        )}
-                                                        {selectedContact.note && (
-                                                            <div className="text-sm text-secondary-600 italic mt-1 bg-white/50 p-2 rounded border border-blue-100">
-                                                                {selectedContact.note}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Row 2, Col 1: Master Job */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
-                        <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                            <Wrench className="text-primary-600" />
-                            ข้อมูลงานหลัก
-                        </h2>
-                        <div className="flex-1 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทงาน</label>
-                                    <select
-                                        value={jobInfo.jobType}
-                                        onChange={e => setJobInfo({ ...jobInfo, jobType: e.target.value })}
-                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                    >
-                                        <option value="installation">งานติดตั้ง (Installation)</option>
-                                        <option value="delivery">ส่งของ (Delivery)</option>
-                                        <option value="separate">งานแยก (Separate)</option>
-                                    </select>
-                                </div>
-                                <div>
-
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={jobInfo.appointmentDate}
-                                        onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
-                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                    />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
-
-                                    {/* Address Dropdown */}
-                                    <div className="relative mb-3">
-                                        <select
-                                            value={customersData.find(c => c.name === customer.name)?.addresses?.findIndex(
-                                                addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
-                                            ) !== -1
-                                                ? customersData.find(c => c.name === customer.name)?.addresses?.findIndex(
-                                                    addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
-                                                )
-                                                : ''}
-                                            onChange={(e) => {
-                                                const idx = e.target.value;
-                                                if (idx !== '') {
-                                                    const addr = customersData.find(c => c.name === customer.name).addresses[idx];
-                                                    setJobInfo({
-                                                        ...jobInfo,
-                                                        installLocationName: addr.label || '',
-                                                        installAddress: addr.address || '',
-                                                        googleMapLink: addr.googleMapsLink || '',
-                                                        distance: addr.distance ? `${addr.distance.toFixed(2)} km` : '',
-                                                        inspector1: addr.inspector1 ? {
-                                                            name: String(addr.inspector1.name || ''),
-                                                            phone: String(addr.inspector1.phone || ''),
-                                                            address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
-                                                        } : { name: '', phone: '', address: '' },
-                                                        inspector2: addr.inspector2 ? {
-                                                            name: String(addr.inspector2.name || ''),
-                                                            phone: String(addr.inspector2.phone || ''),
-                                                            address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
-                                                        } : { name: '', phone: '', address: '' }
-                                                    });
-                                                }
-                                            }}
-                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                        >
-                                            <option value="">-- เลือกสถานที่ติดตั้ง / จัดส่ง --</option>
-                                            {customersData.find(c => c.name === customer.name)?.addresses?.map((addr, index) => (
-                                                <option key={index} value={index}>
-                                                    {addr.label} - {addr.address}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                    </div>
-
-                                    {/* Selected Address Details Card */}
-                                    {(jobInfo.installAddress || jobInfo.installLocationName) && (
-                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-4">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
-                                                    <MapPin size={24} className="text-primary-600" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                        <h3 className="font-bold text-secondary-900 text-lg">
-                                                            {jobInfo.installLocationName || 'สถานที่ติดตั้ง'}
-                                                        </h3>
-                                                        {jobInfo.distance && (
-                                                            <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                                📍 {jobInfo.distance}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Unified Address Display */}
-                                                    {(() => {
-                                                        const selectedAddr = customersData.find(c => c.name === customer.name)?.addresses?.find(
-                                                            addr => addr.label === jobInfo.installLocationName && addr.address === jobInfo.installAddress
-                                                        );
-
-                                                        const hasAddressDetails = selectedAddr && (selectedAddr.addrNumber || selectedAddr.province || selectedAddr.zipcode);
-
-                                                        if (jobInfo.installAddress || hasAddressDetails) {
-                                                            return (
-                                                                <div className="bg-white/70 rounded-lg p-4 border border-primary-100 mb-3">
-                                                                    <div className="font-medium text-primary-700 mb-3 text-xs uppercase tracking-wide flex items-center gap-2">
-                                                                        <MapPin size={14} />
-                                                                        ที่อยู่ติดตั้ง/จัดส่ง
+                                                                            setJobInfo(prev => ({
+                                                                                ...prev,
+                                                                                installLocationName: addr.label || '',
+                                                                                installAddress: fullAddress,
+                                                                                googleMapLink: finalMapLink,
+                                                                                distance: distanceStr,
+                                                                                inspector1: addr.inspector1 ? {
+                                                                                    name: String(addr.inspector1.name || ''),
+                                                                                    phone: String(addr.inspector1.phone || ''),
+                                                                                    address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
+                                                                                } : { name: '', phone: '', address: '' },
+                                                                                inspector2: addr.inspector2 ? {
+                                                                                    name: String(addr.inspector2.name || ''),
+                                                                                    phone: String(addr.inspector2.phone || ''),
+                                                                                    address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
+                                                                                } : { name: '', phone: '', address: '' }
+                                                                            }));
+                                                                            setInstallLocationSearchTerm('');
+                                                                            setShowInstallLocationDropdown(false);
+                                                                        }}
+                                                                        className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                    >
+                                                                        <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
+                                                                        <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
                                                                     </div>
-
-                                                                    {/* Full Address */}
-                                                                    {jobInfo.installAddress && (
-                                                                        <p className="text-sm text-secondary-900 leading-relaxed mb-3 pb-3 border-b border-primary-100">
-                                                                            {jobInfo.installAddress}
-                                                                        </p>
-                                                                    )}
-
-                                                                    {/* Address Components */}
-                                                                    {hasAddressDetails && (
-                                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                                                            {selectedAddr.addrNumber && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">เลขที่:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrNumber}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrMoo && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">หมู่:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrMoo}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrVillage && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">หมู่บ้าน:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrVillage}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrSoi && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">ซอย:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrSoi}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrRoad && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">ถนน:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrRoad}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrTambon && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">ตำบล:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrTambon}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.addrAmphoe && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">อำเภอ:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.addrAmphoe}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.province && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">จังหวัด:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.province}</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedAddr.zipcode && (
-                                                                                <div>
-                                                                                    <span className="text-secondary-500">รหัสไปรษณีย์:</span>
-                                                                                    <span className="ml-1 font-medium text-secondary-900">{selectedAddr.zipcode}</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return null;
-                                                    })()}
-
-                                                    {/* Google Map Link */}
-                                                    <div className="mb-3">
-                                                        <label className="block text-xs font-medium text-primary-700 mb-1">
-                                                            Google Map Link
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            readOnly
-                                                            value={jobInfo.googleMapLink}
-                                                            onClick={() => {
-                                                                if (jobInfo.googleMapLink) {
-                                                                    window.open(jobInfo.googleMapLink, '_blank');
-                                                                }
-                                                            }}
-                                                            className={`w-full px-3 py-2 text-sm border border-primary-200 rounded-md focus:ring-2 focus:ring-primary-500 ${jobInfo.googleMapLink ? 'cursor-pointer text-primary-700 bg-white hover:bg-primary-50 hover:border-primary-300' : 'bg-primary-50/50 text-primary-400 cursor-not-allowed'}`}
-                                                            placeholder="ไม่มีลิงก์ Google Map"
-                                                        />
+                                                                );
+                                                            })}
                                                     </div>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {/* Inspector Selection (From Customer Contacts) */}
-                                    <div className="pt-4 border-t border-secondary-200">
-                                        <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน / สินค้า (จากผู้ติดต่อลูกค้า)</label>
-                                        <div className="relative">
-                                            <select
-                                                value={jobInfo.inspector1?.name && customer.contacts?.find(c => c.name === jobInfo.inspector1.name) ? customer.contacts.find(c => c.name === jobInfo.inspector1.name).id : ''}
-                                                onChange={(e) => {
-                                                    const contactId = e.target.value;
-                                                    if (contactId) {
-                                                        const contact = customer.contacts?.find(c => c.id === contactId);
-                                                        if (contact) {
-                                                            setJobInfo({
-                                                                ...jobInfo,
-                                                                inspector1: {
-                                                                    name: contact.name,
-                                                                    phone: contact.phone || ''
-                                                                }
-                                                            });
-                                                        }
-                                                    } else {
-                                                        setJobInfo({
-                                                            ...jobInfo,
-                                                            inspector1: { name: '', phone: '' }
-                                                        });
-                                                    }
-                                                }}
-                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                            >
-                                                <option value="">-- เลือกผู้ตรวจงาน --</option>
-                                                {customer.contacts?.map((contact, idx) => (
-                                                    <option key={contact.id || idx} value={contact.id}>
-                                                        {contact.name} {contact.position ? `(${contact.position})` : ''} {contact.phone ? `- ${contact.phone}` : ''}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                        </div>
-                                        {/* Display Selected Inspector Details */}
-                                        {jobInfo.inspector1?.name && (
-                                            <div className="mt-2 flex items-center gap-2 text-sm text-secondary-600 bg-secondary-50 p-2 rounded border border-secondary-200">
-                                                <User size={14} />
-                                                <span className="font-medium">{jobInfo.inspector1.name}</span>
-                                                {jobInfo.inspector1.phone && (
-                                                    <>
-                                                        <span className="text-secondary-300">|</span>
-                                                        <Phone size={14} />
-                                                        <span>{jobInfo.inspector1.phone}</span>
-                                                    </>
                                                 )}
                                             </div>
+                                        ) : null}
+
+                                        {/* Selected Address Details Card */}
+                                        {(jobInfo.installAddress || jobInfo.installLocationName) && (
+                                            <AddressCard
+                                                title={jobInfo.installLocationName || 'สถานที่ติดตั้ง'}
+                                                address={jobInfo.installAddress}
+                                                distance={jobInfo.distance}
+                                                mapLink={jobInfo.googleMapLink}
+                                                onClear={() => setJobInfo({
+                                                    ...jobInfo,
+                                                    installLocationName: '',
+                                                    installAddress: '',
+                                                    googleMapLink: '',
+                                                    distance: '',
+                                                    inspector1: { name: '', phone: '', address: '' },
+                                                    inspector2: { name: '', phone: '', address: '' }
+                                                })}
+                                                variant="primary"
+                                            />
                                         )}
+                                        {/* Inspector Selection (From Customer Contacts) */}
+                                        <ContactSelector
+                                            label="ผู้ตรวจงาน / รับสินค้า"
+                                            contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                            value={jobInfo.inspector1}
+                                            onChange={(contact) => {
+                                                setJobInfo(prev => ({
+                                                    ...prev,
+                                                    inspector1: contact ? {
+                                                        name: contact.name,
+                                                        phone: contact.phone || ''
+                                                    } : { name: '', phone: '' }
+                                                }))
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -1415,76 +1055,307 @@ export default function OrderForm() {
                         </div>
                     </div>
 
+                    {/* Right Column */}
+                    <div className="space-y-6">
 
-                    {/* Row 2, Col 2: Payment Summary */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
-                        <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                            <CreditCard className="text-primary-600" />
-                            สรุปยอดชำระ
-                        </h2>
 
-                        <div className="flex-1 space-y-3 text-sm">
-                            <div className="flex justify-between text-secondary-600">
-                                <span>รวมเป็นเงิน</span>
-                                <span>{currency(subtotal)}</span>
+                        {/* Tax Invoice */}
+                        {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                                <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+                                    <FileText className="text-primary-600" />
+                                    ข้อมูลใบกำกับภาษี
+                                </h2>
+
+                                <div className="flex-1 space-y-4">
+                                    {/* Dropdown */}
+                                    {!taxInvoice.companyName ? (
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                            <input
+                                                type="text"
+                                                value={taxInvoiceSearchTerm}
+                                                onChange={(e) => {
+                                                    setTaxInvoiceSearchTerm(e.target.value)
+                                                    setShowTaxInvoiceDropdown(true)
+                                                }}
+                                                onFocus={() => setShowTaxInvoiceDropdown(true)}
+                                                onBlur={() => setTimeout(() => setShowTaxInvoiceDropdown(false), 200)}
+                                                className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                placeholder="ค้นหาใบกำกับภาษี (ชื่อบริษัท / เลขผู้เสียภาษี)..."
+                                            />
+                                            {showTaxInvoiceDropdown && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                    {customersData.find(c => c.name === customer.name)?.taxInvoices
+                                                        ?.filter(inv =>
+                                                            inv.companyName.toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
+                                                            inv.taxId.includes(taxInvoiceSearchTerm)
+                                                        )
+                                                        .map((inv, index) => (
+                                                            <div
+                                                                key={index}
+                                                                onClick={() => {
+                                                                    setTaxInvoice({
+                                                                        ...inv,
+                                                                        branch: inv.branch || 'สำนักงานใหญ่',
+                                                                        phone: customer.phone || '',
+                                                                        email: customer.email || ''
+                                                                    });
+                                                                    setTaxInvoiceSearchTerm('');
+                                                                    setShowTaxInvoiceDropdown(false);
+                                                                }}
+                                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                            >
+                                                                <div className="font-medium text-secondary-900 text-sm">{inv.companyName}</div>
+                                                                <div className="text-xs text-secondary-500">
+                                                                    {inv.taxId} {inv.branch ? `| ${inv.branch}` : ''}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : null}
+
+                                    {/* Selected Details Card */}
+                                    {taxInvoice.companyName && (
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
+                                                    <FileText size={24} className="text-primary-600" />
+                                                </div>
+                                                <div className="flex-1 space-y-3">
+                                                    {/* Header: Company Name & Branch */}
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="font-bold text-secondary-900 text-lg leading-tight">
+                                                                    {taxInvoice.companyName}
+                                                                </h3>
+                                                                <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
+                                                                    {taxInvoice.branch || 'สำนักงานใหญ่'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
+                                                                <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
+                                                                <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
+                                                            className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
+                                                        >
+                                                            <X size={18} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Addresses */}
+                                                    <div className="grid grid-cols-1 gap-4 pt-3 border-t border-primary-200/50">
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
+                                                            <div className="text-sm text-secondary-800 leading-relaxed">
+                                                                {(() => {
+                                                                    const addr = taxInvoice.address;
+                                                                    console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
+                                                                    console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
+                                                                    console.log('Address Type:', typeof addr);
+
+                                                                    // Try string address first
+                                                                    if (typeof addr === 'string' && addr) {
+                                                                        return addr;
+                                                                    }
+                                                                    // Try address object
+                                                                    else if (addr && typeof addr === 'object') {
+                                                                        const p = [];
+                                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                                        if (addr.addrVillage) p.push(addr.addrVillage);
+                                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                                        if (addr.zipcode) p.push(addr.zipcode);
+                                                                        const result = p.join(' ');
+                                                                        if (result) return result;
+                                                                    }
+                                                                    // Fallback: read from taxInvoice root level
+                                                                    const p = [];
+                                                                    if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
+                                                                    if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
+                                                                    if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
+                                                                    if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
+                                                                    if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
+                                                                    if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
+                                                                    if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
+                                                                    if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
+                                                                    if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
+                                                                    return p.join(' ') || '-';
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Tax Invoice Delivery Address Selection */}
+                                    {taxInvoice.companyName && (
+                                        <div className="space-y-3 pt-4 border-t border-secondary-200">
+                                            <label className="block text-sm font-medium text-secondary-700">
+                                                ที่อยู่จัดส่งใบกำกับภาษี
+                                            </label>
+
+                                            {/* Dropdown */}
+                                            {!taxInvoiceDeliveryAddress.address ? (
+                                                <div className="relative">
+                                                    <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={taxAddressSearchTerm}
+                                                        onChange={(e) => {
+                                                            setTaxAddressSearchTerm(e.target.value)
+                                                            setShowTaxAddressDropdown(true)
+                                                        }}
+                                                        onFocus={() => setShowTaxAddressDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowTaxAddressDropdown(false), 200)}
+                                                        className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                        placeholder="ค้นหาที่อยู่..."
+                                                    />
+                                                    {showTaxAddressDropdown && (
+                                                        <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                            {/* Option: Same as installation address */}
+                                                            {jobInfo.installAddress && (
+                                                                <div
+                                                                    onClick={() => {
+                                                                        setTaxInvoiceDeliveryAddress({
+                                                                            type: 'same',
+                                                                            label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง',
+                                                                            address: jobInfo.installAddress || '',
+                                                                            googleMapLink: jobInfo.googleMapLink || '',
+                                                                            distance: jobInfo.distance || ''
+                                                                        });
+                                                                        setTaxAddressSearchTerm('');
+                                                                        setShowTaxAddressDropdown(false);
+                                                                    }}
+                                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                >
+                                                                    <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/จัดส่ง</div>
+                                                                    <div className="text-xs text-secondary-500 truncate">{jobInfo.installAddress}</div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Options: Customer addresses */}
+                                                            {customersData.find(c => c.name === customer.name)?.addresses
+                                                                ?.filter(addr => {
+                                                                    const addressText = typeof addr.address === 'string' ? addr.address : '';
+                                                                    return addr.label.toLowerCase().includes(taxAddressSearchTerm.toLowerCase()) || addressText.includes(taxAddressSearchTerm);
+                                                                })
+                                                                .map((addr, index) => {
+                                                                    const addressText = typeof addr.address === 'string'
+                                                                        ? addr.address
+                                                                        : (addr.address || '');
+
+                                                                    // Helper to build address string if object
+                                                                    let fullAddress = addressText;
+                                                                    if (!fullAddress && typeof addr === 'object') {
+                                                                        const p = [];
+                                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                                        if (addr.addrVillage) p.push(addr.addrVillage);
+                                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                                        if (addr.zipcode) p.push(addr.zipcode);
+                                                                        fullAddress = p.join(' ');
+                                                                    }
+
+                                                                    return (
+                                                                        <div
+                                                                            key={index}
+                                                                            onClick={() => {
+                                                                                setTaxInvoiceDeliveryAddress({
+                                                                                    type: 'custom',
+                                                                                    label: addr.label || '',
+                                                                                    address: fullAddress,
+                                                                                    googleMapLink: addr.googleMapsLink || '',
+                                                                                    distance: addr.distance ? `${addr.distance.toFixed(2)} km` : ''
+                                                                                });
+                                                                                setTaxAddressSearchTerm('');
+                                                                                setShowTaxAddressDropdown(false);
+                                                                            }}
+                                                                            className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                        >
+                                                                            <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
+                                                                            <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : null}
+
+                                            {/* Selected Address Display Card */}
+                                            {taxInvoiceDeliveryAddress.address && (
+                                                <AddressCard
+                                                    title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง') : taxInvoiceDeliveryAddress.label}
+                                                    address={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.installAddress : taxInvoiceDeliveryAddress.address}
+                                                    mapLink={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.googleMapLink : taxInvoiceDeliveryAddress.googleMapLink}
+                                                    distance={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.distance : taxInvoiceDeliveryAddress.distance}
+                                                    onClear={() => setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '', googleMapLink: '', distance: '' })}
+                                                    variant="primary"
+                                                    badge={taxInvoiceDeliveryAddress.type === 'same' ? (
+                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                            ที่อยู่เดียวกัน
+                                                        </span>
+                                                    ) : null}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Contact Selector */}
+                                    {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                        <ContactSelector
+                                            label="ผู้ติดต่อรับเอกสาร"
+                                            contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                            value={selectedContact}
+                                            onChange={setSelectedContact}
+                                        />
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-secondary-600">
-                                <span>ค่าขนส่ง</span>
-                                <input
-                                    type="number"
-                                    value={shippingFee}
-                                    onChange={e => setShippingFee(Number(e.target.value))}
-                                    className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                                />
-                            </div>
-                            <div className="flex justify-between items-center text-secondary-600">
-                                <span>ส่วนลด</span>
-                                <div className="flex gap-1">
-                                    <select
-                                        value={discount.mode}
-                                        onChange={e => setDiscount({ ...discount, mode: e.target.value })}
-                                        className="border border-secondary-300 rounded text-xs px-1"
-                                    >
-                                        <option value="percent">%</option>
-                                        <option value="amount">฿</option>
-                                    </select>
+                        )}
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                            <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+                                <CreditCard className="text-primary-600" />
+                                สรุปยอดชำระ
+                            </h2>
+
+                            <div className="flex-1 space-y-3 text-sm">
+                                <div className="flex justify-between text-secondary-600">
+                                    <span>รวมเป็นเงิน</span>
+                                    <span>{currency(subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-secondary-600">
+                                    <span>ค่าขนส่ง</span>
                                     <input
                                         type="number"
-                                        value={discount.value}
-                                        onChange={e => setDiscount({ ...discount, value: Number(e.target.value) })}
+                                        value={shippingFee}
+                                        onChange={e => setShippingFee(Number(e.target.value))}
                                         className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
                                     />
                                 </div>
-                            </div>
-                            <div className="flex justify-between text-secondary-900 font-medium pt-2 border-t border-secondary-100">
-                                <span>หลังหักส่วนลด</span>
-                                <span>{currency(afterDiscount)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-secondary-600">
-                                <span className="flex items-center gap-2">
-                                    ภาษีมูลค่าเพิ่ม (7%)
-                                    <input
-                                        type="checkbox"
-                                        checked={vatRate > 0}
-                                        onChange={e => setVatRate(e.target.checked ? 0.07 : 0)}
-                                        className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                                    />
-                                </span>
-                                <span>{currency(vatAmt)}</span>
-                            </div>
-
-                            <div className="flex justify-between text-xl font-bold text-primary-700 pt-4 border-t border-secondary-200">
-                                <span>ยอดรวมทั้งสิ้น</span>
-                                <span>{currency(total)}</span>
-                            </div>
-
-                            <div className="pt-4 border-t border-secondary-200">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-secondary-700 font-medium">มัดจำ</span>
+                                <div className="flex justify-between items-center text-secondary-600">
+                                    <span>ส่วนลด</span>
                                     <div className="flex gap-1">
                                         <select
-                                            value={deposit.mode}
-                                            onChange={e => setDeposit({ ...deposit, mode: e.target.value })}
+                                            value={discount.mode}
+                                            onChange={e => setDiscount({ ...discount, mode: e.target.value })}
                                             className="border border-secondary-300 rounded text-xs px-1"
                                         >
                                             <option value="percent">%</option>
@@ -1492,24 +1363,66 @@ export default function OrderForm() {
                                         </select>
                                         <input
                                             type="number"
-                                            value={deposit.value}
-                                            onChange={e => setDeposit({ ...deposit, value: Number(e.target.value) })}
+                                            value={discount.value}
+                                            onChange={e => setDiscount({ ...discount, value: Number(e.target.value) })}
                                             className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
                                         />
                                     </div>
                                 </div>
-                                <div className="flex justify-between text-secondary-600 text-sm">
-                                    <span>ยอดมัดจำที่ต้องชำระ</span>
-                                    <span className="font-medium">{currency(depositAmount)}</span>
+                                <div className="flex justify-between text-secondary-900 font-medium pt-2 border-t border-secondary-100">
+                                    <span>หลังหักส่วนลด</span>
+                                    <span>{currency(afterDiscount)}</span>
                                 </div>
-                                <div className="flex justify-between text-secondary-900 font-bold text-sm">
-                                    <span>ยอดคงเหลือ (ชำระวันงาน)</span>
-                                    <span>{currency(total - depositAmount)}</span>
+                                <div className="flex justify-between items-center text-secondary-600">
+                                    <span className="flex items-center gap-2">
+                                        ภาษีมูลค่าเพิ่ม (7%)
+                                        <input
+                                            type="checkbox"
+                                            checked={vatRate > 0}
+                                            onChange={e => setVatRate(e.target.checked ? 0.07 : 0)}
+                                            className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                    </span>
+                                    <span>{currency(vatAmt)}</span>
+                                </div>
+
+                                <div className="flex justify-between text-xl font-bold text-primary-700 pt-4 border-t border-secondary-200">
+                                    <span>ยอดรวมทั้งสิ้น</span>
+                                    <span>{currency(total)}</span>
+                                </div>
+
+                                <div className="pt-4 border-t border-secondary-200">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-secondary-700 font-medium">มัดจำ</span>
+                                        <div className="flex gap-1">
+                                            <select
+                                                value={deposit.mode}
+                                                onChange={e => setDeposit({ ...deposit, mode: e.target.value })}
+                                                className="border border-secondary-300 rounded text-xs px-1"
+                                            >
+                                                <option value="percent">%</option>
+                                                <option value="amount">฿</option>
+                                            </select>
+                                            <input
+                                                type="number"
+                                                value={deposit.value}
+                                                onChange={e => setDeposit({ ...deposit, value: Number(e.target.value) })}
+                                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between text-secondary-600 text-sm">
+                                        <span>ยอดมัดจำที่ต้องชำระ</span>
+                                        <span className="font-medium">{currency(depositAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-secondary-900 font-bold text-sm">
+                                        <span>ยอดคงเหลือ (ชำระวันงาน)</span>
+                                        <span>{currency(total - depositAmount)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
 
@@ -1734,125 +1647,124 @@ export default function OrderForm() {
                             </tbody>
                         </table>
                     </div>
-                </div >
+                </div>
 
-            </div>
-
-            {/* Map Popup Modal */}
-            {
-                showMapPopup && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
-                            {/* Modal Header */}
-                            <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
-                                <h3 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
-                                    <MapPin className="text-primary-600" size={28} />
-                                    ตำแหน่งที่อยู่
-                                </h3>
-                                <button
-                                    onClick={() => setShowMapPopup(false)}
-                                    className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 rounded-full transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            {/* Map Content */}
-                            <div className="p-8 flex flex-col items-center justify-center space-y-6">
-                                <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
-                                    <MapPin size={48} className="text-primary-600" />
+                {/* Map Popup Modal */}
+                {
+                    showMapPopup && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
+                                {/* Modal Header */}
+                                <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
+                                    <h3 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
+                                        <MapPin className="text-primary-600" size={28} />
+                                        ตำแหน่งที่อยู่
+                                    </h3>
+                                    <button
+                                        onClick={() => setShowMapPopup(false)}
+                                        className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 rounded-full transition-colors"
+                                    >
+                                        <X size={24} />
+                                    </button>
                                 </div>
 
-                                <div className="text-center space-y-2">
-                                    <h4 className="text-xl font-bold text-secondary-900">เปิดดูแผนที่</h4>
-                                    <p className="text-secondary-600">คลิกปุ่มด้านล่างเพื่อเปิดดูตำแหน่งใน Google Maps</p>
-                                </div>
+                                {/* Map Content */}
+                                <div className="p-8 flex flex-col items-center justify-center space-y-6">
+                                    <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
+                                        <MapPin size={48} className="text-primary-600" />
+                                    </div>
 
-                                {(() => {
-                                    const coords = extractCoordinates(selectedMapLink)
-                                    if (coords) {
-                                        return (
-                                            <div className="bg-secondary-50 p-4 rounded-lg w-full">
-                                                <div className="text-sm text-secondary-600 space-y-1">
-                                                    <div className="flex justify-between">
-                                                        <span className="font-medium">Latitude:</span>
-                                                        <span className="font-mono">{coords.lat}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-medium">Longitude:</span>
-                                                        <span className="font-mono">{coords.lon}</span>
-                                                    </div>
-                                                    {jobInfo.distance && (
-                                                        <div className="flex justify-between pt-2 border-t border-secondary-200">
-                                                            <span className="font-medium">ระยะทางจากร้าน:</span>
-                                                            <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
+                                    <div className="text-center space-y-2">
+                                        <h4 className="text-xl font-bold text-secondary-900">เปิดดูแผนที่</h4>
+                                        <p className="text-secondary-600">คลิกปุ่มด้านล่างเพื่อเปิดดูตำแหน่งใน Google Maps</p>
+                                    </div>
+
+                                    {(() => {
+                                        const coords = extractCoordinates(selectedMapLink)
+                                        if (coords) {
+                                            return (
+                                                <div className="bg-secondary-50 p-4 rounded-lg w-full">
+                                                    <div className="text-sm text-secondary-600 space-y-1">
+                                                        <div className="flex justify-between">
+                                                            <span className="font-medium">Latitude:</span>
+                                                            <span className="font-mono">{coords.lat}</span>
                                                         </div>
-                                                    )}
+                                                        <div className="flex justify-between">
+                                                            <span className="font-medium">Longitude:</span>
+                                                            <span className="font-mono">{coords.lon}</span>
+                                                        </div>
+                                                        {jobInfo.distance && (
+                                                            <div className="flex justify-between pt-2 border-t border-secondary-200">
+                                                                <span className="font-medium">ระยะทางจากร้าน:</span>
+                                                                <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )
-                                    }
-                                    return null
-                                })()}
+                                            )
+                                        }
+                                        return null
+                                    })()}
 
-                                <a
-                                    href={selectedMapLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30"
-                                >
-                                    <MapPin size={20} />
-                                    เปิดใน Google Maps
-                                </a>
-                            </div>
+                                    <a
+                                        href={selectedMapLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30"
+                                    >
+                                        <MapPin size={20} />
+                                        เปิดใน Google Maps
+                                    </a>
+                                </div>
 
-                            {/* Modal Footer */}
-                            <div className="px-6 py-4 border-t border-secondary-200 bg-secondary-50 flex justify-end">
-                                <button
-                                    onClick={() => setShowMapPopup(false)}
-                                    className="px-6 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors font-medium"
-                                >
-                                    ปิด
-                                </button>
+                                {/* Modal Footer */}
+                                <div className="px-6 py-4 border-t border-secondary-200 bg-secondary-50 flex justify-end">
+                                    <button
+                                        onClick={() => setShowMapPopup(false)}
+                                        className="px-6 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors font-medium"
+                                    >
+                                        ปิด
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )
-            }
-            {/* Quick Add Product Modal */}
-            <ProductModal
-                isOpen={showProductModal}
-                onClose={() => setShowProductModal(false)}
-                product={newProduct}
-                onSave={handleSaveNewProduct}
-            />
+                    )
+                }
+                {/* Quick Add Product Modal */}
+                <ProductModal
+                    isOpen={showProductModal}
+                    onClose={() => setShowProductModal(false)}
+                    product={newProduct}
+                    onSave={handleSaveNewProduct}
+                />
 
-            {/* Customer Edit Modal */}
-            <CustomerModal
-                isOpen={showEditCustomerModal}
-                onClose={() => setShowEditCustomerModal(false)}
-                customer={customer}
-                onSave={handleUpdateCustomer}
-            />
+                {/* Customer Edit Modal */}
+                <CustomerModal
+                    isOpen={showEditCustomerModal}
+                    onClose={() => setShowEditCustomerModal(false)}
+                    customer={customer}
+                    onSave={handleUpdateCustomer}
+                />
 
-            {/* Customer Add Modal */}
-            <CustomerModal
-                isOpen={showAddCustomerModal}
-                onClose={() => setShowAddCustomerModal(false)}
-                customer={null}
-                onSave={handleAddNewCustomer}
-            />
+                {/* Customer Add Modal */}
+                <CustomerModal
+                    isOpen={showAddCustomerModal}
+                    onClose={() => setShowAddCustomerModal(false)}
+                    customer={null}
+                    onSave={handleAddNewCustomer}
+                />
 
-            {/* Sub Job Modal */}
-            <SubJobModal
-                isOpen={showSubJobModal}
-                onClose={() => setShowSubJobModal(false)}
-                item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
-                onSave={handleSaveSubJob}
-                customersData={customersData}
-                customerName={customer.name}
-                availableTeams={availableTeams}
-            />
+                {/* Sub Job Modal */}
+                <SubJobModal
+                    isOpen={showSubJobModal}
+                    onClose={() => setShowSubJobModal(false)}
+                    item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
+                    onSave={handleSaveSubJob}
+                    customersData={customersData}
+                    customerName={customer.name}
+                    availableTeams={availableTeams}
+                />
+            </div>
         </div >
     )
 }

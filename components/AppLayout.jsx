@@ -95,7 +95,7 @@ const AppLayout = ({ children }) => {
                                 className="w-8 h-8 rounded-lg shadow-lg shadow-primary-500/30"
                             />
                             <span className="font-bold text-xl text-secondary-900 tracking-tight">VSC System</span>
-                            <span className="ml-2 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-bold rounded-full">v3.1.4</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">v3.1.5</span>
                         </div>
                         <button
                             className="ml-auto lg:hidden text-secondary-500 hover:text-secondary-900"
