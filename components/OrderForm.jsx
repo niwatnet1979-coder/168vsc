@@ -14,6 +14,7 @@ import SubJobModal from './SubJobModal'
 import AddressCard from './AddressCard'
 import ContactSelector from './ContactSelector'
 import JobInfoCard from './JobInfoCard'
+import PaymentEntryModal from './PaymentEntryModal'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
 
 
@@ -106,6 +107,8 @@ export default function OrderForm() {
     const [selectedMapLink, setSelectedMapLink] = useState('')
     const [showEditCustomerModal, setShowEditCustomerModal] = useState(false)
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
+    const [showPaymentModal, setShowPaymentModal] = useState(false)
+    const [editingPaymentIndex, setEditingPaymentIndex] = useState(null)
 
     // --- Effects ---
     useEffect(() => {
@@ -1206,112 +1209,56 @@ export default function OrderForm() {
                                         <span>{currency(total - depositAmount)}</span>
                                     </div>
 
-                                    {/* Payment Schedule Table */}
+                                    {/* Payment Schedule List */}
                                     <div className="mt-6 pt-4 border-t border-secondary-200">
                                         <h3 className="text-sm font-bold text-secondary-900 mb-3">ตารางการชำระเงิน</h3>
 
+                                        {/* Payment List */}
                                         {paymentSchedule.length > 0 && (
-                                            <div className="overflow-x-auto">
-                                                <table className="w-full text-sm">
-                                                    <thead>
-                                                        <tr className="border-b border-secondary-200">
-                                                            <th className="text-center py-2 px-2 text-secondary-700 font-medium w-16">สลิป</th>
-                                                            <th className="text-left py-2 px-2 text-secondary-700 font-medium">ชำระโดย</th>
-                                                            <th className="text-left py-2 px-2 text-secondary-700 font-medium">วันที่ชำระเงิน</th>
-                                                            <th className="text-right py-2 px-2 text-secondary-700 font-medium">ยอดชำระเงิน</th>
-                                                            <th className="w-8"></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {paymentSchedule.map((payment, index) => (
-                                                            <tr key={index} className="border-b border-secondary-100">
-                                                                {/* Slip Upload */}
-                                                                <td className="py-2 px-2 text-center">
-                                                                    <input
-                                                                        type="file"
-                                                                        accept="image/*"
-                                                                        id={`slip-upload-${index}`}
-                                                                        className="hidden"
-                                                                        onChange={(e) => {
-                                                                            const file = e.target.files?.[0]
-                                                                            if (file) {
-                                                                                const newSchedule = [...paymentSchedule]
-                                                                                newSchedule[index].slip = file
-                                                                                setPaymentSchedule(newSchedule)
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => document.getElementById(`slip-upload-${index}`).click()}
-                                                                        className={`${payment.slip ? 'text-success-600' : 'text-secondary-900'} hover:opacity-70`}
-                                                                    >
-                                                                        <Camera size={20} />
-                                                                    </button>
-                                                                </td>
-                                                                {/* Payment Method */}
-                                                                <td className="py-2 px-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={payment.paymentMethod || ''}
-                                                                        onChange={(e) => {
-                                                                            const newSchedule = [...paymentSchedule]
-                                                                            newSchedule[index].paymentMethod = e.target.value
-                                                                            setPaymentSchedule(newSchedule)
-                                                                        }}
-                                                                        className="w-full px-2 py-1 border border-secondary-300 rounded text-sm"
-                                                                        placeholder="เงินสด/โอน"
-                                                                    />
-                                                                </td>
-                                                                {/* Payment Date */}
-                                                                <td className="py-2 px-2">
-                                                                    <input
-                                                                        type="date"
-                                                                        value={payment.date}
-                                                                        onChange={(e) => {
-                                                                            const newSchedule = [...paymentSchedule]
-                                                                            newSchedule[index].date = e.target.value
-                                                                            setPaymentSchedule(newSchedule)
-                                                                        }}
-                                                                        className="w-full px-2 py-1 border border-secondary-300 rounded text-sm"
-                                                                    />
-                                                                </td>
-                                                                {/* Amount */}
-                                                                <td className="py-2 px-2">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={payment.amount}
-                                                                        onChange={(e) => {
-                                                                            const newSchedule = [...paymentSchedule]
-                                                                            newSchedule[index].amount = e.target.value
-                                                                            setPaymentSchedule(newSchedule)
-                                                                        }}
-                                                                        className="w-full px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                                                                        placeholder="0.00"
-                                                                    />
-                                                                </td>
-
-                                                                <td className="py-2 px-2">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index))
-                                                                        }}
-                                                                        className="text-danger-500 hover:text-danger-700"
-                                                                    >
-                                                                        <X size={16} />
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                            <div className="space-y-2 mb-3">
+                                                {paymentSchedule.map((payment, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <span className="font-medium">{payment.date || '-'}</span>
+                                                                <span className="text-secondary-500">•</span>
+                                                                <span className="text-primary-600 font-bold">{currency(payment.amount || 0)}</span>
+                                                                <span className="text-secondary-500">•</span>
+                                                                <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingPaymentIndex(index)
+                                                                    setShowPaymentModal(true)
+                                                                }}
+                                                                className="text-primary-600 hover:text-primary-700"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index))
+                                                                }}
+                                                                className="text-danger-500 hover:text-danger-700"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
 
+                                        {/* Add Payment Button */}
                                         {paymentSchedule.length < 5 && (
                                             <button
-                                                onClick={() => setPaymentSchedule([...paymentSchedule, { slip: null, paymentMethod: '', date: '', amount: '' }])}
-                                                className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                                                onClick={() => {
+                                                    setEditingPaymentIndex(null)
+                                                    setShowPaymentModal(true)
+                                                }}
+                                                className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
                                             >
                                                 <Plus size={16} />
                                                 เพิ่มการชำระ
@@ -1661,6 +1608,28 @@ export default function OrderForm() {
                     onSave={handleSaveSubJob}
                     customer={customer}
                     availableTeams={availableTeams}
+                />
+
+                {/* Payment Entry Modal */}
+                <PaymentEntryModal
+                    isOpen={showPaymentModal}
+                    onClose={() => {
+                        setShowPaymentModal(false)
+                        setEditingPaymentIndex(null)
+                    }}
+                    onSave={(paymentData) => {
+                        if (editingPaymentIndex !== null) {
+                            // Edit existing payment
+                            const newSchedule = [...paymentSchedule]
+                            newSchedule[editingPaymentIndex] = paymentData
+                            setPaymentSchedule(newSchedule)
+                        } else {
+                            // Add new payment
+                            setPaymentSchedule([...paymentSchedule, paymentData])
+                        }
+                    }}
+                    payment={editingPaymentIndex !== null ? paymentSchedule[editingPaymentIndex] : null}
+                    remainingBalance={total - depositAmount - paymentSchedule.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
                 />
             </div >
         </div >
