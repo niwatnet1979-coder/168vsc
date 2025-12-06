@@ -29,7 +29,7 @@ export default function ContactSelector({
     }
 
     return (
-        <div className="pt-4 border-t border-secondary-200">
+        <div className="">
             <label className="block text-sm font-medium text-secondary-700 mb-2">{label}</label>
 
             {!value || !value.name ? (

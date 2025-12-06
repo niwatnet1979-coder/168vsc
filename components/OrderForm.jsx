@@ -1228,7 +1228,7 @@ export default function OrderForm() {
 
                                     {/* Tax Invoice Delivery Address Selection */}
                                     {taxInvoice.companyName && (
-                                        <div className="space-y-3 pt-4 border-t border-secondary-200">
+                                        <div className="space-y-3">
                                             <label className="block text-sm font-medium text-secondary-700">
                                                 ที่อยู่จัดส่งใบกำกับภาษี
                                             </label>
