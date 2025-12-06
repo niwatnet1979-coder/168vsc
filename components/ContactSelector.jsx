@@ -30,7 +30,7 @@ export default function ContactSelector({
 
     return (
         <div className="">
-            <label className="block text-sm font-medium text-secondary-700 mb-2">{label}</label>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">{label}</label>
 
             {!value || !value.name ? (
                 <div className="relative">

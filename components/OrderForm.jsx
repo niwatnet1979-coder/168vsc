@@ -96,6 +96,7 @@ export default function OrderForm() {
     const [deposit, setDeposit] = useState({ mode: 'percent', value: 50 })
     const [shippingFee, setShippingFee] = useState(0)
     const [note, setNote] = useState('')
+    const [paymentSchedule, setPaymentSchedule] = useState([])
 
     // --- UI States ---
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
@@ -659,7 +660,7 @@ export default function OrderForm() {
                                                 }}
                                                 onFocus={() => setShowCustomerDropdown(true)}
                                                 onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
-                                                className="w-full pl-10 pr-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50"
+                                                className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50"
                                                 placeholder="ค้นหาชื่อ, เบอร์โทร..."
                                             />
                                             {showCustomerDropdown && (
@@ -1203,6 +1204,90 @@ export default function OrderForm() {
                                     <div className="flex justify-between text-secondary-900 font-bold text-sm">
                                         <span>ยอดคงเหลือ (ชำระวันงาน)</span>
                                         <span>{currency(total - depositAmount)}</span>
+                                    </div>
+
+                                    {/* Payment Schedule Table */}
+                                    <div className="mt-6 pt-4 border-t border-secondary-200">
+                                        <h3 className="text-sm font-bold text-secondary-900 mb-3">ตารางการชำระเงิน</h3>
+
+                                        {paymentSchedule.length > 0 && (
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="border-b border-secondary-200">
+                                                            <th className="text-left py-2 px-2 text-secondary-700 font-medium">วันที่ชำระเงิน</th>
+                                                            <th className="text-right py-2 px-2 text-secondary-700 font-medium">ยอดชำระเงิน</th>
+                                                            <th className="text-right py-2 px-2 text-secondary-700 font-medium">คงค้างเงิน</th>
+                                                            <th className="w-8"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {paymentSchedule.map((payment, index) => {
+                                                            const remainingBalance = total - depositAmount
+                                                            let currentRemaining = remainingBalance
+
+                                                            // Calculate remaining for this row
+                                                            for (let i = 0; i <= index; i++) {
+                                                                currentRemaining -= (parseFloat(paymentSchedule[i].amount) || 0)
+                                                            }
+
+                                                            return (
+                                                                <tr key={index} className="border-b border-secondary-100">
+                                                                    <td className="py-2 px-2">
+                                                                        <input
+                                                                            type="date"
+                                                                            value={payment.date}
+                                                                            onChange={(e) => {
+                                                                                const newSchedule = [...paymentSchedule]
+                                                                                newSchedule[index].date = e.target.value
+                                                                                setPaymentSchedule(newSchedule)
+                                                                            }}
+                                                                            className="w-full px-2 py-1 border border-secondary-300 rounded text-sm"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="py-2 px-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={payment.amount}
+                                                                            onChange={(e) => {
+                                                                                const newSchedule = [...paymentSchedule]
+                                                                                newSchedule[index].amount = e.target.value
+                                                                                setPaymentSchedule(newSchedule)
+                                                                            }}
+                                                                            className="w-full px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                                                                            placeholder="0.00"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="py-2 px-2 text-right font-medium text-secondary-900">
+                                                                        {currency(currentRemaining)}
+                                                                    </td>
+                                                                    <td className="py-2 px-2">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index))
+                                                                            }}
+                                                                            className="text-danger-500 hover:text-danger-700"
+                                                                        >
+                                                                            <X size={16} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+
+                                        {paymentSchedule.length < 5 && (
+                                            <button
+                                                onClick={() => setPaymentSchedule([...paymentSchedule, { date: '', amount: '' }])}
+                                                className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                                            >
+                                                <Plus size={16} />
+                                                เพิ่มการชำระ
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
