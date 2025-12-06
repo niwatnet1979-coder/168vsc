@@ -1099,7 +1099,7 @@ export default function OrderForm() {
 
                                     {/* Contact Selector - Delivery */}
                                     {customer.contacts?.length > 0 && (
-                                        <div className="pt-4 border-t border-secondary-100">
+                                        <div className="pt-4">
                                             <ContactSelector
                                                 label="ผู้ติดต่อรับเอกสาร"
                                                 contacts={customer.contacts}
