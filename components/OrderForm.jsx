@@ -744,6 +744,30 @@ export default function OrderForm() {
                                                         <span className="font-medium text-secondary-900 truncate max-w-[200px]">{String(customer.email)}</span>
                                                     </div>
                                                 )}
+                                                {customer.line && (
+                                                    <div className="flex items-center gap-2 text-secondary-600">
+                                                        <div className="w-6 h-6 bg-[#06c755]/10 rounded flex items-center justify-center flex-shrink-0">
+                                                            <MessageCircle size={14} className="text-[#06c755]" />
+                                                        </div>
+                                                        <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.line}</span>
+                                                    </div>
+                                                )}
+                                                {customer.facebook && (
+                                                    <div className="flex items-center gap-2 text-secondary-600">
+                                                        <div className="w-6 h-6 bg-[#1877F2]/10 rounded flex items-center justify-center flex-shrink-0">
+                                                            <Facebook size={14} className="text-[#1877F2]" />
+                                                        </div>
+                                                        <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.facebook}</span>
+                                                    </div>
+                                                )}
+                                                {customer.instagram && (
+                                                    <div className="flex items-center gap-2 text-secondary-600">
+                                                        <div className="w-6 h-6 bg-[#E1306C]/10 rounded flex items-center justify-center flex-shrink-0">
+                                                            <Instagram size={14} className="text-[#E1306C]" />
+                                                        </div>
+                                                        <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.instagram}</span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                         </div>
