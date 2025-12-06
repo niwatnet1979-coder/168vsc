@@ -24,7 +24,7 @@ export default function JobInfoCard({
     }
 
     return (
-        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : ''}`}>
+        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 md:p-6 flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : ''}`}>
             {showHeader && (
                 <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                     <Wrench className="text-primary-600" />
@@ -70,7 +70,7 @@ export default function JobInfoCard({
                                     type="datetime-local"
                                     value={data.appointmentDate}
                                     onChange={e => handleUpdate({ appointmentDate: e.target.value })}
-                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-w-0 max-w-full"
                                 />
                             </div>
                             {showCompletionDate && (
@@ -80,7 +80,7 @@ export default function JobInfoCard({
                                         type="datetime-local"
                                         value={data.completionDate || ''}
                                         onChange={e => handleUpdate({ completionDate: e.target.value })}
-                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-w-0 max-w-full"
                                     />
                                 </div>
                             )}

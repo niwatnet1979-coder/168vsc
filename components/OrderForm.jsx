@@ -1096,17 +1096,20 @@ export default function OrderForm() {
                                         </div>
                                     )}
 
-                                    {/* Contact Selector */}
-                                    {customer.contacts?.length > 0 && (
-                                        <ContactSelector
-                                            label="ผู้ติดต่อรับเอกสาร"
-                                            contacts={customer.contacts}
-                                            value={selectedContact}
-                                            onChange={setSelectedContact}
-                                            variant="blue"
-                                        />
-                                    )}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Contact Selector - Delivery (Moved outside Tax Invoice block) */}
+                        {customer.contacts?.length > 0 && (
+                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                                <ContactSelector
+                                    label="ผู้ติดต่อรับเอกสาร"
+                                    contacts={customer.contacts}
+                                    value={selectedContact}
+                                    onChange={setSelectedContact}
+                                    variant="blue"
+                                />
                             </div>
                         )}
                         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
