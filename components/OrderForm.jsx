@@ -1339,6 +1339,58 @@ export default function OrderForm() {
                                             </div>
                                         </div>
                                     )}
+                                    {/* Inspector Selection (From Customer Contacts) */}
+                                    <div className="pt-4 border-t border-secondary-200">
+                                        <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ตรวจงาน / สินค้า (จากผู้ติดต่อลูกค้า)</label>
+                                        <div className="relative">
+                                            <select
+                                                value={jobInfo.inspector1?.name && customer.contacts?.find(c => c.name === jobInfo.inspector1.name) ? customer.contacts.find(c => c.name === jobInfo.inspector1.name).id : ''}
+                                                onChange={(e) => {
+                                                    const contactId = e.target.value;
+                                                    if (contactId) {
+                                                        const contact = customer.contacts?.find(c => c.id === contactId);
+                                                        if (contact) {
+                                                            setJobInfo({
+                                                                ...jobInfo,
+                                                                inspector1: {
+                                                                    name: contact.name,
+                                                                    phone: contact.phone || ''
+                                                                }
+                                                            });
+                                                        }
+                                                    } else {
+                                                        setJobInfo({
+                                                            ...jobInfo,
+                                                            inspector1: { name: '', phone: '' }
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                            >
+                                                <option value="">-- เลือกผู้ตรวจงาน --</option>
+                                                {customer.contacts?.map((contact, idx) => (
+                                                    <option key={contact.id || idx} value={contact.id}>
+                                                        {contact.name} {contact.position ? `(${contact.position})` : ''} {contact.phone ? `- ${contact.phone}` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                        </div>
+                                        {/* Display Selected Inspector Details */}
+                                        {jobInfo.inspector1?.name && (
+                                            <div className="mt-2 flex items-center gap-2 text-sm text-secondary-600 bg-secondary-50 p-2 rounded border border-secondary-200">
+                                                <User size={14} />
+                                                <span className="font-medium">{jobInfo.inspector1.name}</span>
+                                                {jobInfo.inspector1.phone && (
+                                                    <>
+                                                        <span className="text-secondary-300">|</span>
+                                                        <Phone size={14} />
+                                                        <span>{jobInfo.inspector1.phone}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
