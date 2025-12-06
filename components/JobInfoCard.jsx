@@ -64,23 +64,23 @@ export default function JobInfoCard({
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
                                 </div>
                             </div>
-                            <div className="min-w-0 overflow-hidden">
+                            <div className="min-w-0">
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
                                 <input
                                     type="datetime-local"
                                     value={data.appointmentDate}
                                     onChange={e => handleUpdate({ appointmentDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-w-0 max-w-full"
+                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full"
                                 />
                             </div>
                             {showCompletionDate && (
-                                <div className="min-w-0 overflow-hidden">
+                                <div className="min-w-0">
                                     <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่สำเร็จ</label>
                                     <input
                                         type="datetime-local"
                                         value={data.completionDate || ''}
                                         onChange={e => handleUpdate({ completionDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-w-0 max-w-full"
+                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full"
                                     />
                                 </div>
                             )}
