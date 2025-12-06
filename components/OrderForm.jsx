@@ -1215,6 +1215,8 @@ export default function OrderForm() {
                                                 <table className="w-full text-sm">
                                                     <thead>
                                                         <tr className="border-b border-secondary-200">
+                                                            <th className="text-center py-2 px-2 text-secondary-700 font-medium w-16">สลิป</th>
+                                                            <th className="text-left py-2 px-2 text-secondary-700 font-medium">ชำระโดย</th>
                                                             <th className="text-left py-2 px-2 text-secondary-700 font-medium">วันที่ชำระเงิน</th>
                                                             <th className="text-right py-2 px-2 text-secondary-700 font-medium">ยอดชำระเงิน</th>
                                                             <th className="text-right py-2 px-2 text-secondary-700 font-medium">คงค้างเงิน</th>
@@ -1233,6 +1235,45 @@ export default function OrderForm() {
 
                                                             return (
                                                                 <tr key={index} className="border-b border-secondary-100">
+                                                                    {/* Slip Upload */}
+                                                                    <td className="py-2 px-2 text-center">
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*"
+                                                                            id={`slip-upload-${index}`}
+                                                                            className="hidden"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0]
+                                                                                if (file) {
+                                                                                    const newSchedule = [...paymentSchedule]
+                                                                                    newSchedule[index].slip = file
+                                                                                    setPaymentSchedule(newSchedule)
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => document.getElementById(`slip-upload-${index}`).click()}
+                                                                            className={`${payment.slip ? 'text-success-600' : 'text-secondary-900'} hover:opacity-70`}
+                                                                        >
+                                                                            <Camera size={20} />
+                                                                        </button>
+                                                                    </td>
+                                                                    {/* Payment Method */}
+                                                                    <td className="py-2 px-2">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={payment.paymentMethod || ''}
+                                                                            onChange={(e) => {
+                                                                                const newSchedule = [...paymentSchedule]
+                                                                                newSchedule[index].paymentMethod = e.target.value
+                                                                                setPaymentSchedule(newSchedule)
+                                                                            }}
+                                                                            className="w-full px-2 py-1 border border-secondary-300 rounded text-sm"
+                                                                            placeholder="เงินสด/โอน"
+                                                                        />
+                                                                    </td>
+                                                                    {/* Payment Date */}
                                                                     <td className="py-2 px-2">
                                                                         <input
                                                                             type="date"
@@ -1245,6 +1286,7 @@ export default function OrderForm() {
                                                                             className="w-full px-2 py-1 border border-secondary-300 rounded text-sm"
                                                                         />
                                                                     </td>
+                                                                    {/* Amount */}
                                                                     <td className="py-2 px-2">
                                                                         <input
                                                                             type="number"
@@ -1258,9 +1300,11 @@ export default function OrderForm() {
                                                                             placeholder="0.00"
                                                                         />
                                                                     </td>
+                                                                    {/* Remaining */}
                                                                     <td className="py-2 px-2 text-right font-medium text-secondary-900">
                                                                         {currency(currentRemaining)}
                                                                     </td>
+                                                                    {/* Delete */}
                                                                     <td className="py-2 px-2">
                                                                         <button
                                                                             onClick={() => {
@@ -1281,7 +1325,7 @@ export default function OrderForm() {
 
                                         {paymentSchedule.length < 5 && (
                                             <button
-                                                onClick={() => setPaymentSchedule([...paymentSchedule, { date: '', amount: '' }])}
+                                                onClick={() => setPaymentSchedule([...paymentSchedule, { slip: null, paymentMethod: '', date: '', amount: '' }])}
                                                 className="mt-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
                                             >
                                                 <Plus size={16} />
