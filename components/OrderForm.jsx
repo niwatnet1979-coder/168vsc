@@ -766,7 +766,7 @@ export default function OrderForm() {
                             {/* Contact Person Selection */}
                             {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
                                 <div className="pt-4 border-t border-secondary-200">
-                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ติดต่อเอกสาร</label>
+                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ติดต่อจัดซื้อ</label>
                                     <div className="relative mb-3">
                                         <select
                                             value={activeCustomerContact?.id || ''}
