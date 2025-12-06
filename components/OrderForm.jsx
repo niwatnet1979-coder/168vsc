@@ -1217,35 +1217,20 @@ export default function OrderForm() {
                                         {paymentSchedule.length > 0 && (
                                             <div className="space-y-2 mb-3">
                                                 {paymentSchedule.map((payment, index) => (
-                                                    <div key={index} className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <span className="font-medium">{payment.date || '-'}</span>
-                                                                <span className="text-secondary-500">•</span>
-                                                                <span className="text-primary-600 font-bold">{currency(payment.amount || 0)}</span>
-                                                                <span className="text-secondary-500">•</span>
-                                                                <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
-                                                            </div>
+                                                    <div
+                                                        key={index}
+                                                        onClick={() => {
+                                                            setEditingPaymentIndex(index)
+                                                            setShowPaymentModal(true)
+                                                        }}
+                                                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <span className="font-medium">{payment.date || '-'}</span>
+                                                            <span className="text-secondary-500">•</span>
+                                                            <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingPaymentIndex(index)
-                                                                    setShowPaymentModal(true)
-                                                                }}
-                                                                className="text-primary-600 hover:text-primary-700"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index))
-                                                                }}
-                                                                className="text-danger-500 hover:text-danger-700"
-                                                            >
-                                                                <X size={16} />
-                                                            </button>
-                                                        </div>
+                                                        <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1621,15 +1606,31 @@ export default function OrderForm() {
                         if (editingPaymentIndex !== null) {
                             // Edit existing payment
                             const newSchedule = [...paymentSchedule]
-                            newSchedule[editingPaymentIndex] = paymentData
+                            newSchedule[editingPaymentIndex] = {
+                                ...paymentData,
+                                amount: paymentData.amountMode === 'percent'
+                                    ? ((total - depositAmount) * (parseFloat(paymentData.percentValue) || 0)) / 100
+                                    : parseFloat(paymentData.amount) || 0
+                            }
                             setPaymentSchedule(newSchedule)
                         } else {
                             // Add new payment
-                            setPaymentSchedule([...paymentSchedule, paymentData])
+                            setPaymentSchedule([...paymentSchedule, {
+                                ...paymentData,
+                                amount: paymentData.amountMode === 'percent'
+                                    ? ((total - depositAmount) * (parseFloat(paymentData.percentValue) || 0)) / 100
+                                    : parseFloat(paymentData.amount) || 0
+                            }])
+                        }
+                    }}
+                    onDelete={() => {
+                        if (editingPaymentIndex !== null) {
+                            setPaymentSchedule(paymentSchedule.filter((_, i) => i !== editingPaymentIndex))
                         }
                     }}
                     payment={editingPaymentIndex !== null ? paymentSchedule[editingPaymentIndex] : null}
                     remainingBalance={total - depositAmount - paymentSchedule.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
+                    isEditing={editingPaymentIndex !== null}
                 />
             </div >
         </div >
