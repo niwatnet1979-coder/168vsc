@@ -838,7 +838,8 @@ export default function OrderForm() {
 
 
                         {/* Tax Invoice */}
-                        {customer.taxInvoices?.length > 0 && (
+                        {/* Tax Invoice & Delivery Contact Card */}
+                        {(customer.taxInvoices?.length > 0 || customer.contacts?.length > 0) && (
                             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
                                 <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                     <FileText className="text-primary-600" />
@@ -846,8 +847,8 @@ export default function OrderForm() {
                                 </h2>
 
                                 <div className="flex-1 space-y-4">
-                                    {/* Dropdown */}
-                                    {!taxInvoice.companyName ? (
+                                    {/* Tax Invoice Section */}
+                                    {customer.taxInvoices?.length > 0 && !taxInvoice.companyName ? (
                                         <div className="relative">
                                             <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
                                             <input
@@ -1096,22 +1097,24 @@ export default function OrderForm() {
                                         </div>
                                     )}
 
+                                    {/* Contact Selector - Delivery */}
+                                    {customer.contacts?.length > 0 && (
+                                        <div className="pt-4 border-t border-secondary-100">
+                                            <ContactSelector
+                                                label="ผู้ติดต่อรับเอกสาร"
+                                                contacts={customer.contacts}
+                                                value={selectedContact}
+                                                onChange={setSelectedContact}
+                                                variant="blue"
+                                            />
+                                        </div>
+                                    )}
+
                                 </div>
                             </div>
                         )}
 
-                        {/* Contact Selector - Delivery (Moved outside Tax Invoice block) */}
-                        {customer.contacts?.length > 0 && (
-                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
-                                <ContactSelector
-                                    label="ผู้ติดต่อรับเอกสาร"
-                                    contacts={customer.contacts}
-                                    value={selectedContact}
-                                    onChange={setSelectedContact}
-                                    variant="blue"
-                                />
-                            </div>
-                        )}
+
                         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
                             <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                 <CreditCard className="text-primary-600" />
@@ -1545,7 +1548,7 @@ export default function OrderForm() {
                     customer={customer}
                     availableTeams={availableTeams}
                 />
-            </div>
+            </div >
         </div >
     )
 }
