@@ -8,8 +8,7 @@ import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 export default function JobInfoCard({
     data,
     onChange,
-    customersData,
-    customerName,
+    customer = {},
     availableTeams,
     note,
     onNoteChange,
@@ -19,8 +18,6 @@ export default function JobInfoCard({
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
-
-    const customer = customersData.find(c => c.name === customerName) || {}
 
     const handleUpdate = (updates) => {
         onChange({ ...data, ...updates })

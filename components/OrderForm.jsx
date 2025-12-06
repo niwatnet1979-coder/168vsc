@@ -810,10 +810,10 @@ export default function OrderForm() {
                                 )}
 
                                 {/* Contact Person Selection */}
-                                {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                {customer.contacts?.length > 0 && (
                                     <ContactSelector
                                         label="ผู้ติดต่อจัดซื้อ"
-                                        contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                        contacts={customer.contacts}
                                         value={activeCustomerContact}
                                         onChange={setActiveCustomerContact}
                                         variant="blue"
@@ -826,8 +826,7 @@ export default function OrderForm() {
                         <JobInfoCard
                             data={jobInfo}
                             onChange={setJobInfo}
-                            customersData={customersData}
-                            customerName={customer.name}
+                            customer={customer}
                             availableTeams={availableTeams}
                             note={note}
                             onNoteChange={setNote}
@@ -839,7 +838,7 @@ export default function OrderForm() {
 
 
                         {/* Tax Invoice */}
-                        {customer.name && customersData.find(c => c.name === customer.name)?.taxInvoices?.length > 0 && (
+                        {customer.taxInvoices?.length > 0 && (
                             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
                                 <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                     <FileText className="text-primary-600" />
@@ -865,7 +864,7 @@ export default function OrderForm() {
                                             />
                                             {showTaxInvoiceDropdown && (
                                                 <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                    {customersData.find(c => c.name === customer.name)?.taxInvoices
+                                                    {customer.taxInvoices
                                                         ?.filter(inv =>
                                                             inv.companyName.toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
                                                             inv.taxId.includes(taxInvoiceSearchTerm)
@@ -1026,7 +1025,7 @@ export default function OrderForm() {
                                                             )}
 
                                                             {/* Options: Customer addresses */}
-                                                            {customersData.find(c => c.name === customer.name)?.addresses
+                                                            {customer.addresses
                                                                 ?.filter(addr => {
                                                                     const addressText = typeof addr.address === 'string' ? addr.address : '';
                                                                     return addr.label.toLowerCase().includes(taxAddressSearchTerm.toLowerCase()) || addressText.includes(taxAddressSearchTerm);
@@ -1098,10 +1097,10 @@ export default function OrderForm() {
                                     )}
 
                                     {/* Contact Selector */}
-                                    {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                    {customer.contacts?.length > 0 && (
                                         <ContactSelector
                                             label="ผู้ติดต่อรับเอกสาร"
-                                            contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                            contacts={customer.contacts}
                                             value={selectedContact}
                                             onChange={setSelectedContact}
                                             variant="blue"
@@ -1540,8 +1539,7 @@ export default function OrderForm() {
                     onClose={() => setShowSubJobModal(false)}
                     item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
                     onSave={handleSaveSubJob}
-                    customersData={customersData}
-                    customerName={customer.name}
+                    customer={customer}
                     availableTeams={availableTeams}
                 />
             </div>
