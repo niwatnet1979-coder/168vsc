@@ -86,6 +86,7 @@ export default function OrderForm() {
     })
 
     const [selectedContact, setSelectedContact] = useState(null)
+    const [activeCustomerContact, setActiveCustomerContact] = useState(null)
 
     const [jobInfo, setJobInfo] = useState({
         jobType: 'installation',
@@ -759,6 +760,55 @@ export default function OrderForm() {
                                     )}
 
 
+                                </div>
+                            )}
+
+                            {/* Contact Person Selection */}
+                            {customer.name && customersData.find(c => c.name === customer.name)?.contacts?.length > 0 && (
+                                <div className="pt-4 border-t border-secondary-200">
+                                    <label className="block text-sm font-medium text-secondary-700 mb-2">ผู้ติดต่อเอกสาร</label>
+                                    <div className="relative mb-3">
+                                        <select
+                                            value={activeCustomerContact?.id || ''}
+                                            onChange={(e) => {
+                                                const contactId = e.target.value;
+                                                if (contactId) {
+                                                    const contact = customersData.find(c => c.name === customer.name)?.contacts?.find(ct => ct.id === contactId);
+                                                    setActiveCustomerContact(contact || null);
+                                                } else {
+                                                    setActiveCustomerContact(null);
+                                                }
+                                            }}
+                                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                        >
+                                            <option value="">-- เลือกผู้ติดต่อ --</option>
+                                            {customersData.find(c => c.name === customer.name)?.contacts?.map((contact) => (
+                                                <option key={contact.id} value={contact.id}>
+                                                    {contact.name}{contact.position ? ` (${contact.position})` : ''}{contact.phone ? ` - ${contact.phone}` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                    </div>
+
+                                    {/* Selected Contact Details */}
+                                    {activeCustomerContact && (
+                                        <div className="bg-secondary-50 border border-secondary-200 rounded-lg p-3 flex items-center gap-3">
+                                            <User size={16} className="text-secondary-500" />
+                                            <div className="flex items-center gap-3 text-sm text-secondary-700">
+                                                <span className="font-medium text-secondary-900">{activeCustomerContact.name}</span>
+                                                {activeCustomerContact.phone && (
+                                                    <>
+                                                        <span className="text-secondary-300">|</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <Phone size={14} className="text-secondary-400" />
+                                                            <span>{activeCustomerContact.phone}</span>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
