@@ -76,8 +76,9 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customersDa
                         availableTeams={availableTeams}
                         note={formData.description}
                         onNoteChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-                        showCompletionDate={false}
+                        showCompletionDate={true}
                         showHeader={false}
+                        excludeJobTypes={['separate']}
                     />
 
                     <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">

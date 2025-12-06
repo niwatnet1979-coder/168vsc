@@ -14,7 +14,8 @@ export default function JobInfoCard({
     note,
     onNoteChange,
     showCompletionDate = true,
-    showHeader = true
+    showHeader = true,
+    excludeJobTypes = []
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
@@ -42,9 +43,9 @@ export default function JobInfoCard({
                             onChange={e => handleUpdate({ jobType: e.target.value })}
                             className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                         >
-                            <option value="installation">งานติดตั้ง (Installation)</option>
-                            <option value="delivery">ส่งของ (Delivery)</option>
-                            <option value="separate">งานแยก (Separate)</option>
+                            {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
+                            {!excludeJobTypes.includes('delivery') && <option value="delivery">ส่งของ (Delivery)</option>}
+                            {!excludeJobTypes.includes('separate') && <option value="separate">งานแยก (Separate)</option>}
                         </select>
                     </div>
 
