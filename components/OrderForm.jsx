@@ -877,205 +877,211 @@ export default function OrderForm() {
                                             <option value="separate">งานแยก (Separate)</option>
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-secondary-700 mb-1">ทีม</label>
-                                        <div className="relative">
-                                            <select
-                                                value={jobInfo.team}
-                                                onChange={(e) => setJobInfo({ ...jobInfo, team: e.target.value })}
-                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
-                                            >
-                                                <option value="">-- เลือกทีม --</option>
-                                                {availableTeams.map((team, idx) => (
-                                                    <option key={idx} value={team}>{team}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={jobInfo.appointmentDate}
-                                            onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
-                                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่สำเร็จ</label>
-                                        <input
-                                            type="datetime-local"
-                                            value={jobInfo.completionDate || ''}
-                                            onChange={e => setJobInfo({ ...jobInfo, completionDate: e.target.value })}
-                                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
-
-                                        {/* Address Dropdown */}
-                                        {!jobInfo.installLocationName ? (
-                                            <div className="relative mb-3">
-                                                <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                    {jobInfo.jobType !== 'separate' && (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">ทีม</label>
+                                                <div className="relative">
+                                                    <select
+                                                        value={jobInfo.team}
+                                                        onChange={(e) => setJobInfo({ ...jobInfo, team: e.target.value })}
+                                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                                    >
+                                                        <option value="">-- เลือกทีม --</option>
+                                                        {availableTeams.map((team, idx) => (
+                                                            <option key={idx} value={team}>{team}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
                                                 <input
-                                                    type="text"
-                                                    value={installLocationSearchTerm}
-                                                    onChange={(e) => {
-                                                        setInstallLocationSearchTerm(e.target.value)
-                                                        setShowInstallLocationDropdown(true)
-                                                    }}
-                                                    onFocus={() => setShowInstallLocationDropdown(true)}
-                                                    onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
-                                                    className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                                    placeholder="ค้นหาสถานที่ติดตั้ง..."
+                                                    type="datetime-local"
+                                                    value={jobInfo.appointmentDate}
+                                                    onChange={e => setJobInfo({ ...jobInfo, appointmentDate: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                                                 />
-                                                {showInstallLocationDropdown && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                        {customersData.find(c => c.name === customer.name)?.addresses
-                                                            ?.filter(addr => {
-                                                                const addressText = typeof addr.address === 'string' ? addr.address : '';
-                                                                return addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase()) || addressText.includes(installLocationSearchTerm);
-                                                            })
-                                                            .map((addr, index) => {
-                                                                const addressText = typeof addr.address === 'string'
-                                                                    ? addr.address
-                                                                    : (addr.address || '');
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่สำเร็จ</label>
+                                                <input
+                                                    type="datetime-local"
+                                                    value={jobInfo.completionDate || ''}
+                                                    onChange={e => setJobInfo({ ...jobInfo, completionDate: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
 
-                                                                // Helper to build address string if object
-                                                                let fullAddress = addressText;
-                                                                if (!fullAddress && typeof addr === 'object') {
-                                                                    const p = [];
-                                                                    if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                                    if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                                    if (addr.addrVillage) p.push(addr.addrVillage);
-                                                                    if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                                    if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                                    if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                                    if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                                    if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                                    if (addr.zipcode) p.push(addr.zipcode);
-                                                                    fullAddress = p.join(' ');
-                                                                }
+                                                {/* Address Dropdown */}
+                                                {!jobInfo.installLocationName ? (
+                                                    <div className="relative mb-3">
+                                                        <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                                        <input
+                                                            type="text"
+                                                            value={installLocationSearchTerm}
+                                                            onChange={(e) => {
+                                                                setInstallLocationSearchTerm(e.target.value)
+                                                                setShowInstallLocationDropdown(true)
+                                                            }}
+                                                            onFocus={() => setShowInstallLocationDropdown(true)}
+                                                            onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
+                                                            className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                            placeholder="ค้นหาสถานที่ติดตั้ง..."
+                                                        />
+                                                        {showInstallLocationDropdown && (
+                                                            <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                                {customersData.find(c => c.name === customer.name)?.addresses
+                                                                    ?.filter(addr => {
+                                                                        const addressText = typeof addr.address === 'string' ? addr.address : '';
+                                                                        return addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase()) || addressText.includes(installLocationSearchTerm);
+                                                                    })
+                                                                    .map((addr, index) => {
+                                                                        const addressText = typeof addr.address === 'string'
+                                                                            ? addr.address
+                                                                            : (addr.address || '');
 
-                                                                return (
-                                                                    <div
-                                                                        key={index}
-                                                                        onClick={async () => {
-                                                                            // Calculate distance if not present
-                                                                            let distanceStr = '';
-                                                                            let finalMapLink = addr.googleMapsLink || '';
+                                                                        // Helper to build address string if object
+                                                                        let fullAddress = addressText;
+                                                                        if (!fullAddress && typeof addr === 'object') {
+                                                                            const p = [];
+                                                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                                            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                                            if (addr.addrVillage) p.push(addr.addrVillage);
+                                                                            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                                            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                                            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                                            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                                            if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                                            if (addr.zipcode) p.push(addr.zipcode);
+                                                                            fullAddress = p.join(' ');
+                                                                        }
 
-                                                                            if (addr.distance) {
-                                                                                distanceStr = `${addr.distance.toFixed(2)} km`;
-                                                                            } else if (addr.googleMapsLink) {
-                                                                                let coords = extractCoordinates(addr.googleMapsLink);
+                                                                        return (
+                                                                            <div
+                                                                                key={index}
+                                                                                onClick={async () => {
+                                                                                    // Calculate distance if not present
+                                                                                    let distanceStr = '';
+                                                                                    let finalMapLink = addr.googleMapsLink || '';
 
-                                                                                // If coords not found, try to resolve short link via API
-                                                                                if (!coords) {
-                                                                                    try {
-                                                                                        const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
-                                                                                        if (res.ok) {
-                                                                                            const data = await res.json();
-                                                                                            if (data.url) {
-                                                                                                finalMapLink = data.url;
-                                                                                                coords = extractCoordinates(data.url);
+                                                                                    if (addr.distance) {
+                                                                                        distanceStr = `${addr.distance.toFixed(2)} km`;
+                                                                                    } else if (addr.googleMapsLink) {
+                                                                                        let coords = extractCoordinates(addr.googleMapsLink);
+
+                                                                                        // If coords not found, try to resolve short link via API
+                                                                                        if (!coords) {
+                                                                                            try {
+                                                                                                const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
+                                                                                                if (res.ok) {
+                                                                                                    const data = await res.json();
+                                                                                                    if (data.url) {
+                                                                                                        finalMapLink = data.url;
+                                                                                                        coords = extractCoordinates(data.url);
+                                                                                                    }
+                                                                                                }
+                                                                                            } catch (error) {
+                                                                                                console.error('Error resolving map link:', error);
                                                                                             }
                                                                                         }
-                                                                                    } catch (error) {
-                                                                                        console.error('Error resolving map link:', error);
+
+                                                                                        if (coords) {
+                                                                                            const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
+                                                                                            distanceStr = `${dist} km`;
+                                                                                        }
                                                                                     }
-                                                                                }
 
-                                                                                if (coords) {
-                                                                                    const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
-                                                                                    distanceStr = `${dist} km`;
-                                                                                }
-                                                                            }
-
-                                                                            setJobInfo(prev => ({
-                                                                                ...prev,
-                                                                                installLocationName: addr.label || '',
-                                                                                installAddress: fullAddress,
-                                                                                googleMapLink: finalMapLink,
-                                                                                distance: distanceStr,
-                                                                                inspector1: addr.inspector1 ? {
-                                                                                    name: String(addr.inspector1.name || ''),
-                                                                                    phone: String(addr.inspector1.phone || ''),
-                                                                                    address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
-                                                                                } : { name: '', phone: '', address: '' },
-                                                                                inspector2: addr.inspector2 ? {
-                                                                                    name: String(addr.inspector2.name || ''),
-                                                                                    phone: String(addr.inspector2.phone || ''),
-                                                                                    address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
-                                                                                } : { name: '', phone: '', address: '' }
-                                                                            }));
-                                                                            setInstallLocationSearchTerm('');
-                                                                            setShowInstallLocationDropdown(false);
-                                                                        }}
-                                                                        className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                    >
-                                                                        <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
-                                                                        <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
-                                                                    </div>
-                                                                );
-                                                            })}
+                                                                                    setJobInfo(prev => ({
+                                                                                        ...prev,
+                                                                                        installLocationName: addr.label || '',
+                                                                                        installAddress: fullAddress,
+                                                                                        googleMapLink: finalMapLink,
+                                                                                        distance: distanceStr,
+                                                                                        inspector1: addr.inspector1 ? {
+                                                                                            name: String(addr.inspector1.name || ''),
+                                                                                            phone: String(addr.inspector1.phone || ''),
+                                                                                            address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
+                                                                                        } : { name: '', phone: '', address: '' },
+                                                                                        inspector2: addr.inspector2 ? {
+                                                                                            name: String(addr.inspector2.name || ''),
+                                                                                            phone: String(addr.inspector2.phone || ''),
+                                                                                            address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
+                                                                                        } : { name: '', phone: '', address: '' }
+                                                                                    }));
+                                                                                    setInstallLocationSearchTerm('');
+                                                                                    setShowInstallLocationDropdown(false);
+                                                                                }}
+                                                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                            >
+                                                                                <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
+                                                                                <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                            </div>
+                                                        )}
                                                     </div>
+                                                ) : null}
+
+                                                {/* Selected Address Details Card */}
+                                                {(jobInfo.installAddress || jobInfo.installLocationName) && (
+                                                    <AddressCard
+                                                        title={jobInfo.installLocationName || 'สถานที่ติดตั้ง'}
+                                                        address={jobInfo.installAddress}
+                                                        distance={jobInfo.distance}
+                                                        mapLink={jobInfo.googleMapLink}
+                                                        onClear={() => setJobInfo({
+                                                            ...jobInfo,
+                                                            installLocationName: '',
+                                                            installAddress: '',
+                                                            googleMapLink: '',
+                                                            distance: '',
+                                                            inspector1: { name: '', phone: '', address: '' },
+                                                            inspector2: { name: '', phone: '', address: '' }
+                                                        })}
+                                                        variant="primary"
+                                                    />
                                                 )}
+                                                {/* Inspector Selection (From Customer Contacts) */}
+                                                <ContactSelector
+                                                    variant="blue"
+                                                    label="ผู้ตรวจงาน / รับสินค้า"
+                                                    contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
+                                                    value={jobInfo.inspector1}
+                                                    onChange={(contact) => {
+                                                        setJobInfo(prev => ({
+                                                            ...prev,
+                                                            inspector1: contact ? {
+                                                                name: contact.name,
+                                                                phone: contact.phone || ''
+                                                            } : { name: '', phone: '' }
+                                                        }))
+                                                    }}
+
+                                                />
                                             </div>
-                                        ) : null}
-
-                                        {/* Selected Address Details Card */}
-                                        {(jobInfo.installAddress || jobInfo.installLocationName) && (
-                                            <AddressCard
-                                                title={jobInfo.installLocationName || 'สถานที่ติดตั้ง'}
-                                                address={jobInfo.installAddress}
-                                                distance={jobInfo.distance}
-                                                mapLink={jobInfo.googleMapLink}
-                                                onClear={() => setJobInfo({
-                                                    ...jobInfo,
-                                                    installLocationName: '',
-                                                    installAddress: '',
-                                                    googleMapLink: '',
-                                                    distance: '',
-                                                    inspector1: { name: '', phone: '', address: '' },
-                                                    inspector2: { name: '', phone: '', address: '' }
-                                                })}
-                                                variant="primary"
-                                            />
-                                        )}
-                                        {/* Inspector Selection (From Customer Contacts) */}
-                                        <ContactSelector
-                                            variant="blue"
-                                            label="ผู้ตรวจงาน / รับสินค้า"
-                                            contacts={customersData.find(c => c.name === customer.name)?.contacts || []}
-                                            value={jobInfo.inspector1}
-                                            onChange={(contact) => {
-                                                setJobInfo(prev => ({
-                                                    ...prev,
-                                                    inspector1: contact ? {
-                                                        name: contact.name,
-                                                        phone: contact.phone || ''
-                                                    } : { name: '', phone: '' }
-                                                }))
-                                            }}
-
-                                        />
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Notes Section */}
-                            <div className="pt-4 border-t border-secondary-200">
-                                <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
-                                <textarea
-                                    rows={2}
-                                    value={note}
-                                    onChange={e => setNote(e.target.value)}
-                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none"
-                                    placeholder="รายละเอียดเพิ่มเติม..."
-                                />
-                            </div>
+                            {jobInfo.jobType !== 'separate' && (
+                                <div className="pt-4 border-t border-secondary-200">
+                                    <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
+                                    <textarea
+                                        rows={2}
+                                        value={note}
+                                        onChange={e => setNote(e.target.value)}
+                                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                                        placeholder="รายละเอียดเพิ่มเติม..."
+                                    />
+                                </div>
+                            )}
 
 
                         </div>
