@@ -1282,17 +1282,30 @@ export default function OrderForm() {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation()
-                                            setCurrentSubJobItemIndex(idx)
-                                            setShowSubJobModal(true)
+                                            if (jobInfo.jobType === 'separate') {
+                                                setCurrentSubJobItemIndex(idx)
+                                                setShowSubJobModal(true)
+                                            }
                                         }}
-                                        className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center border transition-colors flex-shrink-0 ${item.subJob
-                                            ? 'bg-white border-primary-200 text-primary-600 shadow-sm'
-                                            : 'bg-white border-secondary-200 text-secondary-300 hover:border-primary-300 hover:text-primary-400'
+                                        disabled={jobInfo.jobType !== 'separate'}
+                                        className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${jobInfo.jobType === 'separate'
+                                                ? item.subJob
+                                                    ? 'bg-white border-primary-200 text-primary-600 shadow-sm cursor-pointer hover:bg-primary-50'
+                                                    : 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-pointer hover:bg-secondary-200'
+                                                : 'bg-secondary-50 border-secondary-200 text-secondary-400 cursor-default'
                                             }`}
                                     >
-                                        {item.subJob ? (
-                                            item.subJob.jobType === 'delivery' ? <Truck size={20} /> : <Wrench size={20} />
-                                        ) : <Wrench size={20} />}
+                                        {jobInfo.jobType === 'separate' ? (
+                                            item.subJob ? (
+                                                item.subJob.jobType === 'delivery' ? <Truck size={20} /> : <Wrench size={20} />
+                                            ) : (
+                                                <HelpCircle size={20} />
+                                            )
+                                        ) : jobInfo.jobType === 'delivery' ? (
+                                            <Truck size={20} />
+                                        ) : (
+                                            <Wrench size={20} />
+                                        )}
                                     </button>
 
                                     {/* Content - Click to Edit */}
