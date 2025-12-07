@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { currency } from '../lib/utils'
+import Card from './Card'
 
 export default function PaymentEntryModal({
     isOpen,
@@ -12,7 +13,7 @@ export default function PaymentEntryModal({
     remainingBalance = 0,
     isEditing = false
 }) {
-    const [formData, setFormData] = useState({
+    const initialForm = {
         date: '',
         amountMode: 'percent',
         percentValue: 50,
@@ -21,25 +22,65 @@ export default function PaymentEntryModal({
         slip: null,
         receiverSignature: null,
         payerSignature: null
-    })
+    }
+
+    const [formData, setFormData] = useState(initialForm)
 
     const receiverSigRef = useRef(null)
     const payerSigRef = useRef(null)
 
+    const normalizeDateForInput = (val) => {
+        if (!val) return ''
+        try {
+            // If already in YYYY-MM-DD format return as-is; if ISO or datetime string, convert
+            const d = new Date(val)
+            if (isNaN(d.getTime())) return ''
+            return d.toISOString().slice(0, 10) // input type=date expects YYYY-MM-DD
+        } catch (e) {
+            return ''
+        }
+    }
+
     useEffect(() => {
+        if (!isOpen) return
+
         if (payment) {
-            setFormData(payment)
+            // Normalize date to YYYY-MM-DD for date input
+            const populated = {
+                ...payment,
+                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date)
+            }
+            setFormData(populated)
+
+            // Load signatures into canvases if available
+            setTimeout(() => {
+                try {
+                    receiverSigRef.current?.clear()
+                    payerSigRef.current?.clear()
+                    if (payment.receiverSignature && receiverSigRef.current?.fromDataURL) {
+                        receiverSigRef.current.fromDataURL(payment.receiverSignature)
+                    }
+                    if (payment.payerSignature && payerSigRef.current?.fromDataURL) {
+                        payerSigRef.current.fromDataURL(payment.payerSignature)
+                    }
+                } catch (err) {
+                    // ignore
+                }
+            }, 0)
         } else {
-            setFormData({
-                date: '',
-                amountMode: 'percent',
-                percentValue: 50,
-                amount: '',
-                paymentMethod: 'โอน',
-                slip: null,
-                receiverSignature: null,
-                payerSignature: null
-            })
+            setFormData(initialForm)
+
+            // Clear signatures and file input when creating a new payment
+            setTimeout(() => {
+                try {
+                    receiverSigRef.current?.clear()
+                    payerSigRef.current?.clear()
+                    const slipInput = document.getElementById('slip-upload')
+                    if (slipInput) slipInput.value = ''
+                } catch (err) {
+                    // ignore
+                }
+            }, 0)
         }
     }, [payment, isOpen])
 
@@ -83,7 +124,7 @@ export default function PaymentEntryModal({
                 </div>
 
                 {/* Body */}
-                <div className="p-4 space-y-4">
+                <Card useBase={false} className="p-4">
                     {/* Date */}
                     <div>
                         <label className="block text-xs font-medium text-secondary-700 mb-1">
@@ -229,7 +270,7 @@ export default function PaymentEntryModal({
                             </button>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* Footer */}
                 <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between">

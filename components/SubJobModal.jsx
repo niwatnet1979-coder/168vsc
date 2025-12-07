@@ -67,27 +67,29 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer, a
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <JobInfoCard
-                        data={formData}
-                        onChange={setFormData}
-                        customer={customer}
-                        availableTeams={availableTeams}
-                        note={formData.description}
-                        onNoteChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-                        showCompletionDate={true}
-                        showHeader={false}
-                        excludeJobTypes={['separate']}
-                    />
+                <form onSubmit={handleSubmit}>
+                    <Card useBase={false} className="p-6">
+                        <JobInfoCard
+                            data={formData}
+                            onChange={setFormData}
+                            customer={customer}
+                            availableTeams={availableTeams}
+                            note={formData.description}
+                            onNoteChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
+                            showCompletionDate={true}
+                            showHeader={false}
+                            excludeJobTypes={['separate']}
+                        />
 
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
-                        <button type="button" onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
-                            ยกเลิก
-                        </button>
-                        <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
-                            บันทึก
-                        </button>
-                    </div>
+                        <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
+                            <button type="button" onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
+                                ยกเลิก
+                            </button>
+                            <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
+                                บันทึก
+                            </button>
+                        </div>
+                    </Card>
                 </form>
             </div>
         </div>
