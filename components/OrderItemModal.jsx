@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package } from 'lucide-react'
 import { currency } from '../lib/utils'
 
 export default function OrderItemModal({
@@ -116,45 +117,78 @@ export default function OrderItemModal({
 
                 {/* Body */}
                 <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
-                    {/* Product Search */}
+                    {/* Product Search / Selected Item */}
                     <div className="relative">
                         <label className="block text-xs font-medium text-secondary-700 mb-1">
                             สินค้า <span className="text-danger-500">*</span>
                         </label>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 text-secondary-400" size={18} />
-                            <input
-                                type="text"
-                                value={formData._searchTerm}
-                                onChange={(e) => {
-                                    setFormData({ ...formData, _searchTerm: e.target.value })
-                                    setShowSearchPopup(true)
-                                }}
-                                onFocus={() => setShowSearchPopup(true)}
-                                className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                                placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                            />
-                        </div>
 
-                        {/* Search Popup */}
-                        {showSearchPopup && formData._searchTerm && (
-                            <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                {searchResults.length > 0 ? (
-                                    searchResults.map(p => (
-                                        <div
-                                            key={p.id}
-                                            onClick={() => handleSelectProduct(p)}
-                                            className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                        >
-                                            <div className="font-bold text-secondary-900 text-sm">{p.name || ''}</div>
-                                            <div className="flex justify-between mt-1">
-                                                <div className="text-xs text-secondary-500">{p.id}</div>
-                                                <div className="text-xs font-bold text-primary-600">{currency(p.price)}</div>
-                                            </div>
+                        {formData.code ? (
+                            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 flex justify-between items-center group">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded border border-primary-100 text-primary-600">
+                                        <Package size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-secondary-900 text-sm">{formData.name}</div>
+                                        <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center gap-2">
+                                            <span className="bg-white px-1 rounded border border-secondary-200">{formData.code}</span>
+                                            <span>{currency(formData.unitPrice)}</span>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="p-3 text-sm text-secondary-500 text-center">ไม่พบสินค้า</div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        code: '',
+                                        name: '',
+                                        unitPrice: 0,
+                                        _searchTerm: '',
+                                        description: '', // Optional: clear description too
+                                        image: null
+                                    }))}
+                                    className="p-1.5 bg-white border border-secondary-200 rounded-md text-secondary-400 hover:text-danger-500 hover:border-danger-200 transition-colors"
+                                    title="เลือกสินค้าใหม่"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 text-secondary-400" size={18} />
+                                <input
+                                    type="text"
+                                    value={formData._searchTerm}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, _searchTerm: e.target.value })
+                                        setShowSearchPopup(true)
+                                    }}
+                                    onFocus={() => setShowSearchPopup(true)}
+                                    className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
+                                    placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
+                                />
+
+                                {/* Search Popup */}
+                                {showSearchPopup && formData._searchTerm && (
+                                    <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                        {searchResults.length > 0 ? (
+                                            searchResults.map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    onClick={() => handleSelectProduct(p)}
+                                                    className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                >
+                                                    <div className="font-bold text-secondary-900 text-sm">{p.name || ''}</div>
+                                                    <div className="flex justify-between mt-1">
+                                                        <div className="text-xs text-secondary-500">{p.id}</div>
+                                                        <div className="text-xs font-bold text-primary-600">{currency(p.price)}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-3 text-sm text-secondary-500 text-center">ไม่พบสินค้า</div>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -210,7 +244,7 @@ export default function OrderItemModal({
                             className="w-full flex items-center justify-between p-3 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${formData.subJob ? 'bg-primary-100 text-primary-600' : 'bg-secondary-100 text-secondary-400'}`}>
+                                <div className={`w - 8 h - 8 rounded - full flex items - center justify - center ${formData.subJob ? 'bg-primary-100 text-primary-600' : 'bg-secondary-100 text-secondary-400'} `}>
                                     {formData.subJob?.jobType ? (
                                         formData.subJob.jobType === 'delivery' ? <Truck size={16} /> : <Wrench size={16} />
                                     ) : (
