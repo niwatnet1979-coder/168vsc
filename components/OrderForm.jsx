@@ -86,13 +86,7 @@ export default function OrderForm() {
         distance: ''
     })
 
-    const [items, setItems] = useState([{
-        code: '', name: '', description: '', qty: 1, unitPrice: 0,
-        image: null, category: '', subcategory: '',
-        length: '', width: '', height: '', material: '', color: '',
-        light: '', bulbType: '', crystalColor: '', remote: '',
-        _searchTerm: ''
-    }])
+    const [items, setItems] = useState([])
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
     const [vatRate, setVatRate] = useState(0.07)
