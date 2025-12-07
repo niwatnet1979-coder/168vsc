@@ -15,6 +15,7 @@ import AddressCard from './AddressCard'
 import ContactSelector from './ContactSelector'
 import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
+import Card from './Card'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
 
 
@@ -634,7 +635,7 @@ export default function OrderForm() {
                     {/* Left Column */}
                     <div className="space-y-6">
                         {/* Customer Info */}
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                        <Card className="p-6 flex flex-col">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                     <User className="text-primary-600" />
@@ -726,10 +727,10 @@ export default function OrderForm() {
 
                                         {/* Contact Information */}
 
-                                        <div className="space-y-3">
-                                            {/* Row 1: Contact Info */}
-                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                                                <div className="flex items-center gap-2 text-secondary-600">
+                                        <div className="space-y-6">
+                                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible">
+                
+                                        </div>
                                                     <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
                                                         <Phone size={14} className="text-primary-600" />
                                                     </div>
@@ -826,7 +827,7 @@ export default function OrderForm() {
                                     />
                                 )}
                             </div>
-                        </div>
+                        </Card>
 
                         {/* Master Job Info */}
                         <JobInfoCard
@@ -846,7 +847,7 @@ export default function OrderForm() {
                         {/* Tax Invoice */}
                         {/* Tax Invoice & Delivery Contact Card */}
                         {(customer.taxInvoices?.length > 0 || customer.contacts?.length > 0) && (
-                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                            <Card className="p-6 flex flex-col">
                                 <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                     <FileText className="text-primary-600" />
                                     ข้อมูลใบกำกับภาษี
@@ -898,6 +899,7 @@ export default function OrderForm() {
                                                             </div>
                                                         ))}
                                                 </div>
+                                            </Card>
                                             )}
                                         </div>
                                     ) : null}
@@ -1121,7 +1123,7 @@ export default function OrderForm() {
                         )}
 
 
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col">
+                        <Card className="p-6 flex flex-col">
                             <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
                                 <CreditCard className="text-primary-600" />
                                 สรุปยอดชำระ
@@ -1230,7 +1232,7 @@ export default function OrderForm() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     </div>
                 </div>
 
