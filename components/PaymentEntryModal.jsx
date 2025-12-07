@@ -93,7 +93,7 @@ export default function PaymentEntryModal({
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-1 py-1.5 text-xs border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-center overflow-hidden"
+                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px]"
                         />
                     </div>
 
