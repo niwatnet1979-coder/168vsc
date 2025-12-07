@@ -309,6 +309,7 @@ export default function OrderForm() {
         length: '', width: '', height: '', material: '', color: '', crystalColor: '',
         bulbType: '', light: '', remote: '', images: []
     })
+    const [lastCreatedProduct, setLastCreatedProduct] = useState(null)
 
     const handleSaveNewProduct = (productData) => {
         if (!productData.id) {
@@ -339,7 +340,13 @@ export default function OrderForm() {
             length: '', width: '', height: '', material: '', color: '', crystalColor: '',
             bulbType: '', light: '', remote: '', images: []
         })
-        alert('เพิ่มสินค้าเรียบร้อยแล้ว')
+
+        // Trigger auto-select in OrderItemModal
+        setLastCreatedProduct(productData)
+        if (editingItemIndex === null) {
+            // If we were adding a new item, ensure the modal is open
+            setShowOrderItemModal(true)
+        }
     }
 
     const selectProduct = (index, product) => {
@@ -1415,6 +1422,8 @@ export default function OrderForm() {
                             }
                         }}
                         onAddNewProduct={() => setShowProductModal(true)}
+                        lastCreatedProduct={lastCreatedProduct}
+                        onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
                     />
                 </div>
 

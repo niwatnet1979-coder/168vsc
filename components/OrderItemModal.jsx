@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power } from 'lucide-react'
 import { currency } from '../lib/utils'
 
 
@@ -14,7 +14,9 @@ export default function OrderItemModal({
     isEditing = false,
 
     onOpenSubJob, // Callback to open the sub-job modal
-    onAddNewProduct // Callback to open new product modal
+    onAddNewProduct, // Callback to open new product modal
+    lastCreatedProduct = null,
+    onConsumeLastCreatedProduct
 }) {
     const [formData, setFormData] = useState({
         code: '',
@@ -94,9 +96,20 @@ export default function OrderItemModal({
 
     // Search Logic
     useEffect(() => {
-        if (showSearchPopup) {
-            if (formData._searchTerm) {
-                const lowerTerm = formData._searchTerm.toLowerCase()
+        // Auto-select newly created product
+        if (lastCreatedProduct) {
+            handleSelectProduct(lastCreatedProduct)
+            if (onConsumeLastCreatedProduct) {
+                onConsumeLastCreatedProduct()
+            }
+        }
+    }, [lastCreatedProduct])
+
+    useEffect(() => {
+        if (showSearchPopup && formData._searchTerm !== undefined) {
+            const term = formData._searchTerm
+            if (term.trim()) {
+                const lowerTerm = term.toLowerCase()
                 const results = productsData.filter(p =>
                     JSON.stringify(p).toLowerCase().includes(lowerTerm)
                 )
@@ -167,18 +180,21 @@ export default function OrderItemModal({
                         </label>
 
                         {formData.code ? (
-                            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 group">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3 flex-1 mr-3">
-                                        <div className="p-2 bg-white rounded border border-primary-100 text-primary-600">
-                                            <Package size={20} />
-                                        </div>
-                                        <div className="flex-1 w-full">
-                                            <div className="font-bold text-secondary-900 text-sm line-clamp-1">{formData.name}</div>
-                                            <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center justify-between">
-                                                <span className="bg-white px-1 rounded border border-secondary-200">{formData.code}</span>
-                                                <span className="font-bold text-primary-700">{currency(formData.unitPrice)}</span>
-                                            </div>
+                            <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm group hover:shadow-md transition-shadow">
+                                {/* Header: Icon + Name + Clear Button */}
+                                <div className="bg-secondary-50 p-3 flex items-start gap-3 border-b border-secondary-100">
+                                    <div className="p-2 bg-white rounded-lg border border-secondary-200 text-primary-600 shadow-sm">
+                                        <Package size={24} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-secondary-900 text-sm truncate">{formData.name}</div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="bg-white m-0 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500">
+                                                {formData.code}
+                                            </span>
+                                            <span className="font-bold text-primary-700 text-sm">
+                                                {currency(formData.unitPrice)}
+                                            </span>
                                         </div>
                                     </div>
                                     <button
@@ -189,21 +205,76 @@ export default function OrderItemModal({
                                             unitPrice: 0,
                                             _searchTerm: '',
                                             description: '',
-                                            image: null
+                                            image: null,
+                                            length: '', width: '', height: '',
+                                            material: '', color: '', crystalColor: '',
+                                            bulbType: '', light: '', remote: ''
                                         }))}
-                                        className="p-1.5 bg-white border border-secondary-200 rounded-md text-secondary-400 hover:text-danger-500 hover:border-danger-200 transition-colors"
+                                        className="p-1.5 bg-white border border-secondary-200 rounded-lg text-secondary-400 hover:text-danger-500 hover:border-danger-200 hover:bg-danger-50 transition-all"
                                         title="เลือกสินค้าใหม่"
                                     >
                                         <X size={16} />
                                     </button>
                                 </div>
-                                {formData.description && (
-                                    <div className="mt-3 pt-3 border-t border-primary-200/50">
-                                        <div className="text-xs text-secondary-600 whitespace-pre-wrap leading-relaxed">
-                                            {formData.description}
-                                        </div>
+
+                                {/* Details Grid */}
+                                <div className="p-3 bg-white space-y-3">
+                                    {/* Row 1: Size & Material */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {(formData.length || formData.width || formData.height) && (
+                                            <div className="bg-secondary-50 p-2 rounded-lg border border-secondary-100/50">
+                                                <div className="text-[10px] text-secondary-400 font-medium mb-0.5 flex items-center gap-1">
+                                                    <Box size={10} /> ขนาด (กxยxส)
+                                                </div>
+                                                <div className="text-xs font-semibold text-secondary-700 truncate">
+                                                    {formData.width || '-'} x {formData.length || '-'} x {formData.height || '-'}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {formData.material && (
+                                            <div className="bg-secondary-50 p-2 rounded-lg border border-secondary-100/50">
+                                                <div className="text-[10px] text-secondary-400 font-medium mb-0.5 flex items-center gap-1">
+                                                    <Box size={10} /> วัสดุ
+                                                </div>
+                                                <div className="text-xs font-semibold text-secondary-700 truncate">
+                                                    {formData.material}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+
+                                    {/* Row 2: Color, Bulb, Remote */}
+                                    <div className="flex flex-wrap gap-2">
+                                        {(formData.color || formData.crystalColor) && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-secondary-200 text-[10px] text-secondary-600">
+                                                <Palette size={10} className="text-secondary-400" />
+                                                {formData.color} {formData.crystalColor ? `(${formData.crystalColor})` : ''}
+                                            </span>
+                                        )}
+                                        {(formData.bulbType || formData.light) && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-secondary-200 text-[10px] text-secondary-600">
+                                                <Zap size={10} className="text-secondary-400" />
+                                                {formData.bulbType} {formData.light ? `(${formData.light})` : ''}
+                                            </span>
+                                        )}
+                                        {formData.remote && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-secondary-200 text-[10px] text-secondary-600">
+                                                <Power size={10} className="text-secondary-400" />
+                                                {formData.remote}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Description */}
+                                    {formData.description && formData.description !== formData.name && (
+                                        <div className="pt-2 border-t border-secondary-100">
+                                            <div className="text-[10px] text-secondary-400 font-medium mb-0.5">รายละเอียด</div>
+                                            <div className="text-xs text-secondary-600 whitespace-pre-wrap leading-relaxed line-clamp-3 hover:line-clamp-none transition-all cursor-default">
+                                                {formData.description}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             <div className="relative">
