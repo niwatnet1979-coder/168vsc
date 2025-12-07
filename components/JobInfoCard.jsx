@@ -254,5 +254,6 @@ export default function JobInfoCard({
                 </div>
             )}
         </div>
+    </Card>
     )
 }
