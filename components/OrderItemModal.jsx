@@ -124,34 +124,43 @@ export default function OrderItemModal({
                         </label>
 
                         {formData.code ? (
-                            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 flex justify-between items-center group">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white rounded border border-primary-100 text-primary-600">
-                                        <Package size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-secondary-900 text-sm">{formData.name}</div>
-                                        <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center gap-2">
-                                            <span className="bg-white px-1 rounded border border-secondary-200">{formData.code}</span>
-                                            <span>{currency(formData.unitPrice)}</span>
+                            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 group">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded border border-primary-100 text-primary-600">
+                                            <Package size={20} />
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-secondary-900 text-sm">{formData.name}</div>
+                                            <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center gap-2">
+                                                <span className="bg-white px-1 rounded border border-secondary-200">{formData.code}</span>
+                                                <span>{currency(formData.unitPrice)}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={() => setFormData(prev => ({
+                                            ...prev,
+                                            code: '',
+                                            name: '',
+                                            unitPrice: 0,
+                                            _searchTerm: '',
+                                            description: '',
+                                            image: null
+                                        }))}
+                                        className="p-1.5 bg-white border border-secondary-200 rounded-md text-secondary-400 hover:text-danger-500 hover:border-danger-200 transition-colors"
+                                        title="เลือกสินค้าใหม่"
+                                    >
+                                        <X size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setFormData(prev => ({
-                                        ...prev,
-                                        code: '',
-                                        name: '',
-                                        unitPrice: 0,
-                                        _searchTerm: '',
-                                        description: '', // Optional: clear description too
-                                        image: null
-                                    }))}
-                                    className="p-1.5 bg-white border border-secondary-200 rounded-md text-secondary-400 hover:text-danger-500 hover:border-danger-200 transition-colors"
-                                    title="เลือกสินค้าใหม่"
-                                >
-                                    <X size={16} />
-                                </button>
+                                {formData.description && (
+                                    <div className="mt-3 pt-3 border-t border-primary-200/50">
+                                        <div className="text-xs text-secondary-600 whitespace-pre-wrap leading-relaxed">
+                                            {formData.description}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="relative">
@@ -192,17 +201,6 @@ export default function OrderItemModal({
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <label className="block text-xs font-medium text-secondary-700 mb-1">รายละเอียด/หมายเหตุ</label>
-                        <textarea
-                            value={formData.description || ''}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                            rows={2}
-                        />
                     </div>
 
                     {/* Quantity & Price */}
