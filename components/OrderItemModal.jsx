@@ -133,15 +133,15 @@ export default function OrderItemModal({
                         {formData.code ? (
                             <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 group">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 flex-1 mr-3">
                                         <div className="p-2 bg-white rounded border border-primary-100 text-primary-600">
                                             <Package size={20} />
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-secondary-900 text-sm">{formData.name}</div>
-                                            <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center gap-2">
+                                        <div className="flex-1 w-full">
+                                            <div className="font-bold text-secondary-900 text-sm line-clamp-1">{formData.name}</div>
+                                            <div className="text-xs text-secondary-500 font-mono mt-0.5 flex items-center justify-between">
                                                 <span className="bg-white px-1 rounded border border-secondary-200">{formData.code}</span>
-                                                <span>{currency(formData.unitPrice)}</span>
+                                                <span className="font-bold text-primary-700">{currency(formData.unitPrice)}</span>
                                             </div>
                                         </div>
                                     </div>
