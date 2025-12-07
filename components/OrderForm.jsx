@@ -1289,14 +1289,14 @@ export default function OrderForm() {
                                         }}
                                         disabled={jobInfo.jobType !== 'separate'}
                                         className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${jobInfo.jobType === 'separate'
-                                                ? item.subJob
-                                                    ? 'bg-white border-primary-200 text-primary-600 shadow-sm cursor-pointer hover:bg-primary-50'
-                                                    : 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-pointer hover:bg-secondary-200'
-                                                : 'bg-secondary-50 border-secondary-200 text-secondary-400 cursor-default'
+                                            ? item.subJob
+                                                ? 'bg-white border-primary-200 text-primary-600 shadow-sm cursor-pointer hover:bg-primary-50'
+                                                : 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-pointer hover:bg-secondary-200'
+                                            : 'bg-secondary-50 border-secondary-200 text-secondary-400 cursor-default'
                                             }`}
                                     >
                                         {jobInfo.jobType === 'separate' ? (
-                                            item.subJob ? (
+                                            (item.subJob && item.subJob.jobType) ? (
                                                 item.subJob.jobType === 'delivery' ? <Truck size={20} /> : <Wrench size={20} />
                                             ) : (
                                                 <HelpCircle size={20} />
