@@ -315,9 +315,9 @@ export default function OrderItemModal({
                         </div>
                     )}
 
-                    {/* Quantity & Price */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
+                    {/* Quantity, Price & Total - Single Row */}
+                    <div className="grid grid-cols-12 gap-4 items-end">
+                        <div className="col-span-3">
                             <label className="block text-xs font-medium text-secondary-700 mb-1">จำนวน</label>
                             <input
                                 type="number"
@@ -327,7 +327,7 @@ export default function OrderItemModal({
                                 min="1"
                             />
                         </div>
-                        <div>
+                        <div className="col-span-4">
                             <label className="block text-xs font-medium text-secondary-700 mb-1">ราคา/หน่วย</label>
                             <input
                                 type="number"
@@ -336,13 +336,11 @@ export default function OrderItemModal({
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right text-sm"
                             />
                         </div>
-                    </div>
-
-                    {/* Total */}
-                    <div>
-                        <div className="flex justify-between items-center bg-primary-50 p-3 rounded-lg border border-primary-100">
-                            <span className="text-sm font-medium text-primary-800">รวมเป็นเงิน</span>
-                            <span className="text-lg font-bold text-primary-700">{currency(total)}</span>
+                        <div className="col-span-5">
+                            <label className="block text-xs font-medium text-secondary-700 mb-1 text-right">รวมเป็นเงิน</label>
+                            <div className="w-full px-3 py-2 bg-primary-50 border border-primary-100 rounded-lg text-right">
+                                <span className="text-sm font-bold text-primary-700">{currency(total)}</span>
+                            </div>
                         </div>
                     </div>
 
