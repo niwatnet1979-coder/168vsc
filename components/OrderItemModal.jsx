@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar } from 'lucide-react'
 import { currency } from '../lib/utils'
 
 
@@ -350,8 +350,8 @@ export default function OrderItemModal({
                         <button
                             onClick={onOpenSubJob}
                             className={`w-full group text-left transition-all duration-200 ${formData.subJob
-                                    ? 'bg-white border-2 border-primary-100 ring-2 ring-primary-50 rounded-xl overflow-hidden hover:border-primary-300'
-                                    : 'p-4 bg-white border border-dashed border-secondary-300 rounded-xl hover:bg-secondary-50 hover:border-secondary-400 flex items-center justify-center gap-2'
+                                ? 'bg-white border-2 border-primary-100 ring-2 ring-primary-50 rounded-xl overflow-hidden hover:border-primary-300'
+                                : 'p-4 bg-white border border-dashed border-secondary-300 rounded-xl hover:bg-secondary-50 hover:border-secondary-400 flex items-center justify-center gap-2'
                                 }`}
                         >
                             {formData.subJob ? (
