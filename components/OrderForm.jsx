@@ -1317,53 +1317,71 @@ export default function OrderForm() {
                                         }}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="font-bold text-secondary-900 text-sm">
+                                            <div className="flex flex-col gap-1.5 w-full">
+                                                {/* ROW 1: Name & Total Price */}
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div className="font-bold text-secondary-900 text-sm truncate">
                                                         {item.name || 'รายการใหม่'}
                                                     </div>
+                                                    <div className="font-bold text-primary-600 text-sm whitespace-nowrap">
+                                                        {currency((item.qty || 0) * (item.unitPrice || 0))}
+                                                    </div>
+                                                </div>
+
+                                                {/* ROW 2: Code | Qty | Description */}
+                                                <div className="flex items-center gap-2 text-xs text-secondary-600 h-6 overflow-hidden">
                                                     {item.code && (
-                                                        <div className="text-xs text-secondary-500 font-mono">
-                                                            Code: {item.code}
-                                                        </div>
+                                                        <span className="font-mono text-secondary-500 bg-secondary-50 px-1.5 py-0.5 rounded flex-shrink-0 border border-secondary-100">
+                                                            {item.code}
+                                                        </span>
+                                                    )}
+                                                    <span className="bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded font-medium flex-shrink-0 border border-primary-100">
+                                                        {item.qty} x {currency(item.unitPrice)}
+                                                    </span>
+                                                    {item.description && (
+                                                        <>
+                                                            <span className="text-secondary-300 mx-1">|</span>
+                                                            <span className="truncate flex-1 text-secondary-500">
+                                                                {item.description.replace(/\n/g, ' ')}
+                                                            </span>
+                                                        </>
                                                     )}
                                                 </div>
 
-                                                {/* Price & Qty */}
-                                                <div className="text-sm text-secondary-700 mt-2 font-medium bg-secondary-50 inline-block px-2 py-1 rounded border border-secondary-200">
-                                                    {item.qty} x {currency(item.unitPrice)}
-                                                </div>
-
-                                                {/* Description */}
-                                                {item.description && (
-                                                    <div className="text-xs text-secondary-600 mt-2 whitespace-pre-wrap leading-relaxed bg-white border border-secondary-100 p-2 rounded">
-                                                        {item.description}
-                                                    </div>
-                                                )}
-
-                                                {/* Job Information Tag */}
+                                                {/* ROW 3: Job Info (Compact Horizontal) */}
                                                 {item.subJob && item.subJob.jobType && (
-                                                    <div className="mt-3 flex flex-col gap-1 text-xs border-l-2 border-primary-300 pl-3 py-1">
-                                                        <div className="font-bold text-primary-700 flex items-center gap-1">
+                                                    <div className="flex items-center gap-2 text-xs text-secondary-600 bg-secondary-50/50 rounded-lg px-2 py-1.5 border border-secondary-100 w-full overflow-hidden">
+                                                        <div className="font-bold text-primary-700 flex items-center gap-1.5 flex-shrink-0 pr-2 border-r border-secondary-200">
                                                             {item.subJob.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
                                                             {item.subJob.jobType === 'delivery' ? 'งานจัดส่ง' : 'งานติดตั้ง'}
                                                         </div>
-                                                        <div className="text-secondary-600">
-                                                            <span className="font-medium">วันที่:</span> {item.subJob.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleString('th-TH') : 'ไม่ระบุ'}
+
+                                                        <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                                                            {item.subJob.appointmentDate ? (
+                                                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                                                    <Calendar size={10} className="text-secondary-400" />
+                                                                    {new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                                </span>
+                                                            ) : <span className="text-secondary-400 italic">ไม่ระบุวันที่</span>}
+
+                                                            {(item.subJob.team || item.subJob.installLocationName) && <span className="text-secondary-300">|</span>}
+
+                                                            {item.subJob.team && (
+                                                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                                                    <User size={10} className="text-secondary-400" />
+                                                                    {item.subJob.team}
+                                                                </span>
+                                                            )}
+
+                                                            {item.subJob.installLocationName && (
+                                                                <span className="flex items-center gap-1 truncate">
+                                                                    <MapPin size={10} className="text-secondary-400" />
+                                                                    {item.subJob.installLocationName}
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                        <div className="text-secondary-600">
-                                                            <span className="font-medium">ทีม:</span> {item.subJob.team || 'ไม่ระบุ'}
-                                                        </div>
-                                                        {item.subJob.installLocationName && (
-                                                            <div className="text-secondary-600">
-                                                                <span className="font-medium">สถานที่:</span> {item.subJob.installLocationName}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 )}
-                                            </div>
-                                            <div className="font-bold text-primary-600 text-sm">
-                                                {currency((item.qty || 0) * (item.unitPrice || 0))}
                                             </div>
                                         </div>
                                     </div>
