@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Wrench } from 'lucide-react'
 import JobInfoCard from './JobInfoCard'
 
-export default function SubJobModal({ isOpen, onClose, item, onSave, customer, availableTeams }) {
+export default function SubJobModal({ isOpen, onClose, item, onSave, customer = {}, availableTeams }) {
     const [formData, setFormData] = useState({
         jobType: 'installation',
         appointmentDate: '',

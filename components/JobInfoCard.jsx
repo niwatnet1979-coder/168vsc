@@ -108,93 +108,99 @@ export default function JobInfoCard({
                                     />
                                     {showInstallLocationDropdown && (
                                         <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            {customer.addresses
-                                                ?.filter(addr => {
-                                                    const addressText = typeof addr.address === 'string' ? addr.address : '';
-                                                    return addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase()) || addressText.includes(installLocationSearchTerm);
-                                                })
-                                                .map((addr, index) => {
-                                                    const addressText = typeof addr.address === 'string'
-                                                        ? addr.address
-                                                        : (addr.address || '');
+                                            {customer && customer.addresses && Array.isArray(customer.addresses)
+                                                ? customer.addresses
+                                                    .filter(addr => {
+                                                        if (!addr) return false;
+                                                        const addressText = typeof addr.address === 'string' ? addr.address : '';
+                                                        return (addr.label && addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase())) ||
+                                                            (addressText && addressText.includes(installLocationSearchTerm));
+                                                    })
+                                                    .map((addr, index) => {
+                                                        if (!addr) return null;
 
-                                                    // Helper to build address string if object
-                                                    let fullAddress = addressText;
-                                                    if (!fullAddress && typeof addr === 'object') {
-                                                        const p = [];
-                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                        if (addr.addrVillage) p.push(addr.addrVillage);
-                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                        if (addr.zipcode) p.push(addr.zipcode);
-                                                        fullAddress = p.join(' ');
-                                                    }
+                                                        const addressText = typeof addr.address === 'string'
+                                                            ? addr.address
+                                                            : (addr.address || '');
 
-                                                    return (
-                                                        <div
-                                                            key={index}
-                                                            onClick={async () => {
-                                                                // Calculate distance if not present
-                                                                let distanceStr = '';
-                                                                let finalMapLink = addr.googleMapsLink || '';
+                                                        // Helper to build address string if object
+                                                        let fullAddress = addressText;
+                                                        if (!fullAddress && typeof addr === 'object') {
+                                                            const p = [];
+                                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                            if (addr.addrVillage) p.push(addr.addrVillage);
+                                                            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                            if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                            if (addr.zipcode) p.push(addr.zipcode);
+                                                            fullAddress = p.join(' ');
+                                                        }
 
-                                                                if (addr.distance) {
-                                                                    distanceStr = `${addr.distance.toFixed(2)} km`;
-                                                                } else if (addr.googleMapsLink) {
-                                                                    let coords = extractCoordinates(addr.googleMapsLink);
+                                                        return (
+                                                            <div
+                                                                key={index}
+                                                                onClick={async () => {
+                                                                    // Calculate distance if not present
+                                                                    let distanceStr = '';
+                                                                    let finalMapLink = addr.googleMapsLink || '';
 
-                                                                    // If coords not found, try to resolve short link via API
-                                                                    if (!coords) {
-                                                                        try {
-                                                                            const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
-                                                                            if (res.ok) {
-                                                                                const data = await res.json();
-                                                                                if (data.url) {
-                                                                                    finalMapLink = data.url;
-                                                                                    coords = extractCoordinates(data.url);
+                                                                    if (addr.distance) {
+                                                                        distanceStr = `${addr.distance.toFixed(2)} km`;
+                                                                    } else if (typeof addr.googleMapsLink === 'string' && addr.googleMapsLink) {
+                                                                        let coords = extractCoordinates(addr.googleMapsLink);
+
+                                                                        // If coords not found, try to resolve short link via API
+                                                                        if (!coords) {
+                                                                            try {
+                                                                                const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
+                                                                                if (res.ok) {
+                                                                                    const data = await res.json();
+                                                                                    if (data.url) {
+                                                                                        finalMapLink = data.url;
+                                                                                        coords = extractCoordinates(data.url);
+                                                                                    }
                                                                                 }
+                                                                            } catch (error) {
+                                                                                console.error('Error resolving map link:', error);
                                                                             }
-                                                                        } catch (error) {
-                                                                            console.error('Error resolving map link:', error);
+                                                                        }
+
+                                                                        if (coords) {
+                                                                            const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
+                                                                            distanceStr = `${dist} km`;
                                                                         }
                                                                     }
 
-                                                                    if (coords) {
-                                                                        const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
-                                                                        distanceStr = `${dist} km`;
-                                                                    }
-                                                                }
-
-                                                                handleUpdate({
-                                                                    installLocationName: addr.label || '',
-                                                                    installAddress: fullAddress,
-                                                                    googleMapLink: finalMapLink,
-                                                                    distance: distanceStr,
-                                                                    inspector1: addr.inspector1 ? {
-                                                                        name: String(addr.inspector1.name || ''),
-                                                                        phone: String(addr.inspector1.phone || ''),
-                                                                        address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
-                                                                    } : { name: '', phone: '', address: '' },
-                                                                    inspector2: addr.inspector2 ? {
-                                                                        name: String(addr.inspector2.name || ''),
-                                                                        phone: String(addr.inspector2.phone || ''),
-                                                                        address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
-                                                                    } : { name: '', phone: '', address: '' }
-                                                                });
-                                                                setInstallLocationSearchTerm('');
-                                                                setShowInstallLocationDropdown(false);
-                                                            }}
-                                                            className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                        >
-                                                            <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
-                                                            <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                                    handleUpdate({
+                                                                        installLocationName: addr.label || '',
+                                                                        installAddress: fullAddress,
+                                                                        googleMapLink: finalMapLink,
+                                                                        distance: distanceStr,
+                                                                        inspector1: addr.inspector1 ? {
+                                                                            name: String(addr.inspector1.name || ''),
+                                                                            phone: String(addr.inspector1.phone || ''),
+                                                                            address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
+                                                                        } : { name: '', phone: '', address: '' },
+                                                                        inspector2: addr.inspector2 ? {
+                                                                            name: String(addr.inspector2.name || ''),
+                                                                            phone: String(addr.inspector2.phone || ''),
+                                                                            address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
+                                                                        } : { name: '', phone: '', address: '' }
+                                                                    });
+                                                                    setInstallLocationSearchTerm('');
+                                                                    setShowInstallLocationDropdown(false);
+                                                                }}
+                                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                            >
+                                                                <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
+                                                                <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
+                                                            </div>
+                                                        );
+                                                    })
+                                                : null}
                                         </div>
                                     )}
                                 </div>
