@@ -382,7 +382,6 @@ export default function OrderItemModal({
                                         </div>
                                     </div>
 
-                                    {/* Row 2: Location & Contact */}
                                     <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-3">
                                         <div className="col-span-2 sm:col-span-1 min-w-0">
                                             <div className="flex items-start gap-2">
@@ -391,6 +390,11 @@ export default function OrderItemModal({
                                                     <div className="text-xs font-medium text-secondary-900 truncate">
                                                         {formData.subJob.installLocationName || 'ไม่ระบุสถานที่'}
                                                     </div>
+                                                    {formData.subJob.distance && (
+                                                        <div className="text-[10px] font-bold text-red-600 mt-0.5">
+                                                            ระยะทาง {formData.subJob.distance}
+                                                        </div>
+                                                    )}
                                                     {formData.subJob.installAddress && (
                                                         <div className="text-[10px] text-secondary-500 truncate leading-tight mt-0.5">
                                                             {formData.subJob.installAddress}
@@ -409,7 +413,12 @@ export default function OrderItemModal({
                                                             : 'ไม่ระบุวันที่'
                                                         }
                                                     </div>
-                                                    {formData.subJob.appointmentDate && (
+                                                    {formData.subJob.completionDate && (
+                                                        <div className="text-[10px] text-success-600 mt-0.5 font-medium">
+                                                            เสร็จ: {new Date(formData.subJob.completionDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    )}
+                                                    {!formData.subJob.completionDate && formData.subJob.appointmentDate && (
                                                         <div className="text-[10px] text-secondary-500 truncate mt-0.5">
                                                             เวลานัดหมาย
                                                         </div>

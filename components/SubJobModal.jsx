@@ -7,6 +7,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
     const [formData, setFormData] = useState({
         jobType: 'installation',
         appointmentDate: '',
+        completionDate: '',
         installLocationName: '',
         installAddress: '',
         googleMapLink: '',
@@ -22,6 +23,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
             setFormData({
                 jobType: item.subJob.jobType || 'installation',
                 appointmentDate: item.subJob.appointmentDate || '',
+                completionDate: item.subJob.completionDate || '',
                 installLocationName: item.subJob.installLocationName || '',
                 installAddress: item.subJob.installAddress || '',
                 googleMapLink: item.subJob.googleMapLink || '',
@@ -36,6 +38,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
             setFormData({
                 jobType: 'installation',
                 appointmentDate: '',
+                completionDate: '',
                 installLocationName: '',
                 installAddress: '',
                 googleMapLink: '',
