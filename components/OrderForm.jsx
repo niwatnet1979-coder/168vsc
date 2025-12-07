@@ -1581,23 +1581,33 @@ export default function OrderForm() {
                         setEditingPaymentIndex(null)
                     }}
                     onSave={(paymentData) => {
+                        // Calculate base amount for percentage (total minus other payments, excluding current if editing)
+                        const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
+                            // Exclude the payment being edited
+                            if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
+                                return sum
+                            }
+                            return sum + (parseFloat(p.amount) || 0)
+                        }, 0)
+                        const baseAmount = total - otherPaymentsTotal
+
+                        const calculatedAmount = paymentData.amountMode === 'percent'
+                            ? (baseAmount * (parseFloat(paymentData.percentValue) || 0)) / 100
+                            : parseFloat(paymentData.amount) || 0
+
                         if (editingPaymentIndex !== null) {
                             // Edit existing payment
                             const newSchedule = [...paymentSchedule]
                             newSchedule[editingPaymentIndex] = {
                                 ...paymentData,
-                                amount: paymentData.amountMode === 'percent'
-                                    ? ((total - depositAmount) * (parseFloat(paymentData.percentValue) || 0)) / 100
-                                    : parseFloat(paymentData.amount) || 0
+                                amount: calculatedAmount
                             }
                             setPaymentSchedule(newSchedule)
                         } else {
                             // Add new payment
                             setPaymentSchedule([...paymentSchedule, {
                                 ...paymentData,
-                                amount: paymentData.amountMode === 'percent'
-                                    ? ((total - depositAmount) * (parseFloat(paymentData.percentValue) || 0)) / 100
-                                    : parseFloat(paymentData.amount) || 0
+                                amount: calculatedAmount
                             }])
                         }
                     }}
@@ -1607,7 +1617,16 @@ export default function OrderForm() {
                         }
                     }}
                     payment={editingPaymentIndex !== null ? paymentSchedule[editingPaymentIndex] : null}
-                    remainingBalance={total - depositAmount - paymentSchedule.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)}
+                    remainingBalance={(() => {
+                        // Calculate remaining balance excluding the payment being edited
+                        const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
+                            if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
+                                return sum
+                            }
+                            return sum + (parseFloat(p.amount) || 0)
+                        }, 0)
+                        return total - otherPaymentsTotal
+                    })()}
                     isEditing={editingPaymentIndex !== null}
                 />
             </div >
