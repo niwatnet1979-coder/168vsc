@@ -28,7 +28,8 @@ export default function OrderItemModal({
         _searchTerm: '',
         lightColor: '',
         remote: '',
-        bulbType: ''
+        bulbType: '',
+        remark: ''
     })
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
@@ -65,7 +66,8 @@ export default function OrderItemModal({
                     _searchTerm: item.name || '',
                     lightColor: item.lightColor || '',
                     remote: item.remote || '',
-                    bulbType: item.bulbType || ''
+                    bulbType: item.bulbType || '',
+                    remark: item.remark || ''
                 })
             } else {
                 // Reset for new item
@@ -82,7 +84,8 @@ export default function OrderItemModal({
                     _searchTerm: '',
                     lightColor: '',
                     remote: '',
-                    bulbType: ''
+                    bulbType: '',
+                    remark: ''
                 })
             }
         }
@@ -254,47 +257,59 @@ export default function OrderItemModal({
                         )}
                     </div>
 
-                    {/* Product Options Dropdowns */}
+                    {/* Product Options Dropdowns & Remark */}
                     {formData.code && (
-                        <div className="grid grid-cols-1 gap-3 bg-secondary-50 p-3 rounded-lg border border-secondary-200">
-                            <div>
-                                <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
-                                <select
-                                    value={formData.lightColor}
-                                    onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                >
-                                    <option value="">-- เลือกสีแสงไฟ --</option>
-                                    {productOptions.lightColors.map((opt, i) => (
-                                        <option key={i} value={opt}>{opt}</option>
-                                    ))}
-                                </select>
+                        <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
+                                    <select
+                                        value={formData.lightColor}
+                                        onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">-- เลือกสีแสงไฟ --</option>
+                                        {productOptions.lightColors.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
+                                    <select
+                                        value={formData.remote}
+                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">-- เลือกรีโมท --</option>
+                                        {productOptions.remotes.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">หลอดไฟ</label>
+                                    <select
+                                        value={formData.bulbType}
+                                        onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">-- เลือกหลอดไฟ --</option>
+                                        {productOptions.bulbTypes.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
-                                <select
-                                    value={formData.remote}
-                                    onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                <label className="block text-xs font-medium text-secondary-700 mb-1">หมายเหตุ</label>
+                                <input
+                                    type="text"
+                                    value={formData.remark}
+                                    onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                                     className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                >
-                                    <option value="">-- เลือกรีโมท --</option>
-                                    {productOptions.remotes.map((opt, i) => (
-                                        <option key={i} value={opt}>{opt}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-secondary-700 mb-1">หลอดไฟ</label>
-                                <select
-                                    value={formData.bulbType}
-                                    onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                >
-                                    <option value="">-- เลือกหลอดไฟ --</option>
-                                    {productOptions.bulbTypes.map((opt, i) => (
-                                        <option key={i} value={opt}>{opt}</option>
-                                    ))}
-                                </select>
+                                    placeholder="ระบุรายละเอียดเพิ่มเติม..."
+                                />
                             </div>
                         </div>
                     )}
