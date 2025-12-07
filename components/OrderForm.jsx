@@ -1420,6 +1420,7 @@ export default function OrderForm() {
                                 alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
                             }
                         }}
+                        onAddNewProduct={() => setShowProductModal(true)}
                     />
                 </div>
 

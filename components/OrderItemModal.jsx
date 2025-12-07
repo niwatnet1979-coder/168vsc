@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus } from 'lucide-react'
 import { currency } from '../lib/utils'
 
 export default function OrderItemModal({
@@ -11,7 +11,9 @@ export default function OrderItemModal({
     item = null,
     productsData = [],
     isEditing = false,
-    onOpenSubJob // Callback to open the sub-job modal
+
+    onOpenSubJob, // Callback to open the sub-job modal
+    onAddNewProduct // Callback to open new product modal
 }) {
     const [formData, setFormData] = useState({
         code: '',
@@ -197,6 +199,18 @@ export default function OrderItemModal({
                                         ) : (
                                             <div className="p-3 text-sm text-secondary-500 text-center">ไม่พบสินค้า</div>
                                         )}
+                                        {/* Add New Product Option */}
+                                        <div
+                                            onClick={() => {
+                                                if (onAddNewProduct) {
+                                                    onAddNewProduct()
+                                                    setShowSearchPopup(false)
+                                                }
+                                            }}
+                                            className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
+                                        >
+                                            <Plus size={16} /> เริ่มสินค้าใหม่
+                                        </div>
                                     </div>
                                 )}
                             </div>
