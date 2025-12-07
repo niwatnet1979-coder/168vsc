@@ -58,12 +58,17 @@ export default function OrderItemModal({
 
     // Search Logic
     useEffect(() => {
-        if (formData._searchTerm && showSearchPopup) {
-            const lowerTerm = formData._searchTerm.toLowerCase()
-            const results = productsData.filter(p =>
-                JSON.stringify(p).toLowerCase().includes(lowerTerm)
-            )
-            setSearchResults(results)
+        if (showSearchPopup) {
+            if (formData._searchTerm) {
+                const lowerTerm = formData._searchTerm.toLowerCase()
+                const results = productsData.filter(p =>
+                    JSON.stringify(p).toLowerCase().includes(lowerTerm)
+                )
+                setSearchResults(results)
+            } else {
+                // Show all (or first 50) if no search term
+                setSearchResults(productsData.slice(0, 50))
+            }
         } else {
             setSearchResults([])
         }
@@ -180,7 +185,7 @@ export default function OrderItemModal({
                                 />
 
                                 {/* Search Popup */}
-                                {showSearchPopup && formData._searchTerm && (
+                                {showSearchPopup && (
                                     <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                         {searchResults.length > 0 ? (
                                             searchResults.map(p => (
