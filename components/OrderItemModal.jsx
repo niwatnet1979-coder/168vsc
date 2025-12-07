@@ -349,26 +349,111 @@ export default function OrderItemModal({
                         <label className="block text-xs font-medium text-secondary-700 mb-2">ข้อมูลงาน (Job)</label>
                         <button
                             onClick={onOpenSubJob}
-                            className="w-full flex items-center justify-between p-3 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
+                            className={`w-full group text-left transition-all duration-200 ${formData.subJob
+                                    ? 'bg-white border-2 border-primary-100 ring-2 ring-primary-50 rounded-xl overflow-hidden hover:border-primary-300'
+                                    : 'p-4 bg-white border border-dashed border-secondary-300 rounded-xl hover:bg-secondary-50 hover:border-secondary-400 flex items-center justify-center gap-2'
+                                }`}
                         >
-                            <div className="flex items-center gap-3">
-                                <div className={`w - 8 h - 8 rounded - full flex items - center justify - center ${formData.subJob ? 'bg-primary-100 text-primary-600' : 'bg-secondary-100 text-secondary-400'} `}>
-                                    {formData.subJob?.jobType ? (
-                                        formData.subJob.jobType === 'delivery' ? <Truck size={16} /> : <Wrench size={16} />
-                                    ) : (
-                                        <HelpCircle size={16} />
-                                    )}
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-sm font-medium text-secondary-900">
-                                        {formData.subJob ? (formData.subJob.jobType === 'delivery' ? 'งานจัดส่ง' : 'งานติดตั้ง') : 'ตั้งค่าข้อมูลงาน'}
+                            {formData.subJob ? (
+                                <div className="divide-y divide-primary-50">
+                                    {/* Row 1: Main Info */}
+                                    <div className="p-3 bg-primary-50/30 grid grid-cols-2 gap-x-4 gap-y-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <div className="p-1.5 bg-white rounded-lg shadow-sm text-primary-600 shrink-0">
+                                                {formData.subJob.jobType === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                            </div>
+                                            <div className="truncate">
+                                                <div className="text-xs text-secondary-500 font-medium">ประเภทงาน</div>
+                                                <div className="text-sm font-bold text-secondary-900 truncate">
+                                                    {formData.subJob.jobType === 'delivery' ? 'งานจัดส่ง (Delivery)' : 'งานติดตั้ง (Installation)'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <div className="p-1.5 bg-white rounded-lg shadow-sm text-primary-600 shrink-0">
+                                                <User size={14} />
+                                            </div>
+                                            <div className="truncate">
+                                                <div className="text-xs text-secondary-500 font-medium">ทีม</div>
+                                                <div className="text-sm font-bold text-secondary-900 truncate">
+                                                    {formData.subJob.team || '-'}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-secondary-500">
-                                        {formData.subJob ? (formData.subJob.team || 'ไม่ระบุทีม') : 'คลิกเพื่อระบุวันที่, ทีมช่าง, สถานที่'}
+
+                                    {/* Row 2: Location & Contact */}
+                                    <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                                        <div className="col-span-2 sm:col-span-1 min-w-0">
+                                            <div className="flex items-start gap-2">
+                                                <MapPin size={14} className="text-secondary-400 mt-0.5 shrink-0" />
+                                                <div className="truncate w-full">
+                                                    <div className="text-xs font-medium text-secondary-900 truncate">
+                                                        {formData.subJob.installLocationName || 'ไม่ระบุสถานที่'}
+                                                    </div>
+                                                    {formData.subJob.installAddress && (
+                                                        <div className="text-[10px] text-secondary-500 truncate leading-tight mt-0.5">
+                                                            {formData.subJob.installAddress}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-span-2 sm:col-span-1 min-w-0">
+                                            <div className="flex items-start gap-2">
+                                                <Calendar size={14} className="text-secondary-400 mt-0.5 shrink-0" />
+                                                <div className="truncate w-full">
+                                                    <div className="text-xs font-medium text-secondary-900">
+                                                        {formData.subJob.appointmentDate
+                                                            ? new Date(formData.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                                            : 'ไม่ระบุวันที่'
+                                                        }
+                                                    </div>
+                                                    {formData.subJob.appointmentDate && (
+                                                        <div className="text-[10px] text-secondary-500 truncate mt-0.5">
+                                                            เวลานัดหมาย
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Optional: Inspector / Description if space allows or spans full width */}
+                                        {(formData.subJob.inspector1 || formData.subJob.description) && (
+                                            <div className="col-span-2 pt-2 mt-1 border-t border-secondary-100 flex gap-4 text-xs text-secondary-600">
+                                                {formData.subJob.inspector1 && (
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <div className="w-4 h-4 rounded-full bg-secondary-100 flex items-center justify-center text-[10px] font-bold">
+                                                            {String(formData.subJob.inspector1.name || 'I').charAt(0)}
+                                                        </div>
+                                                        <span className="truncate max-w-[100px]">{formData.subJob.inspector1.name}</span>
+                                                    </div>
+                                                )}
+                                                {formData.subJob.description && (
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <div className="w-1 h-1 rounded-full bg-secondary-300"></div>
+                                                        <span className="truncate italic text-secondary-500">{formData.subJob.description}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Footnote */}
+                                    <div className="px-3 py-1.5 bg-secondary-50 text-[10px] text-primary-600 font-medium text-center border-t border-secondary-100 group-hover:bg-primary-50 transition-colors">
+                                        คลิกเพื่อแก้ไขข้อมูลงาน
                                     </div>
                                 </div>
-                            </div>
-                            <ChevronRight size={18} className="text-secondary-400" />
+                            ) : (
+                                <>
+                                    <div className="w-8 h-8 rounded-full bg-secondary-100 text-secondary-400 flex items-center justify-center">
+                                        <Wrench size={16} />
+                                    </div>
+                                    <span className="text-sm font-medium text-secondary-600">
+                                        ระบุข้อมูลงาน (ติดตั้ง/จัดส่ง)
+                                    </span>
+                                </>
+                            )}
                         </button>
                     </div>
 
