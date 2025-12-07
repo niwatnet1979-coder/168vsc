@@ -209,7 +209,7 @@ export default function OrderItemModal({
                                             }}
                                             className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
                                         >
-                                            <Plus size={16} /> เริ่มสินค้าใหม่
+                                            <Plus size={16} /> เพิ่มสินค้าใหม่
                                         </div>
                                     </div>
                                 )}
