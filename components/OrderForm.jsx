@@ -17,6 +17,7 @@ import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
 import Card from './Card'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
+import OrderItemModal from './OrderItemModal'
 
 
 
@@ -109,7 +110,10 @@ export default function OrderForm() {
     const [showEditCustomerModal, setShowEditCustomerModal] = useState(false)
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
     const [showPaymentModal, setShowPaymentModal] = useState(false)
+
     const [editingPaymentIndex, setEditingPaymentIndex] = useState(null)
+    const [showOrderItemModal, setShowOrderItemModal] = useState(false)
+    const [editingItemIndex, setEditingItemIndex] = useState(null)
 
     // --- Effects ---
     useEffect(() => {
@@ -374,6 +378,26 @@ export default function OrderForm() {
             setItems(newItems)
             setShowSubJobModal(false)
             setCurrentSubJobItemIndex(null)
+        }
+    }
+
+    const handleSaveItem = (itemData) => {
+        const newItems = [...items]
+        if (editingItemIndex !== null) {
+            newItems[editingItemIndex] = itemData
+        } else {
+            newItems.push(itemData)
+        }
+        setItems(newItems)
+        setShowOrderItemModal(false)
+        setEditingItemIndex(null)
+    }
+
+    const handleDeleteItem = () => {
+        if (editingItemIndex !== null) {
+            const newItems = items.filter((_, i) => i !== editingItemIndex)
+            setItems(newItems)
+            setShowOrderItemModal(false)
         }
     }
 
@@ -1120,7 +1144,7 @@ export default function OrderForm() {
                                     )}
 
                                 </div>
-                            </div>
+                            </Card>
                         )}
 
 
@@ -1238,227 +1262,102 @@ export default function OrderForm() {
                 </div>
 
 
-                {/* Bottom Section: Items Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible">
-                    <div className="p-6 border-b border-secondary-200 flex justify-between items-center">
+                {/* Product List Section */}
+                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                    <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                             <FileText className="text-primary-600" />
                             รายการสินค้า
                         </h2>
+                    </div>
+
+                    <div className="space-y-3">
+                        {items.map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="flex flex-col bg-secondary-50 rounded-xl border border-secondary-200 overflow-hidden"
+                            >
+                                <div className="p-3 flex items-start gap-3">
+                                    {/* Icon / Job Status */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setCurrentSubJobItemIndex(idx)
+                                            setShowSubJobModal(true)
+                                        }}
+                                        className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center border transition-colors flex-shrink-0 ${item.subJob
+                                            ? 'bg-white border-primary-200 text-primary-600 shadow-sm'
+                                            : 'bg-white border-secondary-200 text-secondary-300 hover:border-primary-300 hover:text-primary-400'
+                                            }`}
+                                    >
+                                        {item.subJob ? (
+                                            item.subJob.jobType === 'delivery' ? <Truck size={20} /> : <Wrench size={20} />
+                                        ) : <Wrench size={20} />}
+                                    </button>
+
+                                    {/* Content - Click to Edit */}
+                                    <div
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => {
+                                            setEditingItemIndex(idx)
+                                            setShowOrderItemModal(true)
+                                        }}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <div className="font-bold text-secondary-900 text-sm line-clamp-2">
+                                                    {item.name || item.code || 'รายการใหม่'}
+                                                </div>
+                                                <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
+                                                    <span className="bg-white px-1.5 py-0.5 rounded border border-secondary-200 text-secondary-600 font-medium">
+                                                        {item.qty} x {currency(item.unitPrice)}
+                                                    </span>
+                                                    {item.description && (
+                                                        <span className="truncate max-w-[150px]">{item.description}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="font-bold text-primary-600 text-sm">
+                                                {currency((item.qty || 0) * (item.unitPrice || 0))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Add Button */}
                         <button
-                            onClick={() => setItems([...items, { code: '', qty: 1, unitPrice: 0 }])}
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium flex items-center gap-2 shadow-sm transition-all"
+                            onClick={() => {
+                                setEditingItemIndex(null)
+                                setShowOrderItemModal(true)
+                            }}
+                            className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-primary-300 rounded-xl hover:bg-primary-50 transition-colors"
                         >
-                            <Plus size={18} /> เพิ่มรายการ
+                            <Plus size={18} />
+                            เพิ่มรายการสินค้า
                         </button>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[800px]">
-                            <thead className="bg-secondary-50 border-b border-secondary-200">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase w-16">#</th>
-                                    <th className="px-4 py-3 text-center text-xs font-semibold text-secondary-600 uppercase w-20">งานย่อย</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">สินค้า / รายละเอียด</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-24">จำนวน</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-32">ราคา/หน่วย</th>
-                                    <th className="px-4 py-3 text-right text-xs font-semibold text-secondary-600 uppercase w-32">รวม</th>
-                                    <th className="px-4 py-3 text-center w-16"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-secondary-100">
-                                {items.map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-secondary-50/50">
-                                        <td className="px-4 py-3 text-center text-secondary-500">{idx + 1}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            {jobInfo.jobType === 'installation' && (
-                                                <div className="flex justify-center" title="งานติดตั้ง">
-                                                    <Wrench size={18} className="text-secondary-400" />
-                                                </div>
-                                            )}
-                                            {jobInfo.jobType === 'delivery' && (
-                                                <div className="flex justify-center" title="จัดส่ง">
-                                                    <Truck size={18} className="text-secondary-400" />
-                                                </div>
-                                            )}
-                                            {jobInfo.jobType === 'separate' && (
-                                                <button
-                                                    onClick={() => {
-                                                        setCurrentSubJobItemIndex(idx)
-                                                        setShowSubJobModal(true)
-                                                    }}
-                                                    className={`flex justify-center w-full hover:bg-secondary-100 p-1 rounded transition-colors ${item.subJob ? 'text-primary-600' : 'text-secondary-400'}`}
-                                                    title={item.subJob ? "แก้ไขข้อมูลงานย่อย" : "เพิ่มข้อมูลงานย่อย"}
-                                                >
-                                                    {item.subJob ? (
-                                                        item.subJob.jobType === 'delivery' ? <Truck size={18} /> : <Wrench size={18} />
-                                                    ) : <HelpCircle size={18} />}
-                                                </button>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3 relative">
-                                            <div className="flex items-center gap-2">
-                                                <Search size={16} className="text-secondary-400 absolute left-7 top-1/2 -translate-y-1/2 z-10" />
-                                                <input
-                                                    type="text"
-                                                    value={item._searchTerm !== undefined ? item._searchTerm : (item.code ? `${item.code} - ${item.description}` : '')}
-                                                    onChange={(e) => {
-                                                        console.log('onChange triggered! Value:', e.target.value);
-                                                        handleSearchProduct(idx, e.target.value);
-                                                    }}
-                                                    onFocus={() => {
-                                                        const newItems = [...items];
-                                                        newItems[idx].showPopup = true;
-                                                        setItems(newItems);
-                                                    }}
-                                                    className="w-full pl-9 pr-4 py-2 border border-secondary-300 rounded focus:ring-2 focus:ring-primary-500 text-sm"
-                                                    placeholder="ค้นหารหัสสินค้า หรือ ชื่อสินค้า..."
-                                                />
-                                            </div>
-                                            {/* Product Search Popup */}
-                                            {item.showPopup && (
-                                                <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4" onClick={() => {
-                                                    const newItems = [...items];
-                                                    newItems[idx].showPopup = false;
-                                                    setItems(newItems);
-                                                }}>
-                                                    <div
-                                                        className="bg-white rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        {/* Header */}
-                                                        <div className="px-4 py-3 border-b border-secondary-200 bg-primary-50">
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <h3 className="font-bold text-secondary-900">เลือกสินค้า</h3>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const newItems = [...items];
-                                                                        newItems[idx].showPopup = false;
-                                                                        setItems(newItems);
-                                                                    }}
-                                                                    className="text-secondary-500 hover:text-secondary-700"
-                                                                >
-                                                                    <X size={20} />
-                                                                </button>
-                                                            </div>
-                                                            {/* Search input inside popup */}
-                                                            <div className="relative">
-                                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" />
-                                                                <input
-                                                                    type="text"
-                                                                    value={item._searchTerm || ''}
-                                                                    onChange={(e) => {
-                                                                        const newItems = [...items];
-                                                                        newItems[idx]._searchTerm = e.target.value;
-                                                                        setItems(newItems);
-                                                                    }}
-                                                                    placeholder="ค้นหารหัสสินค้า หรือ ชื่อสินค้า..."
-                                                                    className="w-full pl-9 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                                                                    autoFocus
-                                                                />
-                                                            </div>
-                                                        </div>
 
-                                                        {/* Product List */}
-                                                        <div className="flex-1 overflow-y-auto">
-                                                            {productsData
-                                                                .filter(p => {
-                                                                    if (!item._searchTerm) return true;
-                                                                    const lowerTerm = item._searchTerm.toLowerCase();
-                                                                    return JSON.stringify(p).toLowerCase().includes(lowerTerm);
-                                                                })
-                                                                .map(p => (
-                                                                    <div
-                                                                        key={p.id}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            selectProduct(idx, p);
-                                                                        }}
-                                                                        className="px-4 py-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                    >
-                                                                        <div className="grid grid-cols-1 gap-1">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <span className="font-bold text-primary-700 text-sm">{String(p.id || '')}</span>
-                                                                                <span className="text-xs font-medium text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">
-                                                                                    {String(p.category || 'ทั่วไป')}
-                                                                                </span>
-                                                                            </div>
-                                                                            {p.description && typeof p.description === 'string' && (
-                                                                                <div className="text-xs text-secondary-900 font-medium line-clamp-2">
-                                                                                    {p.description}
-                                                                                </div>
-                                                                            )}
-                                                                            <div className="flex items-center justify-between pt-1">
-                                                                                <span className="font-bold text-success-600 text-sm">{currency(p.price)}</span>
-                                                                                <span className="text-xs text-secondary-500">คงเหลือ: {p.stock || 0}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-
-                                                        {/* Footer - Add New Product */}
-                                                        <div
-                                                            className="px-4 py-3 bg-secondary-50 text-primary-600 cursor-pointer font-medium flex items-center justify-center gap-2 border-t border-secondary-200 hover:bg-primary-100"
-                                                            onClick={() => {
-                                                                setNewProduct({
-                                                                    id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
-                                                                    length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-                                                                    bulbType: '', light: '', remote: '', images: []
-                                                                });
-                                                                setShowProductModal(true);
-                                                            }}
-                                                        >
-                                                            <Plus size={16} />
-                                                            เพิ่มสินค้าใหม่
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={item.qty}
-                                                onChange={e => {
-                                                    const newItems = [...items]
-                                                    newItems[idx].qty = Number(e.target.value)
-                                                    setItems(newItems)
-                                                }}
-                                                className="w-full px-2 py-1 border border-secondary-300 rounded focus:ring-2 focus:ring-primary-500 text-sm text-right"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input
-                                                type="number"
-                                                value={item.unitPrice}
-                                                onChange={e => {
-                                                    const newItems = [...items]
-                                                    newItems[idx].unitPrice = Number(e.target.value)
-                                                    setItems(newItems)
-                                                }}
-                                                className="w-full px-2 py-1 border border-secondary-300 rounded focus:ring-2 focus:ring-primary-500 text-sm text-right"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-medium text-secondary-900">
-                                            {currency(item.qty * item.unitPrice)}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <button
-                                                onClick={() => {
-                                                    const newItems = items.filter((_, i) => i !== idx)
-                                                    setItems(newItems.length ? newItems : [{ code: '', qty: 1, unitPrice: 0 }])
-                                                }}
-                                                className="text-secondary-400 hover:text-danger-500 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    {/* Order Item Modal */}
+                    <OrderItemModal
+                        isOpen={showOrderItemModal}
+                        onClose={() => setShowOrderItemModal(false)}
+                        onSave={handleSaveItem}
+                        onDelete={handleDeleteItem}
+                        item={editingItemIndex !== null ? items[editingItemIndex] : null}
+                        productsData={productsData}
+                        isEditing={editingItemIndex !== null}
+                        onOpenSubJob={() => {
+                            if (editingItemIndex !== null) {
+                                setShowOrderItemModal(false)
+                                setCurrentSubJobItemIndex(editingItemIndex)
+                                setShowSubJobModal(true)
+                            } else {
+                                alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
+                            }
+                        }}
+                    />
                 </div>
 
                 {/* Map Popup Modal */}
