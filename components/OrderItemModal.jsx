@@ -211,7 +211,11 @@ export default function OrderItemModal({
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${formData.subJob ? 'bg-primary-100 text-primary-600' : 'bg-secondary-100 text-secondary-400'}`}>
-                                    {formData.subJob?.jobType === 'delivery' ? <Truck size={16} /> : <Wrench size={16} />}
+                                    {formData.subJob?.jobType ? (
+                                        formData.subJob.jobType === 'delivery' ? <Truck size={16} /> : <Wrench size={16} />
+                                    ) : (
+                                        <HelpCircle size={16} />
+                                    )}
                                 </div>
                                 <div className="text-left">
                                     <div className="text-sm font-medium text-secondary-900">
