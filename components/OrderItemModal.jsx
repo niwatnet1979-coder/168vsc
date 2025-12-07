@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus } from 'lucide-react'
 import { currency } from '../lib/utils'
 
+
 export default function OrderItemModal({
     isOpen,
     onClose,
