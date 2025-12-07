@@ -1318,17 +1318,49 @@ export default function OrderForm() {
                                     >
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <div className="font-bold text-secondary-900 text-sm line-clamp-2">
-                                                    {item.name || item.code || 'รายการใหม่'}
-                                                </div>
-                                                <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
-                                                    <span className="bg-white px-1.5 py-0.5 rounded border border-secondary-200 text-secondary-600 font-medium">
-                                                        {item.qty} x {currency(item.unitPrice)}
-                                                    </span>
-                                                    {item.description && (
-                                                        <span className="truncate max-w-[150px]">{item.description}</span>
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="font-bold text-secondary-900 text-sm">
+                                                        {item.name || 'รายการใหม่'}
+                                                    </div>
+                                                    {item.code && (
+                                                        <div className="text-xs text-secondary-500 font-mono">
+                                                            Code: {item.code}
+                                                        </div>
                                                     )}
                                                 </div>
+
+                                                {/* Price & Qty */}
+                                                <div className="text-sm text-secondary-700 mt-2 font-medium bg-secondary-50 inline-block px-2 py-1 rounded border border-secondary-200">
+                                                    {item.qty} x {currency(item.unitPrice)}
+                                                </div>
+
+                                                {/* Description */}
+                                                {item.description && (
+                                                    <div className="text-xs text-secondary-600 mt-2 whitespace-pre-wrap leading-relaxed bg-white border border-secondary-100 p-2 rounded">
+                                                        {item.description}
+                                                    </div>
+                                                )}
+
+                                                {/* Job Information Tag */}
+                                                {item.subJob && item.subJob.jobType && (
+                                                    <div className="mt-3 flex flex-col gap-1 text-xs border-l-2 border-primary-300 pl-3 py-1">
+                                                        <div className="font-bold text-primary-700 flex items-center gap-1">
+                                                            {item.subJob.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
+                                                            {item.subJob.jobType === 'delivery' ? 'งานจัดส่ง' : 'งานติดตั้ง'}
+                                                        </div>
+                                                        <div className="text-secondary-600">
+                                                            <span className="font-medium">วันที่:</span> {item.subJob.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleString('th-TH') : 'ไม่ระบุ'}
+                                                        </div>
+                                                        <div className="text-secondary-600">
+                                                            <span className="font-medium">ทีม:</span> {item.subJob.team || 'ไม่ระบุ'}
+                                                        </div>
+                                                        {item.subJob.installLocationName && (
+                                                            <div className="text-secondary-600">
+                                                                <span className="font-medium">สถานที่:</span> {item.subJob.installLocationName}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="font-bold text-primary-600 text-sm">
                                                 {currency((item.qty || 0) * (item.unitPrice || 0))}
