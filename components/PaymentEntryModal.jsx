@@ -93,7 +93,8 @@ export default function PaymentEntryModal({
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-1 py-2 text-xs border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-center"
+                            className="w-full px-1.5 py-1.5 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-center leading-tight"
+                            style={{ fontSize: '0.8125rem' }}
                         />
                     </div>
 
