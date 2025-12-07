@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Wrench } from 'lucide-react'
 import JobInfoCard from './JobInfoCard'
+import Card from './Card'
 
 export default function SubJobModal({ isOpen, onClose, item, onSave, customer = {}, availableTeams }) {
     const [formData, setFormData] = useState({
