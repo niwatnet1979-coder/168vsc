@@ -93,7 +93,7 @@ export default function PaymentEntryModal({
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-2 py-2 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-center"
                         />
                     </div>
 
@@ -179,8 +179,8 @@ export default function PaymentEntryModal({
                             type="button"
                             onClick={() => document.getElementById('slip-upload').click()}
                             className={`w-full px-3 py-2 text-sm border-2 border-dashed rounded-lg ${formData.slip
-                                    ? 'border-success-500 bg-success-50 text-success-700'
-                                    : 'border-secondary-300 hover:border-secondary-400'
+                                ? 'border-success-500 bg-success-50 text-success-700'
+                                : 'border-secondary-300 hover:border-secondary-400'
                                 }`}
                         >
                             {formData.slip ? formData.slip.name || 'มีรูปสลิปแล้ว' : 'อัพโหลดสลิป'}
@@ -191,7 +191,7 @@ export default function PaymentEntryModal({
                     <div className="grid grid-cols-2 gap-3">
                         {/* Receiver Signature */}
                         <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นผู้รับ</label>
+                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นพนักงาน</label>
                             <div className="border-2 border-secondary-300 rounded-lg overflow-hidden">
                                 <SignatureCanvas
                                     ref={receiverSigRef}
@@ -211,7 +211,7 @@ export default function PaymentEntryModal({
 
                         {/* Payer Signature */}
                         <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นผู้ชำระ</label>
+                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นลูกค้า</label>
                             <div className="border-2 border-secondary-300 rounded-lg overflow-hidden">
                                 <SignatureCanvas
                                     ref={payerSigRef}
