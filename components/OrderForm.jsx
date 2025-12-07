@@ -899,7 +899,6 @@ export default function OrderForm() {
                                                             </div>
                                                         ))}
                                                 </div>
-                                            </Card>
                                             )}
                                         </div>
                                     ) : null}
@@ -1238,7 +1237,7 @@ export default function OrderForm() {
 
 
                 {/* Bottom Section: Items Table */}
-                < div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible" >
+                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible">
                     <div className="p-6 border-b border-secondary-200 flex justify-between items-center">
                         <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                             <FileText className="text-primary-600" />
