@@ -1,5 +1,6 @@
 import React from 'react'
 import { MapPin, X, Map } from 'lucide-react'
+import Card from './Card'
 
 export default function AddressCard({
     title,
@@ -17,7 +18,7 @@ export default function AddressCard({
     const iconColor = isPrimary ? 'text-primary-600' : 'text-success-600'
 
     return (
-        <div className={`${bgColor} border ${borderColor} rounded-lg p-4 relative`}>
+        <Card useBase={false} className={`${bgColor} border ${borderColor} rounded-lg p-4 relative`} contentClassName="">
             <div className="flex items-start gap-3">
                 <div className={`p-2 bg-white rounded-lg border ${iconBgColor} mt-1`}>
                     <MapPin size={20} className={iconColor} />
@@ -59,6 +60,6 @@ export default function AddressCard({
             >
                 <X size={16} />
             </button>
-        </div>
+        </Card>
     )
 }

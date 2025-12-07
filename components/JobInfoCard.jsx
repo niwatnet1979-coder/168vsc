@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Wrench, ChevronDown, Search } from 'lucide-react'
 import AddressCard from './AddressCard'
+import Card from './Card'
 import ContactSelector from './ContactSelector'
 import { calculateDistance, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
@@ -24,15 +25,17 @@ export default function JobInfoCard({
     }
 
     return (
-        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 md:p-6 flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : ''}`}>
-            {showHeader && (
-                <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
+        <Card
+            className={`flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : 'md:p-6'}`}
+            title={showHeader ? (
+                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                     <Wrench className="text-primary-600" />
                     ข้อมูลงานหลัก
                 </h2>
-            )}
-            <div className="flex-1 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ) : null}
+            contentClassName="flex-1"
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทงาน</label>
                         <select
@@ -68,7 +71,7 @@ export default function JobInfoCard({
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
                                 <input
                                     type="datetime-local"
-                                    value={data.appointmentDate}
+                                    value={data.appointmentDate || ''}
                                     onChange={e => handleUpdate({ appointmentDate: e.target.value })}
                                     className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px]"
                                 />
