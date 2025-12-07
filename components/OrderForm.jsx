@@ -599,7 +599,9 @@ export default function OrderForm() {
     const depositAmount = deposit.mode === 'percent'
         ? total * (Number(deposit.value) / 100)
         : Number(deposit.value)
-    const outstanding = Math.max(0, total - depositAmount)
+    // Calculate total paid from payment schedule
+    const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
+    const outstanding = Math.max(0, total - totalPaid)
 
     return (
         <div className="min-h-screen bg-secondary-50 pb-20">
@@ -1180,75 +1182,51 @@ export default function OrderForm() {
                                     <span>{currency(total)}</span>
                                 </div>
 
+                                {/* Payment Schedule List */}
                                 <div className="pt-4 border-t border-secondary-200">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-secondary-700 font-medium">มัดจำ</span>
-                                        <div className="flex gap-1">
-                                            <select
-                                                value={deposit.mode}
-                                                onChange={e => setDeposit({ ...deposit, mode: e.target.value })}
-                                                className="border border-secondary-300 rounded text-xs px-1"
-                                            >
-                                                <option value="percent">%</option>
-                                                <option value="amount">฿</option>
-                                            </select>
-                                            <input
-                                                type="number"
-                                                value={deposit.value}
-                                                onChange={e => setDeposit({ ...deposit, value: Number(e.target.value) })}
-                                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between text-secondary-600 text-sm">
-                                        <span>ยอดมัดจำที่ต้องชำระ</span>
-                                        <span className="font-medium">{currency(depositAmount)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-secondary-900 font-bold text-sm">
-                                        <span>ยอดคงเหลือ (ชำระวันงาน)</span>
-                                        <span>{currency(total - depositAmount)}</span>
-                                    </div>
+                                    <h3 className="text-sm font-bold text-secondary-900 mb-3">รายการการชำระเงิน</h3>
 
-                                    {/* Payment Schedule List */}
-                                    <div className="mt-6 pt-4 border-t border-secondary-200">
-                                        <h3 className="text-sm font-bold text-secondary-900 mb-3">ตารางการชำระเงิน</h3>
-
-                                        {/* Payment List */}
-                                        {paymentSchedule.length > 0 && (
-                                            <div className="space-y-2 mb-3">
-                                                {paymentSchedule.map((payment, index) => (
-                                                    <div
-                                                        key={index}
-                                                        onClick={() => {
-                                                            setEditingPaymentIndex(index)
-                                                            setShowPaymentModal(true)
-                                                        }}
-                                                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors"
-                                                    >
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <span className="font-medium">{payment.date || '-'}</span>
-                                                            <span className="text-secondary-500">•</span>
-                                                            <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
-                                                        </div>
-                                                        <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
+                                    {/* Payment List */}
+                                    {paymentSchedule.length > 0 && (
+                                        <div className="space-y-2 mb-3">
+                                            {paymentSchedule.map((payment, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => {
+                                                        setEditingPaymentIndex(index)
+                                                        setShowPaymentModal(true)
+                                                    }}
+                                                    className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2 text-sm">
+                                                        <span className="font-medium">{payment.date || '-'}</span>
+                                                        <span className="text-secondary-500">•</span>
+                                                        <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                    <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
 
-                                        {/* Add Payment Button */}
-                                        {paymentSchedule.length < 5 && (
-                                            <button
-                                                onClick={() => {
-                                                    setEditingPaymentIndex(null)
-                                                    setShowPaymentModal(true)
-                                                }}
-                                                className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
-                                            >
-                                                <Plus size={16} />
-                                                เพิ่มการชำระ
-                                            </button>
-                                        )}
+                                    {/* Add Payment Button */}
+                                    {paymentSchedule.length < 5 && (
+                                        <button
+                                            onClick={() => {
+                                                setEditingPaymentIndex(null)
+                                                setShowPaymentModal(true)
+                                            }}
+                                            className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
+                                        >
+                                            <Plus size={16} />
+                                            เพิ่มการชำระ
+                                        </button>
+                                    )}
+
+                                    {/* Outstanding Balance - Moved below payment schedule */}
+                                    <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-4 border-t border-secondary-200">
+                                        <span>รวมยอดค้างชำระ</span>
+                                        <span>{currency(outstanding)}</span>
                                     </div>
                                 </div>
                             </div>
