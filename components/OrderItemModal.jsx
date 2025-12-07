@@ -25,18 +25,47 @@ export default function OrderItemModal({
         category: '',
         subcategory: '',
         subJob: null,
-        _searchTerm: ''
+        _searchTerm: '',
+        lightColor: '',
+        remote: '',
+        bulbType: ''
     })
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
     const [searchResults, setSearchResults] = useState([])
+    const [productOptions, setProductOptions] = useState({
+        lightColors: [],
+        remotes: [],
+        bulbTypes: []
+    })
 
     useEffect(() => {
         if (isOpen) {
+            // Load Product Options
+            const savedOptions = localStorage.getItem('product_options_data')
+            if (savedOptions) {
+                try {
+                    setProductOptions(JSON.parse(savedOptions))
+                } catch (e) {
+                    console.error('Error parsing product options:', e)
+                }
+            } else {
+                // Determine defaults if not set? Or just empty.
+                // Based on plan, we can set defaults if missing to match Settings page logic
+                setProductOptions({
+                    lightColors: ['warm', 'cool', 'white', '3แสง'],
+                    remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
+                    bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+                })
+            }
+
             if (item) {
                 setFormData({
                     ...item,
-                    _searchTerm: item.name || ''
+                    _searchTerm: item.name || '',
+                    lightColor: item.lightColor || '',
+                    remote: item.remote || '',
+                    bulbType: item.bulbType || ''
                 })
             } else {
                 // Reset for new item
@@ -50,7 +79,10 @@ export default function OrderItemModal({
                     category: '',
                     subcategory: '',
                     subJob: null,
-                    _searchTerm: ''
+                    _searchTerm: '',
+                    lightColor: '',
+                    remote: '',
+                    bulbType: ''
                 })
             }
         }
@@ -221,6 +253,51 @@ export default function OrderItemModal({
                             </div>
                         )}
                     </div>
+
+                    {/* Product Options Dropdowns */}
+                    {formData.code && (
+                        <div className="grid grid-cols-1 gap-3 bg-secondary-50 p-3 rounded-lg border border-secondary-200">
+                            <div>
+                                <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
+                                <select
+                                    value={formData.lightColor}
+                                    onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                >
+                                    <option value="">-- เลือกสีแสงไฟ --</option>
+                                    {productOptions.lightColors.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
+                                <select
+                                    value={formData.remote}
+                                    onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                >
+                                    <option value="">-- เลือกรีโมท --</option>
+                                    {productOptions.remotes.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-secondary-700 mb-1">หลอดไฟ</label>
+                                <select
+                                    value={formData.bulbType}
+                                    onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                >
+                                    <option value="">-- เลือกหลอดไฟ --</option>
+                                    {productOptions.bulbTypes.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Quantity & Price */}
                     <div className="grid grid-cols-2 gap-4">

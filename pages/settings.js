@@ -12,7 +12,11 @@ import {
     Trash2,
     Shield,
     Bell,
-    Globe
+    Globe,
+    List,
+    Plus,
+    X,
+
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
@@ -37,11 +41,30 @@ export default function SettingsPage() {
     const [editingMember, setEditingMember] = useState(null)
     const [formData, setFormData] = useState(null)
 
+    // Product Options State
+    const [productOptions, setProductOptions] = useState({
+        lightColors: ['warm', 'cool', 'white', '3แสง'],
+        remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
+        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+    })
+    const [newOption, setNewOption] = useState('')
+    const [activeOptionType, setActiveOptionType] = useState(null) // 'lightColors', 'remotes', 'bulbTypes'
+
     // Load settings and users
     useEffect(() => {
         const savedSettings = localStorage.getItem('shop_settings')
         if (savedSettings) {
             setShopSettings(JSON.parse(savedSettings))
+        }
+
+        // Load product options
+        const savedOptions = localStorage.getItem('product_options_data')
+        if (savedOptions) {
+            try {
+                setProductOptions(JSON.parse(savedOptions))
+            } catch (e) {
+                console.error('Error parsing product options:', e)
+            }
         }
 
         // Load users from team_data (same as Team page)
@@ -221,13 +244,32 @@ export default function SettingsPage() {
                 localStorage.removeItem('orders_data')
                 localStorage.removeItem('products_data')
                 localStorage.removeItem('customers_data')
-
-                // Optional: Clear other temporary keys if any
-                // localStorage.removeItem('temp_key')
+                // Keep product_options_data as it's configuration
 
                 alert('ล้างข้อมูลเรียบร้อยแล้ว ระบบพร้อมสำหรับเริ่มใช้งานใหม่')
                 window.location.reload()
             }
+        }
+    }
+
+    const handleAddOption = (type) => {
+        if (!newOption.trim()) return
+        const updatedOptions = {
+            ...productOptions,
+            [type]: [...productOptions[type], newOption.trim()]
+        }
+        setProductOptions(updatedOptions)
+        localStorage.setItem('product_options_data', JSON.stringify(updatedOptions))
+        setNewOption('')
+        setActiveOptionType(null)
+    }
+
+    const handleDeleteOption = (type, index) => {
+        if (confirm('ต้องการลบตัวเลือกนี้ใช่หรือไม่?')) {
+            const updatedList = productOptions[type].filter((_, i) => i !== index)
+            const updatedOptions = { ...productOptions, [type]: updatedList }
+            setProductOptions(updatedOptions)
+            localStorage.setItem('product_options_data', JSON.stringify(updatedOptions))
         }
     }
 
@@ -265,6 +307,7 @@ export default function SettingsPage() {
                                     { id: 'general', label: 'ข้อมูลร้านค้า', icon: Store },
                                     { id: 'users', label: 'ผู้ใช้งาน & สิทธิ์', icon: Users },
                                     { id: 'system', label: 'การตั้งค่าระบบ', icon: Globe },
+                                    { id: 'options', label: 'ประเภทข้อมูล', icon: List },
                                     { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell },
                                     { id: 'database', label: 'จัดการฐานข้อมูล', icon: Database, danger: true }
                                 ].map((tab) => (
@@ -391,8 +434,8 @@ export default function SettingsPage() {
                                                         <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
                                                         <td className="py-3 px-4">
                                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                                                                    user.role === 'disabled' ? 'bg-gray-100 text-gray-600' :
-                                                                        'bg-green-100 text-green-800'
+                                                                user.role === 'disabled' ? 'bg-gray-100 text-gray-600' :
+                                                                    'bg-green-100 text-green-800'
                                                                 }`}>
                                                                 {user.role === 'admin' ? 'Admin' : user.role === 'disabled' ? 'Disabled' : 'User'}
                                                             </span>
@@ -469,17 +512,149 @@ export default function SettingsPage() {
                                 </div>
                             )}
 
-                            {activeTab === 'notifications' && (
+
+                            {activeTab === 'options' && (
                                 <div className="space-y-6">
                                     <div className="border-b border-secondary-200 pb-4">
-                                        <h2 className="text-xl font-bold text-secondary-900">การแจ้งเตือน</h2>
-                                        <p className="text-secondary-500 text-sm mt-1">ตั้งค่าการแจ้งเตือนผ่าน LINE Notify และ Email</p>
+                                        <h2 className="text-xl font-bold text-secondary-900">ประเภทข้อมูลสินค้า</h2>
+                                        <p className="text-secondary-500 text-sm mt-1">จัดการตัวเลือกต่างๆ ของสินค้า (สีแสงไฟ, รีโมท, หลอดไฟ)</p>
                                     </div>
 
-                                    <div className="p-8 text-center border-2 border-dashed border-secondary-200 rounded-xl">
-                                        <Bell className="mx-auto h-12 w-12 text-secondary-300 mb-4" />
-                                        <h3 className="text-lg font-medium text-secondary-900">ยังไม่เปิดให้บริการ</h3>
-                                        <p className="text-secondary-500 mt-1">ฟีเจอร์นี้จะเปิดให้ใช้งานในเวอร์ชันถัดไป</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {/* Light Colors */}
+                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
+                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+                                                <h3 className="font-bold text-secondary-900">สีแสงไฟ (Light Color)</h3>
+                                                <button
+                                                    onClick={() => setActiveOptionType(activeOptionType === 'lightColors' ? null : 'lightColors')}
+                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
+                                            </div>
+                                            {activeOptionType === 'lightColors' && (
+                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newOption}
+                                                        onChange={(e) => setNewOption(e.target.value)}
+                                                        placeholder="เพิ่มตัวเลือก..."
+                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('lightColors')}
+                                                    />
+                                                    <button
+                                                        onClick={() => handleAddOption('lightColors')}
+                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+                                                    >
+                                                        เพิ่ม
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
+                                                {productOptions.lightColors.map((opt, idx) => (
+                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
+                                                        <span className="text-sm text-secondary-700">{opt}</span>
+                                                        <button
+                                                            onClick={() => handleDeleteOption('lightColors', idx)}
+                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        {/* Remotes */}
+                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
+                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+                                                <h3 className="font-bold text-secondary-900">รีโมท (Remote)</h3>
+                                                <button
+                                                    onClick={() => setActiveOptionType(activeOptionType === 'remotes' ? null : 'remotes')}
+                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
+                                            </div>
+                                            {activeOptionType === 'remotes' && (
+                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newOption}
+                                                        onChange={(e) => setNewOption(e.target.value)}
+                                                        placeholder="เพิ่มตัวเลือก..."
+                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('remotes')}
+                                                    />
+                                                    <button
+                                                        onClick={() => handleAddOption('remotes')}
+                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+                                                    >
+                                                        เพิ่ม
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
+                                                {productOptions.remotes.map((opt, idx) => (
+                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
+                                                        <span className="text-sm text-secondary-700">{opt}</span>
+                                                        <button
+                                                            onClick={() => handleDeleteOption('remotes', idx)}
+                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        {/* Bulb Types */}
+                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
+                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+                                                <h3 className="font-bold text-secondary-900">หลอดไฟ (Bulb Type)</h3>
+                                                <button
+                                                    onClick={() => setActiveOptionType(activeOptionType === 'bulbTypes' ? null : 'bulbTypes')}
+                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
+                                            </div>
+                                            {activeOptionType === 'bulbTypes' && (
+                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newOption}
+                                                        onChange={(e) => setNewOption(e.target.value)}
+                                                        placeholder="เพิ่มตัวเลือก..."
+                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('bulbTypes')}
+                                                    />
+                                                    <button
+                                                        onClick={() => handleAddOption('bulbTypes')}
+                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+                                                    >
+                                                        เพิ่ม
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
+                                                {productOptions.bulbTypes.map((opt, idx) => (
+                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
+                                                        <span className="text-sm text-secondary-700">{opt}</span>
+                                                        <button
+                                                            onClick={() => handleDeleteOption('bulbTypes', idx)}
+                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             )}
