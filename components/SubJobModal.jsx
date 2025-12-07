@@ -61,7 +61,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
                 <div className="p-6 border-b border-secondary-200 flex items-center justify-between">
                     <h2 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
                         <Wrench className="text-primary-600" size={24} />
-                        ข้อมูลงานหลัก (งานย่อย)
+                        ข้อมูลงานย่อย
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-secondary-100 rounded-lg">
                         <X size={24} className="text-secondary-500" />
