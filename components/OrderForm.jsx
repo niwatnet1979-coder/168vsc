@@ -727,15 +727,15 @@ export default function OrderForm() {
 
                                         {/* Contact Information */}
 
-                                        <div className="space-y-6">
-                                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-visible">
-                
-                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                                                <div className="flex items-center gap-2 text-secondary-600">
                                                     <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
                                                         <Phone size={14} className="text-primary-600" />
                                                     </div>
                                                     <span className="font-medium text-secondary-900">{customer.phone || '-'}</span>
                                                 </div>
+
                                                 {customer.email && (
                                                     <div className="flex items-center gap-2 text-secondary-600">
                                                         <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
@@ -744,6 +744,7 @@ export default function OrderForm() {
                                                         <span className="font-medium text-secondary-900 truncate max-w-[200px]">{String(customer.email)}</span>
                                                     </div>
                                                 )}
+
                                                 {customer.line && (
                                                     <div className="flex items-center gap-2 text-secondary-600">
                                                         <div className="w-6 h-6 bg-[#06c755]/10 rounded flex items-center justify-center flex-shrink-0">
@@ -752,6 +753,7 @@ export default function OrderForm() {
                                                         <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.line}</span>
                                                     </div>
                                                 )}
+
                                                 {customer.facebook && (
                                                     <div className="flex items-center gap-2 text-secondary-600">
                                                         <div className="w-6 h-6 bg-[#1877F2]/10 rounded flex items-center justify-center flex-shrink-0">
@@ -760,6 +762,7 @@ export default function OrderForm() {
                                                         <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.facebook}</span>
                                                     </div>
                                                 )}
+
                                                 {customer.instagram && (
                                                     <div className="flex items-center gap-2 text-secondary-600">
                                                         <div className="w-6 h-6 bg-[#E1306C]/10 rounded flex items-center justify-center flex-shrink-0">
@@ -769,7 +772,6 @@ export default function OrderForm() {
                                                     </div>
                                                 )}
                                             </div>
-
                                         </div>
 
                                         {/* Address */}
