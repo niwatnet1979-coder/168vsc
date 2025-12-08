@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import packageJson from '../package.json';
 
-const AppLayout = ({ children, renderHeader }) => {
+const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const router = useRouter();
     const { data: session } = useSession();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -221,6 +221,9 @@ const AppLayout = ({ children, renderHeader }) => {
                         {children}
                     </div>
                 </main>
+
+                {/* Bottom Navigation */}
+                {renderBottomNav && renderBottomNav()}
 
             </div>
         </div>

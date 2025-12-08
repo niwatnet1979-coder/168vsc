@@ -267,14 +267,23 @@ export default function MobilePage() {
                     </div>
                 </header>
             )}
+            renderBottomNav={() => (
+                <nav className="bg-white border-t border-secondary-200 safe-area-bottom pb-safe z-20">
+                    <div className="flex justify-around items-center h-16">
+                        <TabButton id="previous" label="งานก่อนหน้า" icon={History} />
+                        <TabButton id="installation" label="งานติดตั้ง" icon={Wrench} />
+                        <TabButton id="delivery" label="งานจัดส่ง" icon={Truck} />
+                    </div>
+                </nav>
+            )}
         >
             <Head>
                 <title>คิวงานช่าง - 168VSC</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
             </Head>
 
-            {/* Content Body - Removed main wrapper since AppLayout provides it, but added padding wrapper */}
-            <div className="p-4 space-y-4 pb-24">
+            {/* Content Body - No padding bottom needed as nav is outside scroll area */}
+            <div className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-secondary-700">
                         {activeTab === 'previous' && 'งานที่ทำเสร็จแล้ว'}
@@ -323,15 +332,6 @@ export default function MobilePage() {
                     </div>
                 )}
             </div>
-
-            {/* Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-secondary-200 safe-area-bottom pb-safe z-20">
-                <div className="flex justify-around items-center h-16">
-                    <TabButton id="previous" label="งานก่อนหน้า" icon={History} />
-                    <TabButton id="installation" label="งานติดตั้ง" icon={Wrench} />
-                    <TabButton id="delivery" label="งานจัดส่ง" icon={Truck} />
-                </div>
-            </nav>
 
             <style jsx global>{`
                 .safe-area-bottom {
