@@ -46,6 +46,55 @@ export default function TeamMemberModal({
 
     const [formData, setFormData] = useState(member || initialFormState)
 
+    // Option States
+    const [teamNames, setTeamNames] = useState([])
+    const [teamTypes, setTeamTypes] = useState([])
+    const [jobPositions, setJobPositions] = useState([])
+    const [jobLevels, setJobLevels] = useState([])
+    const [employmentTypes, setEmploymentTypes] = useState([])
+    const [paymentTypes, setPaymentTypes] = useState([])
+    const [wageRates, setWageRates] = useState([])
+    const [commissionRates, setCommissionRates] = useState([])
+
+    // Defaults
+    const defaultTeamNames = ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร']
+    const defaultTeamTypes = ['QC', 'SALE', 'บริหาร']
+    const defaultJobPositions = ['พนักงาน', 'บริหาร']
+    const defaultJobLevels = ['Executive', 'Director', 'Manager', 'Leader', 'Senior', 'Staff']
+    const defaultEmploymentTypes = ['พนักงานประจำ', 'พนักงานชั่วคราว']
+    const defaultPaymentTypes = ['รายวัน', 'รายเดือน', 'เหมาจ่าย']
+    const defaultWageRates = ['500', '10000']
+    const defaultCommissionRates = ['0%', '0.3%']
+
+    useEffect(() => {
+        const savedOptions = localStorage.getItem('product_options_data')
+        if (savedOptions) {
+            try {
+                const options = JSON.parse(savedOptions)
+                setTeamNames(options.teamNames && options.teamNames.length > 0 ? options.teamNames : defaultTeamNames)
+                setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
+                setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
+                setJobLevels(options.jobLevels && options.jobLevels.length > 0 ? options.jobLevels : defaultJobLevels)
+                setEmploymentTypes(options.employmentTypes && options.employmentTypes.length > 0 ? options.employmentTypes : defaultEmploymentTypes)
+                setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
+                setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
+                setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
+                return
+            } catch (e) {
+                console.error('Error loading options', e)
+            }
+        }
+        // Fallback
+        setTeamNames(defaultTeamNames)
+        setTeamTypes(defaultTeamTypes)
+        setJobPositions(defaultJobPositions)
+        setJobLevels(defaultJobLevels)
+        setEmploymentTypes(defaultEmploymentTypes)
+        setPaymentTypes(defaultPaymentTypes)
+        setWageRates(defaultWageRates)
+        setCommissionRates(defaultCommissionRates)
+    }, [])
+
     // Update form data when member prop changes
     useEffect(() => {
         if (member) {
@@ -150,39 +199,55 @@ export default function TeamMemberModal({
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ชื่อทีม</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.team}
                                     onChange={e => setFormData({ ...formData, team: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกชื่อทีม</option>
+                                    {teamNames.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภททีม</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.teamType}
                                     onChange={e => setFormData({ ...formData, teamType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกประเภททีม</option>
+                                    {teamTypes.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ตำแหน่ง (Job)</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.job}
                                     onChange={e => setFormData({ ...formData, job: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกตำแหน่ง</option>
+                                    {jobPositions.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ระดับ (Level)</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.level}
                                     onChange={e => setFormData({ ...formData, level: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกระดับ</option>
+                                    {jobLevels.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">User Type / สิทธิ์</label>
@@ -262,39 +327,55 @@ export default function TeamMemberModal({
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทการทำงาน</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.workType}
                                     onChange={e => setFormData({ ...formData, workType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกประเภทการทำงาน</option>
+                                    {employmentTypes.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทการจ่าย</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.payType}
                                     onChange={e => setFormData({ ...formData, payType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกประเภทการจ่าย</option>
+                                    {paymentTypes.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">อัตราค่าจ้าง</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.payRate}
                                     onChange={e => setFormData({ ...formData, payRate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกอัตราค่าจ้าง</option>
+                                    {wageRates.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">อัตราค่าคอมมิชชั่น</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.incentiveRate}
                                     onChange={e => setFormData({ ...formData, incentiveRate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกอัตราค่าคอมมิชชั่น</option>
+                                    {commissionRates.map((opt, i) => (
+                                        <option key={i} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     )}

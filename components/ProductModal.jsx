@@ -1,12 +1,58 @@
 import React, { useState, useEffect } from 'react'
 import { X, Camera } from 'lucide-react'
 
-export default function ProductModal({ isOpen, onClose, product, onSave }) {
+export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
         id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
         length: '', width: '', height: '', material: '', color: '', crystalColor: '',
         bulbType: '', light: '', remote: '', images: []
     })
+
+    const [productTypes, setProductTypes] = useState([])
+    const [materials, setMaterials] = useState([])
+    const [materialColors, setMaterialColors] = useState([])
+    const [crystalColors, setCrystalColors] = useState([])
+
+    const defaultProductTypes = [
+        'XX ไม่ระบุ',
+        'AA โคมไฟระย้า',
+        'AC โคมไฟโถงสูง',
+        'AB โคมไฟแขวนโต้ะทานข้าว',
+        'LP โคมไฟเดี่ยว',
+        'MM โคมไฟโมเดิ้ล',
+        'WL โคมไฟกริ่ง',
+        'IN โคมไฟเพดาล',
+        'RM รีโมท',
+        'GI ของขวัญ',
+        'DV Driver',
+        'LM หลอดไฟ',
+        'K9 คริสตัล'
+    ]
+
+    const defaultMaterials = ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้']
+    const defaultMaterialColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
+    const defaultCrystalColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
+
+    useEffect(() => {
+        const savedOptions = localStorage.getItem('product_options_data')
+        if (savedOptions) {
+            try {
+                const options = JSON.parse(savedOptions)
+                setProductTypes(options.productTypes && options.productTypes.length > 0 ? options.productTypes : defaultProductTypes)
+                setMaterials(options.materials && options.materials.length > 0 ? options.materials : defaultMaterials)
+                setMaterialColors(options.materialColors && options.materialColors.length > 0 ? options.materialColors : defaultMaterialColors)
+                setCrystalColors(options.crystalColors && options.crystalColors.length > 0 ? options.crystalColors : defaultCrystalColors)
+                return
+            } catch (e) {
+                console.error('Error loading product options', e)
+            }
+        }
+        // Fallback to defaults if no saved options or parsing failed
+        setProductTypes(defaultProductTypes)
+        setMaterials(defaultMaterials)
+        setMaterialColors(defaultMaterialColors)
+        setCrystalColors(defaultCrystalColors)
+    }, [])
 
     useEffect(() => {
         if (product) {
@@ -22,6 +68,40 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
             })
         }
     }, [product, isOpen])
+
+    // Auto-generate ID when category changes
+    useEffect(() => {
+        // Only generate if:
+        // 1. We are in "Add New" mode (no product prop OR product has no ID)
+        // 2. A category is selected
+        // 3. The category has a valid prefix format (2 chars)
+        if ((!product || !product.id) && formData.category) {
+            const prefix = formData.category.substring(0, 2).toUpperCase()
+
+            // Validate prefix is 2 letters/chars
+            if (prefix.length === 2 && prefix !== 'XX') { // Skip XX or invalid
+                // Find max number for this prefix
+                let maxNum = 0
+
+                existingProducts.forEach(p => {
+                    if (p.id && p.id.startsWith(prefix)) {
+                        const numPart = p.id.substring(2)
+                        // Check if the rest is a number
+                        if (/^\d+$/.test(numPart)) {
+                            const num = parseInt(numPart, 10)
+                            if (num > maxNum) maxNum = num
+                        }
+                    }
+                })
+
+                // Generate new ID: Prefix + (Max+1) padded to 3 digits
+                const nextNum = maxNum + 1
+                const newId = `${prefix}${nextNum.toString().padStart(3, '0')}`
+
+                setFormData(prev => ({ ...prev, id: newId }))
+            }
+        }
+    }, [formData.category, product, existingProducts])
 
     if (!isOpen) return null
 
@@ -49,6 +129,20 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
+                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทสินค้า *</label>
+                            <select
+                                value={formData.category}
+                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                required
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                            >
+                                <option value="">เลือกประเภทสินค้า</option>
+                                {productTypes.map((type, index) => (
+                                    <option key={index} value={type}>{type}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">รหัสสินค้า *</label>
                             <input
                                 type="text"
@@ -56,16 +150,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
                                 onChange={e => setFormData({ ...formData, id: e.target.value })}
                                 required
                                 className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทสินค้า *</label>
-                            <input
-                                type="text"
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                required
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                             />
                         </div>
                     </div>
@@ -98,15 +182,42 @@ export default function ProductModal({ isOpen, onClose, product, onSave }) {
                     <div className="grid grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทวัสดุ</label>
-                            <input type="text" value={formData.material} onChange={e => setFormData({ ...formData, material: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <select
+                                value={formData.material}
+                                onChange={e => setFormData({ ...formData, material: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                            >
+                                <option value="">เลือกประเภทวัสดุ</option>
+                                {materials.map((item, index) => (
+                                    <option key={index} value={item}>{item}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">สีวัสดุ</label>
-                            <input type="text" value={formData.color} onChange={e => setFormData({ ...formData, color: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <select
+                                value={formData.color}
+                                onChange={e => setFormData({ ...formData, color: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                            >
+                                <option value="">เลือกสีวัสดุ</option>
+                                {materialColors.map((item, index) => (
+                                    <option key={index} value={item}>{item}</option>
+                                ))}
+                            </select>
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">สีคริสตัล</label>
-                            <input type="text" value={formData.crystalColor} onChange={e => setFormData({ ...formData, crystalColor: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            <select
+                                value={formData.crystalColor}
+                                onChange={e => setFormData({ ...formData, crystalColor: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                            >
+                                <option value="">เลือกสีคริสตัล</option>
+                                {crystalColors.map((item, index) => (
+                                    <option key={index} value={item}>{item}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

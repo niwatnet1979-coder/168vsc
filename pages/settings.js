@@ -16,6 +16,13 @@ import {
     List,
     Plus,
     X,
+    LayoutGrid,
+    Palette,
+    ToggleLeft,
+    Lightbulb,
+    Package,
+    Briefcase,
+    CreditCard
 
 } from 'lucide-react'
 
@@ -45,10 +52,39 @@ export default function SettingsPage() {
     const [productOptions, setProductOptions] = useState({
         lightColors: ['warm', 'cool', 'white', '3แสง'],
         remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
-        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module'],
+        productTypes: [],
+        materials: ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้'],
+        materialColors: ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ'],
+        crystalColors: ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ'],
+        // Employee Options
+        teamNames: ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร'],
+        teamTypes: ['QC', 'SALE', 'บริหาร'],
+        jobPositions: ['พนักงาน', 'บริหาร'],
+        jobLevels: ['Executive', 'Director', 'Manager', 'Leader', 'Senior', 'Staff'],
+        employmentTypes: ['พนักงานประจำ', 'พนักงานชั่วคราว'],
+        paymentTypes: ['รายวัน', 'รายเดือน', 'เหมาจ่าย'],
+        wageRates: ['500', '10000'],
+        commissionRates: ['0%', '0.3%']
     })
     const [newOption, setNewOption] = useState('')
     const [activeOptionType, setActiveOptionType] = useState(null) // 'lightColors', 'remotes', 'bulbTypes'
+
+    const defaultProductTypes = [
+        'XX ไม่ระบุ',
+        'AA โคมไฟระย้า',
+        'AC โคมไฟโถงสูง',
+        'AB โคมไฟแขวนโต้ะทานข้าว',
+        'LP โคมไฟเดี่ยว',
+        'MM โคมไฟโมเดิ้ล',
+        'WL โคมไฟกริ่ง',
+        'IN โคมไฟเพดาล',
+        'RM รีโมท',
+        'GI ของขวัญ',
+        'DV Driver',
+        'LM หลอดไฟ',
+        'K9 คริสตัล'
+    ]
 
     // Load settings and users
     useEffect(() => {
@@ -61,30 +97,49 @@ export default function SettingsPage() {
         const savedOptions = localStorage.getItem('product_options_data')
         if (savedOptions) {
             try {
-                setProductOptions(JSON.parse(savedOptions))
+                const parsedOptions = JSON.parse(savedOptions)
+                // Ensure all keys exist (merge with defaults if missing)
+                setProductOptions(prev => ({
+                    ...prev,
+                    ...parsedOptions,
+                    // If productTypes is missing in saved data, use default
+                    productTypes: (parsedOptions.productTypes && parsedOptions.productTypes.length > 0)
+                        ? parsedOptions.productTypes
+                        : defaultProductTypes,
+                    // Ensure new fields exist if loading from old data
+                    materials: parsedOptions.materials || prev.materials,
+                    materialColors: parsedOptions.materialColors || prev.materialColors,
+                    crystalColors: parsedOptions.crystalColors || prev.crystalColors,
+                    // Employee Options Fallback
+                    teamNames: parsedOptions.teamNames || prev.teamNames,
+                    teamTypes: parsedOptions.teamTypes || prev.teamTypes,
+                    jobPositions: parsedOptions.jobPositions || prev.jobPositions,
+                    jobLevels: parsedOptions.jobLevels || prev.jobLevels,
+                    employmentTypes: parsedOptions.employmentTypes || prev.employmentTypes,
+                    paymentTypes: parsedOptions.paymentTypes || prev.paymentTypes,
+                    wageRates: parsedOptions.wageRates || prev.wageRates,
+                    commissionRates: parsedOptions.commissionRates || prev.commissionRates
+                }))
             } catch (e) {
                 console.error('Error parsing product options:', e)
+                // Fallback to defaults including productTypes
+                setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
             }
+        } else {
+            // First time load, set productTypes to defaults
+            setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
         }
 
-        // Load users from team_data (same as Team page)
-        const savedUsers = localStorage.getItem('team_data')
+        // Load users
+        const savedUsers = localStorage.getItem('users_data')
         if (savedUsers) {
-            const teamData = JSON.parse(savedUsers)
-            // Convert team data to users format
-            const usersData = teamData.map(member => ({
-                id: member.id,
-                image: member.image || null,
-                nickname: member.nickname,
-                email: member.email,
-                phone: member.phone1 || member.phone,
-                teamType: member.teamType || member.team,
-                teamName: member.team || member.teamName,
-                role: member.userType?.toLowerCase() === 'admin' ? 'admin' : 'user'
-            }))
-            setUsers(usersData)
+            try {
+                setUsers(JSON.parse(savedUsers))
+            } catch (e) {
+                console.error('Error parsing users:', e)
+                setUsers([])
+            }
         } else {
-            // Default users - will also be saved to team_data
             const defaultUsers = [
                 {
                     id: 1,
@@ -104,80 +159,12 @@ export default function SettingsPage() {
                     userType: 'Admin',
                     role: 'admin',
                     status: 'current'
-                },
-                {
-                    id: 2,
-                    eid: 'EID0001',
-                    image: null,
-                    nickname: 'ช่างเอ',
-                    firstname: '',
-                    lastname: '',
-                    fullname: 'ช่างเอ',
-                    email: 'technician.a@168vsc.com',
-                    phone: '081-234-5678',
-                    phone1: '081-234-5678',
-                    teamType: 'ช่างติดตั้ง',
-                    team: 'ทีม A',
-                    teamName: 'ทีม A',
-                    job: 'Technician',
-                    userType: 'User',
-                    role: 'user',
-                    status: 'current'
-                },
-                {
-                    id: 3,
-                    eid: 'EID0002',
-                    image: null,
-                    nickname: 'ช่างบี',
-                    firstname: '',
-                    lastname: '',
-                    fullname: 'ช่างบี',
-                    email: 'technician.b@168vsc.com',
-                    phone: '082-345-6789',
-                    phone1: '082-345-6789',
-                    teamType: 'ช่างติดตั้ง',
-                    team: 'ทีม B',
-                    teamName: 'ทีม B',
-                    job: 'Technician',
-                    userType: 'User',
-                    role: 'user',
-                    status: 'current'
-                },
-                {
-                    id: 4,
-                    eid: 'EID0003',
-                    image: null,
-                    nickname: 'QC1',
-                    firstname: '',
-                    lastname: '',
-                    fullname: 'QC1',
-                    email: 'qc1@168vsc.com',
-                    phone: '083-456-7890',
-                    phone1: '083-456-7890',
-                    teamType: 'QC',
-                    team: 'ทีม QC',
-                    teamName: 'ทีม QC',
-                    job: 'QC',
-                    userType: 'User',
-                    role: 'user',
-                    status: 'current'
                 }
             ]
-            localStorage.setItem('team_data', JSON.stringify(defaultUsers))
-
-            // Convert to users format for display
-            const usersData = defaultUsers.map(member => ({
-                id: member.id,
-                image: member.image,
-                nickname: member.nickname,
-                email: member.email,
-                phone: member.phone,
-                teamType: member.teamType,
-                teamName: member.teamName,
-                role: member.role
-            }))
-            setUsers(usersData)
+            setUsers(defaultUsers)
+            localStorage.setItem('users_data', JSON.stringify(defaultUsers))
         }
+
     }, [])
 
     const handleSave = () => {
@@ -521,140 +508,51 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {/* Light Colors */}
-                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
-                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
-                                                <h3 className="font-bold text-secondary-900">สีแสงไฟ (Light Color)</h3>
-                                                <button
-                                                    onClick={() => setActiveOptionType(activeOptionType === 'lightColors' ? null : 'lightColors')}
-                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
-                                            </div>
-                                            {activeOptionType === 'lightColors' && (
-                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newOption}
-                                                        onChange={(e) => setNewOption(e.target.value)}
-                                                        placeholder="เพิ่มตัวเลือก..."
-                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
-                                                        autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('lightColors')}
-                                                    />
+                                        {optionTypes.map((type) => (
+                                            <div key={type.id} className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
+                                                <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+                                                    <h3 className="font-bold text-secondary-900">{type.label}</h3>
                                                     <button
-                                                        onClick={() => handleAddOption('lightColors')}
-                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
+                                                        onClick={() => setActiveOptionType(activeOptionType === type.id ? null : type.id)}
+                                                        className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                                     >
-                                                        เพิ่ม
+                                                        <Plus size={18} />
                                                     </button>
                                                 </div>
-                                            )}
-                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
-                                                {productOptions.lightColors.map((opt, idx) => (
-                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
-                                                        <span className="text-sm text-secondary-700">{opt}</span>
+                                                {activeOptionType === type.id && (
+                                                    <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={newOption}
+                                                            onChange={(e) => setNewOption(e.target.value)}
+                                                            placeholder="เพิ่มตัวเลือก..."
+                                                            className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
+                                                            autoFocus
+                                                            onKeyDown={(e) => e.key === 'Enter' && handleAddOption(type.id)}
+                                                        />
                                                         <button
-                                                            onClick={() => handleDeleteOption('lightColors', idx)}
-                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            onClick={() => handleAddOption(type.id)}
+                                                            className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
                                                         >
-                                                            <Trash2 size={16} />
+                                                            เพิ่ม
                                                         </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        {/* Remotes */}
-                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
-                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
-                                                <h3 className="font-bold text-secondary-900">รีโมท (Remote)</h3>
-                                                <button
-                                                    onClick={() => setActiveOptionType(activeOptionType === 'remotes' ? null : 'remotes')}
-                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
+                                                    </div>
+                                                )}
+                                                <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
+                                                    {productOptions[type.id]?.map((opt, idx) => (
+                                                        <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
+                                                            <span className="text-sm text-secondary-700">{opt}</span>
+                                                            <button
+                                                                onClick={() => handleDeleteOption(type.id, idx)}
+                                                                className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </div>
-                                            {activeOptionType === 'remotes' && (
-                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newOption}
-                                                        onChange={(e) => setNewOption(e.target.value)}
-                                                        placeholder="เพิ่มตัวเลือก..."
-                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
-                                                        autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('remotes')}
-                                                    />
-                                                    <button
-                                                        onClick={() => handleAddOption('remotes')}
-                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
-                                                    >
-                                                        เพิ่ม
-                                                    </button>
-                                                </div>
-                                            )}
-                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
-                                                {productOptions.remotes.map((opt, idx) => (
-                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
-                                                        <span className="text-sm text-secondary-700">{opt}</span>
-                                                        <button
-                                                            onClick={() => handleDeleteOption('remotes', idx)}
-                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        {/* Bulb Types */}
-                                        <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm">
-                                            <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
-                                                <h3 className="font-bold text-secondary-900">หลอดไฟ (Bulb Type)</h3>
-                                                <button
-                                                    onClick={() => setActiveOptionType(activeOptionType === 'bulbTypes' ? null : 'bulbTypes')}
-                                                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
-                                            </div>
-                                            {activeOptionType === 'bulbTypes' && (
-                                                <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={newOption}
-                                                        onChange={(e) => setNewOption(e.target.value)}
-                                                        placeholder="เพิ่มตัวเลือก..."
-                                                        className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
-                                                        autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddOption('bulbTypes')}
-                                                    />
-                                                    <button
-                                                        onClick={() => handleAddOption('bulbTypes')}
-                                                        className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
-                                                    >
-                                                        เพิ่ม
-                                                    </button>
-                                                </div>
-                                            )}
-                                            <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
-                                                {productOptions.bulbTypes.map((opt, idx) => (
-                                                    <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
-                                                        <span className="text-sm text-secondary-700">{opt}</span>
-                                                        <button
-                                                            onClick={() => handleDeleteOption('bulbTypes', idx)}
-                                                            className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

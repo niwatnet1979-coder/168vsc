@@ -394,6 +394,7 @@ export default function ProductManagement() {
                 onClose={() => setShowModal(false)}
                 product={currentProduct}
                 onSave={handleSave}
+                existingProducts={products}
             />
         </AppLayout>
     )
