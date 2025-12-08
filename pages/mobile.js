@@ -253,9 +253,6 @@ export default function MobilePage() {
                                     <option key={team} value={team}>{team}</option>
                                 ))}
                             </select>
-                            <div className="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center">
-                                <User size={18} className="text-secondary-600" />
-                            </div>
                         </div>
                     </div>
 

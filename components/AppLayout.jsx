@@ -70,7 +70,7 @@ const AppLayout = ({ children, renderHeader }) => {
     };
 
     return (
-        <div className="min-h-screen bg-secondary-50 flex font-sans text-secondary-900">
+        <div className="h-screen overflow-hidden bg-secondary-50 flex font-sans text-secondary-900">
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && (
                 <div
