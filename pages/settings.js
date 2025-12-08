@@ -86,6 +86,25 @@ export default function SettingsPage() {
         'K9 คริสตัล'
     ]
 
+    const optionTypes = [
+        { id: 'lightColors', label: 'สีแสงไฟ (Light Colors)' },
+        { id: 'remotes', label: 'รีโมท (Remotes)' },
+        { id: 'bulbTypes', label: 'ขั้วหลอดไฟ (Bulb Types)' },
+        { id: 'productTypes', label: 'ประเภทสินค้า (Product Types)' },
+        { id: 'materials', label: 'วัสดุ (Materials)' },
+        { id: 'materialColors', label: 'สีวัสดุ (Material Colors)' },
+        { id: 'crystalColors', label: 'สีคริสตัล (Crystal Colors)' },
+        // Employee Options
+        { id: 'teamNames', label: 'ชื่อทีม (Team Names)' },
+        { id: 'teamTypes', label: 'ประเภททีม (Team Types)' },
+        { id: 'jobPositions', label: 'ตำแหน่งงาน (Job Positions)' },
+        { id: 'jobLevels', label: 'ระดับงาน (Job Levels)' },
+        { id: 'employmentTypes', label: 'ประเภทการจ้างงาน (Employment Types)' },
+        { id: 'paymentTypes', label: 'รูปแบบการจ่ายเงิน (Payment Types)' },
+        { id: 'wageRates', label: 'อัตราค่าจ้าง (Wage Rates)' },
+        { id: 'commissionRates', label: 'อัตราค่าคอมมิชชั่น (Commission Rates)' }
+    ]
+
     // Load settings and users
     useEffect(() => {
         const savedSettings = localStorage.getItem('shop_settings')
@@ -136,25 +155,29 @@ export default function SettingsPage() {
             if (savedTeamData) {
                 try {
                     const teamMembers = JSON.parse(savedTeamData)
-                    // Map team members to users format
-                    const mappedUsers = teamMembers.map(m => ({
-                        id: m.id,
-                        eid: m.eid,
-                        image: m.image || null,
-                        nickname: m.nickname,
-                        firstname: m.firstname,
-                        lastname: m.lastname,
-                        fullname: m.fullname,
-                        email: m.email,
-                        phone: m.phone1 || m.phone,
-                        teamType: m.teamType,
-                        team: m.team,
-                        teamName: m.team,
-                        // Determine role based on userType or teamType
-                        role: (m.userType && m.userType.toLowerCase() === 'admin') ? 'admin' : 'user',
-                        status: m.status
-                    }))
-                    setUsers(mappedUsers)
+                    if (Array.isArray(teamMembers)) {
+                        // Map team members to users format
+                        const mappedUsers = teamMembers.map(m => ({
+                            id: m.id,
+                            eid: m.eid,
+                            image: m.image || null,
+                            nickname: m.nickname,
+                            firstname: m.firstname,
+                            lastname: m.lastname,
+                            fullname: m.fullname,
+                            email: m.email,
+                            phone: m.phone1 || m.phone,
+                            teamType: m.teamType,
+                            team: m.team,
+                            teamName: m.team,
+                            // Determine role based on userType or teamType
+                            role: (m.userType && m.userType.toLowerCase() === 'admin') ? 'admin' : 'user',
+                            status: m.status
+                        }))
+                        setUsers(mappedUsers)
+                    } else {
+                        setUsers([])
+                    }
                 } catch (e) {
                     console.error('Error parsing team data for users:', e)
                     setUsers([])
