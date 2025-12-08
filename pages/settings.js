@@ -130,40 +130,46 @@ export default function SettingsPage() {
             setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
         }
 
-        // Load users
-        const savedUsers = localStorage.getItem('users_data')
-        if (savedUsers) {
-            try {
-                setUsers(JSON.parse(savedUsers))
-            } catch (e) {
-                console.error('Error parsing users:', e)
+        // Load users from team_data (Source of Truth)
+        const loadUsersFromTeamData = () => {
+            const savedTeamData = localStorage.getItem('team_data')
+            if (savedTeamData) {
+                try {
+                    const teamMembers = JSON.parse(savedTeamData)
+                    // Map team members to users format
+                    const mappedUsers = teamMembers.map(m => ({
+                        id: m.id,
+                        eid: m.eid,
+                        image: m.image || null,
+                        nickname: m.nickname,
+                        firstname: m.firstname,
+                        lastname: m.lastname,
+                        fullname: m.fullname,
+                        email: m.email,
+                        phone: m.phone1 || m.phone,
+                        teamType: m.teamType,
+                        team: m.team,
+                        teamName: m.team,
+                        // Determine role based on userType or teamType
+                        role: (m.userType && m.userType.toLowerCase() === 'admin') ? 'admin' : 'user',
+                        status: m.status
+                    }))
+                    setUsers(mappedUsers)
+                } catch (e) {
+                    console.error('Error parsing team data for users:', e)
+                    setUsers([])
+                }
+            } else {
                 setUsers([])
             }
-        } else {
-            const defaultUsers = [
-                {
-                    id: 1,
-                    eid: 'EID0000',
-                    image: '/logo-192.png',
-                    nickname: 'Admin',
-                    firstname: '',
-                    lastname: '',
-                    fullname: 'Admin',
-                    email: 'niwatnet1979@gmail.com',
-                    phone: '084-282-9465',
-                    phone1: '084-282-9465',
-                    teamType: 'ผู้ดูแลระบบ',
-                    team: 'All Teams',
-                    teamName: 'All Teams',
-                    job: 'Manager',
-                    userType: 'Admin',
-                    role: 'admin',
-                    status: 'current'
-                }
-            ]
-            setUsers(defaultUsers)
-            localStorage.setItem('users_data', JSON.stringify(defaultUsers))
         }
+
+        loadUsersFromTeamData()
+
+        // Listen for storage changes to sync if team page updates (optional, but good practice)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'team_data') loadUsersFromTeamData()
+        })
 
     }, [])
 
