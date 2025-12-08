@@ -138,13 +138,10 @@ export default function MobileJobsV2() {
 
             // If logged in as non-admin, restrict to their team (unless they are admin, who can see all)
             // But if NOT logged in (session is null), allow selecting any team
-            if (userRole && userRole !== 'admin') {
-                filteredJobs = validJobs.filter(job => job.assignedTeam === userTeam)
-            } else {
-                // Admin or Public User: Filter by selectedTeam
-                if (selectedTeam !== 'ทั้งหมด') {
-                    filteredJobs = validJobs.filter(job => job.assignedTeam === selectedTeam)
-                }
+            // Admin or Public User (or V2 Logged In): Filter by selectedTeam
+            // We removed strict userRole enforcement for V2 to prevent data disappearing if team doesn't match
+            if (selectedTeam !== 'ทั้งหมด') {
+                filteredJobs = validJobs.filter(job => job.assignedTeam === selectedTeam)
             }
 
             // Sort by date (nearest first)
@@ -208,7 +205,7 @@ export default function MobileJobsV2() {
     }
 
     // Header logic needs update too
-    const showTeamSelector = !userRole || userRole === 'admin'
+    const showTeamSelector = true // Always allow filtering in V2
 
     if (loading) {
         return (
