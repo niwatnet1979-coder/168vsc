@@ -33,62 +33,73 @@ export default function MobileJobsV2() {
     // Auto-seed data for demo if empty
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const hasJobs = localStorage.getItem('jobs_data')
-            if (!hasJobs) {
-                console.log('Seeding mock data for demo...')
+            try {
+                const hasJobs = localStorage.getItem('jobs_data')
+                if (!hasJobs) {
+                    console.log('Seeding mock data for demo...')
 
-                // Seed Customers
-                if (!localStorage.getItem('customers_data')) {
-                    localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+                    // Seed Customers
+                    if (!localStorage.getItem('customers_data')) {
+                        localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+                    }
+
+                    // Seed Products
+                    if (!localStorage.getItem('products_data_v3')) {
+                        localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+                    }
+
+                    // Seed Orders & Jobs
+                    const mockOrders = []
+                    const mockJobs = []
+                    const teams = ['ทีม A', 'ทีม B', 'ทีม C', 'ทีมช่าง 1']
+
+                    for (let i = 0; i < 5; i++) {
+                        const customer = MOCK_CUSTOMERS_DATA[i % MOCK_CUSTOMERS_DATA.length]
+                        const product = MOCK_PRODUCTS_DATA[i % MOCK_PRODUCTS_DATA.length]
+                        const orderId = `OD${20230001 + i}`
+                        const jobId = `JB${20230001 + i}`
+
+                        mockOrders.push({
+                            id: orderId,
+                            customerId: customer.id,
+                            orderDate: '2023-12-01',
+                            status: 'confirmed',
+                            items: [{ productId: product.id, quantity: 1, price: product.price }]
+                        })
+
+                        mockJobs.push({
+                            id: jobId,
+                            orderId: orderId,
+                            customerId: customer.id,
+                            productId: product.id,
+                            jobType: i % 2 === 0 ? 'ติดตั้ง' : 'ขนส่ง',
+                            jobDate: new Date().toISOString().split('T')[0],
+                            jobTime: `${9 + i}:00`,
+                            address: customer.addresses?.[0]?.address || 'กรุงเทพฯ',
+                            assignedTeam: teams[i % teams.length],
+                            status: 'pending',
+                            notes: 'Demonstration job data',
+                            customerName: customer.name,
+                            productName: product.name
+                        })
+                    }
+
+                    localStorage.setItem('orders_data', JSON.stringify(mockOrders))
+                    localStorage.setItem('jobs_data', JSON.stringify(mockJobs))
+
+                    // Update state immediately to reflect changes without reload
+                    console.log('Seeding complete. Updating state...')
+                    setJobs(mockJobs) // Note: This might be overwritten by loadJobs, so we should trigger loadJobs
+
+                    // Allow loadJobs to run naturally via dependency update or manual call if needed
+                    // But since selectedTeam/userRole didn't change, we might need to force it
+                    // Actually, setting state here is temporary. loadJobs will fetch from LS.
+                    // Let's call loadJobs() explicitly after a short delay or just let the next render cycle handle it?
+                    // Better: just trigger a reload of jobs.
+                    setTimeout(() => loadJobs(), 100)
                 }
-
-                // Seed Products
-                if (!localStorage.getItem('products_data_v3')) {
-                    localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
-                }
-
-                // Seed Orders & Jobs
-                const mockOrders = []
-                const mockJobs = []
-                const teams = ['ทีม A', 'ทีม B', 'ทีม C', 'ทีมช่าง 1']
-
-                // Generate 5 mock jobs
-                for (let i = 0; i < 5; i++) {
-                    const customer = MOCK_CUSTOMERS_DATA[i % MOCK_CUSTOMERS_DATA.length]
-                    const product = MOCK_PRODUCTS_DATA[i % MOCK_PRODUCTS_DATA.length]
-                    const orderId = `OD${20230001 + i}`
-                    const jobId = `JB${20230001 + i}`
-
-                    mockOrders.push({
-                        id: orderId,
-                        customerId: customer.id,
-                        orderDate: '2023-12-01',
-                        status: 'confirmed',
-                        items: [{ productId: product.id, quantity: 1, price: product.price }]
-                    })
-
-                    mockJobs.push({
-                        id: jobId,
-                        orderId: orderId,
-                        customerId: customer.id,
-                        productId: product.id,
-                        jobType: i % 2 === 0 ? 'ติดตั้ง' : 'ขนส่ง',
-                        jobDate: new Date().toISOString().split('T')[0], // Today
-                        jobTime: `${9 + i}:00`,
-                        address: customer.addresses?.[0]?.address || 'กรุงเทพฯ',
-                        assignedTeam: teams[i % teams.length],
-                        status: 'pending',
-                        notes: 'Demonstration job data',
-                        customerName: customer.name, // Pre-fill for easier debug
-                        productName: product.name    // Pre-fill for easier debug
-                    })
-                }
-
-                localStorage.setItem('orders_data', JSON.stringify(mockOrders))
-                localStorage.setItem('jobs_data', JSON.stringify(mockJobs))
-
-                // Trigger reload
-                window.location.reload()
+            } catch (error) {
+                console.error('Seeding error:', error)
             }
         }
     }, [])
