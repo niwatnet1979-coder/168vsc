@@ -52,13 +52,28 @@ export default function MobileJobsV2() {
                     console.log('Seeding mock data for demo...')
 
                     // Seed Customers
-                    if (!localStorage.getItem('customers_data')) {
+                    let seedCustomers = !localStorage.getItem('customers_data')
+                    if (!seedCustomers) {
+                        try {
+                            const c = JSON.parse(localStorage.getItem('customers_data'))
+                            if (!Array.isArray(c) || c.length === 0) seedCustomers = true
+                        } catch (e) { seedCustomers = true }
+                    }
+                    if (seedCustomers) {
                         localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
                     }
 
                     // Seed Products
-                    if (!localStorage.getItem('products_data_v3')) {
+                    let seedProducts = !localStorage.getItem('products_data_v3')
+                    if (!seedProducts) {
+                        try {
+                            const p = JSON.parse(localStorage.getItem('products_data_v3'))
+                            if (!Array.isArray(p) || p.length === 0) seedProducts = true
+                        } catch (e) { seedProducts = true }
+                    }
+                    if (seedProducts) {
                         localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+                        localStorage.setItem('products_data', JSON.stringify(MOCK_PRODUCTS_DATA)) // Sync both keys
                     }
 
                     // Seed Orders & Jobs
@@ -271,13 +286,17 @@ export default function MobileJobsV2() {
                             <p className="text-secondary-500 mb-4">ไม่มีงานในขณะนี้</p>
                             <button
                                 onClick={() => {
+                                    // Clear ALL related data to force a full re-seed
                                     localStorage.removeItem('jobs_data')
                                     localStorage.removeItem('orders_data')
+                                    localStorage.removeItem('customers_data')
+                                    localStorage.removeItem('products_data')
+                                    localStorage.removeItem('products_data_v3')
                                     window.location.reload()
                                 }}
                                 className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
                             >
-                                สร้างข้อมูลจำลอง (Demo Data)
+                                สร้างข้อมูลจำลองใหม่ (Reset Demo Data)
                             </button>
                         </div>
                     ) : (
