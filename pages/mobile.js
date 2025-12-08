@@ -47,7 +47,20 @@ export default function MobilePage() {
     const [selectedTeam, setSelectedTeam] = useState('ทั้งหมด')
     const [availableTeams, setAvailableTeams] = useState([])
 
-    // Auto-seed data if empty (Shared Logic)
+    // Get user role and team
+    const userRole = session?.user?.role
+    const userTeam = session?.user?.team
+
+    // Auto-select team
+    useEffect(() => {
+        if (userTeam) {
+            // Only set if availableTeams includes it? Or just set it.
+            // Ideally we wait for availableTeams, but for now just setting it works as select will default if missing or just show value
+            setSelectedTeam(userTeam)
+        }
+    }, [userTeam])
+
+    // Auto-seed data if empty (Copied from mobile-jobs-v2 to ensure standalone functionality)
     useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
@@ -65,9 +78,75 @@ export default function MobilePage() {
                 }
 
                 if (shouldSeed) {
-                    // Trigger seed if needed (Same as V2)
-                    // For brevity, we might just rely on V2 or redirect, but better to support standby seeding
-                    // ... (Seeding logic omitted for brevity, assuming V2 has done it or user clicks reset) ...
+                    console.log('Seeding mock data for mobile page...')
+                    const { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA } = require('../lib/mockData')
+
+                    // Seed Customers
+                    let seedCustomers = !localStorage.getItem('customers_data')
+                    if (!seedCustomers) {
+                        try {
+                            const c = JSON.parse(localStorage.getItem('customers_data'))
+                            if (!Array.isArray(c) || c.length === 0) seedCustomers = true
+                        } catch (e) { seedCustomers = true }
+                    }
+                    if (seedCustomers) {
+                        localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+                    }
+
+                    // Seed Products
+                    let seedProducts = !localStorage.getItem('products_data_v3')
+                    if (!seedProducts) {
+                        try {
+                            const p = JSON.parse(localStorage.getItem('products_data_v3'))
+                            if (!Array.isArray(p) || p.length === 0) seedProducts = true
+                        } catch (e) { seedProducts = true }
+                    }
+                    if (seedProducts) {
+                        localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+                        localStorage.setItem('products_data', JSON.stringify(MOCK_PRODUCTS_DATA))
+                    }
+
+                    // Seed Orders & Jobs
+                    const mockOrders = []
+                    const mockJobs = []
+                    const teams = ['ทีม A', 'ทีม B', 'ทีม C', 'ทีมช่าง 1']
+
+                    for (let i = 0; i < 5; i++) {
+                        const customer = MOCK_CUSTOMERS_DATA[i % MOCK_CUSTOMERS_DATA.length]
+                        const product = MOCK_PRODUCTS_DATA[i % MOCK_PRODUCTS_DATA.length]
+                        const orderId = `OD${20230001 + i}`
+                        const jobId = `JB${20230001 + i}`
+
+                        mockOrders.push({
+                            id: orderId,
+                            customerId: customer.id,
+                            orderDate: '2023-12-01',
+                            status: 'confirmed',
+                            items: [{ productId: product.id, quantity: 1, price: product.price }]
+                        })
+
+                        mockJobs.push({
+                            id: jobId,
+                            orderId: orderId,
+                            customerId: customer.id,
+                            productId: product.id,
+                            jobType: i % 2 === 0 ? 'ติดตั้ง' : 'ขนส่ง',
+                            jobDate: new Date().toISOString().split('T')[0],
+                            jobTime: `${9 + i}:00`,
+                            address: customer.addresses?.[0]?.address || 'กรุงเทพฯ',
+                            assignedTeam: teams[i % teams.length],
+                            status: 'pending',
+                            notes: 'Demonstration job data',
+                            customerName: customer.name,
+                            productName: product.name
+                        })
+                    }
+
+                    localStorage.setItem('orders_data', JSON.stringify(mockOrders))
+                    localStorage.setItem('jobs_data', JSON.stringify(mockJobs))
+
+                    // Reload jobs
+                    setTimeout(() => window.location.reload(), 100)
                 }
             } catch (error) {
                 console.error('Seeding error:', error)
