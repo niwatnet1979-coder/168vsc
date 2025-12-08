@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck
 } from 'lucide-react'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
@@ -1313,30 +1313,73 @@ export default function OrderForm() {
                                         )}
                                     </div>
 
-                                    {/* Stats (Dimensions, Material) & Description */}
-                                    <div className="text-xs text-secondary-500 space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Line 1: Complete Product Details */}
+                                    <div className="text-xs text-secondary-600 mb-1.5 leading-relaxed">
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            {/* Dimensions */}
                                             {(item.width || item.length || item.height) && (
-                                                <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-secondary-100">
+                                                <span className="bg-white px-1.5 py-0.5 rounded border border-secondary-100 flex items-center gap-1 whitespace-nowrap">
                                                     <Box size={10} />
-                                                    <span>{item.width || '-'}x{item.length || '-'}x{item.height || '-'}</span>
-                                                </div>
+                                                    {item.width || '-'}x{item.length || '-'}x{item.height || '-'}
+                                                </span>
                                             )}
-                                            {item.material && (
-                                                <span className="truncate max-w-[150px]">{item.material}</span>
-                                            )}
-                                            {(item.color || item.crystalColor) && (
-                                                <span className="flex items-center gap-1">
-                                                    <Palette size={10} /> {item.color} {item.crystalColor}
+
+                                            {/* Materials & Colors */}
+                                            {item.material && <span>{item.material}</span>}
+                                            {item.color && <span>{item.color}</span>}
+                                            {item.crystalColor && <span>{item.crystalColor}</span>}
+
+                                            {/* Light & Tech */}
+                                            {item.light && <span>{item.light}</span>}
+                                            {item.remote && <span>{item.remote}</span>}
+                                            {item.bulbType && <span>{item.bulbType}</span>}
+
+                                            {/* Description */}
+                                            {item.description && item.description !== item.name && (
+                                                <span className="text-secondary-400 border-l border-secondary-300 pl-2">
+                                                    {item.description.replace(/\n/g, ' ')}
                                                 </span>
                                             )}
                                         </div>
+                                    </div>
 
-                                        {item.description && (
-                                            <div className="text-secondary-400 truncate pr-4">
-                                                {item.description.replace(/\n/g, ' ')}
+                                    {/* Line 2: Installation Info (Bottom Red Box area) */}
+                                    <div className="text-xs text-secondary-500 bg-white/50 p-1.5 rounded-lg border border-secondary-100/50">
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            {/* Address */}
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <MapPin size={10} className="text-primary-500" />
+                                                <span className="truncate max-w-[200px]" title={item.subJob?.installAddress || jobInfo.installAddress}>
+                                                    {item.subJob?.installAddress || jobInfo.installAddress || 'ใช้ที่อยู่เดียวกับงานหลัก'}
+                                                </span>
                                             </div>
-                                        )}
+
+                                            {/* Distance */}
+                                            {(item.subJob?.distance || jobInfo.distance) && (
+                                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                                    <Map size={10} className="text-secondary-400" />
+                                                    <span>{item.subJob?.distance || jobInfo.distance} กม.</span>
+                                                </div>
+                                            )}
+
+                                            {/* Inspector */}
+                                            {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) && (
+                                                <div className="flex items-center gap-1 whitespace-nowrap text-secondary-600">
+                                                    <UserCheck size={10} />
+                                                    <span>{item.subJob?.inspector1?.name || jobInfo.inspector1?.name}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Completion Date */}
+                                            {(item.subJob?.completionDate || jobInfo.completionDate) && (
+                                                <div className="flex items-center gap-1 whitespace-nowrap text-success-600">
+                                                    <CheckCircle size={10} />
+                                                    <span>
+                                                        {new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
