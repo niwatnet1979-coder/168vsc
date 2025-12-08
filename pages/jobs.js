@@ -16,7 +16,8 @@ import {
     Wrench,
     Truck,
     Search,
-    User
+    User,
+    Menu
 } from 'lucide-react'
 
 export default function JobQueuePage() {
@@ -138,22 +139,34 @@ export default function JobQueuePage() {
     }
 
     return (
-        <AppLayout>
+        <AppLayout
+            renderHeader={({ setIsSidebarOpen }) => (
+                <header className="bg-white border-b border-secondary-200 px-4 py-3 sm:px-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-3">
+                                    <Briefcase className="text-primary-600" size={28} />
+                                    คิวงานติดตั้งและจัดส่ง
+                                </h1>
+                                <p className="text-sm text-secondary-500 mt-1">จัดการคิวงานทั้งหมด {jobs.length} รายการ</p>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            )}
+        >
             <Head>
                 <title>คิวงานติดตั้งและจัดส่ง - 168VSC System</title>
             </Head>
 
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
-                            <Briefcase className="text-primary-600" size={32} />
-                            คิวงานติดตั้งและจัดส่ง
-                        </h1>
-                        <p className="text-secondary-500 mt-1">จัดการคิวงานทั้งหมด {jobs.length} รายการ</p>
-                    </div>
-                </div>
+            <div className="space-y-6 pt-6">
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

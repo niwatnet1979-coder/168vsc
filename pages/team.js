@@ -20,7 +20,9 @@ import {
     Users,
     UserCheck,
     UserX,
-    RotateCcw
+    UserX,
+    RotateCcw,
+    Menu
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
@@ -129,38 +131,50 @@ export default function TeamPage() {
     }
 
     return (
-        <AppLayout>
+        <AppLayout
+            renderHeader={({ setIsSidebarOpen }) => (
+                <header className="bg-white border-b border-secondary-200 px-4 py-3 sm:px-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-3">
+                                    <Users className="text-primary-600" size={28} />
+                                    จัดการทีม (Team)
+                                </h1>
+                                <p className="text-sm text-secondary-500 mt-1">จัดการข้อมูลพนักงานและทีมงานทั้งหมด</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={handleResetData}
+                                className="flex-1 sm:flex-none justify-center px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                            >
+                                <RotateCcw size={18} />
+                                Reset Data
+                            </button>
+                            <button
+                                onClick={handleAdd}
+                                className="flex-1 sm:flex-none justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
+                            >
+                                <Plus size={18} />
+                                เพิ่มทีมงานใหม่
+                            </button>
+                        </div>
+                    </div>
+                </header>
+            )}
+        >
             <Head>
                 <title>จัดการทีม (Team) - 168VSC System</title>
             </Head>
 
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
-                            <Users className="text-primary-600" size={32} />
-                            จัดการทีม (Team)
-                        </h1>
-                        <p className="text-secondary-500 mt-1">จัดการข้อมูลพนักงานและทีมงานทั้งหมด</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={handleResetData}
-                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
-                        >
-                            <RotateCcw size={18} />
-                            Reset Data
-                        </button>
-                        <button
-                            onClick={handleAdd}
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
-                        >
-                            <Plus size={18} />
-                            เพิ่มทีมงานใหม่
-                        </button>
-                    </div>
-                </div>
+            <div className="space-y-6 pt-6">
 
                 {/* Tabs & Search */}
                 <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">

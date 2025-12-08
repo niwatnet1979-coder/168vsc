@@ -14,7 +14,8 @@ import {
     Clock,
     User,
     Phone,
-    UserCheck
+    UserCheck,
+    Menu
 } from 'lucide-react'
 import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA } from '../lib/mockData'
 
@@ -248,20 +249,23 @@ export default function MobileJobsV2() {
     }
 
     return (
-        <AppLayout>
-            <Head>
-                <title>Mobile Jobs - 168VSC System</title>
-            </Head>
-
-            <div className="space-y-4 pb-20">
-                {/* Header */}
-                <div className="sticky top-0 bg-secondary-50 z-10 pb-4">
+        <AppLayout
+            renderHeader={({ setIsSidebarOpen }) => (
+                <header className="bg-white border-b border-secondary-200 px-4 py-3 sticky top-0 z-10">
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h1 className="text-2xl font-bold text-secondary-900">Mobile Jobs</h1>
-                            <p className="text-sm text-secondary-500">
-                                {loading ? '...' : `${jobs.length} งาน`}
-                            </p>
+                        <div className="flex items-center gap-3">
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-xl font-bold text-secondary-900">Mobile Jobs</h1>
+                                <p className="text-xs text-secondary-500">
+                                    {loading ? '...' : `${jobs.length} งาน`}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Team Selector for Public/Admin */}
@@ -269,7 +273,7 @@ export default function MobileJobsV2() {
                             <select
                                 value={selectedTeam}
                                 onChange={(e) => setSelectedTeam(e.target.value)}
-                                className="text-sm border-secondary-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                                className="text-sm border-secondary-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 py-1.5 pl-2 pr-8"
                             >
                                 {availableTeams.map(team => (
                                     <option key={team} value={team}>{team}</option>
@@ -277,7 +281,14 @@ export default function MobileJobsV2() {
                             </select>
                         )}
                     </div>
-                </div>
+                </header>
+            )}
+        >
+            <Head>
+                <title>Mobile Jobs - 168VSC System</title>
+            </Head>
+
+            <div className="space-y-4 pb-20 pt-4 px-4 bg-secondary-50 min-h-screen">
 
                 {/* Job Cards */}
                 <div className="space-y-3">
