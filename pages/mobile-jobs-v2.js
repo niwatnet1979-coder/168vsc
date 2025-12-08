@@ -35,8 +35,20 @@ export default function MobileJobsV2() {
         if (typeof window !== 'undefined') {
             try {
                 const jobsData = localStorage.getItem('jobs_data')
-                const hasJobs = jobsData && JSON.parse(jobsData).length > 0
-                if (!hasJobs) {
+                // Force seed if null, or empty array, or invalid JSON
+                let shouldSeed = !jobsData
+                if (jobsData) {
+                    try {
+                        const parsed = JSON.parse(jobsData)
+                        if (!Array.isArray(parsed) || parsed.length === 0) {
+                            shouldSeed = true
+                        }
+                    } catch (e) {
+                        shouldSeed = true
+                    }
+                }
+
+                if (shouldSeed) {
                     console.log('Seeding mock data for demo...')
 
                     // Seed Customers
@@ -255,8 +267,18 @@ export default function MobileJobsV2() {
                 {/* Job Cards */}
                 <div className="space-y-3">
                     {jobs.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-secondary-500">ไม่มีงานในขณะนี้</p>
+                        <div className="text-center py-12 flex flex-col items-center justify-center">
+                            <p className="text-secondary-500 mb-4">ไม่มีงานในขณะนี้</p>
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('jobs_data')
+                                    localStorage.removeItem('orders_data')
+                                    window.location.reload()
+                                }}
+                                className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
+                            >
+                                สร้างข้อมูลจำลอง (Demo Data)
+                            </button>
                         </div>
                     ) : (
                         jobs.map((job) => {
