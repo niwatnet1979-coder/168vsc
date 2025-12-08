@@ -34,7 +34,8 @@ export default function MobileJobsV2() {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             try {
-                const hasJobs = localStorage.getItem('jobs_data')
+                const jobsData = localStorage.getItem('jobs_data')
+                const hasJobs = jobsData && JSON.parse(jobsData).length > 0
                 if (!hasJobs) {
                     console.log('Seeding mock data for demo...')
 
@@ -128,8 +129,9 @@ export default function MobileJobsV2() {
             const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
             setAvailableTeams(['ทั้งหมด', ...teams])
 
-            // Filter orphans first
-            let validJobs = allJobs.filter(job => orderIds.has(job.orderId))
+            // Filter orphans first - RELAXED for debugging/demo
+            // let validJobs = allJobs.filter(job => orderIds.has(job.orderId))
+            let validJobs = allJobs // Show all jobs even if order is missing
 
             // Filter by role/selection
             let filteredJobs = validJobs
