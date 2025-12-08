@@ -1315,11 +1315,11 @@ export default function OrderForm() {
                                         </div>
                                         <div className="text-right">
                                             <div className="font-bold text-primary-600 text-sm">
-                                                {currency(item.price * item.quantity)}
+                                                {currency((item.unitPrice || 0) * (item.qty || 0))}
                                             </div>
-                                            {item.quantity > 1 && (
+                                            {(item.qty > 1) && (
                                                 <div className="text-[10px] text-secondary-400">
-                                                    {item.quantity} x {currency(item.price)}
+                                                    {item.qty} x {currency(item.unitPrice || 0)}
                                                 </div>
                                             )}
                                         </div>
@@ -1349,8 +1349,8 @@ export default function OrderForm() {
                                         <div className="flex items-center gap-3 min-w-0 overflow-hidden">
                                             {/* Job Type Badge */}
                                             <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border ${item.subJob?.jobType === 'delivery'
-                                                    ? 'bg-orange-50 text-orange-700 border-orange-100'
-                                                    : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                ? 'bg-orange-50 text-orange-700 border-orange-100'
+                                                : 'bg-blue-50 text-blue-700 border-blue-100'
                                                 }`}>
                                                 {item.subJob?.jobType === 'delivery' ? <Truck size={10} /> : <Wrench size={10} />}
                                                 <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
