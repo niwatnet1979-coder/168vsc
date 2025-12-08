@@ -16,6 +16,7 @@ import {
     Phone,
     UserCheck
 } from 'lucide-react'
+import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA } from '../lib/mockData'
 
 export default function MobileJobsV2() {
     const router = useRouter()
@@ -28,6 +29,69 @@ export default function MobileJobsV2() {
     // Get user role and team
     const userRole = session?.user?.role
     const userTeam = session?.user?.team
+
+    // Auto-seed data for demo if empty
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const hasJobs = localStorage.getItem('jobs_data')
+            if (!hasJobs) {
+                console.log('Seeding mock data for demo...')
+
+                // Seed Customers
+                if (!localStorage.getItem('customers_data')) {
+                    localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
+                }
+
+                // Seed Products
+                if (!localStorage.getItem('products_data_v3')) {
+                    localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
+                }
+
+                // Seed Orders & Jobs
+                const mockOrders = []
+                const mockJobs = []
+                const teams = ['ทีม A', 'ทีม B', 'ทีม C', 'ทีมช่าง 1']
+
+                // Generate 5 mock jobs
+                for (let i = 0; i < 5; i++) {
+                    const customer = MOCK_CUSTOMERS_DATA[i % MOCK_CUSTOMERS_DATA.length]
+                    const product = MOCK_PRODUCTS_DATA[i % MOCK_PRODUCTS_DATA.length]
+                    const orderId = `OD${20230001 + i}`
+                    const jobId = `JB${20230001 + i}`
+
+                    mockOrders.push({
+                        id: orderId,
+                        customerId: customer.id,
+                        orderDate: '2023-12-01',
+                        status: 'confirmed',
+                        items: [{ productId: product.id, quantity: 1, price: product.price }]
+                    })
+
+                    mockJobs.push({
+                        id: jobId,
+                        orderId: orderId,
+                        customerId: customer.id,
+                        productId: product.id,
+                        jobType: i % 2 === 0 ? 'ติดตั้ง' : 'ขนส่ง',
+                        jobDate: new Date().toISOString().split('T')[0], // Today
+                        jobTime: `${9 + i}:00`,
+                        address: customer.addresses?.[0]?.address || 'กรุงเทพฯ',
+                        assignedTeam: teams[i % teams.length],
+                        status: 'pending',
+                        notes: 'Demonstration job data',
+                        customerName: customer.name, // Pre-fill for easier debug
+                        productName: product.name    // Pre-fill for easier debug
+                    })
+                }
+
+                localStorage.setItem('orders_data', JSON.stringify(mockOrders))
+                localStorage.setItem('jobs_data', JSON.stringify(mockJobs))
+
+                // Trigger reload
+                window.location.reload()
+            }
+        }
+    }, [])
 
     useEffect(() => {
         if (userTeam) {
