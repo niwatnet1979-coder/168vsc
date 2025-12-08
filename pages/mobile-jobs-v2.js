@@ -22,6 +22,8 @@ export default function MobileJobsV2() {
     const { data: session } = useSession()
     const [selectedTeam, setSelectedTeam] = useState('ทั้งหมด')
     const [availableTeams, setAvailableTeams] = useState([])
+    const [jobs, setJobs] = useState([])
+    const [loading, setLoading] = useState(true)
 
     // Get user role and team
     const userRole = session?.user?.role
@@ -295,4 +297,5 @@ export default function MobileJobsV2() {
         </AppLayout>
     )
 }
-```
+
+
