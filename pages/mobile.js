@@ -12,9 +12,11 @@ import {
     User,
     Phone,
     ChevronRight,
-    Search
+    Search,
+    Menu
 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import AppLayout from '../components/AppLayout'
 
 // Helper to format date
 const formatDate = (dateString, timeString) => {
@@ -226,47 +228,56 @@ export default function MobilePage() {
     )
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24 font-prompt">
+        <AppLayout
+            renderHeader={({ setIsSidebarOpen }) => (
+                <header className="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 pb-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="text-secondary-600 hover:bg-secondary-100 p-1 rounded-lg"
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <h1 className="text-xl font-bold text-secondary-900">คิวงานของฉัน</h1>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {/* Team Selector */}
+                            <select
+                                value={selectedTeam}
+                                onChange={(e) => setSelectedTeam(e.target.value)}
+                                className="text-xs border-secondary-300 rounded-lg py-1 pl-2 pr-6 shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                dir="rtl"
+                            >
+                                {availableTeams.map(team => (
+                                    <option key={team} value={team}>{team}</option>
+                                ))}
+                            </select>
+                            <div className="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center">
+                                <User size={18} className="text-secondary-600" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Search Bar (Visual Only) */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="ค้นหางาน, ลูกค้า..."
+                            className="w-full bg-secondary-50 border border-secondary-200 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        />
+                    </div>
+                </header>
+            )}
+        >
             <Head>
                 <title>คิวงานช่าง - 168VSC</title>
                 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
             </Head>
 
-            {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 pb-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-xl font-bold text-secondary-900">คิวงานของฉัน</h1>
-                    <div className="flex items-center gap-2">
-                        {/* Team Selector */}
-                        <select
-                            value={selectedTeam}
-                            onChange={(e) => setSelectedTeam(e.target.value)}
-                            className="text-xs border-secondary-300 rounded-lg py-1 pl-2 pr-6 shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white"
-                            dir="rtl"
-                        >
-                            {availableTeams.map(team => (
-                                <option key={team} value={team}>{team}</option>
-                            ))}
-                        </select>
-                        <div className="w-8 h-8 bg-secondary-100 rounded-full flex items-center justify-center">
-                            <User size={18} className="text-secondary-600" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Search Bar (Visual Only) */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="ค้นหางาน, ลูกค้า..."
-                        className="w-full bg-secondary-50 border border-secondary-200 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                </div>
-            </header>
-
-            {/* Content */}
-            <main className="p-4 space-y-4">
+            {/* Content Body - Removed main wrapper since AppLayout provides it, but added padding wrapper */}
+            <div className="p-4 space-y-4 pb-24">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-secondary-700">
                         {activeTab === 'previous' && 'งานที่ทำเสร็จแล้ว'}
@@ -314,7 +325,7 @@ export default function MobilePage() {
                         ))}
                     </div>
                 )}
-            </main>
+            </div>
 
             {/* Bottom Navigation */}
             <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-secondary-200 safe-area-bottom pb-safe z-20">
@@ -330,6 +341,6 @@ export default function MobilePage() {
                     padding-bottom: env(safe-area-inset-bottom);
                 }
             `}</style>
-        </div>
+        </AppLayout>
     )
 }
