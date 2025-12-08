@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette
 } from 'lucide-react'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import ProductModal from './ProductModal'
@@ -1276,115 +1276,125 @@ export default function OrderForm() {
                         {items.map((item, idx) => (
                             <div
                                 key={idx}
-                                className="flex flex-col bg-secondary-50 rounded-xl border border-secondary-200 overflow-hidden"
+                                className="flex bg-secondary-50 rounded-xl border border-secondary-200 overflow-hidden hover:bg-white hover:shadow-md transition-all cursor-pointer group"
+                                onClick={() => {
+                                    setEditingItemIndex(idx)
+                                    setShowOrderItemModal(true)
+                                }}
                             >
-                                <div className="p-3 flex items-start gap-3">
-                                    {/* Icon / Job Status */}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            if (jobInfo.jobType === 'separate') {
-                                                setCurrentSubJobItemIndex(idx)
-                                                setShowSubJobModal(true)
-                                            }
-                                        }}
-                                        disabled={jobInfo.jobType !== 'separate'}
-                                        className={`mt-1 w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${jobInfo.jobType === 'separate'
-                                            ? item.subJob
-                                                ? 'bg-white border-primary-200 text-primary-600 shadow-sm cursor-pointer hover:bg-primary-50'
-                                                : 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-pointer hover:bg-secondary-200'
-                                            : 'bg-secondary-50 border-secondary-200 text-secondary-400 cursor-default'
-                                            }`}
-                                    >
-                                        {jobInfo.jobType === 'separate' ? (
-                                            (item.subJob && item.subJob.jobType) ? (
-                                                item.subJob.jobType === 'delivery' ? <Truck size={20} /> : <Wrench size={20} />
-                                            ) : (
-                                                <HelpCircle size={20} />
-                                            )
-                                        ) : jobInfo.jobType === 'delivery' ? (
-                                            <Truck size={20} />
-                                        ) : (
-                                            <Wrench size={20} />
-                                        )}
-                                    </button>
+                                {/* LEFT: Product Image (Fixed Size) */}
+                                <div className="w-24 bg-white flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
+                                    {item.image ? (
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <Package size={28} className="text-secondary-300" />
+                                    )}
+                                    {/* Item Index Badge */}
+                                    <div className="absolute top-1 left-1 bg-secondary-900/10 text-secondary-600 text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-mono">
+                                        {idx + 1}
+                                    </div>
+                                </div>
 
-                                    {/* Content - Click to Edit */}
-                                    <div
-                                        className="flex-1 cursor-pointer"
-                                        onClick={() => {
-                                            setEditingItemIndex(idx)
-                                            setShowOrderItemModal(true)
-                                        }}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex flex-col gap-1.5 w-full">
-                                                {/* ROW 1: Name & Total Price */}
-                                                <div className="flex justify-between items-start gap-4">
-                                                    <div className="font-bold text-secondary-900 text-sm truncate">
-                                                        {item.name || 'รายการใหม่'}
-                                                    </div>
-                                                    <div className="font-bold text-primary-600 text-sm whitespace-nowrap">
-                                                        {currency((item.qty || 0) * (item.unitPrice || 0))}
-                                                    </div>
-                                                </div>
-
-                                                {/* ROW 2: Code | Qty | Description */}
-                                                <div className="flex items-center gap-2 text-xs text-secondary-600 h-6 overflow-hidden">
-                                                    {item.code && (
-                                                        <span className="font-mono text-secondary-500 bg-secondary-50 px-1.5 py-0.5 rounded flex-shrink-0 border border-secondary-100">
-                                                            {item.code}
-                                                        </span>
-                                                    )}
-                                                    <span className="bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded font-medium flex-shrink-0 border border-primary-100">
-                                                        {item.qty} x {currency(item.unitPrice)}
-                                                    </span>
-                                                    {item.description && (
-                                                        <>
-                                                            <span className="text-secondary-300 mx-1">|</span>
-                                                            <span className="truncate flex-1 text-secondary-500">
-                                                                {item.description.replace(/\n/g, ' ')}
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                {/* ROW 3: Job Info (Compact Horizontal) */}
-                                                {item.subJob && item.subJob.jobType && (
-                                                    <div className="flex items-center gap-2 text-xs text-secondary-600 bg-secondary-50/50 rounded-lg px-2 py-1.5 border border-secondary-100 w-full overflow-hidden">
-                                                        <div className="font-bold text-primary-700 flex items-center gap-1.5 flex-shrink-0 pr-2 border-r border-secondary-200">
-                                                            {item.subJob.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
-                                                            {item.subJob.jobType === 'delivery' ? 'งานจัดส่ง' : 'งานติดตั้ง'}
-                                                        </div>
-
-                                                        <div className="flex items-center gap-3 flex-1 overflow-hidden">
-                                                            {item.subJob.appointmentDate ? (
-                                                                <span className="flex items-center gap-1 whitespace-nowrap">
-                                                                    <Calendar size={10} className="text-secondary-400" />
-                                                                    {new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
-                                                                </span>
-                                                            ) : <span className="text-secondary-400 italic">ไม่ระบุวันที่</span>}
-
-                                                            {(item.subJob.team || item.subJob.installLocationName) && <span className="text-secondary-300">|</span>}
-
-                                                            {item.subJob.team && (
-                                                                <span className="flex items-center gap-1 whitespace-nowrap">
-                                                                    <User size={10} className="text-secondary-400" />
-                                                                    {item.subJob.team}
-                                                                </span>
-                                                            )}
-
-                                                            {item.subJob.installLocationName && (
-                                                                <span className="flex items-center gap-1 truncate">
-                                                                    <MapPin size={10} className="text-secondary-400" />
-                                                                    {item.subJob.installLocationName}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                {/* MIDDLE: Content Info */}
+                                <div className="flex-1 p-3 min-w-0 flex flex-col justify-center">
+                                    {/* Name & Code */}
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="font-bold text-secondary-900 text-sm truncate">
+                                            {item.name || 'รายการใหม่'}
                                         </div>
+                                        {item.code && (
+                                            <span className="font-mono text-[10px] text-secondary-500 bg-white border border-secondary-200 px-1.5 py-0.5 rounded flex-shrink-0">
+                                                {item.code}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Stats (Dimensions, Material) & Description */}
+                                    <div className="text-xs text-secondary-500 space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {(item.width || item.length || item.height) && (
+                                                <div className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-secondary-100">
+                                                    <Box size={10} />
+                                                    <span>{item.width || '-'}x{item.length || '-'}x{item.height || '-'}</span>
+                                                </div>
+                                            )}
+                                            {item.material && (
+                                                <span className="truncate max-w-[150px]">{item.material}</span>
+                                            )}
+                                            {(item.color || item.crystalColor) && (
+                                                <span className="flex items-center gap-1">
+                                                    <Palette size={10} /> {item.color} {item.crystalColor}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {item.description && (
+                                            <div className="text-secondary-400 truncate pr-4">
+                                                {item.description.replace(/\n/g, ' ')}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* RIGHT: Price & Job Info */}
+                                <div className="w-[180px] p-3 border-l border-secondary-100 bg-secondary-50/50 flex flex-col items-end justify-between">
+                                    {/* Top: Price */}
+                                    <div className="text-right">
+                                        <div className="font-bold text-primary-600 text-base">
+                                            {currency((item.qty || 0) * (item.unitPrice || 0))}
+                                        </div>
+                                        <div className="text-[10px] text-secondary-400 mt-0.5">
+                                            {item.qty} x {currency(item.unitPrice)}
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom: Job Info Button/Badge */}
+                                    <div className="mt-2 w-full flex justify-end">
+                                        {item.subJob ? (
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    if (jobInfo.jobType === 'separate') {
+                                                        setCurrentSubJobItemIndex(idx)
+                                                        setShowSubJobModal(true)
+                                                    }
+                                                }}
+                                                className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg border w-full justify-between transition-colors ${jobInfo.jobType !== 'separate'
+                                                    ? 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-not-allowed opacity-50'
+                                                    : 'bg-white border-primary-200 text-primary-700 shadow-sm hover:bg-primary-50 cursor-pointer'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-1.5 font-bold">
+                                                    {item.subJob.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
+                                                    <span>{item.subJob.jobType === 'delivery' ? 'จัดส่ง' : 'ติดตั้ง'}</span>
+                                                </div>
+                                                {item.subJob.appointmentDate ? (
+                                                    <span className="text-[10px]">{new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
+                                                ) : <span className="text-[10px] italic">ไม่ระบุ</span>}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    if (jobInfo.jobType === 'separate') {
+                                                        setCurrentSubJobItemIndex(idx)
+                                                        setShowSubJobModal(true)
+                                                    }
+                                                }}
+                                                disabled={jobInfo.jobType !== 'separate'}
+                                                className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border w-full transition-colors ${jobInfo.jobType !== 'separate'
+                                                    ? 'bg-secondary-100 border-secondary-200 text-secondary-300 cursor-default'
+                                                    : 'bg-white border-dashed border-secondary-300 text-secondary-400 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50'
+                                                    }`}
+                                            >
+                                                <Plus size={12} />
+                                                <span>ข้อมูลงาน</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
