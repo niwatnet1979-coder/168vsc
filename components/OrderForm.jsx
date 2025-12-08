@@ -1276,14 +1276,14 @@ export default function OrderForm() {
                         {items.map((item, idx) => (
                             <div
                                 key={idx}
-                                className="flex bg-secondary-50 rounded-xl border border-secondary-200 overflow-hidden hover:bg-white hover:shadow-md transition-all cursor-pointer group"
+                                className="group relative flex bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer"
                                 onClick={() => {
                                     setEditingItemIndex(idx)
                                     setShowOrderItemModal(true)
                                 }}
                             >
-                                {/* LEFT: Product Image (Fixed Size) */}
-                                <div className="w-24 bg-white flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
+                                {/* LEFT: Image (Fixed Aspect) */}
+                                <div className="w-24 bg-gray-50 flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
                                     {item.image ? (
                                         <img
                                             src={item.image}
@@ -1291,152 +1291,93 @@ export default function OrderForm() {
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (
-                                        <Package size={28} className="text-secondary-300" />
+                                        <Package size={24} className="text-secondary-300" />
                                     )}
-                                    {/* Item Index Badge */}
-                                    <div className="absolute top-1 left-1 bg-secondary-900/10 text-secondary-600 text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-mono">
+                                    {/* Index Badge */}
+                                    <div className="absolute top-1 left-1 bg-black/50 backdrop-blur text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-mono shadow-sm">
                                         {idx + 1}
                                     </div>
                                 </div>
 
-                                {/* MIDDLE: Content Info */}
-                                <div className="flex-1 p-3 min-w-0 flex flex-col justify-center">
-                                    {/* Name & Code */}
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="font-bold text-secondary-900 text-sm truncate">
-                                            {item.name || 'รายการใหม่'}
+                                {/* RIGHT: Content */}
+                                <div className="flex-1 min-w-0 flex flex-col">
+                                    {/* Top Row: Name, Code, Price */}
+                                    <div className="p-3 pb-1 flex justify-between items-start gap-2">
+                                        <div className="min-w-0">
+                                            <div className="font-bold text-secondary-900 text-sm truncate leading-tight">
+                                                {item.name || 'รายการใหม่'}
+                                            </div>
+                                            {item.code && (
+                                                <span className="inline-block mt-0.5 font-mono text-[10px] text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                    {item.code}
+                                                </span>
+                                            )}
                                         </div>
-                                        {item.code && (
-                                            <span className="font-mono text-[10px] text-secondary-500 bg-white border border-secondary-200 px-1.5 py-0.5 rounded flex-shrink-0">
-                                                {item.code}
+                                        <div className="text-right">
+                                            <div className="font-bold text-primary-600 text-sm">
+                                                {currency(item.price * item.quantity)}
+                                            </div>
+                                            {item.quantity > 1 && (
+                                                <div className="text-[10px] text-secondary-400">
+                                                    {item.quantity} x {currency(item.price)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Middle: Compact Specs */}
+                                    <div className="px-3 pb-2 text-xs text-secondary-600 flex flex-wrap gap-x-2 gap-y-1 items-center leading-none">
+                                        {/* Dimensions Tag */}
+                                        {(item.width || item.length || item.height) && (
+                                            <span className="flex items-center gap-1 bg-secondary-50 px-1.5 py-0.5 rounded text-[10px] border border-secondary-100 text-secondary-500">
+                                                <Box size={10} />
+                                                {item.width || '-'}x{item.length || '-'}x{item.height || '-'}
                                             </span>
                                         )}
+
+                                        {/* Material/Color Info */}
+                                        <span className="truncate max-w-[150px]">
+                                            {[item.material, item.color, item.light, item.bulbType]
+                                                .filter(Boolean)
+                                                .join(' • ')}
+                                        </span>
                                     </div>
 
-                                    {/* Line 1: Complete Product Details */}
-                                    <div className="text-xs text-secondary-600 mb-1.5 leading-relaxed">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            {/* Dimensions */}
-                                            {(item.width || item.length || item.height) && (
-                                                <span className="bg-white px-1.5 py-0.5 rounded border border-secondary-100 flex items-center gap-1 whitespace-nowrap">
-                                                    <Box size={10} />
-                                                    {item.width || '-'}x{item.length || '-'}x{item.height || '-'}
-                                                </span>
-                                            )}
-
-                                            {/* Materials & Colors */}
-                                            {item.material && <span>{item.material}</span>}
-                                            {item.color && <span>{item.color}</span>}
-                                            {item.crystalColor && <span>{item.crystalColor}</span>}
-
-                                            {/* Light & Tech */}
-                                            {item.light && <span>{item.light}</span>}
-                                            {item.remote && <span>{item.remote}</span>}
-                                            {item.bulbType && <span>{item.bulbType}</span>}
-
-                                            {/* Description */}
-                                            {item.description && item.description !== item.name && (
-                                                <span className="text-secondary-400 border-l border-secondary-300 pl-2">
-                                                    {item.description.replace(/\n/g, ' ')}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Line 2: Installation Info (Bottom Red Box area) */}
-                                    <div className="text-xs text-secondary-500 bg-white/50 p-1.5 rounded-lg border border-secondary-100/50">
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                            {/* Address */}
-                                            <div className="flex items-center gap-1.5 min-w-0">
-                                                <MapPin size={10} className="text-primary-500" />
-                                                <span className="truncate max-w-[200px]" title={item.subJob?.installAddress || jobInfo.installAddress}>
-                                                    {item.subJob?.installAddress || jobInfo.installAddress || 'ใช้ที่อยู่เดียวกับงานหลัก'}
-                                                </span>
+                                    {/* Bottom: Job Info (Full width tint) */}
+                                    <div className="mt-auto bg-secondary-50 border-t border-secondary-100 px-3 py-1.5 flex items-center justify-between gap-2">
+                                        {/* Job Details */}
+                                        <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+                                            {/* Job Type Badge */}
+                                            <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border ${item.subJob?.jobType === 'delivery'
+                                                    ? 'bg-orange-50 text-orange-700 border-orange-100'
+                                                    : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                }`}>
+                                                {item.subJob?.jobType === 'delivery' ? <Truck size={10} /> : <Wrench size={10} />}
+                                                <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
                                             </div>
 
-                                            {/* Distance */}
-                                            {(item.subJob?.distance || jobInfo.distance) && (
-                                                <div className="flex items-center gap-1 whitespace-nowrap">
-                                                    <Map size={10} className="text-secondary-400" />
-                                                    <span>{item.subJob?.distance || jobInfo.distance} กม.</span>
-                                                </div>
-                                            )}
-
-                                            {/* Inspector */}
-                                            {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) && (
-                                                <div className="flex items-center gap-1 whitespace-nowrap text-secondary-600">
-                                                    <UserCheck size={10} />
-                                                    <span>{item.subJob?.inspector1?.name || jobInfo.inspector1?.name}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Completion Date */}
-                                            {(item.subJob?.completionDate || jobInfo.completionDate) && (
-                                                <div className="flex items-center gap-1 whitespace-nowrap text-success-600">
+                                            {/* Completion Date (if available) */}
+                                            {item.subJob?.completionDate ? (
+                                                <div className="flex items-center gap-1 text-[10px] text-green-600 font-medium">
                                                     <CheckCircle size={10} />
-                                                    <span>
-                                                        {new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}
-                                                    </span>
+                                                    <span>{new Date(item.subJob.completionDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
                                                 </div>
+                                            ) : item.subJob?.appointmentDate ? (
+                                                <div className="flex items-center gap-1 text-[10px] text-secondary-500">
+                                                    <Calendar size={10} />
+                                                    <span>{new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-secondary-400">-</span>
                                             )}
                                         </div>
-                                    </div>
-                                </div>
 
-                                {/* RIGHT: Price & Job Info */}
-                                <div className="w-[180px] p-3 border-l border-secondary-100 bg-secondary-50/50 flex flex-col items-end justify-between">
-                                    {/* Top: Price */}
-                                    <div className="text-right">
-                                        <div className="font-bold text-primary-600 text-base">
-                                            {currency((item.qty || 0) * (item.unitPrice || 0))}
-                                        </div>
-                                        <div className="text-[10px] text-secondary-400 mt-0.5">
-                                            {item.qty} x {currency(item.unitPrice)}
-                                        </div>
-                                    </div>
-
-                                    {/* Bottom: Job Info Button/Badge */}
-                                    <div className="mt-2 w-full flex justify-end">
-                                        {item.subJob ? (
-                                            <div
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    if (jobInfo.jobType === 'separate') {
-                                                        setCurrentSubJobItemIndex(idx)
-                                                        setShowSubJobModal(true)
-                                                    }
-                                                }}
-                                                className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg border w-full justify-between transition-colors ${jobInfo.jobType !== 'separate'
-                                                    ? 'bg-secondary-100 border-secondary-200 text-secondary-400 cursor-not-allowed opacity-50'
-                                                    : 'bg-white border-primary-200 text-primary-700 shadow-sm hover:bg-primary-50 cursor-pointer'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-1.5 font-bold">
-                                                    {item.subJob.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
-                                                    <span>{item.subJob.jobType === 'delivery' ? 'จัดส่ง' : 'ติดตั้ง'}</span>
-                                                </div>
-                                                {item.subJob.appointmentDate ? (
-                                                    <span className="text-[10px]">{new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
-                                                ) : <span className="text-[10px] italic">ไม่ระบุ</span>}
+                                        {/* Inspector Name */}
+                                        {item.subJob?.inspector1?.name && (
+                                            <div className="flex items-center gap-1 text-[10px] text-secondary-600 truncate max-w-[80px]">
+                                                <UserCheck size={10} />
+                                                <span className="truncate">{item.subJob.inspector1.name}</span>
                                             </div>
-                                        ) : (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    if (jobInfo.jobType === 'separate') {
-                                                        setCurrentSubJobItemIndex(idx)
-                                                        setShowSubJobModal(true)
-                                                    }
-                                                }}
-                                                disabled={jobInfo.jobType !== 'separate'}
-                                                className={`flex items-center justify-center gap-1 text-xs px-2 py-1.5 rounded-lg border w-full transition-colors ${jobInfo.jobType !== 'separate'
-                                                    ? 'bg-secondary-100 border-secondary-200 text-secondary-300 cursor-default'
-                                                    : 'bg-white border-dashed border-secondary-300 text-secondary-400 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50'
-                                                    }`}
-                                            >
-                                                <Plus size={12} />
-                                                <span>ข้อมูลงาน</span>
-                                            </button>
                                         )}
                                     </div>
                                 </div>
