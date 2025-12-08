@@ -230,7 +230,7 @@ export default function MobilePage() {
     return (
         <AppLayout
             renderHeader={({ setIsSidebarOpen }) => (
-                <header className="bg-white shadow-sm sticky top-0 z-10 px-4 py-3 pb-4">
+                <header className="bg-white shadow-sm px-4 py-3 pb-4 z-10 relative">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <button
