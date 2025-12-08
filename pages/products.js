@@ -16,7 +16,8 @@ import {
     X,
     Image as ImageIcon,
     Package,
-    RotateCcw
+    RotateCcw,
+    Menu
 } from 'lucide-react'
 import ProductModal from '../components/ProductModal'
 
@@ -152,39 +153,51 @@ export default function ProductManagement() {
     }
 
     return (
-        <AppLayout>
+        <AppLayout
+            renderHeader={({ setIsSidebarOpen }) => (
+                <header className="bg-white border-b border-secondary-200 px-4 py-3 sm:px-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <Menu size={24} />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-3">
+                                    <Package className="text-primary-600" size={28} />
+                                    จัดการสินค้า
+                                </h1>
+                                <p className="text-sm text-secondary-500 mt-1">ทั้งหมด {filteredProducts.length} รายการ</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                            <button
+                                onClick={handleResetData}
+                                className="whitespace-nowrap px-3 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium text-sm"
+                            >
+                                <RotateCcw size={16} />
+                                Reset
+                            </button>
+                            <button onClick={handleExportExcel} className="whitespace-nowrap px-3 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium text-sm">
+                                <Download size={16} />
+                                Export
+                            </button>
+                            <button onClick={handleAdd} className="whitespace-nowrap px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30 text-sm">
+                                <Plus size={18} />
+                                เพิ่มสินค้าใหม่
+                            </button>
+                        </div>
+                    </div>
+                </header>
+            )}
+        >
             <Head>
                 <title>จัดการสินค้า - 168VSC System</title>
             </Head>
 
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
-                            <Package className="text-primary-600" size={32} />
-                            จัดการสินค้า
-                        </h1>
-                        <p className="text-secondary-500 mt-1">ทั้งหมด {filteredProducts.length} รายการ</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={handleResetData}
-                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
-                        >
-                            <RotateCcw size={18} />
-                            Reset Data
-                        </button>
-                        <button onClick={handleExportExcel} className="px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium">
-                            <Download size={18} />
-                            Export Excel
-                        </button>
-                        <button onClick={handleAdd} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30">
-                            <Plus size={18} />
-                            เพิ่มสินค้าใหม่
-                        </button>
-                    </div>
-                </div>
+            <div className="space-y-6 pt-6">
 
                 {/* Search and View Toggle */}
                 <div className="flex flex-col sm:flex-row gap-4">
