@@ -1,5 +1,6 @@
+import dynamic from 'next/dynamic'
 
-import OrderForm from '../components/OrderForm'
+const OrderForm = dynamic(() => import('../components/OrderFormClean'), { ssr: false })
 
 export default function OrderPage() {
     return (

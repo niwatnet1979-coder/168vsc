@@ -1549,6 +1549,7 @@ export default function OrderForm() {
                     />
 
                     {/* Payment Entry Modal */}
+                    {/* Payment Entry Modal */}
                     <PaymentEntryModal
                         isOpen={showPaymentModal}
                         onClose={() => {
@@ -1606,7 +1607,6 @@ export default function OrderForm() {
                     />
                 </div>
             </div>
-        </div>
-        </AppLayout >
+        </AppLayout>
     )
 }
