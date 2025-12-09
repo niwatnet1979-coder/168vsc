@@ -138,6 +138,7 @@ export default function OrderItemModal({
             height: product.height,
             material: product.material,
             color: product.color,
+            crystalColor: product.crystalColor,
             bulbType: product.bulbType,
             light: product.light,
             _searchTerm: product.name,

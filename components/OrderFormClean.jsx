@@ -1453,10 +1453,14 @@ export default function OrderForm() {
                                                         <span>{item.crystalColor}</span>
                                                     </div>
                                                 )}
-                                                {item.light && (
+                                                {(item.light || item.lightColor) && (
                                                     <div className="flex items-center gap-1" title="แสงไฟ">
                                                         <Zap size={12} />
-                                                        <span>{item.light}</span>
+                                                        <span>
+                                                            {item.light}
+                                                            {item.light && item.lightColor && ' '}
+                                                            {item.lightColor}
+                                                        </span>
                                                     </div>
                                                 )}
                                                 {item.remote && (
@@ -1492,20 +1496,20 @@ export default function OrderForm() {
                                                 setShowSubJobModal(true)
                                             }}
                                         >
-                                            {/* LEFT: Job Type, Team, Location */}
+                                            {/* LEFT: Job Info: Inspector, Location */}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                {/* Inspector (Swapped from Row 4) */}
                                                 <div className="flex items-center gap-1">
-                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
-                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Users size={12} />
-                                                    <span>{item.subJob?.team || '-'}</span>
+                                                    <UserCheck size={12} />
+                                                    <span>
+                                                        {item.subJob?.inspector1?.name || '-'}
+                                                        {item.subJob?.inspector1?.phone && ` (${item.subJob.inspector1.phone})`}
+                                                    </span>
                                                 </div>
 
                                                 {(item.subJob?.distance || item.subJob?.installLocationName) && (
                                                     <div className="flex items-center gap-1 text-secondary-500">
-                                                        {item.subJob?.distance && <span>{item.subJob.distance}</span>}
+                                                        {item.subJob?.distance && <span>{item.subJob.distance} Km</span>}
                                                         {item.subJob?.installLocationName && <span>{item.subJob.installLocationName}</span>}
                                                     </div>
                                                 )}
@@ -1517,7 +1521,35 @@ export default function OrderForm() {
                                                 </div>
                                             </div>
 
-                                            {/* RIGHT: Dates */}
+                                            {/* RIGHT: Dates - Moved to Row 4 */}
+                                        </div>
+
+                                        {/* Row 4: Job Type, Team, Details & Dates */}
+                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
+                                            {/* LEFT Group: Job Type, Team, Details */}
+                                            <div className="flex items-center gap-4">
+                                                {/* Job Type (Swapped from Row 3) */}
+                                                <div className="flex items-center gap-1">
+                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
+                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
+                                                </div>
+
+                                                {/* Team (Swapped from Row 3) */}
+                                                <div className="flex items-center gap-1">
+                                                    <Users size={12} />
+                                                    <span>{item.subJob?.team || '-'}</span>
+                                                </div>
+
+                                                {/* Details/Note */}
+                                                <div className="flex items-center gap-1 text-secondary-400">
+                                                    <FileText size={12} />
+                                                    <span className="truncate max-w-[300px]">
+                                                        {item.subJob?.description || '-'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT: Dates (Moved from Row 3) */}
                                             <div className="flex items-center gap-3 flex-shrink-0">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar size={12} />
@@ -1527,26 +1559,6 @@ export default function OrderForm() {
                                                     <CheckCircle size={12} />
                                                     <span>{item.subJob?.completionDate ? new Date(item.subJob.completionDate).toLocaleDateString('th-TH') : '-'}</span>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Row 4: Inspector & Details */}
-                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
-                                            {/* LEFT: Inspector */}
-                                            <div className="flex items-center gap-1">
-                                                <UserCheck size={12} />
-                                                <span>
-                                                    {item.subJob?.inspector1?.name || '-'}
-                                                    {item.subJob?.inspector1?.phone && ` (${item.subJob.inspector1.phone})`}
-                                                </span>
-                                            </div>
-
-                                            {/* RIGHT: Details/Note */}
-                                            <div className="flex items-center gap-1 flex-shrink-0 max-w-[40%]">
-                                                <FileText size={12} />
-                                                <span className="truncate">
-                                                    {item.subJob?.description || '-'}
-                                                </span>
                                             </div>
                                         </div>
 
