@@ -1414,59 +1414,68 @@ export default function OrderForm() {
                                             )}
                                         </div>
 
-                                        {/* Row 3: Job / Transport Info */}
-                                        <div className="flex flex-wrap items-center justify-between gap-y-1 pl-6 pt-2 border-t border-dashed border-secondary-200">
-                                            <div className="flex items-center gap-4">
-                                                {/* Job Type */}
-                                                <div className="flex items-center gap-1.5 text-secondary-700 font-medium">
-                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
-                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ประเภทงาน: ขนส่ง' : 'ประเภทงาน: ติดตั้ง'}</span>
+                                        <div
+                                            className="group/job -ml-2 pl-2 rounded-lg cursor-pointer hover:bg-secondary-50 transition-colors border border-transparent hover:border-secondary-200"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setCurrentSubJobItemIndex(idx)
+                                                setShowSubJobModal(true)
+                                            }}
+                                        >
+                                            {/* Row 3: Job / Transport Info */}
+                                            <div className="flex flex-wrap items-center justify-between gap-y-1 pt-2 border-t border-dashed border-secondary-200">
+                                                <div className="flex items-center gap-4">
+                                                    {/* Job Type */}
+                                                    <div className="flex items-center gap-1.5 text-secondary-700 font-medium">
+                                                        {item.subJob?.jobType === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                                        <span>{item.subJob?.jobType === 'delivery' ? 'ประเภทงาน: ขนส่ง' : 'ประเภทงาน: ติดตั้ง'}</span>
+                                                    </div>
+
+                                                    {/* Team */}
+                                                    <div className="flex items-center gap-1.5 text-secondary-600">
+                                                        <Users size={14} />
+                                                        <span>ทีม: {item.subJob?.team || '-'}</span>
+                                                    </div>
                                                 </div>
 
-                                                {/* Team */}
-                                                <div className="flex items-center gap-1.5 text-secondary-600">
-                                                    <Users size={14} />
-                                                    <span>ทีม: {item.subJob?.team || '-'}</span>
+                                                {/* Dates */}
+                                                <div className="flex items-center gap-4 text-secondary-600">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>วันที่นัดหมาย:</span>
+                                                        <span className="font-medium text-secondary-900">
+                                                            {item.subJob?.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH') : '-'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>วันที่สำเร็จ:</span>
+                                                        <span className="font-medium text-green-700">
+                                                            {item.subJob?.completionDate ? new Date(item.subJob.completionDate).toLocaleDateString('th-TH') : '-'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Dates */}
-                                            <div className="flex items-center gap-4 text-secondary-600">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span>วันที่นัดหมาย:</span>
-                                                    <span className="font-medium text-secondary-900">
-                                                        {item.subJob?.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH') : '-'}
+                                            {/* Row 4: Location / Inspector / Details */}
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-secondary-600">
+                                                {/* Location */}
+                                                <div className="flex items-center gap-1.5 max-w-[30%]">
+                                                    <MapPin size={14} className="flex-shrink-0" />
+                                                    <span className="truncate" title={item.subJob?.installLocationName || item.subJob?.installAddress}>
+                                                        สถานที่: {item.subJob?.installLocationName || (item.subJob?.installAddress ? 'ตามที่อยู่' : '-')}
                                                     </span>
                                                 </div>
+
+                                                {/* Inspector */}
                                                 <div className="flex items-center gap-1.5">
-                                                    <span>วันที่สำเร็จ:</span>
-                                                    <span className="font-medium text-green-700">
-                                                        {item.subJob?.completionDate ? new Date(item.subJob.completionDate).toLocaleDateString('th-TH') : '-'}
-                                                    </span>
+                                                    <UserCheck size={14} className="flex-shrink-0" />
+                                                    <span>ผู้ตรวจงาน: {item.subJob?.inspector1?.name || '-'}{item.subJob?.inspector1?.tel ? `, ${item.subJob.inspector1.tel}` : ''}</span>
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        {/* Row 4: Location / Inspector / Details */}
-                                        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pl-6 text-secondary-600">
-                                            {/* Location */}
-                                            <div className="flex items-center gap-1.5 max-w-[30%]">
-                                                <MapPin size={14} className="flex-shrink-0" />
-                                                <span className="truncate" title={item.subJob?.installLocationName || item.subJob?.installAddress}>
-                                                    สถานที่: {item.subJob?.installLocationName || (item.subJob?.installAddress ? 'ตามที่อยู่' : '-')}
-                                                </span>
-                                            </div>
-
-                                            {/* Inspector */}
-                                            <div className="flex items-center gap-1.5">
-                                                <UserCheck size={14} className="flex-shrink-0" />
-                                                <span>ผู้ตรวจงาน: {item.subJob?.inspector1?.name || '-'}{item.subJob?.inspector1?.tel ? `, ${item.subJob.inspector1.tel}` : ''}</span>
-                                            </div>
-
-                                            {/* Details */}
-                                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                                <FileText size={14} className="flex-shrink-0" />
-                                                <span className="truncate" title={item.subJob?.description}>รายละเอียด: {item.subJob?.description || '-'}</span>
+                                                {/* Details */}
+                                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                    <FileText size={14} className="flex-shrink-0" />
+                                                    <span className="truncate" title={item.subJob?.description}>รายละเอียด: {item.subJob?.description || '-'}</span>
+                                                </div>
                                             </div>
                                         </div>
 
