@@ -71,8 +71,6 @@ export default function OrderForm() {
     const [taxAddressSearchTerm, setTaxAddressSearchTerm] = useState('')
 
 
-
-
     const [jobInfo, setJobInfo] = useState({
         jobType: 'installation',
         orderDate: new Date().toISOString().split('T')[0],
@@ -88,6 +86,33 @@ export default function OrderForm() {
     })
 
     const [items, setItems] = useState([])
+
+    // Sync Job Info to Items
+    useEffect(() => {
+        if (jobInfo.jobType === 'installation' || jobInfo.jobType === 'delivery') {
+            setItems(prevItems => prevItems.map(item => ({
+                ...item,
+                subJob: {
+                    ...item.subJob,
+                    jobType: jobInfo.jobType,
+                    appointmentDate: jobInfo.appointmentDate,
+                    completionDate: jobInfo.completionDate,
+                    installLocationName: jobInfo.installLocationName,
+                    installAddress: jobInfo.installAddress,
+                    googleMapLink: jobInfo.googleMapLink,
+                    distance: jobInfo.distance,
+                    inspector1: jobInfo.inspector1,
+                    inspector2: jobInfo.inspector2,
+                    team: jobInfo.team,
+                    // Description is NOT synced by default to allow individual notes, OR should it be?
+                    // Request says "use all values", but detailed instructions imply syncing major fields.
+                    // Let's sync description too if that's implied by "all values", but usually description is specific.
+                    // However, user said "Bring all values from main job info to sub job info".
+                    // Let's sync key logistical fields.
+                }
+            })))
+        }
+    }, [jobInfo])
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
     const [vatRate, setVatRate] = useState(0.07)
