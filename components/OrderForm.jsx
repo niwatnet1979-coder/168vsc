@@ -1604,8 +1604,8 @@ export default function OrderForm() {
                         })()}
                         isEditing={editingPaymentIndex !== null}
                     />
-                </div >
-            </div >
+                </div>
+            </div>
         </div>
         </AppLayout >
     )
