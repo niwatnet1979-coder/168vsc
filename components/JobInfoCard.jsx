@@ -15,13 +15,16 @@ export default function JobInfoCard({
     onNoteChange,
     showCompletionDate = true,
     showHeader = true,
-    excludeJobTypes = []
+    excludeJobTypes = [],
+    readOnly = false
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
 
     const handleUpdate = (updates) => {
-        onChange({ ...data, ...updates })
+        if (!readOnly) {
+            onChange({ ...data, ...updates })
+        }
     }
 
     return (
@@ -41,10 +44,11 @@ export default function JobInfoCard({
                     <select
                         value={data.jobType}
                         onChange={e => handleUpdate({ jobType: e.target.value })}
-                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        disabled={readOnly}
+                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                     >
                         {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
-                        {!excludeJobTypes.includes('delivery') && <option value="delivery">ส่งของ (Delivery)</option>}
+                        {!excludeJobTypes.includes('delivery') && <option value="delivery">ขนส่ง (Delivery)</option>}
                         {!excludeJobTypes.includes('separate') && <option value="separate">งานแยก (Separate)</option>}
                     </select>
                 </div>
@@ -57,7 +61,8 @@ export default function JobInfoCard({
                                 <select
                                     value={data.team}
                                     onChange={(e) => handleUpdate({ team: e.target.value })}
-                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 appearance-none bg-white font-medium text-secondary-900"
+                                    disabled={readOnly}
+                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                 >
                                     <option value="">-- เลือกทีม --</option>
                                     {availableTeams.map((team, idx) => (
@@ -73,7 +78,8 @@ export default function JobInfoCard({
                                 type="datetime-local"
                                 value={data.appointmentDate || ''}
                                 onChange={e => handleUpdate({ appointmentDate: e.target.value })}
-                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px]"
+                                disabled={readOnly}
+                                className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                             />
                         </div>
                         {showCompletionDate && (
@@ -83,12 +89,13 @@ export default function JobInfoCard({
                                     type="datetime-local"
                                     value={data.completionDate || ''}
                                     onChange={e => handleUpdate({ completionDate: e.target.value })}
-                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px]"
+                                    disabled={readOnly}
+                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                         )}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
 
                             {/* Address Dropdown */}
                             {!data.installLocationName ? (
@@ -101,9 +108,10 @@ export default function JobInfoCard({
                                             setInstallLocationSearchTerm(e.target.value)
                                             setShowInstallLocationDropdown(true)
                                         }}
-                                        onFocus={() => setShowInstallLocationDropdown(true)}
+                                        onFocus={() => !readOnly && setShowInstallLocationDropdown(true)}
                                         onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
-                                        className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                        disabled={readOnly}
+                                        className={`w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                         placeholder="ค้นหาสถานที่ติดตั้ง..."
                                     />
                                     {showInstallLocationDropdown && (
@@ -143,6 +151,7 @@ export default function JobInfoCard({
                                                             <div
                                                                 key={index}
                                                                 onClick={async () => {
+                                                                    if (readOnly) return;
                                                                     // Calculate distance if not present
                                                                     let distanceStr = '';
                                                                     let finalMapLink = addr.googleMapsLink || '';
@@ -209,18 +218,18 @@ export default function JobInfoCard({
                             {/* Selected Address Details Card */}
                             {(data.installAddress || data.installLocationName) && (
                                 <AddressCard
-                                    title={data.installLocationName || 'สถานที่ติดตั้ง'}
+                                    title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
                                     address={data.installAddress}
                                     distance={data.distance}
                                     mapLink={data.googleMapLink}
-                                    onClear={() => handleUpdate({
+                                    onClear={!readOnly ? () => handleUpdate({
                                         installLocationName: '',
                                         installAddress: '',
                                         googleMapLink: '',
                                         distance: '',
                                         inspector1: { name: '', phone: '', address: '' },
                                         inspector2: { name: '', phone: '', address: '' }
-                                    })}
+                                    }) : undefined}
                                     variant="primary"
                                 />
                             )}
@@ -238,7 +247,7 @@ export default function JobInfoCard({
                                         } : { name: '', phone: '' }
                                     })
                                 }}
-
+                                isReadOnly={readOnly}
                             />
                         </div>
                     </>
@@ -253,7 +262,8 @@ export default function JobInfoCard({
                         rows={2}
                         value={note}
                         onChange={e => onNoteChange && onNoteChange(e.target.value)}
-                        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                        disabled={readOnly}
+                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                         placeholder="รายละเอียดเพิ่มเติม..."
                     />
                 </div>

@@ -132,6 +132,29 @@ export default function OrderForm() {
 
 
 
+    // Sync Sub Jobs with Main Job Info
+    useEffect(() => {
+        if (jobInfo.jobType !== 'separate') {
+            setItems(prevItems => prevItems.map(item => ({
+                ...item,
+                subJob: {
+                    ...item.subJob,
+                    jobType: jobInfo.jobType,
+                    appointmentDate: jobInfo.appointmentDate,
+                    completionDate: jobInfo.completionDate,
+                    installLocationName: jobInfo.installLocationName,
+                    installAddress: jobInfo.installAddress,
+                    googleMapLink: jobInfo.googleMapLink,
+                    distance: jobInfo.distance,
+                    inspector1: jobInfo.inspector1,
+                    inspector2: jobInfo.inspector2,
+                    team: jobInfo.team,
+                    description: jobInfo.note || item.subJob?.description // Sync note if available, else keep existing or empty
+                }
+            })))
+        }
+    }, [jobInfo])
+
     // Load Existing Order
     useEffect(() => {
         const generateOrderId = () => {
@@ -1056,7 +1079,7 @@ export default function OrderForm() {
                                                                         onClick={() => {
                                                                             setTaxInvoiceDeliveryAddress({
                                                                                 type: 'same',
-                                                                                label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง',
+                                                                                label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง',
                                                                                 address: jobInfo.installAddress || '',
                                                                                 googleMapLink: jobInfo.googleMapLink || '',
                                                                                 distance: jobInfo.distance || ''
@@ -1066,7 +1089,7 @@ export default function OrderForm() {
                                                                         }}
                                                                         className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                                     >
-                                                                        <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/จัดส่ง</div>
+                                                                        <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง</div>
                                                                         <div className="text-xs text-secondary-500 truncate">{jobInfo.installAddress}</div>
                                                                     </div>
                                                                 )}
@@ -1127,7 +1150,7 @@ export default function OrderForm() {
                                                 {/* Selected Address Display Card */}
                                                 {taxInvoiceDeliveryAddress.address && (
                                                     <AddressCard
-                                                        title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/จัดส่ง') : taxInvoiceDeliveryAddress.label}
+                                                        title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label}
                                                         address={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.installAddress : taxInvoiceDeliveryAddress.address}
                                                         mapLink={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.googleMapLink : taxInvoiceDeliveryAddress.googleMapLink}
                                                         distance={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.distance : taxInvoiceDeliveryAddress.distance}
@@ -1546,6 +1569,7 @@ export default function OrderForm() {
                         onSave={handleSaveSubJob}
                         customer={customer}
                         availableTeams={availableTeams}
+                        readOnly={jobInfo.jobType !== 'separate'}
                     />
 
                     {/* Payment Entry Modal */}
