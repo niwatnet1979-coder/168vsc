@@ -1497,7 +1497,7 @@ export default function OrderForm() {
                                     setEditingItemIndex(null)
                                     setShowOrderItemModal(true)
                                 }}
-                                className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-primary-300 rounded-xl hover:bg-primary-50 transition-colors"
+                                className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
                             >
                                 <Plus size={18} />
                                 เพิ่มรายการสินค้า
