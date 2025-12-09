@@ -18,7 +18,7 @@ export default function AddressCard({
     const iconColor = isPrimary ? 'text-primary-600' : 'text-success-600'
 
     return (
-        <Card useBase={false} className={`${bgColor} border ${borderColor} rounded-lg p-4 relative`} contentClassName="">
+        <Card useBase={false} className={`${bgColor} border ${borderColor} rounded-lg p-5 relative`} contentClassName="">
             <div className="flex items-start gap-3">
                 <div className={`p-2 bg-white rounded-lg border ${iconBgColor} mt-1`}>
                     <MapPin size={20} className={iconColor} />

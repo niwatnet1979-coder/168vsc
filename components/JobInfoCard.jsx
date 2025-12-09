@@ -16,7 +16,8 @@ export default function JobInfoCard({
     showCompletionDate = true,
     showHeader = true,
     excludeJobTypes = [],
-    readOnly = false
+    readOnly = false,
+    className = ''
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
@@ -29,7 +30,7 @@ export default function JobInfoCard({
 
     return (
         <Card
-            className={`flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : 'md:p-6'}`}
+            className={`flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : 'md:p-6'} ${className}`}
             title={showHeader ? (
                 <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                     <Wrench className="text-primary-600" />
@@ -38,9 +39,9 @@ export default function JobInfoCard({
             ) : null}
             contentClassName="flex-1"
         >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภทงาน</label>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">ประเภทงาน</label>
                     <select
                         value={data.jobType}
                         onChange={e => handleUpdate({ jobType: e.target.value })}
@@ -56,7 +57,7 @@ export default function JobInfoCard({
                 {data.jobType !== 'separate' && (
                     <>
                         <div>
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">ทีม</label>
+                            <label className="block text-sm font-medium text-secondary-700 mb-2">ทีม</label>
                             <div className="relative">
                                 <select
                                     value={data.team}
@@ -73,7 +74,7 @@ export default function JobInfoCard({
                             </div>
                         </div>
                         <div className="min-w-0">
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่นัดหมาย</label>
+                            <label className="block text-sm font-medium text-secondary-700 mb-2">วันที่นัดหมาย</label>
                             <input
                                 type="datetime-local"
                                 value={data.appointmentDate || ''}
@@ -84,7 +85,7 @@ export default function JobInfoCard({
                         </div>
                         {showCompletionDate && (
                             <div className="min-w-0">
-                                <label className="block text-sm font-medium text-secondary-700 mb-1">วันที่สำเร็จ</label>
+                                <label className="block text-sm font-medium text-secondary-700 mb-2">วันที่สำเร็จ</label>
                                 <input
                                     type="datetime-local"
                                     value={data.completionDate || ''}
@@ -95,7 +96,7 @@ export default function JobInfoCard({
                             </div>
                         )}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
+                            <label className="block text-sm font-medium text-secondary-700 mb-2">สถานที่ติดตั้ง / ขนส่ง</label>
 
                             {/* Address Dropdown */}
                             {!data.installLocationName ? (
@@ -256,14 +257,14 @@ export default function JobInfoCard({
 
             {/* Notes Section */}
             {data.jobType !== 'separate' && (
-                <div className="mt-4">
+                <div className="mt-6">
                     <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
                     <textarea
-                        rows={2}
+                        rows={1}
                         value={note}
                         onChange={e => onNoteChange && onNoteChange(e.target.value)}
                         disabled={readOnly}
-                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                        className={`w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                         placeholder="รายละเอียดเพิ่มเติม..."
                     />
                 </div>
