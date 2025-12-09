@@ -386,7 +386,9 @@ export default function OrderForm() {
             subcategory: product.subcategory,
             length: product.length, width: product.width, height: product.height,
             material: product.material, color: product.color,
+            crystalColor: product.crystalColor,
             bulbType: product.bulbType, light: product.light,
+            stock: product.stock,
             _searchTerm: undefined,
             showPopup: false
         }
@@ -1334,7 +1336,7 @@ export default function OrderForm() {
                             {items.map((item, idx) => (
                                 <div
                                     key={idx}
-                                    className="group relative flex bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer"
+                                    className="group relative flex bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer text-xs"
                                     onClick={() => {
                                         setEditingItemIndex(idx)
                                         setShowOrderItemModal(true)
@@ -1352,91 +1354,129 @@ export default function OrderForm() {
                                             <Package size={24} className="text-secondary-300" />
                                         )}
                                         {/* Index Badge */}
-                                        <div className="absolute top-1 left-1 bg-black/50 backdrop-blur text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-mono shadow-sm">
+                                        <div className="absolute top-1 left-1 bg-primary-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-sm z-10">
                                             {idx + 1}
                                         </div>
                                     </div>
 
                                     {/* RIGHT: Content */}
-                                    <div className="flex-1 min-w-0 flex flex-col">
-                                        {/* Top Row: Name, Code, Price */}
-                                        <div className="p-3 pb-1 flex justify-between items-start gap-2">
-                                            <div className="min-w-0">
-                                                <div className="font-bold text-secondary-900 text-sm truncate leading-tight">
-                                                    {item.name || 'รายการใหม่'}
-                                                </div>
-                                                {item.code && (
-                                                    <span className="inline-block mt-0.5 font-mono text-[10px] text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded">
-                                                        {item.code}
+                                    <div className="flex-1 min-w-0 p-3 space-y-2">
+                                        {/* Row 1: Header Info & Price */}
+                                        <div className="flex flex-wrap items-start justify-between gap-2">
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-secondary-700">
+                                                {/* Type/Category */}
+                                                <span className="font-semibold text-primary-700 bg-primary-50 px-1.5 rounded">{item.category || '-'}</span>
+
+                                                {/* Code */}
+                                                <span className="font-mono text-secondary-500 bg-secondary-100 px-1.5 rounded text-[10px]">{item.code || '-'}</span>
+
+                                                {/* Name */}
+                                                <span className="font-bold text-secondary-900">{item.name || 'สินค้าใหม่'}</span>
+
+                                                {/* Dimensions */}
+                                                {(item.width || item.length || item.height) && (
+                                                    <span className="text-secondary-600 font-medium">
+                                                        {item.width ? `W:${item.width} ` : ''}
+                                                        {item.length ? `L:${item.length} ` : ''}
+                                                        {item.height ? `H:${item.height}` : ''}
                                                     </span>
                                                 )}
+
+                                                {/* Stock */}
+                                                <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    Stock: {item.stock || 0}
+                                                </span>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="font-bold text-primary-600 text-sm">
+
+                                            {/* Price Breakdown */}
+                                            <div className="flex items-center gap-3 text-right">
+                                                <div className="text-secondary-500 font-medium">
+                                                    {currency(item.unitPrice || 0)}
+                                                </div>
+                                                <div className="text-secondary-400 text-[10px]">
+                                                    x {item.qty || 1}
+                                                </div>
+                                                <div className="font-bold text-primary-700">
                                                     {currency((item.unitPrice || 0) * (item.qty || 0))}
                                                 </div>
-                                                {(item.qty > 1) && (
-                                                    <div className="text-[10px] text-secondary-400">
-                                                        {item.qty} x {currency(item.unitPrice || 0)}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Middle: Compact Specs */}
-                                        <div className="px-3 pb-2 text-xs text-secondary-600 flex flex-wrap gap-x-2 gap-y-1 items-center leading-none">
-                                            {/* Dimensions Tag */}
-                                            {(item.width || item.length || item.height) && (
-                                                <span className="flex items-center gap-1 bg-secondary-50 px-1.5 py-0.5 rounded text-[10px] border border-secondary-100 text-secondary-500">
-                                                    <Box size={10} />
-                                                    {item.width || '-'}x{item.length || '-'}x{item.height || '-'}
+                                        {/* Row 2: Specs */}
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-secondary-600 pl-6">
+                                            {item.material && <span>วัสดุ: {item.material}</span>}
+                                            {item.color && <span>สี: {item.color}</span>}
+                                            {item.crystalColor && <span>สีคริสตัล: {item.crystalColor}</span>}
+                                            {item.description && (
+                                                <span className="text-secondary-500 truncate max-w-[300px]" title={item.description}>
+                                                    รายละเอียด: {item.description}
                                                 </span>
                                             )}
-
-                                            {/* Material/Color Info */}
-                                            <span className="truncate max-w-[150px]">
-                                                {[item.material, item.color, item.light, item.bulbType]
-                                                    .filter(Boolean)
-                                                    .join(' • ')}
-                                            </span>
                                         </div>
 
-                                        {/* Bottom: Job Info (Full width tint) */}
-                                        <div className="mt-auto bg-secondary-50 border-t border-secondary-100 px-3 py-1.5 flex items-center justify-between gap-2">
-                                            {/* Job Details */}
-                                            <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                                                {/* Job Type Badge */}
-                                                <div className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border ${item.subJob?.jobType === 'delivery'
-                                                    ? 'bg-orange-50 text-orange-700 border-orange-100'
-                                                    : 'bg-blue-50 text-blue-700 border-blue-100'
-                                                    }`}>
-                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={10} /> : <Wrench size={10} />}
-                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
+                                        {/* Row 3: Job / Transport Info */}
+                                        <div className="flex flex-wrap items-center justify-between gap-y-1 pl-6 pt-2 border-t border-dashed border-secondary-200">
+                                            <div className="flex items-center gap-4">
+                                                {/* Job Type */}
+                                                <div className="flex items-center gap-1.5 text-secondary-700 font-medium">
+                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ประเภทงาน: ขนส่ง' : 'ประเภทงาน: ติดตั้ง'}</span>
                                                 </div>
 
-                                                {/* Completion Date (if available) */}
-                                                {item.subJob?.completionDate ? (
-                                                    <div className="flex items-center gap-1 text-[10px] text-green-600 font-medium">
-                                                        <CheckCircle size={10} />
-                                                        <span>{new Date(item.subJob.completionDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
-                                                    </div>
-                                                ) : item.subJob?.appointmentDate ? (
-                                                    <div className="flex items-center gap-1 text-[10px] text-secondary-500">
-                                                        <Calendar size={10} />
-                                                        <span>{new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-[10px] text-secondary-400">-</span>
-                                                )}
+                                                {/* Team */}
+                                                <div className="flex items-center gap-1.5 text-secondary-600">
+                                                    <Users size={14} />
+                                                    <span>ทีม: {item.subJob?.team || '-'}</span>
+                                                </div>
                                             </div>
 
-                                            {/* Inspector Name */}
-                                            {item.subJob?.inspector1?.name && (
-                                                <div className="flex items-center gap-1 text-[10px] text-secondary-600 truncate max-w-[80px]">
-                                                    <UserCheck size={10} />
-                                                    <span className="truncate">{item.subJob.inspector1.name}</span>
+                                            {/* Dates */}
+                                            <div className="flex items-center gap-4 text-secondary-600">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>วันที่นัดหมาย:</span>
+                                                    <span className="font-medium text-secondary-900">
+                                                        {item.subJob?.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH') : '-'}
+                                                    </span>
                                                 </div>
-                                            )}
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>วันที่สำเร็จ:</span>
+                                                    <span className="font-medium text-green-700">
+                                                        {item.subJob?.completionDate ? new Date(item.subJob.completionDate).toLocaleDateString('th-TH') : '-'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Row 4: Location / Inspector / Details */}
+                                        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pl-6 text-secondary-600">
+                                            {/* Location */}
+                                            <div className="flex items-center gap-1.5 max-w-[30%]">
+                                                <MapPin size={14} className="flex-shrink-0" />
+                                                <span className="truncate" title={item.subJob?.installLocationName || item.subJob?.installAddress}>
+                                                    สถานที่: {item.subJob?.installLocationName || (item.subJob?.installAddress ? 'ตามที่อยู่' : '-')}
+                                                </span>
+                                            </div>
+
+                                            {/* Inspector */}
+                                            <div className="flex items-center gap-1.5">
+                                                <UserCheck size={14} className="flex-shrink-0" />
+                                                <span>ผู้ตรวจงาน: {item.subJob?.inspector1?.name || '-'}{item.subJob?.inspector1?.tel ? `, ${item.subJob.inspector1.tel}` : ''}</span>
+                                            </div>
+
+                                            {/* Details */}
+                                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                <FileText size={14} className="flex-shrink-0" />
+                                                <span className="truncate" title={item.subJob?.description}>รายละเอียด: {item.subJob?.description || '-'}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Row 5: Mock SNs */}
+                                        <div className="flex flex-wrap gap-2 pl-6 pt-1">
+                                            {['SN000000000001', 'SN000000000002', 'SN000000000003', 'SN000000000004'].map((sn, i) => (
+                                                <span key={i} className="text-[10px] font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                                                    {sn}
+                                                </span>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
