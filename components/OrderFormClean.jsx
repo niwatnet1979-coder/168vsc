@@ -779,7 +779,7 @@ export default function OrderForm() {
 
                                     {/* Customer Details Card */}
                                     {customer.id && (
-                                        <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-5">
+                                        <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-5 shadow-sm hover:shadow-md transition-shadow duration-200">
                                             {/* Header with Name */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
@@ -993,7 +993,7 @@ export default function OrderForm() {
 
                                     {/* Selected Details Card */}
                                     {taxInvoice.companyName && (
-                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-5">
+                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
                                             <div className="flex items-start gap-3">
                                                 <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
                                                     <FileText size={24} className="text-primary-600" />
@@ -1284,7 +1284,7 @@ export default function OrderForm() {
                                                             setEditingPaymentIndex(index)
                                                             setShowPaymentModal(true)
                                                         }}
-                                                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors"
+                                                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors shadow-sm hover:shadow-md duration-200"
                                                     >
                                                         <div className="flex items-center gap-2 text-sm">
                                                             <span className="font-medium">{payment.date || '-'}</span>
@@ -1324,7 +1324,7 @@ export default function OrderForm() {
 
 
                     {/* Product List Section */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                 <FileText className="text-primary-600" />

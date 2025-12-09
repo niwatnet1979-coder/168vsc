@@ -71,7 +71,7 @@ export default function ContactSelector({
                     )}
                 </div>
             ) : (
-                <div className={`${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 flex items-center justify-between`}>
+                <div className={`${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-200`}>
                     <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'} flex items-center justify-center`}>
                             <User size={16} />

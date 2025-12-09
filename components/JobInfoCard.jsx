@@ -46,7 +46,7 @@ export default function JobInfoCard({
                         value={data.jobType}
                         onChange={e => handleUpdate({ jobType: e.target.value })}
                         disabled={readOnly}
-                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                     >
                         {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
                         {!excludeJobTypes.includes('delivery') && <option value="delivery">ขนส่ง (Delivery)</option>}
@@ -63,7 +63,7 @@ export default function JobInfoCard({
                                     value={data.team}
                                     onChange={(e) => handleUpdate({ team: e.target.value })}
                                     disabled={readOnly}
-                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                 >
                                     <option value="">-- เลือกทีม --</option>
                                     {availableTeams.map((team, idx) => (
@@ -80,7 +80,7 @@ export default function JobInfoCard({
                                 value={data.appointmentDate || ''}
                                 onChange={e => handleUpdate({ appointmentDate: e.target.value })}
                                 disabled={readOnly}
-                                className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                             />
                         </div>
                         {showCompletionDate && (
@@ -91,7 +91,7 @@ export default function JobInfoCard({
                                     value={data.completionDate || ''}
                                     onChange={e => handleUpdate({ completionDate: e.target.value })}
                                     disabled={readOnly}
-                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                         )}
@@ -112,7 +112,7 @@ export default function JobInfoCard({
                                         onFocus={() => !readOnly && setShowInstallLocationDropdown(true)}
                                         onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
                                         disabled={readOnly}
-                                        className={`w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                        className={`w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                                         placeholder="ค้นหาสถานที่ติดตั้ง..."
                                     />
                                     {showInstallLocationDropdown && (
@@ -264,7 +264,7 @@ export default function JobInfoCard({
                         value={note}
                         onChange={e => onNoteChange && onNoteChange(e.target.value)}
                         disabled={readOnly}
-                        className={`w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                        className={`w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                         placeholder="รายละเอียดเพิ่มเติม..."
                     />
                 </div>

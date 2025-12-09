@@ -8,7 +8,7 @@ export default function Card({
   actions = null,
   useBase = true
 }) {
-  const base = 'bg-white p-4 rounded-xl border border-secondary-200 shadow-sm'
+  const base = 'bg-white p-4 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow duration-200'
 
   return (
     <div className={`${useBase ? base : ''} ${className}`.trim()}>
