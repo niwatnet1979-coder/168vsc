@@ -440,7 +440,7 @@ export default function TeamMemberModal({
                                         >
                                             {/* Main Click Area for Image/Camera */}
                                             <div
-                                                className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer p-4"
+                                                className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer p-4 relative"
                                                 onClick={() => document.getElementById(`file-img-${item.key}`).click()}
                                             >
                                                 <input
@@ -477,20 +477,20 @@ export default function TeamMemberModal({
                                                 />
 
                                                 {formData.photos?.[item.key] ? (
-                                                    <div className="relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden bg-gray-100">
+                                                    <div className="absolute inset-0 p-2 flex items-center justify-center bg-gray-50">
                                                         {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
-                                                            <div className="text-center p-2">
-                                                                <span className="block text-3xl mb-1">📄</span>
-                                                                <span className="text-xs font-medium text-gray-600 break-all">PDF Uploaded</span>
+                                                            <div className="text-center">
+                                                                <span className="block text-4xl mb-2">📄</span>
+                                                                <span className="text-xs font-medium text-gray-600 block px-2 break-all">PDF Uploaded</span>
                                                             </div>
                                                         ) : (
                                                             <img
                                                                 src={formData.photos[item.key]}
                                                                 alt={item.label}
-                                                                className="w-full h-full object-contain"
+                                                                className="max-w-full max-h-full object-contain"
                                                             />
                                                         )}
-                                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                                             <p className="text-white text-xs font-medium mb-1">แตะเพื่อเปลี่ยนรูป</p>
                                                         </div>
                                                     </div>
@@ -505,16 +505,14 @@ export default function TeamMemberModal({
                                                 )}
                                             </div>
 
-                                            {/* Separate PDF Button */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    document.getElementById(`file-pdf-${item.key}`).click()
-                                                }}
-                                                className="w-full py-2 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors rounded-b-lg flex items-center justify-center gap-1 bg-gray-50 from-transparent"
+                                            {/* Separate PDF Label (Acts as button) */}
+                                            <label
+                                                htmlFor={`file-pdf-${item.key}`}
+                                                className="w-full py-2 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors uppercase font-medium cursor-pointer flex items-center justify-center gap-1 bg-gray-50 z-20"
+                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 <span>📂 หรือเลือกไฟล์ PDF</span>
-                                            </button>
+                                            </label>
                                         </div>
                                     ))}
                                 </div>
