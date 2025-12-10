@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import Quotation from '../components/Quotation'
 import {
   FileText,
@@ -22,24 +23,23 @@ export default function QuotationPage() {
   const [selectedQuotation, setSelectedQuotation] = useState(null)
   const [showModal, setShowModal] = useState(false)
 
-  // Load data from LocalStorage and transform to Quotation format
+  // Load data from Supabase
   useEffect(() => {
-    const loadQuotations = () => {
-      const savedOrders = localStorage.getItem('orders_data')
-      if (savedOrders) {
-        const orders = JSON.parse(savedOrders)
+    const loadQuotations = async () => {
+      try {
+        const orders = await DataManager.getOrders()
 
         // Transform Orders to Quotations
         const transformedQuotations = orders.map(order => {
           // Calculate valid until date (15 days after order date)
-          const orderDate = new Date(order.date)
+          const orderDate = new Date(order.date || order.createdAt)
           const validUntilDate = new Date(orderDate)
           validUntilDate.setDate(validUntilDate.getDate() + 15)
 
           return {
             id: order.id, // Use Order ID as base
-            quotationNumber: `Q-${order.id.replace('ORD-', '')}`,
-            date: order.date,
+            quotationNumber: `Q-${order.id.replace('ORD-', '').replace('OD', '')}`,
+            date: orderDate.toISOString().split('T')[0],
             validUntil: validUntilDate.toISOString().split('T')[0],
             status: order.status === 'Completed' ? 'Approved' : 'Pending', // Map status
             total: order.total || 0,
@@ -84,6 +84,8 @@ export default function QuotationPage() {
         // Sort by date desc
         transformedQuotations.sort((a, b) => new Date(b.date) - new Date(a.date))
         setQuotations(transformedQuotations)
+      } catch (error) {
+        console.error("Error loading quotations:", error)
       }
     }
 
@@ -175,8 +177,8 @@ export default function QuotationPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${q.status === 'Approved' ? 'bg-success-100 text-success-700' :
-                            q.status === 'Pending' ? 'bg-warning-100 text-warning-700' :
-                              'bg-secondary-100 text-secondary-700'
+                          q.status === 'Pending' ? 'bg-warning-100 text-warning-700' :
+                            'bg-secondary-100 text-secondary-700'
                           }`}>
                           {q.status}
                         </span>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import {
     Search,
     DollarSign,
@@ -24,11 +25,11 @@ export default function FinancePage() {
     const itemsPerPage = 15
 
     // Load and calculate data from LocalStorage
+    // Load and calculate data from Supabase
     useEffect(() => {
-        const loadPayments = () => {
-            const savedOrders = localStorage.getItem('orders_data')
-            if (savedOrders) {
-                const orders = JSON.parse(savedOrders)
+        const loadPayments = async () => {
+            try {
+                const orders = await DataManager.getOrders()
 
                 const calculatedPayments = orders.map(order => {
                     const total = order.total || 0
@@ -43,13 +44,13 @@ export default function FinancePage() {
                     else if (paid > 0) status = 'Partial'
 
                     // Mock due date (e.g., 7 days after order date)
-                    const orderDate = new Date(order.date)
+                    const orderDate = new Date(order.date || order.createdAt)
                     const dueDate = new Date(orderDate)
                     dueDate.setDate(dueDate.getDate() + 7)
 
                     return {
                         id: order.id,
-                        date: order.date,
+                        date: orderDate.toISOString().split('T')[0],
                         customer: order.customer || 'Unknown',
                         total: total,
                         deposit: deposit,
@@ -64,12 +65,12 @@ export default function FinancePage() {
                 calculatedPayments.sort((a, b) => new Date(b.date) - new Date(a.date))
 
                 setPayments(calculatedPayments)
+            } catch (error) {
+                console.error("Error loading payments:", error)
             }
         }
 
         loadPayments()
-        window.addEventListener('storage', loadPayments)
-        return () => window.removeEventListener('storage', loadPayments)
     }, [])
 
     // Filter logic
@@ -214,10 +215,10 @@ export default function FinancePage() {
                             key={tab.id}
                             onClick={() => { setFilter(tab.id); setCurrentPage(1); }}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === tab.id
-                                    ? tab.id === 'overdue'
-                                        ? 'bg-danger-100 text-danger-700 shadow-sm'
-                                        : 'bg-primary-100 text-primary-700 shadow-sm'
-                                    : 'text-secondary-600 hover:bg-secondary-50'
+                                ? tab.id === 'overdue'
+                                    ? 'bg-danger-100 text-danger-700 shadow-sm'
+                                    : 'bg-primary-100 text-primary-700 shadow-sm'
+                                : 'text-secondary-600 hover:bg-secondary-50'
                                 }`}
                         >
                             <tab.icon size={16} />
