@@ -454,9 +454,7 @@ export default function OrderForm() {
             const newCustomerData = {
                 ...customer,
                 id: 'CUST' + Date.now(), // Temporary ID if needed by saveCustomer logic, or let it generate
-                // For now, let's use the same logic as handleAddNewCustomer
-                contact1: { name: '', phone: '' }, // Ensure structure
-                contact2: { name: '', phone: '' }
+                contacts: customer.contacts || [] // Ensure contacts array exists
             }
 
             const savedC = await DataManager.saveCustomer(newCustomerData)
