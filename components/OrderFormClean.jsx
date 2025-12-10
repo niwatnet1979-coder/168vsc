@@ -136,9 +136,14 @@ export default function OrderForm() {
             const products = await DataManager.getProducts()
             setProductsData(products)
 
-            // Load Teams (Legacy table removed)
-            // const teams = await DataManager.getTeams()
-            setAvailableTeams([])
+            // Load Teams from Settings
+            const options = await DataManager.getProductOptions()
+            if (options && options.teamNames) {
+                setAvailableTeams(options.teamNames)
+            } else {
+                // Fallback to default teams
+                setAvailableTeams(['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร'])
+            }
         }
         loadData()
     }, [])
