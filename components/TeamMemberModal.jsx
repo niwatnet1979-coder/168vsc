@@ -468,6 +468,14 @@ export default function TeamMemberModal({
                                                     onChange={async (e) => {
                                                         const file = e.target.files[0]
                                                         if (!file) return
+
+                                                        // Debug feedback
+                                                        const isPdf = file.type === 'application/pdf'
+                                                        if (!isPdf) {
+                                                            alert('กรุณาเลือกไฟล์ PDF เท่านั้น')
+                                                            return
+                                                        }
+
                                                         const url = await import('../lib/dataManager').then(m => m.DataManager.uploadFile(file, 'employees'))
                                                         if (url) {
                                                             const newPhotos = { ...(formData.photos || {}), [item.key]: url }
@@ -478,7 +486,7 @@ export default function TeamMemberModal({
 
                                                 {formData.photos?.[item.key] ? (
                                                     <div className="absolute inset-0 p-2 flex items-center justify-center bg-gray-50">
-                                                        {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
+                                                        {/\.pdf$/i.test(formData.photos[item.key]) || formData.photos[item.key].includes('.pdf') ? (
                                                             <div className="text-center">
                                                                 <span className="block text-4xl mb-2">📄</span>
                                                                 <span className="text-xs font-medium text-gray-600 block px-2 break-all">PDF Uploaded</span>
@@ -506,13 +514,15 @@ export default function TeamMemberModal({
                                             </div>
 
                                             {/* Separate PDF Label (Acts as button) */}
-                                            <label
-                                                htmlFor={`file-pdf-${item.key}`}
+                                            <div
                                                 className="w-full py-2 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors uppercase font-medium cursor-pointer flex items-center justify-center gap-1 bg-gray-50 z-20"
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    document.getElementById(`file-pdf-${item.key}`).click()
+                                                }}
                                             >
                                                 <span>📂 หรือเลือกไฟล์ PDF</span>
-                                            </label>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
