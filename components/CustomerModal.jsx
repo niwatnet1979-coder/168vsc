@@ -21,9 +21,9 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                 ...customer,
                 contact1: customer.contact1 || { name: '', phone: '' },
                 contact2: customer.contact2 || { name: '', phone: '' },
-                taxInvoices: customer.taxInvoices || [],
-                addresses: customer.addresses || [],
-                contacts: customer.contacts || []  // Initialize contacts
+                taxInvoices: (Array.isArray(customer.taxInvoices) ? customer.taxInvoices : []).filter(Boolean),
+                addresses: (Array.isArray(customer.addresses) ? customer.addresses : []).filter(Boolean),
+                contacts: (Array.isArray(customer.contacts) ? customer.contacts : []).filter(Boolean)
             })
         } else {
             // Reset for new customer
