@@ -149,24 +149,29 @@ export default function OrderForm() {
 
     // Sync Sub Jobs with Main Job Info
     useEffect(() => {
+        console.log('[DEBUG] Sync SubJob useEffect triggered', { jobType: jobInfo.jobType, itemsCount: items.length })
         if (jobInfo.jobType !== 'separate') {
-            setItems(prevItems => prevItems.map(item => ({
-                ...item,
-                subJob: {
-                    ...item.subJob,
-                    jobType: jobInfo.jobType,
-                    appointmentDate: jobInfo.appointmentDate,
-                    completionDate: jobInfo.completionDate,
-                    installLocationName: jobInfo.installLocationName,
-                    installAddress: jobInfo.installAddress,
-                    googleMapLink: jobInfo.googleMapLink,
-                    distance: jobInfo.distance,
-                    inspector1: jobInfo.inspector1,
-                    inspector2: jobInfo.inspector2,
-                    team: jobInfo.team,
-                    description: jobInfo.note || item.subJob?.description // Sync note if available, else keep existing or empty
-                }
-            })))
+            setItems(prevItems => {
+                const updated = prevItems.map(item => ({
+                    ...item,
+                    subJob: {
+                        ...item.subJob,
+                        jobType: jobInfo.jobType,
+                        appointmentDate: jobInfo.appointmentDate,
+                        completionDate: jobInfo.completionDate,
+                        installLocationName: jobInfo.installLocationName,
+                        installAddress: jobInfo.installAddress,
+                        googleMapLink: jobInfo.googleMapLink,
+                        distance: jobInfo.distance,
+                        inspector1: jobInfo.inspector1,
+                        inspector2: jobInfo.inspector2,
+                        team: jobInfo.team,
+                        description: jobInfo.note || item.subJob?.description // Sync note if available, else keep existing or empty
+                    }
+                }))
+                console.log('[DEBUG] Updated items with subJob:', updated)
+                return updated
+            })
         }
     }, [jobInfo])
 
