@@ -95,14 +95,16 @@ export default function TeamMemberModal({
         setCommissionRates(defaultCommissionRates)
     }, [])
 
-    // Update form data when member prop changes
+    // Update form data when member prop changes or modal opens
     useEffect(() => {
         if (member) {
             setFormData(member)
         } else {
             setFormData(initialFormState)
         }
-    }, [member])
+        // Reset to first tab when opening
+        setActiveTab('general')
+    }, [member, isOpen])
 
     const handleSave = () => {
         if (!formData.nickname) {
