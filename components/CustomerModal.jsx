@@ -40,11 +40,20 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
     if (!isOpen) return null
 
-    const handleSave = () => {
+    const [isSaving, setIsSaving] = useState(false)
+
+    const handleSave = async () => {
         if (!formData.name) return alert('กรุณาระบุชื่อลูกค้า')
         if (!formData.phone) return alert('กรุณาระบุเบอร์โทรศัพท์')
-        onSave(formData)
-        onClose()
+
+        setIsSaving(true)
+        try {
+            await onSave(formData)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const tabs = [
@@ -504,8 +513,10 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
 
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
-                    <button onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium">ยกเลิก</button>
-                    <button onClick={handleSave} className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-lg shadow-primary-500/30">บันทึก</button>
+                    <button onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium" disabled={isSaving}>ยกเลิก</button>
+                    <button onClick={handleSave} disabled={isSaving} className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-lg shadow-primary-500/30 flex items-center gap-2">
+                        {isSaving ? 'กำลังบันทึก...' : 'บันทึก'}
+                    </button>
                 </div>
             </div>
         </div >
