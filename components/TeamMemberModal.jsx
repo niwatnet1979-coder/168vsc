@@ -429,12 +429,59 @@ export default function TeamMemberModal({
                             <div className="md:col-span-2 space-y-4 pt-4 border-t border-secondary-200">
                                 <h4 className="font-medium text-secondary-900">เอกสารแนบ</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    {['รูปถ่ายหน้าตรง', 'รูปบัตรประชาชน', 'รูปทะเบียนบ้าน'].map((label, i) => (
-                                        <div key={i} className="border border-dashed border-secondary-300 rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:bg-secondary-50 transition-colors cursor-pointer">
-                                            <div className="p-2 bg-secondary-100 rounded-full text-secondary-500">
-                                                <ImageIcon size={20} />
-                                            </div>
-                                            <span className="text-sm text-secondary-600 text-center">{label}</span>
+                                    {[
+                                        { key: 'profile', label: 'รูปถ่ายหน้าตรง' },
+                                        { key: 'id_card', label: 'รูปบัตรประชาชน' },
+                                        { key: 'house_reg', label: 'รูปทะเบียนบ้าน' }
+                                    ].map((item) => (
+                                        <div
+                                            key={item.key}
+                                            className="relative border border-dashed border-secondary-300 rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:bg-secondary-50 transition-colors cursor-pointer overflow-hidden group"
+                                            onClick={() => document.getElementById(`file-${item.key}`).click()}
+                                        >
+                                            <input
+                                                type="file"
+                                                id={`file-${item.key}`}
+                                                className="hidden"
+                                                accept="image/*,application/pdf"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0]
+                                                    if (!file) return
+
+                                                    // Upload immediately
+                                                    const url = await import('../lib/dataManager').then(m => m.DataManager.uploadFile(file, 'employees'))
+                                                    if (url) {
+                                                        const newPhotos = { ...(formData.photos || {}), [item.key]: url }
+                                                        setFormData({ ...formData, photos: newPhotos })
+                                                    } else {
+                                                        alert('Upload failed. Please check if "employee-documents" bucket exists.')
+                                                    }
+                                                }}
+                                            />
+
+                                            {formData.photos?.[item.key] ? (
+                                                <div className="relative w-full h-32 flex items-center justify-center bg-gray-100 rounded-md">
+                                                    {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
+                                                        <span className="text-sm font-medium text-gray-600">PDF File</span>
+                                                    ) : (
+                                                        <img
+                                                            src={formData.photos[item.key]}
+                                                            alt={item.label}
+                                                            className="max-h-full max-w-full object-contain"
+                                                        />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <p className="text-white text-xs">คลิกเพื่อเปลี่ยน</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="p-2 bg-secondary-100 rounded-full text-secondary-500">
+                                                        <ImageIcon size={20} />
+                                                    </div>
+                                                    <span className="text-sm text-secondary-600 text-center">{item.label}</span>
+                                                </>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
