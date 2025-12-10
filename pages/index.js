@@ -1,24 +1,4 @@
-import { useState, useEffect } from 'react'
-import Head from 'next/head'
-import Link from 'next/link'
-import AppLayout from '../components/AppLayout'
-import {
-  ShoppingCart,
-  Package,
-  Users,
-  UserSquare2,
-  Wrench,
-  Banknote,
-  FileText,
-  BarChart3,
-  ArrowRight,
-  TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Menu
-} from 'lucide-react'
+import { DataManager } from '../lib/dataManager'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
@@ -37,48 +17,48 @@ export default function Home() {
   useEffect(() => {
     if (!mounted) return
 
-    const loadDashboardData = () => {
-      // 1. Load Orders
-      const savedOrders = localStorage.getItem('orders_data')
-      const orders = savedOrders ? JSON.parse(savedOrders) : []
+    const loadDashboardData = async () => {
+      try {
+        // 1. Load Orders from Supabase
+        const orders = await DataManager.getOrders()
 
-      // Calculate Today's Revenue
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const todayRevenue = orders
-        .filter(o => {
-          const d = new Date(o.date)
-          d.setHours(0, 0, 0, 0)
-          return d.getTime() === today.getTime()
+        // Calculate Today's Revenue
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const todayRevenue = orders
+          .filter(o => {
+            const d = new Date(o.date)
+            d.setHours(0, 0, 0, 0)
+            return d.getTime() === today.getTime()
+          })
+          .reduce((sum, o) => sum + (o.total || 0), 0)
+
+        // Calculate Pending Orders
+        const pendingOrdersCount = orders.filter(o => o.status === 'Processing' || o.status === 'Pending').length
+
+        // 2. Pending Jobs (derive from orders for now)
+        const pendingJobsCount = orders.filter(o =>
+          (o.status === 'Processing' || o.status === 'Pending')
+        ).length
+
+        // 3. Load Products for Low Stock
+        const products = await DataManager.getProducts()
+        const lowStockCount = products.filter(p => (p.stock || 0) < 10).length
+
+        setStats({
+          todayRevenue,
+          pendingOrders: pendingOrdersCount,
+          pendingJobs: pendingJobsCount,
+          lowStockProducts: lowStockCount
         })
-        .reduce((sum, o) => sum + (o.total || 0), 0)
 
-      // Calculate Pending Orders
-      const pendingOrdersCount = orders.filter(o => o.status === 'Processing' || o.status === 'Pending').length
+        // Recent Orders
+        const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10)
+        setRecentOrders(sortedOrders)
 
-      // 2. Load Jobs (from Orders for now, assuming jobs are derived)
-      // Or if we have jobs_data, use that. Let's assume jobs are orders with installation
-      const pendingJobsCount = orders.filter(o =>
-        (o.status === 'Processing' || o.status === 'Pending') &&
-        // Simple check if it might be a job (e.g. has installation items or just count all processing orders as jobs for simplicity)
-        true
-      ).length
-
-      // 3. Load Products for Low Stock
-      const savedProducts = localStorage.getItem('products_data')
-      const products = savedProducts ? JSON.parse(savedProducts) : []
-      const lowStockCount = products.filter(p => (p.stock || 0) < 10).length
-
-      setStats({
-        todayRevenue,
-        pendingOrders: pendingOrdersCount,
-        pendingJobs: pendingJobsCount,
-        lowStockProducts: lowStockCount
-      })
-
-      // Recent Orders
-      const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
-      setRecentOrders(sortedOrders)
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+      }
     }
 
     loadDashboardData()
