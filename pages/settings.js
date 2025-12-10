@@ -126,9 +126,9 @@ export default function SettingsPage() {
                 // Merge product options with defaults
                 setProductOptions(prev => ({
                     ...prev,
-                    ...settings.productOptions,
-                    productTypes: (settings.productOptions.productTypes && settings.productOptions.productTypes.length > 0)
-                        ? settings.productOptions.productTypes
+                    ...settings.systemOptions,
+                    productTypes: (settings.systemOptions.productTypes && settings.systemOptions.productTypes.length > 0)
+                        ? settings.systemOptions.productTypes
                         : defaultProductTypes
                 }))
             } else {
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                             shopTaxId: shopSettings.taxId,
                             vatRegistered: shopSettings.vatRegistered,
                             vatRate: shopSettings.vatRate,
-                            productOptions: parsedOptions
+                            systemOptions: parsedOptions
                         })
                         console.log('Migrated localStorage data to Supabase')
                     } catch (e) {
@@ -184,7 +184,7 @@ export default function SettingsPage() {
             shopTaxId: shopSettings.taxId,
             vatRegistered: shopSettings.vatRegistered,
             vatRate: shopSettings.vatRate,
-            productOptions
+            systemOptions: productOptions
         })
 
         if (success) {
