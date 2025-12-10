@@ -41,40 +41,6 @@ export default function CustomersPage() {
     // Loading state
     const [isLoading, setIsLoading] = useState(true)
 
-    // Customer Info
-    const [customerData, setCustomerData] = useState({
-        name: '',
-        phone: '',
-        email: '',
-        line: '',
-        facebook: '',
-        instagram: '',
-        mediaSource: '',
-        mediaSourceOther: '',
-        contact1: { name: '', phone: '' },
-        contact2: { name: '', phone: '' }
-    })
-
-    // Tax Invoice Info (Multiple)
-    const [taxInvoices, setTaxInvoices] = useState([
-        { id: 1, companyName: '', taxId: '', address: '' }
-    ])
-
-    // Installation/Delivery Addresses (Multiple)
-    const [addresses, setAddresses] = useState([
-        {
-            id: 1,
-            label: '',
-            address: '',
-            province: '',
-            postalCode: '',
-            inspector1: { name: '', phone: '' },
-            inspector2: { name: '', phone: '' },
-            googleMapsLink: '',
-            distance: null
-        }
-    ])
-
     // Helper function to extract coordinates from Google Maps link
     const extractCoordinatesFromLink = (link) => {
         if (!link) return null
@@ -146,62 +112,12 @@ export default function CustomersPage() {
     const handleAdd = () => {
         setEditingCustomer(null)
         setActiveTab('customer')
-        setCustomerData({
-            name: '',
-            phone: '',
-            email: '',
-            line: '',
-            facebook: '',
-            instagram: '',
-            mediaSource: '',
-            mediaSourceOther: '',
-            contact1: { name: '', phone: '' },
-            contact2: { name: '', phone: '' }
-        })
-        setTaxInvoices([{ id: 1, companyName: '', taxId: '', address: '' }])
-        setAddresses([{ id: 1, label: '', address: '', province: '', postalCode: '', contactName: '', contactPhone: '' }])
         setShowModal(true)
     }
 
     const handleEdit = (customer) => {
-        // We might need to fetch full details if the list only has summary.
-        // But let's assume the list has full details for now or we update DataManager.
         setEditingCustomer(customer)
         setActiveTab('customer')
-        setCustomerData({
-            name: customer.name || '',
-            phone: customer.phone || '',
-            email: customer.email || '',
-            line: customer.lineId || customer.line || '', // Handle both camelCase from app and potential DB mapping
-            facebook: customer.facebook || '',
-            instagram: customer.instagram || '',
-            mediaSource: customer.mediaSource || '',
-            mediaSourceOther: customer.mediaSourceOther || '',
-            contact1: customer.contact1 || { name: '', phone: '' },
-            contact2: customer.contact2 || { name: '', phone: '' }
-        })
-        setTaxInvoices(customer.taxInvoices && customer.taxInvoices.length > 0
-            ? customer.taxInvoices
-            : [{ id: 1, companyName: '', taxId: '', address: '' }])
-        setAddresses(customer.addresses && customer.addresses.length > 0
-            ? customer.addresses.map(addr => ({
-                ...addr,
-                inspector1: addr.inspector1 || { name: '', phone: '' },
-                inspector2: addr.inspector2 || { name: '', phone: '' },
-                googleMapsLink: addr.googleMapsLink || '',
-                distance: addr.distance || null
-            }))
-            : [{
-                id: 1,
-                label: '',
-                address: '',
-                province: '',
-                postalCode: '',
-                inspector1: { name: '', phone: '' },
-                inspector2: { name: '', phone: '' },
-                googleMapsLink: '',
-                distance: null
-            }])
         setShowModal(true)
     }
 
