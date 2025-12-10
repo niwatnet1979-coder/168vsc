@@ -174,13 +174,7 @@ export default function ProductManagement() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                            <button
-                                onClick={handleResetData}
-                                className="whitespace-nowrap px-3 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium text-sm"
-                            >
-                                <RotateCcw size={16} />
-                                Reset
-                            </button>
+
                             <button onClick={handleExportExcel} className="whitespace-nowrap px-3 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium text-sm">
                                 <Download size={16} />
                                 Export
