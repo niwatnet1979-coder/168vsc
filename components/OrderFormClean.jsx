@@ -387,7 +387,22 @@ export default function OrderForm() {
             bulbType: product.bulbType, light: product.light,
             stock: product.stock,
             _searchTerm: undefined,
-            showPopup: false
+            showPopup: false,
+            // Sync main job info to sub job if not separate
+            subJob: jobInfo.jobType !== 'separate' ? {
+                ...newItems[index].subJob,
+                jobType: jobInfo.jobType,
+                appointmentDate: jobInfo.appointmentDate,
+                completionDate: jobInfo.completionDate,
+                installLocationName: jobInfo.installLocationName,
+                installAddress: jobInfo.installAddress,
+                googleMapLink: jobInfo.googleMapLink,
+                distance: jobInfo.distance,
+                inspector1: jobInfo.inspector1,
+                inspector2: jobInfo.inspector2,
+                team: jobInfo.team,
+                description: jobInfo.note || newItems[index].subJob?.description
+            } : newItems[index].subJob
         }
         setItems(newItems)
     }
