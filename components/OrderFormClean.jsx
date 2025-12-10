@@ -136,9 +136,9 @@ export default function OrderForm() {
             const products = await DataManager.getProducts()
             setProductsData(products)
 
-            // Load Teams
-            const teams = await DataManager.getTeams()
-            setAvailableTeams(teams)
+            // Load Teams (Legacy table removed)
+            // const teams = await DataManager.getTeams()
+            setAvailableTeams([])
         }
         loadData()
     }, [])
