@@ -436,7 +436,7 @@ export default function TeamMemberModal({
                                     ].map((item) => (
                                         <div
                                             key={item.key}
-                                            className="relative border border-dashed border-secondary-300 rounded-lg p-0 flex flex-col items-center justify-center hover:bg-secondary-50 transition-colors group h-48 bg-white"
+                                            className="relative border border-dashed border-secondary-300 rounded-lg p-0 flex flex-col items-center justify-center hover:bg-secondary-50 transition-colors group h-48 bg-white overflow-hidden"
                                         >
                                             {/* Main Click Area for Image/Camera */}
                                             <div
