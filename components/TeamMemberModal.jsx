@@ -466,46 +466,34 @@ export default function TeamMemberModal({
                                                     ) : (
                                                         <img
                                                             src={formData.photos[item.key]}
-                                                            alt={item.label}
-                                                            className="max-h-full max-w-full object-contain"
-                                                        />
-                                                    )}
-                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <p className="text-white text-xs">คลิกเพื่อเปลี่ยน</p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="p-2 bg-secondary-100 rounded-full text-secondary-500">
-                                                        <ImageIcon size={20} />
-                                                    </div>
-                                                    <span className="text-sm text-secondary-600 text-center">{item.label}</span>
-                                                </>
-                                            )}
+                                                            className="w-full py-1 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors rounded-b-lg flex items-center justify-center gap-1"
+                                                        >
+                                                            <span>หรือ เลือกไฟล์ PDF</span>
+                                                        </button>
                                         </div>
-                                    ))}
-                                </div>
+                                            ))}
+                                        </div>
                             </div>
-                        </div>
+                            </div>
                     )}
-                </div>
+                        </div>
 
                 {/* Modal Footer */}
-                <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
-                    >
-                        ยกเลิก
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
-                    >
-                        บันทึกข้อมูล
-                    </button>
+                    <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
+                        >
+                            ยกเลิก
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                        >
+                            บันทึกข้อมูล
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    )
+            )
 }
