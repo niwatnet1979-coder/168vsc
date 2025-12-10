@@ -19,6 +19,7 @@ import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
 import Card from './Card'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
+import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import OrderItemModal from './OrderItemModal'
 
 function convertToEmbedUrl(url) {
