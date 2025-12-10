@@ -107,6 +107,25 @@ export default function CustomersPage() {
 
     useEffect(() => {
         loadCustomers()
+
+        // Subscribe to Realtime changes
+        const channel = DataManager.supabase
+            .channel('customers-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'customers' },
+                (payload) => {
+                    console.log('Realtime update:', payload)
+                    // Reload customers when any change occurs
+                    loadCustomers()
+                }
+            )
+            .subscribe()
+
+        // Cleanup subscription on unmount
+        return () => {
+            DataManager.supabase.removeChannel(channel)
+        }
     }, [])
 
     const handleAdd = () => {
