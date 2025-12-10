@@ -477,7 +477,7 @@ export default function TeamMemberModal({
                                                 />
 
                                                 {formData.photos?.[item.key] ? (
-                                                    <div className="relative w-full h-full flex items-center justify-center rounded-md overflow-hidden">
+                                                    <div className="relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden bg-gray-100">
                                                         {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
                                                             <div className="text-center p-2">
                                                                 <span className="block text-3xl mb-1">📄</span>
@@ -487,7 +487,7 @@ export default function TeamMemberModal({
                                                             <img
                                                                 src={formData.photos[item.key]}
                                                                 alt={item.label}
-                                                                className="max-h-full max-w-full object-contain"
+                                                                className="w-full h-full object-contain"
                                                             />
                                                         )}
                                                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
