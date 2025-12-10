@@ -308,7 +308,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                     <Plus size={16} /> เพิ่มข้อมูล
                                 </button>
                             </div>
-                            {formData.taxInvoices.map((tax, index) => (
+                            {Array.isArray(formData.taxInvoices) && formData.taxInvoices.map((tax, index) => (
                                 <div key={tax.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative mb-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="font-bold text-secondary-900">ข้อมูลชุดที่ {index + 1}</h4>
@@ -384,7 +384,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                                     <Plus size={16} /> เพิ่มที่อยู่
                                 </button>
                             </div>
-                            {formData.addresses.map((addr, index) => (
+                            {Array.isArray(formData.addresses) && formData.addresses.map((addr, index) => (
                                 <div key={addr.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative mb-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="font-bold text-secondary-900">ที่อยู่ #{index + 1}</h4>
@@ -450,7 +450,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
                     {/* Tab 4: Contacts */}
                     {activeTab === 'contacts' && (
                         <div className="p-6 space-y-4">
-                            {formData.contacts.map((contact, index) => (
+                            {Array.isArray(formData.contacts) && formData.contacts.map((contact, index) => (
                                 <div key={contact.id} className="p-6 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="font-bold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
