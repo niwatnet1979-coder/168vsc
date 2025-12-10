@@ -67,9 +67,7 @@ export default function TeamPage() {
 
     // Load data
     const loadTeams = async () => {
-        const teams = await DataManager.getTeams()
-        // Map data to match component state if necessary
-        // Assuming DataManager returns objects compatible or we map them here
+        const teams = await DataManager.getEmployees()
         setTeamMembers(teams)
     }
 
@@ -81,7 +79,7 @@ export default function TeamPage() {
         setEditingMember(null)
         setFormData({
             ...initialFormState,
-            eid: `EID${String(teamMembers.length + 1).padStart(4, '0')}`, // Simple local generation, potentially risky concurrency
+            eid: `EID${String(teamMembers.length + 1).padStart(4, '0')}`,
         })
         setShowModal(true)
     }
@@ -94,7 +92,7 @@ export default function TeamPage() {
 
     const handleDelete = async (id) => {
         if (confirm('คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?')) {
-            const success = await DataManager.deleteTeam(id)
+            const success = await DataManager.deleteEmployee(id)
             if (success) {
                 await loadTeams()
             } else {
@@ -104,18 +102,20 @@ export default function TeamPage() {
     }
 
     const handleSave = async (data) => {
-        // Clean up data before saving
-        const teamData = {
-            ...data,
-            id: editingMember ? editingMember.id : undefined // Let Supabase handle ID for new, or manage explicitly
+        let result = null
+
+        // Ensure ID is passed if editing
+        if (editingMember && editingMember.id) {
+            data.id = editingMember.id
         }
 
-        const savedTeam = await DataManager.saveTeam(teamData)
-        if (savedTeam) {
+        result = await DataManager.saveEmployee(data)
+
+        if (result) {
             await loadTeams()
             setShowModal(false)
         } else {
-            alert('บันทึกข้อมูลไม่สำเร็จ')
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล')
         }
     }
 
