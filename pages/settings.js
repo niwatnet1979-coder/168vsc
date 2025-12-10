@@ -107,73 +107,112 @@ export default function SettingsPage() {
 
     // Load settings and users
     useEffect(() => {
-        const savedSettings = localStorage.getItem('shop_settings')
-        if (savedSettings) {
-            setShopSettings(JSON.parse(savedSettings))
-        }
+        const loadSettings = async () => {
+            // Load from Supabase
+            const settings = await DataManager.getSettings()
 
-        // Load product options
-        const savedOptions = localStorage.getItem('product_options_data')
-        if (savedOptions) {
-            try {
-                const parsedOptions = JSON.parse(savedOptions)
-                // Ensure all keys exist (merge with defaults if missing)
+            if (settings) {
+                // Use Supabase data
+                setShopSettings({
+                    name: settings.shopName,
+                    address: settings.shopAddress,
+                    phone: settings.shopPhone,
+                    email: settings.shopEmail,
+                    taxId: settings.shopTaxId,
+                    vatRegistered: settings.vatRegistered,
+                    vatRate: settings.vatRate
+                })
+
+                // Merge product options with defaults
                 setProductOptions(prev => ({
                     ...prev,
-                    ...parsedOptions,
-                    // If productTypes is missing in saved data, use default
-                    productTypes: (parsedOptions.productTypes && parsedOptions.productTypes.length > 0)
-                        ? parsedOptions.productTypes
-                        : defaultProductTypes,
-                    // Ensure new fields exist if loading from old data
-                    materials: parsedOptions.materials || prev.materials,
-                    materialColors: parsedOptions.materialColors || prev.materialColors,
-                    crystalColors: parsedOptions.crystalColors || prev.crystalColors,
-                    // Employee Options Fallback
-                    teamNames: parsedOptions.teamNames || prev.teamNames,
-                    teamTypes: parsedOptions.teamTypes || prev.teamTypes,
-                    jobPositions: parsedOptions.jobPositions || prev.jobPositions,
-                    jobLevels: parsedOptions.jobLevels || prev.jobLevels,
-                    employmentTypes: parsedOptions.employmentTypes || prev.employmentTypes,
-                    paymentTypes: parsedOptions.paymentTypes || prev.paymentTypes,
-                    wageRates: parsedOptions.wageRates || prev.wageRates,
-                    commissionRates: parsedOptions.commissionRates || prev.commissionRates
+                    ...settings.productOptions,
+                    productTypes: (settings.productOptions.productTypes && settings.productOptions.productTypes.length > 0)
+                        ? settings.productOptions.productTypes
+                        : defaultProductTypes
                 }))
-            } catch (e) {
-                console.error('Error parsing product options:', e)
-                // Fallback to defaults including productTypes
-                setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
+            } else {
+                // Fallback to localStorage for migration
+                const savedSettings = localStorage.getItem('shop_settings')
+                if (savedSettings) {
+                    setShopSettings(JSON.parse(savedSettings))
+                }
+
+                const savedOptions = localStorage.getItem('product_options_data')
+                if (savedOptions) {
+                    try {
+                        const parsedOptions = JSON.parse(savedOptions)
+                        setProductOptions(prev => ({
+                            ...prev,
+                            ...parsedOptions,
+                            productTypes: (parsedOptions.productTypes && parsedOptions.productTypes.length > 0)
+                                ? parsedOptions.productTypes
+                                : defaultProductTypes
+                        }))
+
+                        // Auto-migrate to Supabase
+                        await DataManager.saveSettings({
+                            shopName: shopSettings.name,
+                            shopAddress: shopSettings.address,
+                            shopPhone: shopSettings.phone,
+                            shopEmail: shopSettings.email,
+                            shopTaxId: shopSettings.taxId,
+                            vatRegistered: shopSettings.vatRegistered,
+                            vatRate: shopSettings.vatRate,
+                            productOptions: parsedOptions
+                        })
+                        console.log('Migrated localStorage data to Supabase')
+                    } catch (e) {
+                        console.error('Error parsing product options:', e)
+                        setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
+                    }
+                } else {
+                    setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
+                }
             }
-        } else {
-            // First time load, set productTypes to defaults
-            setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
         }
+
+        loadSettings()
     }, [])
 
-    const handleSave = () => {
-        localStorage.setItem('shop_settings', JSON.stringify(shopSettings))
-        setIsSaved(true)
-        setTimeout(() => setIsSaved(false), 3000)
+    const handleSave = async () => {
+        const success = await DataManager.saveSettings({
+            shopName: shopSettings.name,
+            shopAddress: shopSettings.address,
+            shopPhone: shopSettings.phone,
+            shopEmail: shopSettings.email,
+            shopTaxId: shopSettings.taxId,
+            vatRegistered: shopSettings.vatRegistered,
+            vatRate: shopSettings.vatRate,
+            productOptions
+        })
+
+        if (success) {
+            setIsSaved(true)
+            setTimeout(() => setIsSaved(false), 3000)
+        } else {
+            alert('เกิดข้อผิดพลาดในการบันทึก')
+        }
     }
 
-    const handleAddOption = (type) => {
+    const handleAddOption = async (type) => {
         if (!newOption.trim()) return
         const updatedOptions = {
             ...productOptions,
             [type]: [...productOptions[type], newOption.trim()]
         }
         setProductOptions(updatedOptions)
-        localStorage.setItem('product_options_data', JSON.stringify(updatedOptions))
+        await DataManager.saveProductOptions(updatedOptions)
         setNewOption('')
         setActiveOptionType(null)
     }
 
-    const handleDeleteOption = (type, index) => {
+    const handleDeleteOption = async (type, index) => {
         if (confirm('ต้องการลบตัวเลือกนี้ใช่หรือไม่?')) {
             const updatedList = productOptions[type].filter((_, i) => i !== index)
             const updatedOptions = { ...productOptions, [type]: updatedList }
             setProductOptions(updatedOptions)
-            localStorage.setItem('product_options_data', JSON.stringify(updatedOptions))
+            await DataManager.saveProductOptions(updatedOptions)
         }
     }
 

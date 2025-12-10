@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power } from 'lucide-react'
 import { currency } from '../lib/utils'
+import { DataManager } from '../lib/dataManager'
 
 
 export default function OrderItemModal({
@@ -45,23 +45,25 @@ export default function OrderItemModal({
 
     useEffect(() => {
         if (isOpen) {
-            // Load Product Options
-            const savedOptions = localStorage.getItem('product_options_data')
-            if (savedOptions) {
-                try {
-                    setProductOptions(JSON.parse(savedOptions))
-                } catch (e) {
-                    console.error('Error parsing product options:', e)
+            // Load Product Options from Supabase
+            const loadOptions = async () => {
+                const options = await DataManager.getProductOptions()
+                if (options) {
+                    setProductOptions({
+                        lightColors: options.lightColors || ['warm', 'cool', 'white', '3แสง'],
+                        remotes: options.remotes || ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
+                        bulbTypes: options.bulbTypes || ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+                    })
+                } else {
+                    // Fallback to defaults
+                    setProductOptions({
+                        lightColors: ['warm', 'cool', 'white', '3แสง'],
+                        remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
+                        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+                    })
                 }
-            } else {
-                // Determine defaults if not set? Or just empty.
-                // Based on plan, we can set defaults if missing to match Settings page logic
-                setProductOptions({
-                    lightColors: ['warm', 'cool', 'white', '3แสง'],
-                    remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
-                    bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
-                })
             }
+            loadOptions()
 
             if (item) {
                 setFormData({

@@ -7,6 +7,7 @@ import {
     CreditCard,
     Image as ImageIcon
 } from 'lucide-react'
+import { DataManager } from '../lib/dataManager'
 
 export default function TeamMemberModal({
     isOpen,
@@ -67,10 +68,9 @@ export default function TeamMemberModal({
     const defaultCommissionRates = ['0%', '0.3%']
 
     useEffect(() => {
-        const savedOptions = localStorage.getItem('product_options_data')
-        if (savedOptions) {
-            try {
-                const options = JSON.parse(savedOptions)
+        const loadOptions = async () => {
+            const options = await DataManager.getProductOptions()
+            if (options) {
                 setTeamNames(options.teamNames && options.teamNames.length > 0 ? options.teamNames : defaultTeamNames)
                 setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
                 setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
@@ -79,20 +79,19 @@ export default function TeamMemberModal({
                 setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
                 setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
                 setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
-                return
-            } catch (e) {
-                console.error('Error loading options', e)
+            } else {
+                // Fallback to defaults
+                setTeamNames(defaultTeamNames)
+                setTeamTypes(defaultTeamTypes)
+                setJobPositions(defaultJobPositions)
+                setJobLevels(defaultJobLevels)
+                setEmploymentTypes(defaultEmploymentTypes)
+                setPaymentTypes(defaultPaymentTypes)
+                setWageRates(defaultWageRates)
+                setCommissionRates(defaultCommissionRates)
             }
         }
-        // Fallback
-        setTeamNames(defaultTeamNames)
-        setTeamTypes(defaultTeamTypes)
-        setJobPositions(defaultJobPositions)
-        setJobLevels(defaultJobLevels)
-        setEmploymentTypes(defaultEmploymentTypes)
-        setPaymentTypes(defaultPaymentTypes)
-        setWageRates(defaultWageRates)
-        setCommissionRates(defaultCommissionRates)
+        loadOptions()
     }, [])
 
     // Update form data when member prop changes or modal opens

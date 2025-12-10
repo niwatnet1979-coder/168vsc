@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { X, Camera } from 'lucide-react'
+import { DataManager } from '../lib/dataManager'
 
 export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
@@ -34,24 +35,22 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
     const defaultCrystalColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
 
     useEffect(() => {
-        const savedOptions = localStorage.getItem('product_options_data')
-        if (savedOptions) {
-            try {
-                const options = JSON.parse(savedOptions)
+        const loadOptions = async () => {
+            const options = await DataManager.getProductOptions()
+            if (options) {
                 setProductTypes(options.productTypes && options.productTypes.length > 0 ? options.productTypes : defaultProductTypes)
                 setMaterials(options.materials && options.materials.length > 0 ? options.materials : defaultMaterials)
                 setMaterialColors(options.materialColors && options.materialColors.length > 0 ? options.materialColors : defaultMaterialColors)
                 setCrystalColors(options.crystalColors && options.crystalColors.length > 0 ? options.crystalColors : defaultCrystalColors)
-                return
-            } catch (e) {
-                console.error('Error loading product options', e)
+            } else {
+                // Fallback to defaults
+                setProductTypes(defaultProductTypes)
+                setMaterials(defaultMaterials)
+                setMaterialColors(defaultMaterialColors)
+                setCrystalColors(defaultCrystalColors)
             }
         }
-        // Fallback to defaults if no saved options or parsing failed
-        setProductTypes(defaultProductTypes)
-        setMaterials(defaultMaterials)
-        setMaterialColors(defaultMaterialColors)
-        setCrystalColors(defaultCrystalColors)
+        loadOptions()
     }, [])
 
     useEffect(() => {
