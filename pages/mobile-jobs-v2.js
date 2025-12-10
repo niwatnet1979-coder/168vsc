@@ -17,8 +17,7 @@ import {
     UserCheck,
     Menu
 } from 'lucide-react'
-import { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA } from '../lib/mockData'
-import { seedDemoData } from '../lib/seeder'
+
 
 export default function MobileJobsV2() {
     const router = useRouter()
@@ -32,16 +31,25 @@ export default function MobileJobsV2() {
     const userRole = session?.user?.role
     const userTeam = session?.user?.team
 
-    // Auto-seed data for demo if empty
-    useEffect(() => {
-        if (seedDemoData()) {
-            setTimeout(() => loadJobs(), 100)
-        }
-    }, [])
+
 
     useEffect(() => {
         if (userTeam) {
-            setSelectedTeam(userTeam)
+            // Enhanced Normalization for Session Team Name
+            let normalizedTeam = userTeam
+            if (userTeam.toLowerCase().includes('team')) {
+                // Try to map "Team A" -> "ทีม A"
+                const parts = userTeam.split(' ')
+                if (parts.length > 1) {
+                    const suffix = parts.slice(1).join(' ')
+                    // Check if it's a single letter like A, B, C or numeric
+                    if (/^[A-Z0-9]+$/i.test(suffix)) {
+                        normalizedTeam = `ทีม ${suffix}`
+                    }
+                }
+            }
+            console.log(`MobileJobs: Session Team '${userTeam}' normalized to '${normalizedTeam}'`)
+            setSelectedTeam(normalizedTeam)
         }
     }, [userTeam])
 
@@ -49,23 +57,18 @@ export default function MobileJobsV2() {
         loadJobs()
     }, [selectedTeam, userRole]) // Reload when filter changes
 
-    const loadJobs = () => {
+    const loadJobs = async () => {
         try {
-            // Get fresh orders to check for orphans
-            const savedOrders = localStorage.getItem('orders_data')
-            const orders = savedOrders ? JSON.parse(savedOrders) : []
-            const orderIds = new Set(orders.map(o => o.id))
-
-            // Get all jobs from DataManager
-            const allJobs = DataManager.getJobs()
+            // Get all jobs from DataManager (Async)
+            const allJobs = await DataManager.getJobs()
 
             // Extract unique teams for filter
             const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
             setAvailableTeams(['ทั้งหมด', ...teams])
 
-            // Filter orphans first - RELAXED for debugging/demo
-            // let validJobs = allJobs.filter(job => orderIds.has(job.orderId))
-            let validJobs = allJobs // Show all jobs even if order is missing
+            // Relaxed: Show all jobs even if orderId is missing, to prevent data disappearance
+            // If we strictly filter `orderIds.has(job.orderId)`, jobs with broken links vanish.
+            const validJobs = allJobs
 
             // Filter by role/selection
             let filteredJobs = validJobs
@@ -74,8 +77,54 @@ export default function MobileJobsV2() {
             // But if NOT logged in (session is null), allow selecting any team
             // Admin or Public User (or V2 Logged In): Filter by selectedTeam
             // We removed strict userRole enforcement for V2 to prevent data disappearing if team doesn't match
-            if (selectedTeam !== 'ทั้งหมด') {
-                filteredJobs = validJobs.filter(job => job.assignedTeam === selectedTeam)
+            // Verify selectedTeam exists in available teams, otherwise fallback or normalize
+            let effectiveTeam = selectedTeam
+
+            // Normalize "Team X" to "ทีม X" if needed for matching
+            const normalizeTeam = (t) => {
+                if (!t) return 'ทั้งหมด'
+                if (t.toLowerCase() === 'team a') return 'ทีม A'
+                if (t.toLowerCase() === 'team b') return 'ทีม B'
+                if (t.toLowerCase() === 'team c') return 'ทีม C'
+                // Add logic to check if 'Team X' exists in availableTeams as 'ทีม X'
+                if (t.startsWith('Team ')) {
+                    const thaiName = 'ทีม ' + t.substring(5)
+                    if (teams.includes(thaiName)) return thaiName
+                }
+                return t
+            }
+
+            // If selectedTeam isn't in the list (and isn't All), try to normalize
+            if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
+                const normalized = normalizeTeam(effectiveTeam)
+                if (teams.includes(normalized)) {
+                    effectiveTeam = normalized
+                    // Update state so dropdown matches too (optional but good UI)
+                    if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
+                } else {
+                    // Fallback: Team not found even after normalization? Default to ALL
+                    effectiveTeam = 'ทั้งหมด'
+                    if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
+                }
+            } else {
+                // Check if it is "Team A" format but not in list?
+                if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
+                    // Safety net: If selectedTeam is some randome string not in teams, default to All
+                    effectiveTeam = 'ทั้งหมด'
+                    setSelectedTeam('ทั้งหมด')
+                }
+            }
+
+
+            // If not "All", filter by team
+            if (effectiveTeam !== 'ทั้งหมด') {
+                const teamFiltered = validJobs.filter(job => job.assignedTeam === effectiveTeam)
+                // Fallback: If strict filter returns NONE, but we have jobs, maybe the Team Name is still slightly off?
+                // Or maybe default to showing ALL if the specific team has no jobs? (User preference)
+                // For now, trust the filter.
+                filteredJobs = teamFiltered
+            } else {
+                filteredJobs = validJobs
             }
 
             // Sort by date (nearest first)
@@ -161,7 +210,7 @@ export default function MobileJobsV2() {
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
                             <button
-                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                className="p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
                                 onClick={() => setIsSidebarOpen(true)}
                             >
                                 <Menu size={24} />
@@ -201,20 +250,6 @@ export default function MobileJobsV2() {
                     {jobs.length === 0 ? (
                         <div className="text-center py-12 flex flex-col items-center justify-center">
                             <p className="text-secondary-500 mb-4">ไม่มีงานในขณะนี้</p>
-                            <button
-                                onClick={() => {
-                                    // Clear ALL related data to force a full re-seed
-                                    localStorage.removeItem('jobs_data')
-                                    localStorage.removeItem('orders_data')
-                                    localStorage.removeItem('customers_data')
-                                    localStorage.removeItem('products_data')
-                                    localStorage.removeItem('products_data_v3')
-                                    window.location.reload()
-                                }}
-                                className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
-                            >
-                                สร้างข้อมูลจำลองใหม่ (Reset Demo Data)
-                            </button>
                         </div>
                     ) : (
                         jobs.map((job) => {

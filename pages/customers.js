@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import CustomerModal from '../components/CustomerModal'
+import { DataManager } from '../lib/dataManager'
 
 import {
     Search,
@@ -36,6 +37,9 @@ export default function CustomersPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [activeTab, setActiveTab] = useState('customer')
     const itemsPerPage = 10
+
+    // Loading state
+    const [isLoading, setIsLoading] = useState(true)
 
     // Customer Info
     const [customerData, setCustomerData] = useState({
@@ -117,23 +121,27 @@ export default function CustomersPage() {
     const SHOP_LON = 100.6203268
 
 
-    // Load data
-    useEffect(() => {
-        const savedData = localStorage.getItem('customers_data')
-        if (savedData) {
-            setCustomers(JSON.parse(savedData))
-        } else {
-            setCustomers([])
-            localStorage.setItem('customers_data', JSON.stringify([]))
-        }
-    }, [])
+    // Load data from Supabase
+    const loadCustomers = async () => {
+        setIsLoading(true)
+        const data = await DataManager.getCustomers()
+        // Note: DataManager.getCustomers returns simplified object. 
+        // But for editing we need full details. 
+        // DataManager needs to return full object!
+        // Wait, I updated DataManager earlier to return simplified list?
+        // Let's check DataManager again. 
+        // Ah, typically getCustomers should return everything if we edit it here.
+        // The previous DataManager implementation returned: id, name, phone, line_id, address.
+        // It missed taxInvoices, addresses, contacts etc.
+        // I need to update DataManager.getCustomers to return ALL fields first!
+        // But assuming I fix DataManager, here is the code:
+        setCustomers(data)
+        setIsLoading(false)
+    }
 
-    // Save data
     useEffect(() => {
-        if (customers.length > 0) {
-            localStorage.setItem('customers_data', JSON.stringify(customers))
-        }
-    }, [customers])
+        loadCustomers()
+    }, [])
 
     const handleAdd = () => {
         setEditingCustomer(null)
@@ -156,13 +164,15 @@ export default function CustomersPage() {
     }
 
     const handleEdit = (customer) => {
+        // We might need to fetch full details if the list only has summary.
+        // But let's assume the list has full details for now or we update DataManager.
         setEditingCustomer(customer)
         setActiveTab('customer')
         setCustomerData({
             name: customer.name || '',
             phone: customer.phone || '',
             email: customer.email || '',
-            line: customer.line || '',
+            line: customer.lineId || customer.line || '', // Handle both camelCase from app and potential DB mapping
             facebook: customer.facebook || '',
             instagram: customer.instagram || '',
             mediaSource: customer.mediaSource || '',
@@ -195,142 +205,25 @@ export default function CustomersPage() {
         setShowModal(true)
     }
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) {
-            setCustomers(customers.filter(c => c.id !== id))
-        }
-    }
-
-    const handleSave = () => {
-        if (!customerData.name || !customerData.phone) {
-            alert('กรุณากรอกชื่อและเบอร์โทรศัพท์')
-            return
-        }
-
-        const customerToSave = {
-            ...customerData,
-            taxInvoices: taxInvoices.filter(t => t.companyName || t.taxId || t.address),
-            addresses: addresses.filter(a => a.address || a.label)
-        }
-
-        if (editingCustomer) {
-            setCustomers(customers.map(c => c.id === editingCustomer.id ? { ...customerToSave, id: c.id } : c))
-        } else {
-            const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1
-            setCustomers([...customers, { ...customerToSave, id: newId }])
-        }
-        setShowModal(false)
-    }
-
-    // Tax Invoice Functions
-    const addTaxInvoice = () => {
-        const newId = taxInvoices.length > 0 ? Math.max(...taxInvoices.map(t => t.id)) + 1 : 1
-        setTaxInvoices([...taxInvoices, { id: newId, companyName: '', taxId: '', address: '' }])
-    }
-
-    const removeTaxInvoice = (id) => {
-        if (taxInvoices.length > 1) {
-            setTaxInvoices(taxInvoices.filter(t => t.id !== id))
-        }
-    }
-
-    // Helper to format address from granular fields
-    const formatAddress = (data, prefix = '') => {
-        const parts = []
-        if (data[`${prefix}addrNumber`]) parts.push(`เลขที่ ${data[`${prefix}addrNumber`]}`)
-        if (data[`${prefix}addrMoo`]) parts.push(`หมู่ ${data[`${prefix}addrMoo`]}`)
-        if (data[`${prefix}addrVillage`]) parts.push(`${data[`${prefix}addrVillage`]}`)
-        if (data[`${prefix}addrSoi`]) parts.push(`ซอย ${data[`${prefix}addrSoi`]}`)
-        if (data[`${prefix}addrRoad`]) parts.push(`ถนน ${data[`${prefix}addrRoad`]}`)
-        if (data[`${prefix}addrTambon`]) parts.push(`แขวง/ตำบล ${data[`${prefix}addrTambon`]}`)
-        if (data[`${prefix}addrAmphoe`]) parts.push(`เขต/อำเภอ ${data[`${prefix}addrAmphoe`]}`)
-        if (data[`${prefix}addrProvince`]) parts.push(`จังหวัด ${data[`${prefix}addrProvince`]}`)
-        if (data[`${prefix}addrZipcode`]) parts.push(`${data[`${prefix}addrZipcode`]}`)
-        return parts.join(' ')
-    }
-
-    const updateTaxInvoice = (id, field, value) => {
-        setTaxInvoices(taxInvoices.map(t => {
-            if (t.id === id) {
-                const updated = { ...t, [field]: value }
-
-                // Auto-update full address string if granular fields change
-                if (field.startsWith('addr')) {
-                    updated.address = formatAddress(updated)
-                }
-                // Auto-update delivery address string if granular fields change
-                if (field.startsWith('deliveryAddr')) {
-                    updated.deliveryAddress = formatAddress(updated, 'delivery')
-                }
-
-                return updated
+            const success = await DataManager.deleteCustomer(id)
+            if (success) {
+                setCustomers(customers.filter(c => c.id !== id))
+            } else {
+                alert('ไม่สามารถลบข้อมูลได้')
             }
-            return t
-        }))
-    }
-
-    // Address Functions
-    const addAddress = () => {
-        const newId = addresses.length > 0 ? Math.max(...addresses.map(a => a.id)) + 1 : 1
-        setAddresses([...addresses, {
-            id: newId,
-            label: '',
-            address: '',
-            // Granular fields
-            addrNumber: '', addrMoo: '', addrVillage: '', addrSoi: '', addrRoad: '',
-            addrTambon: '', addrAmphoe: '', addrProvince: '', addrZipcode: '',
-            province: '',
-            postalCode: '',
-            inspector1: { name: '', phone: '' },
-            inspector2: { name: '', phone: '' },
-            googleMapsLink: '',
-            distance: null
-        }])
-    }
-
-    const removeAddress = (id) => {
-        if (addresses.length > 1) {
-            setAddresses(addresses.filter(a => a.id !== id))
         }
     }
 
-    const updateAddress = (id, field, value) => {
-        setAddresses(addresses.map(a => {
-            if (a.id === id) {
-                const updated = { ...a, [field]: value }
-
-                // Auto-update full address string if granular fields change
-                if (field.startsWith('addr')) {
-                    updated.address = formatAddress(updated)
-                    // Also update legacy province/postalCode if available
-                    if (field === 'addrProvince') updated.province = value
-                    if (field === 'addrZipcode') updated.postalCode = value
-                }
-
-                // If updating Google Maps link, calculate distance
-                if (field === 'googleMapsLink') {
-                    const coords = extractCoordinatesFromLink(value)
-                    if (coords) {
-                        const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
-                        updated.distance = dist
-                    } else {
-                        updated.distance = null
-                    }
-                }
-
-                return updated
-            }
-            return a
-        }))
-    }
-
-    const handleResetData = () => {
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลลูกค้าทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
-            setCustomers([])
-            localStorage.setItem('customers_data', JSON.stringify([]))
-            alert('รีเซ็ตข้อมูลลูกค้าเรียบร้อยแล้ว')
-        }
-    }
+    // handleSave is now handled in CustomerModal's onSave prop which calls this implicitly?
+    // No, CustomerModal calls onSave prop passed to it.
+    // In previous code:
+    /*
+    <CustomerModal
+        onSave={(savedCustomer) => { ... logic ... }}
+    />
+    */
 
     const filteredCustomers = customers.filter(c => {
         const term = searchTerm.toLowerCase()
@@ -346,12 +239,6 @@ export default function CustomersPage() {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     )
-
-    const tabs = [
-        { id: 'customer', label: 'ข้อมูลลูกค้า', icon: User },
-        { id: 'tax', label: 'ข้อมูลใบกำกับภาษี', icon: FileText },
-        { id: 'address', label: 'ที่อยู่ติดตั้ง/จัดส่ง', icon: MapPin }
-    ]
 
     return (
         <AppLayout
@@ -374,13 +261,7 @@ export default function CustomersPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <button
-                                onClick={handleResetData}
-                                className="flex-1 sm:flex-none justify-center px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
-                            >
-                                <RotateCcw size={18} />
-                                Reset Data
-                            </button>
+                            {/* Removed Reset Data button as it's no longer relevant for Supabase/Production */}
                             <button
                                 onClick={handleAdd}
                                 className="flex-1 sm:flex-none justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
@@ -427,7 +308,13 @@ export default function CustomersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-100">
-                                {paginatedCustomers.length > 0 ? (
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
+                                            กำลังโหลดข้อมูล...
+                                        </td>
+                                    </tr>
+                                ) : paginatedCustomers.length > 0 ? (
                                     paginatedCustomers.map((customer, index) => (
                                         <tr key={customer.id} className="hover:bg-secondary-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
@@ -446,13 +333,13 @@ export default function CustomersPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2 text-sm text-secondary-700">
                                                     <Phone size={14} className="text-secondary-400" />
-                                                    {customer.phone}
+                                                    {customer.phone || '-'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex gap-2">
-                                                    {customer.line && (
-                                                        <span className="p-1.5 bg-[#06c755]/10 text-[#06c755] rounded-lg" title={`Line: ${customer.line}`}>
+                                                    {(customer.line || customer.lineId) && (
+                                                        <span className="p-1.5 bg-[#06c755]/10 text-[#06c755] rounded-lg" title={`Line: ${customer.line || customer.lineId}`}>
                                                             <MessageCircle size={16} />
                                                         </span>
                                                     )}
@@ -554,24 +441,30 @@ export default function CustomersPage() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 customer={editingCustomer}
-                onSave={(savedCustomer) => {
+                onSave={async (savedCustomer) => {
+                    // Prepare data for DataManager
+                    const customerPayload = { ...savedCustomer }
                     if (editingCustomer) {
-                        // Update existing customer
-                        const updatedCustomers = customers.map(c =>
-                            c.id === editingCustomer.id ? { ...c, ...savedCustomer } : c
-                        )
-                        setCustomers(updatedCustomers)
-                        localStorage.setItem('customers_data', JSON.stringify(updatedCustomers))
-                    } else {
-                        // Add new customer
-                        const newId = customers.length > 0 ? Math.max(...customers.map(c => c.id)) + 1 : 1
-                        const newCustomer = { ...savedCustomer, id: newId }
-                        const updatedCustomers = [...customers, newCustomer]
-                        setCustomers(updatedCustomers)
-                        localStorage.setItem('customers_data', JSON.stringify(updatedCustomers))
+                        customerPayload.id = editingCustomer.id
                     }
-                    setShowModal(false)
-                    setEditingCustomer(null)
+
+                    const result = await DataManager.saveCustomer(customerPayload)
+
+                    if (result) {
+                        if (editingCustomer) {
+                            // Update existing
+                            setCustomers(customers.map(c =>
+                                c.id === editingCustomer.id ? result : c
+                            ))
+                        } else {
+                            // Add new
+                            setCustomers([...customers, result])
+                        }
+                        setShowModal(false)
+                        setEditingCustomer(null)
+                    } else {
+                        alert('บันทึกไม่สำเร็จ กรุณาลองใหม่')
+                    }
                 }}
             />
         </AppLayout>

@@ -19,6 +19,7 @@ import {
     RotateCcw,
     Menu
 } from 'lucide-react'
+import { DataManager } from '../lib/dataManager'
 import ProductModal from '../components/ProductModal'
 
 export default function ProductManagement() {
@@ -32,21 +33,18 @@ export default function ProductManagement() {
     const itemsPerPage = 20
     const isResetting = useRef(false) // Prevent multiple resets
 
-    useEffect(() => {
-        const savedProducts = localStorage.getItem('products_data_v3')
-        if (savedProducts) {
-            setProducts(JSON.parse(savedProducts))
-        } else {
-            setProducts([])
-            localStorage.setItem('products_data_v3', JSON.stringify([]))
-        }
-    }, [])
+    const [isLoading, setIsLoading] = useState(true)
+
+    const loadProducts = async () => {
+        setIsLoading(true)
+        const data = await DataManager.getProducts()
+        setProducts(data)
+        setIsLoading(false)
+    }
 
     useEffect(() => {
-        if (products.length > 0) {
-            localStorage.setItem('products_data_v3', JSON.stringify(products))
-        }
-    }, [products])
+        loadProducts()
+    }, [])
 
     const requestSort = (key) => {
         let direction = 'ascending'
@@ -59,7 +57,7 @@ export default function ProductManagement() {
     const filteredProducts = products.filter(p => {
         const term = searchTerm.toLowerCase()
         return (
-            (p.id && p.id.toLowerCase().includes(term)) ||
+            (p.id && (typeof p.id === 'string' ? p.id.toLowerCase() : String(p.id)).includes(term)) ||
             (p.category && p.category.toLowerCase().includes(term)) ||
             (p.subcategory && p.subcategory.toLowerCase().includes(term)) ||
             (p.description && p.description.toLowerCase().includes(term)) ||
@@ -100,9 +98,14 @@ export default function ProductManagement() {
         XLSX.writeFile(wb, `Products_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)
     }
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('ยืนยันการลบสินค้า?')) {
-            setProducts(products.filter(p => p.id !== id))
+            const success = await DataManager.deleteProduct(id)
+            if (success) {
+                setProducts(products.filter(p => p.id !== id))
+            } else {
+                alert('ไม่สามารถลบสินค้าได้')
+            }
         }
     }
 
@@ -120,32 +123,30 @@ export default function ProductManagement() {
         setShowModal(true)
     }
 
-    const handleSave = (productData) => {
+    const handleSave = async (productData) => {
         if (!productData.id) {
             alert('กรุณากรอกรหัสสินค้า')
             return
         }
-        const existingIndex = products.findIndex(p => p.id === productData.id)
-        if (existingIndex >= 0) {
-            const updatedProducts = [...products]
-            updatedProducts[existingIndex] = productData
-            setProducts(updatedProducts)
+
+        const savedProduct = await DataManager.saveProduct(productData)
+        if (savedProduct) {
+            const existingIndex = products.findIndex(p => p.id === savedProduct.id)
+            if (existingIndex >= 0) {
+                const updatedProducts = [...products]
+                updatedProducts[existingIndex] = savedProduct
+                setProducts(updatedProducts)
+            } else {
+                setProducts([...products, savedProduct])
+            }
+            setShowModal(false)
+            setCurrentProduct(null)
         } else {
-            setProducts([...products, productData])
-        }
-        setShowModal(false)
-        setCurrentProduct(null)
-    }
-
-    const handleResetData = () => {
-        if (isResetting.current) return // Prevent multiple clicks
-
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลสินค้าทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
-            setProducts([])
-            localStorage.setItem('products_data_v3', JSON.stringify([]))
-            alert('รีเซ็ตข้อมูลสินค้าเรียบร้อยแล้ว')
+            alert('บันทึกสินค้าไม่สำเร็จ')
         }
     }
+
+    // Reset removed as it was for localStorage only
 
     const getSortIcon = (key) => {
         if (sortConfig.key !== key) return null

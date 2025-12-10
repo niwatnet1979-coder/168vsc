@@ -36,10 +36,10 @@ export default function MobileJobDetail() {
     useEffect(() => {
         if (!id) return
 
-        const loadJobDetails = () => {
+        const loadJobDetails = async () => {
             try {
-                // Get job from jobs_data
-                const jobs = DataManager.getJobs()
+                // Get job from DataManager (Async) - now includes all joined data
+                const jobs = await DataManager.getJobs()
                 const foundJob = jobs.find(j => j.id === id)
 
                 if (!foundJob) {
@@ -48,22 +48,9 @@ export default function MobileJobDetail() {
                 }
 
                 setJob(foundJob)
-
-                // Get customer details
-                const customersData = localStorage.getItem('customers_data')
-                if (customersData) {
-                    const customers = JSON.parse(customersData)
-                    const foundCustomer = customers.find(c => c.id === foundJob.customerId)
-                    setCustomer(foundCustomer)
-                }
-
-                // Get product details
-                const productsData = localStorage.getItem('products_data_v3')
-                if (productsData) {
-                    const products = JSON.parse(productsData)
-                    const foundProduct = products.find(p => p.code === foundJob.productId)
-                    setProduct(foundProduct)
-                }
+                // Use joined data from DataManager
+                setCustomer(foundJob.customer)
+                setProduct(foundJob.product)
 
                 setLoading(false)
             } catch (error) {

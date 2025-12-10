@@ -31,11 +31,11 @@ export default function OrdersListPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
-    // Load data from LocalStorage on mount
-    const loadOrders = () => {
+    // Load data from Supabase on mount
+    const loadOrders = async () => {
         try {
             // Use DataManager to get normalized orders with joined customer data
-            const allOrders = DataManager.getOrders()
+            const allOrders = await DataManager.getOrders()
 
             // Sort by date (newest first)
             const sortedOrders = allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -75,34 +75,15 @@ export default function OrdersListPage() {
         completed: orders.filter(o => o.status === 'Completed').length
     }
 
-    const handleDeleteOrder = (orderId) => {
+    const handleDeleteOrder = async (orderId) => {
         if (confirm('คุณต้องการลบคำสั่งซื้อนี้ใช่หรือไม่?')) {
-            // Read fresh data from localStorage to ensure we don't overwrite with stale state
-            const currentData = localStorage.getItem('orders_data')
-            if (currentData) {
-                const currentOrders = JSON.parse(currentData)
-                const updatedOrders = currentOrders.filter(o => o.id !== orderId)
-
-                localStorage.setItem('orders_data', JSON.stringify(updatedOrders))
-                setOrders(updatedOrders) // Update state for immediate feedback
-
-                // Also delete associated jobs
-                const jobsData = localStorage.getItem('jobs_data')
-                if (jobsData) {
-                    const jobs = JSON.parse(jobsData)
-                    const updatedJobs = jobs.filter(j => j.orderId !== orderId)
-                    localStorage.setItem('jobs_data', JSON.stringify(updatedJobs))
-                }
+            const success = await DataManager.deleteOrder(orderId)
+            if (success) {
+                // Reload
+                loadOrders()
+            } else {
+                alert('เกิดข้อผิดพลาดในการลบ')
             }
-        }
-    }
-
-    const handleResetData = () => {
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลคำสั่งซื้อทั้งหมดหรือไม่?')) {
-            localStorage.removeItem('orders_data')
-            setOrders([])
-            // Use window.location.href for reliable navigation
-            window.location.href = '/'
         }
     }
 
@@ -153,13 +134,7 @@ export default function OrdersListPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <button
-                                onClick={handleResetData}
-                                className="flex-1 sm:flex-none justify-center px-3 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium text-sm"
-                            >
-                                <RotateCcw size={16} />
-                                Reset Data
-                            </button>
+
                             <button
                                 onClick={() => router.push('/order')}
                                 className="flex-1 sm:flex-none justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30 text-sm"

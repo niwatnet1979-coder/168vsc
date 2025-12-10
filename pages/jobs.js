@@ -27,20 +27,16 @@ export default function JobQueuePage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
-    // Load data from localStorage
+    // Load data from DataManager
     useEffect(() => {
-        const loadJobs = () => {
+        const loadJobs = async () => {
             try {
-                // Get fresh data
-                const savedOrders = localStorage.getItem('orders_data')
-                const orders = savedOrders ? JSON.parse(savedOrders) : []
-                const orderIds = new Set(orders.map(o => o.id))
+                // Use DataManager to get normalized jobs (Async)
+                const allJobs = await DataManager.getJobs()
 
-                // Use DataManager to get normalized jobs
-                const allJobs = DataManager.getJobs()
-
-                // Filter out orphaned jobs (jobs with no matching order)
-                const validJobs = allJobs.filter(job => orderIds.has(job.orderId))
+                // Filter out orphaned jobs if needed (though DB should enforce this)
+                // For now, assume DataManager returns valid data.
+                const validJobs = allJobs
 
                 const formattedJobs = validJobs.map(job => ({
                     uniqueId: job.id,
@@ -258,8 +254,7 @@ export default function JobQueuePage() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สินค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่นัดหมาย</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ทีมช่าง</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ผู้ตรวจงาน</th>
+
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
                                 </tr>
                             </thead>
@@ -306,15 +301,7 @@ export default function JobQueuePage() {
                                                     }) : '-'}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-sm text-secondary-600">
-                                                    <User size={14} className="text-secondary-400" />
-                                                    {job.team}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-secondary-600">{job.inspector}</div>
-                                            </td>
+
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
                                                     {job.status}
@@ -324,7 +311,7 @@ export default function JobQueuePage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="6" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <Briefcase size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคิวงาน</p>

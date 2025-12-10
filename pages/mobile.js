@@ -51,119 +51,37 @@ export default function MobilePage() {
     const userRole = session?.user?.role
     const userTeam = session?.user?.team
 
-    // Auto-select team
+    // Auto-select team with Normalization
     useEffect(() => {
         if (userTeam) {
-            // Only set if availableTeams includes it? Or just set it.
-            // Ideally we wait for availableTeams, but for now just setting it works as select will default if missing or just show value
-            setSelectedTeam(userTeam)
+            let normalizedTeam = userTeam
+            if (userTeam.toLowerCase().includes('team')) {
+                // Try to map "Team A" -> "ทีม A"
+                const parts = userTeam.split(' ')
+                if (parts.length > 1) {
+                    const suffix = parts.slice(1).join(' ')
+                    // Check if it's a single letter like A, B, C or numeric
+                    if (/^[A-Z0-9]+$/i.test(suffix)) {
+                        normalizedTeam = `ทีม ${suffix}`
+                    }
+                }
+            }
+            setSelectedTeam(normalizedTeam)
         }
     }, [userTeam])
 
-    // Auto-seed data if empty (Copied from mobile-jobs-v2 to ensure standalone functionality)
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            try {
-                const jobsData = localStorage.getItem('jobs_data')
-                let shouldSeed = !jobsData
-                if (jobsData) {
-                    try {
-                        const parsed = JSON.parse(jobsData)
-                        if (!Array.isArray(parsed) || parsed.length === 0) {
-                            shouldSeed = true
-                        }
-                    } catch (e) {
-                        shouldSeed = true
-                    }
-                }
 
-                if (shouldSeed) {
-                    console.log('Seeding mock data for mobile page...')
-                    const { MOCK_CUSTOMERS_DATA, MOCK_PRODUCTS_DATA } = require('../lib/mockData')
-
-                    // Seed Customers
-                    let seedCustomers = !localStorage.getItem('customers_data')
-                    if (!seedCustomers) {
-                        try {
-                            const c = JSON.parse(localStorage.getItem('customers_data'))
-                            if (!Array.isArray(c) || c.length === 0) seedCustomers = true
-                        } catch (e) { seedCustomers = true }
-                    }
-                    if (seedCustomers) {
-                        localStorage.setItem('customers_data', JSON.stringify(MOCK_CUSTOMERS_DATA))
-                    }
-
-                    // Seed Products
-                    let seedProducts = !localStorage.getItem('products_data_v3')
-                    if (!seedProducts) {
-                        try {
-                            const p = JSON.parse(localStorage.getItem('products_data_v3'))
-                            if (!Array.isArray(p) || p.length === 0) seedProducts = true
-                        } catch (e) { seedProducts = true }
-                    }
-                    if (seedProducts) {
-                        localStorage.setItem('products_data_v3', JSON.stringify(MOCK_PRODUCTS_DATA))
-                        localStorage.setItem('products_data', JSON.stringify(MOCK_PRODUCTS_DATA))
-                    }
-
-                    // Seed Orders & Jobs
-                    const mockOrders = []
-                    const mockJobs = []
-                    const teams = ['ทีม A', 'ทีม B', 'ทีม C', 'ทีมช่าง 1']
-
-                    for (let i = 0; i < 5; i++) {
-                        const customer = MOCK_CUSTOMERS_DATA[i % MOCK_CUSTOMERS_DATA.length]
-                        const product = MOCK_PRODUCTS_DATA[i % MOCK_PRODUCTS_DATA.length]
-                        const orderId = `OD${20230001 + i}`
-                        const jobId = `JB${20230001 + i}`
-
-                        mockOrders.push({
-                            id: orderId,
-                            customerId: customer.id,
-                            orderDate: '2023-12-01',
-                            status: 'confirmed',
-                            items: [{ productId: product.id, quantity: 1, price: product.price }]
-                        })
-
-                        mockJobs.push({
-                            id: jobId,
-                            orderId: orderId,
-                            customerId: customer.id,
-                            productId: product.id,
-                            jobType: i % 2 === 0 ? 'ติดตั้ง' : 'ขนส่ง',
-                            jobDate: new Date().toISOString().split('T')[0],
-                            jobTime: `${9 + i}:00`,
-                            address: customer.addresses?.[0]?.address || 'กรุงเทพฯ',
-                            assignedTeam: teams[i % teams.length],
-                            status: 'pending',
-                            notes: 'Demonstration job data',
-                            customerName: customer.name,
-                            productName: product.name
-                        })
-                    }
-
-                    localStorage.setItem('orders_data', JSON.stringify(mockOrders))
-                    localStorage.setItem('jobs_data', JSON.stringify(mockJobs))
-
-                    // Reload jobs
-                    setTimeout(() => window.location.reload(), 100)
-                }
-            } catch (error) {
-                console.error('Seeding error:', error)
-            }
-        }
-    }, [])
 
     // Load Data
     useEffect(() => {
         loadJobs()
     }, [activeTab, selectedTeam])
 
-    const loadJobs = () => {
+    const loadJobs = async () => {
         setLoading(true)
         try {
             // Get all jobs from DataManager
-            const allJobs = DataManager.getJobs()
+            const allJobs = await DataManager.getJobs()
 
             // Extract unique teams
             const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
@@ -195,9 +113,37 @@ export default function MobilePage() {
                 return matchesTab
             })
 
-            // Team Filter
-            if (selectedTeam !== 'ทั้งหมด') {
-                filteredJobs = filteredJobs.filter(job => job.assignedTeam === selectedTeam)
+            // Team Filter Logic with Fallback
+            let effectiveTeam = selectedTeam
+
+            // Normalize "Team X" to "ทีม X" if needed for matching
+            const normalizeTeam = (t) => {
+                if (!t) return 'ทั้งหมด'
+                if (t.toLowerCase() === 'team a') return 'ทีม A'
+                if (t.toLowerCase() === 'team b') return 'ทีม B'
+                if (t.toLowerCase() === 'team c') return 'ทีม C'
+                if (t.startsWith('Team ')) {
+                    const thaiName = 'ทีม ' + t.substring(5)
+                    if (teams.includes(thaiName)) return thaiName
+                }
+                return t
+            }
+
+            // Logic to handle Fallback to All if team not found
+            if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
+                const normalized = normalizeTeam(effectiveTeam)
+                if (teams.includes(normalized)) {
+                    effectiveTeam = normalized
+                    if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
+                } else {
+                    // Fallback to ALL
+                    effectiveTeam = 'ทั้งหมด'
+                    if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
+                }
+            }
+
+            if (effectiveTeam !== 'ทั้งหมด') {
+                filteredJobs = filteredJobs.filter(job => job.assignedTeam === effectiveTeam)
             }
 
             // Sort
@@ -386,22 +332,7 @@ export default function MobilePage() {
                         </div>
                         <p>ไม่มีงานในหมวดหมู่นี้</p>
 
-                        {/* Fallback Reset Button */}
-                        <div className="mt-8">
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem('jobs_data')
-                                    localStorage.removeItem('orders_data')
-                                    localStorage.removeItem('customers_data')
-                                    localStorage.removeItem('products_data')
-                                    localStorage.removeItem('products_data_v3')
-                                    window.location.reload()
-                                }}
-                                className="text-xs text-primary-600 underline"
-                            >
-                                รีเซ็ตข้อมูลตัวอย่าง (Fix Data)
-                            </button>
-                        </div>
+
                     </div>
                 ) : (
                     <div className="space-y-3">
