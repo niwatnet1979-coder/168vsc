@@ -188,17 +188,7 @@ export default function JobInfoCard({
                                                                         installLocationName: addr.label || '',
                                                                         installAddress: fullAddress,
                                                                         googleMapLink: finalMapLink,
-                                                                        distance: distanceStr,
-                                                                        inspector1: addr.inspector1 ? {
-                                                                            name: String(addr.inspector1.name || ''),
-                                                                            phone: String(addr.inspector1.phone || ''),
-                                                                            address: typeof addr.inspector1.address === 'string' ? addr.inspector1.address : (addr.inspector1.address ? JSON.stringify(addr.inspector1.address) : '')
-                                                                        } : { name: '', phone: '', address: '' },
-                                                                        inspector2: addr.inspector2 ? {
-                                                                            name: String(addr.inspector2.name || ''),
-                                                                            phone: String(addr.inspector2.phone || ''),
-                                                                            address: typeof addr.inspector2.address === 'string' ? addr.inspector2.address : (addr.inspector2.address ? JSON.stringify(addr.inspector2.address) : '')
-                                                                        } : { name: '', phone: '', address: '' }
+                                                                        distance: distanceStr
                                                                     });
                                                                     setInstallLocationSearchTerm('');
                                                                     setShowInstallLocationDropdown(false);
@@ -227,9 +217,7 @@ export default function JobInfoCard({
                                         installLocationName: '',
                                         installAddress: '',
                                         googleMapLink: '',
-                                        distance: '',
-                                        inspector1: { name: '', phone: '', address: '' },
-                                        inspector2: { name: '', phone: '', address: '' }
+                                        distance: ''
                                     }) : undefined}
                                     variant="primary"
                                 />
