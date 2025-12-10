@@ -1,3 +1,24 @@
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import Link from 'next/link'
+import AppLayout from '../components/AppLayout'
+import {
+  ShoppingCart,
+  Package,
+  Users,
+  UserSquare2,
+  Wrench,
+  Banknote,
+  FileText,
+  BarChart3,
+  ArrowRight,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+  Menu
+} from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 
 export default function Home() {
