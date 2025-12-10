@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import CustomerModal from './CustomerModal'
@@ -147,6 +147,23 @@ export default function OrderForm() {
 
 
 
+
+
+    // Serialize jobInfo for proper change detection
+    const jobInfoSerialized = useMemo(() => JSON.stringify(jobInfo), [
+        jobInfo.jobType,
+        jobInfo.appointmentDate,
+        jobInfo.completionDate,
+        jobInfo.installLocationName,
+        jobInfo.installAddress,
+        jobInfo.googleMapLink,
+        jobInfo.distance,
+        JSON.stringify(jobInfo.inspector1),
+        JSON.stringify(jobInfo.inspector2),
+        jobInfo.team,
+        jobInfo.note
+    ])
+
     // Sync Sub Jobs with Main Job Info
     useEffect(() => {
         console.log('[DEBUG] Sync SubJob useEffect triggered', { jobType: jobInfo.jobType, itemsCount: items.length })
@@ -173,19 +190,7 @@ export default function OrderForm() {
                 return updated
             })
         }
-    }, [
-        jobInfo.jobType,
-        jobInfo.appointmentDate,
-        jobInfo.completionDate,
-        jobInfo.installLocationName,
-        jobInfo.installAddress,
-        jobInfo.googleMapLink,
-        jobInfo.distance,
-        jobInfo.inspector1,
-        jobInfo.inspector2,
-        jobInfo.team,
-        jobInfo.note
-    ])
+    }, [jobInfoSerialized])
 
     // Load Existing Order
     useEffect(() => {
