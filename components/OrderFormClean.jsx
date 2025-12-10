@@ -173,7 +173,19 @@ export default function OrderForm() {
                 return updated
             })
         }
-    }, [jobInfo])
+    }, [
+        jobInfo.jobType,
+        jobInfo.appointmentDate,
+        jobInfo.completionDate,
+        jobInfo.installLocationName,
+        jobInfo.installAddress,
+        jobInfo.googleMapLink,
+        jobInfo.distance,
+        jobInfo.inspector1,
+        jobInfo.inspector2,
+        jobInfo.team,
+        jobInfo.note
+    ])
 
     // Load Existing Order
     useEffect(() => {
