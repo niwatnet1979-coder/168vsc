@@ -16,7 +16,6 @@ import {
     X,
     Image as ImageIcon,
     Package,
-    RotateCcw,
     Menu
 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
@@ -31,7 +30,6 @@ export default function ProductManagement() {
     const [viewMode, setViewMode] = useState('table')
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
-    const isResetting = useRef(false) // Prevent multiple resets
 
     const [isLoading, setIsLoading] = useState(true)
 

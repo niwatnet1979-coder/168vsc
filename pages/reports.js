@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import {
     BarChart3,
     TrendingUp,
@@ -28,89 +29,101 @@ export default function ReportsPage() {
     const [recentOrders, setRecentOrders] = useState([])
 
     // Load and calculate data from LocalStorage
+    const [allOrders, setAllOrders] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Load data from Supabase
+    useEffect(() => {
+        const loadData = async () => {
+            setIsLoading(true)
+            const orders = await DataManager.getOrders()
+            setAllOrders(orders)
+            setIsLoading(false)
+        }
+        loadData()
+    }, [])
+
+    // Calculate stats when period or data changes
     useEffect(() => {
         const calculateStats = () => {
-            const savedOrders = localStorage.getItem('orders_data')
-            if (savedOrders) {
-                const orders = JSON.parse(savedOrders)
+            if (!allOrders.length) return
 
-                // Filter orders based on period
-                const now = new Date()
-                const filteredOrders = orders.filter(order => {
-                    const orderDate = new Date(order.date)
-                    // Reset times to compare dates only
-                    const d1 = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate())
-                    const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+            // Filter orders based on period
+            const now = new Date()
+            const filteredOrders = allOrders.filter(order => {
+                const orderDate = new Date(order.date || order.createdAt) // Handle both formats
+                // Reset times to compare dates only
+                const d1 = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate())
+                const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-                    switch (period) {
-                        case 'today':
-                            return d1.getTime() === d2.getTime()
-                        case 'week':
-                            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-                            return orderDate >= oneWeekAgo
-                        case 'month':
-                            return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear()
-                        case 'year':
-                            return orderDate.getFullYear() === now.getFullYear()
-                        case 'all':
-                        default:
-                            return true
-                    }
-                })
+                switch (period) {
+                    case 'today':
+                        return d1.getTime() === d2.getTime()
+                    case 'week':
+                        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        return orderDate >= oneWeekAgo
+                    case 'month':
+                        return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear()
+                    case 'year':
+                        return orderDate.getFullYear() === now.getFullYear()
+                    case 'all':
+                    default:
+                        return true
+                }
+            })
 
-                // Calculate Stats
-                const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
-                const totalOrders = filteredOrders.length
-                const totalItems = filteredOrders.reduce((sum, order) => {
-                    return sum + (Array.isArray(order.items) ? order.items.length : (order.items || 0))
-                }, 0)
-                const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0
+            // Calculate Stats
+            const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+            const totalOrders = filteredOrders.length
+            const totalItems = filteredOrders.reduce((sum, order) => {
+                return sum + (Array.isArray(order.items) ? order.items.reduce((acc, item) => acc + (item.qty || 1), 0) : 0)
+            }, 0)
+            const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-                setStats({
-                    revenue: totalRevenue,
-                    orders: totalOrders,
-                    items: totalItems,
-                    average: averageOrder
-                })
+            setStats({
+                revenue: totalRevenue,
+                orders: totalOrders,
+                items: totalItems,
+                average: averageOrder
+            })
 
-                // Calculate Top Products
-                const productMap = {}
-                filteredOrders.forEach(order => {
-                    if (Array.isArray(order.items)) {
-                        order.items.forEach(item => {
-                            const productName = item.name || 'Unknown Product'
-                            if (!productMap[productName]) {
-                                productMap[productName] = { name: productName, sold: 0, revenue: 0 }
-                            }
-                            productMap[productName].sold += (item.qty || 1)
-                            productMap[productName].revenue += (item.price || 0) * (item.qty || 1)
-                        })
-                    }
-                })
-                const sortedProducts = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-                setTopProducts(sortedProducts)
+            // Calculate Top Products
+            const productMap = {}
+            filteredOrders.forEach(order => {
+                if (Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        const productName = item.name || 'Unknown Product'
+                        if (!productMap[productName]) {
+                            productMap[productName] = { name: productName, sold: 0, revenue: 0 }
+                        }
+                        productMap[productName].sold += (item.qty || 1)
+                        productMap[productName].revenue += (item.price || 0) * (item.qty || 1)
+                    })
+                }
+            })
+            const sortedProducts = Object.values(productMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+            setTopProducts(sortedProducts)
 
-                // Calculate Top Customers
-                const customerMap = {}
-                filteredOrders.forEach(order => {
-                    const customerName = order.customer || 'Unknown Customer'
-                    if (!customerMap[customerName]) {
-                        customerMap[customerName] = { name: customerName, orders: 0, revenue: 0 }
-                    }
-                    customerMap[customerName].orders += 1
-                    customerMap[customerName].revenue += (order.total || 0)
-                })
-                const sortedCustomers = Object.values(customerMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-                setTopCustomers(sortedCustomers)
+            // Calculate Top Customers
+            const customerMap = {}
+            filteredOrders.forEach(order => {
+                const customerName = order.customer || 'Unknown Customer'
+                if (!customerMap[customerName]) {
+                    customerMap[customerName] = { name: customerName, orders: 0, revenue: 0 }
+                }
+                customerMap[customerName].orders += 1
+                customerMap[customerName].revenue += (order.total || 0)
+            })
+            const sortedCustomers = Object.values(customerMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+            setTopCustomers(sortedCustomers)
 
-                // Recent Orders (from filtered set)
-                const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
-                setRecentOrders(sortedOrders)
-            }
+            // Recent Orders (from filtered set)
+            const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).slice(0, 5)
+            setRecentOrders(sortedOrders)
         }
 
         calculateStats()
-    }, [period])
+    }, [period, allOrders])
 
     return (
         <AppLayout>
@@ -136,8 +149,8 @@ export default function ReportsPage() {
                                 key={p}
                                 onClick={() => setPeriod(p)}
                                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${period === p
-                                        ? 'bg-primary-100 text-primary-700 shadow-sm'
-                                        : 'text-secondary-600 hover:bg-secondary-50'
+                                    ? 'bg-primary-100 text-primary-700 shadow-sm'
+                                    : 'text-secondary-600 hover:bg-secondary-50'
                                     }`}
                             >
                                 {p === 'today' ? 'วันนี้' :
@@ -312,8 +325,8 @@ export default function ReportsPage() {
                                             <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.total || 0).toLocaleString()}</td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' ? 'bg-success-100 text-success-700' :
-                                                        order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :
-                                                            'bg-secondary-100 text-secondary-700'
+                                                    order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :
+                                                        'bg-secondary-100 text-secondary-700'
                                                     }`}>
                                                     {order.status}
                                                 </span>

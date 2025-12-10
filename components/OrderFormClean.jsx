@@ -171,31 +171,13 @@ export default function OrderForm() {
 
     // Load Existing Order
     useEffect(() => {
-        const generateOrderId = () => {
-            const savedOrders = localStorage.getItem('orders_data')
-            let newId = 'OD0000001' // Default starting ID
+        const loadOrder = async () => {
+            if (!router.isReady || !router.query.id) return
 
-            if (savedOrders) {
-                const orders = JSON.parse(savedOrders)
-                if (orders.length > 0) {
-                    // Extract numbers from existing IDs to find the max
-                    const maxId = orders.reduce((max, order) => {
-                        // Handle both old format (ORD-XXX) and new format (ODXXXXXXX)
-                        const numStr = order.id.replace(/\D/g, '')
-                        const num = parseInt(numStr, 10)
-                        return num > max ? num : max
-                    }, 0)
+            try {
+                // Fetch from Supabase
+                const order = await DataManager.getOrderById(router.query.id)
 
-                    // Generate new ID with OD prefix and 7-digit padding
-                    newId = `OD${(maxId + 1).toString().padStart(7, '0')}`
-                }
-            }
-            return newId
-        }
-        if (router.query.id) {
-            const savedOrders = localStorage.getItem('orders_data')
-            if (savedOrders) {
-                const order = JSON.parse(savedOrders).find(o => o.id === router.query.id)
                 if (order) {
                     if (order.customerDetails) setCustomer(order.customerDetails)
                     if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
@@ -208,10 +190,17 @@ export default function OrderForm() {
                     if (order.activeCustomerContact) setActiveCustomerContact(order.activeCustomerContact)
                     if (order.selectedContact) setSelectedContact(order.selectedContact)
                     if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
+                } else {
+                    console.warn(`Order ${router.query.id} not found in database.`)
+                    // Optional: Redirect or show error, but preventing crash is priority
                 }
+            } catch (error) {
+                console.error("Error loading order:", error)
             }
         }
-    }, [router.query.id])
+
+        loadOrder()
+    }, [router.isReady, router.query.id])
 
     // Distance Calculation
     useEffect(() => {

@@ -148,124 +148,12 @@ export default function SettingsPage() {
             // First time load, set productTypes to defaults
             setProductOptions(prev => ({ ...prev, productTypes: defaultProductTypes }))
         }
-
-        // Load users from team_data (Source of Truth)
-        const loadUsersFromTeamData = () => {
-            const savedTeamData = localStorage.getItem('team_data')
-            if (savedTeamData) {
-                try {
-                    const teamMembers = JSON.parse(savedTeamData)
-                    if (Array.isArray(teamMembers)) {
-                        // Map team members to users format
-                        const mappedUsers = teamMembers.map(m => ({
-                            id: m.id,
-                            eid: m.eid,
-                            image: m.image || null,
-                            nickname: m.nickname,
-                            firstname: m.firstname,
-                            lastname: m.lastname,
-                            fullname: m.fullname,
-                            email: m.email,
-                            phone: m.phone1 || m.phone,
-                            teamType: m.teamType,
-                            team: m.team,
-                            teamName: m.team,
-                            // Determine role based on userType or teamType
-                            role: (m.userType && m.userType.toLowerCase() === 'admin') ? 'admin' : 'user',
-                            status: m.status
-                        }))
-                        setUsers(mappedUsers)
-                    } else {
-                        setUsers([])
-                    }
-                } catch (e) {
-                    console.error('Error parsing team data for users:', e)
-                    setUsers([])
-                }
-            } else {
-                setUsers([])
-            }
-        }
-
-        loadUsersFromTeamData()
-
-        // Listen for storage changes to sync if team page updates (optional, but good practice)
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'team_data') loadUsersFromTeamData()
-        })
-
     }, [])
 
     const handleSave = () => {
         localStorage.setItem('shop_settings', JSON.stringify(shopSettings))
         setIsSaved(true)
         setTimeout(() => setIsSaved(false), 3000)
-    }
-
-    const handleEditUser = (user) => {
-        // Load full team data to get all fields
-        const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
-        const member = teamData.find(m => m.id === user.id)
-
-        if (member) {
-            setEditingMember(member)
-            setFormData(member)
-            setShowModal(true)
-        }
-    }
-
-    const handleSaveUser = (data) => {
-        // Update team_data in localStorage
-        const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
-        const updatedTeamData = teamData.map(m => m.id === data.id ? data : m)
-        localStorage.setItem('team_data', JSON.stringify(updatedTeamData))
-
-        // Update local users state
-        const usersData = updatedTeamData.map(member => ({
-            id: member.id,
-            image: member.image || null,
-            nickname: member.nickname,
-            email: member.email,
-            phone: member.phone1 || member.phone,
-            teamType: member.teamType || member.team,
-            teamName: member.team || member.teamName,
-            role: member.userType?.toLowerCase() === 'admin' ? 'admin' : 'user'
-        }))
-        setUsers(usersData)
-
-        setShowModal(false)
-    }
-
-    const handleDeleteUser = (userId) => {
-        if (confirm('คุณต้องการลบผู้ใช้งานนี้หรือไม่?')) {
-            // Load team_data
-            const teamData = JSON.parse(localStorage.getItem('team_data') || '[]')
-            // Remove user from team_data
-            const updatedTeamData = teamData.filter(member => member.id !== userId)
-            // Save back to team_data
-            localStorage.setItem('team_data', JSON.stringify(updatedTeamData))
-
-            // Update local users state
-            const updatedUsers = users.filter(user => user.id !== userId)
-            setUsers(updatedUsers)
-
-            alert('ลบผู้ใช้งานเรียบร้อยแล้ว')
-        }
-    }
-
-    const handleClearData = () => {
-        if (confirm('คำเตือน: การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ\n\n(ใช้สำหรับเริ่มระบบใหม่ หรือล้างข้อมูลเก่าเพื่อรองรับ Format ID แบบใหม่)')) {
-            if (confirm('ยืนยันอีกครั้ง: ข้อมูลจะหายไปถาวร! คุณแน่ใจหรือไม่?')) {
-                // Remove specific data keys but keep settings
-                localStorage.removeItem('orders_data')
-                localStorage.removeItem('products_data')
-                localStorage.removeItem('customers_data')
-                // Keep product_options_data as it's configuration
-
-                alert('ล้างข้อมูลเรียบร้อยแล้ว ระบบพร้อมสำหรับเริ่มใช้งานใหม่')
-                window.location.reload()
-            }
-        }
     }
 
     const handleAddOption = (type) => {
@@ -321,11 +209,9 @@ export default function SettingsPage() {
                             <nav className="flex flex-col p-2 gap-1">
                                 {[
                                     { id: 'general', label: 'ข้อมูลร้านค้า', icon: Store },
-                                    { id: 'users', label: 'ผู้ใช้งาน & สิทธิ์', icon: Users },
                                     { id: 'system', label: 'การตั้งค่าระบบ', icon: Globe },
                                     { id: 'options', label: 'ประเภทข้อมูล', icon: List },
-                                    { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell },
-                                    { id: 'database', label: 'จัดการฐานข้อมูล', icon: Database, danger: true }
+                                    { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -405,84 +291,7 @@ export default function SettingsPage() {
                                 </div>
                             )}
 
-                            {activeTab === 'users' && (
-                                <div className="space-y-6">
-                                    <div className="border-b border-secondary-200 pb-4">
-                                        <h2 className="text-xl font-bold text-secondary-900">ผู้ใช้งาน & สิทธิ์</h2>
-                                        <p className="text-secondary-500 text-sm mt-1">จัดการสิทธิ์การเข้าถึงระบบ (เข้าถึงได้ทุกคน)</p>
-                                    </div>
 
-                                    {/* User Table */}
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="border-b border-secondary-200">
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">รูป</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">ชื่อเล่น</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Email</th>
-
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Type</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">Team Name</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">สิทธิ์</th>
-                                                    <th className="text-left py-3 px-4 text-sm font-semibold text-secondary-700">จัดการ</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {users.map((user) => (
-                                                    <tr key={user.id} className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors">
-                                                        <td className="py-3 px-4">
-                                                            {user.image ? (
-                                                                <img
-                                                                    src={user.image}
-                                                                    alt={user.nickname}
-                                                                    className="w-10 h-10 rounded-full"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
-                                                                    {user.nickname.charAt(0)}
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-3 px-4 text-sm font-medium text-secondary-900">{user.nickname}</td>
-                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.email}</td>
-
-                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.teamType}</td>
-                                                        <td className="py-3 px-4 text-sm text-secondary-600">{user.teamName}</td>
-                                                        <td className="py-3 px-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                                                                user.role === 'disabled' ? 'bg-gray-100 text-gray-600' :
-                                                                    'bg-green-100 text-green-800'
-                                                                }`}>
-                                                                {user.role === 'admin' ? 'Admin' : user.role === 'disabled' ? 'Disabled' : 'User'}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <button
-                                                                onClick={() => handleEditUser(user)}
-                                                                className="text-primary-600 hover:text-primary-700 font-medium text-sm hover:underline"
-                                                            >
-                                                                แก้ไข
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    {/* Info Box */}
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                                        <Shield size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="text-sm font-medium text-blue-900">หมายเหตุ</p>
-                                            <p className="text-sm text-blue-700 mt-1">
-                                                คลิก "แก้ไข" เพื่อไปยังหน้าจัดการทีมของผู้ใช้งานแต่ละคน
-                                                สามารถเปลี่ยนสิทธิ์ ทีม และข้อมูลส่วนตัวได้ที่นั่น
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {activeTab === 'system' && (
                                 <div className="space-y-6">
@@ -586,42 +395,10 @@ export default function SettingsPage() {
                                 </div>
                             )}
 
-                            {activeTab === 'database' && (
-                                <div className="space-y-6">
-                                    <div className="border-b border-secondary-200 pb-4">
-                                        <h2 className="text-xl font-bold text-danger-700">จัดการฐานข้อมูล</h2>
-                                        <p className="text-secondary-500 text-sm mt-1">จัดการข้อมูลในระบบ (พื้นที่อันตราย)</p>
-                                    </div>
-
-                                    <div className="bg-danger-50 border border-danger-200 rounded-xl p-6">
-                                        <h3 className="text-lg font-bold text-danger-800 mb-2">ล้างข้อมูลระบบ (Factory Reset)</h3>
-                                        <p className="text-danger-700 mb-6">
-                                            การกระทำนี้จะลบข้อมูล Orders, Products และ Customers ทั้งหมดออกจากระบบ
-                                            แต่จะเก็บการตั้งค่าร้านค้าและผู้ใช้งานไว้
-                                            <br /><br />
-                                            <strong>คำเตือน:</strong> ข้อมูลที่ลบไปแล้วจะไม่สามารถกู้คืนได้!
-                                        </p>
-                                        <button
-                                            onClick={handleClearData}
-                                            className="px-6 py-2 bg-danger-600 text-white rounded-lg hover:bg-danger-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-danger-500/30"
-                                        >
-                                            <RefreshCw size={18} />
-                                            ล้างข้อมูลทั้งหมด
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
             </div>
-
-            <TeamMemberModal
-                isOpen={showModal}
-                onClose={() => setShowModal(false)}
-                member={editingMember}
-                onSave={handleSaveUser}
-            />
         </AppLayout >
     )
 }

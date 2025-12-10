@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
+import { DataManager } from '../lib/dataManager'
 
 export default function TeamPage() {
     const [activeTab, setActiveTab] = useState('current') // current, resigned
@@ -65,29 +66,22 @@ export default function TeamPage() {
     const [formData, setFormData] = useState(initialFormState)
 
     // Load data
-    useEffect(() => {
-        const savedData = localStorage.getItem('team_data')
-        if (savedData) {
-            setTeamMembers(JSON.parse(savedData))
-        } else {
-            // Initialize with empty array
-            setTeamMembers([])
-            localStorage.setItem('team_data', JSON.stringify([]))
-        }
-    }, [])
+    const loadTeams = async () => {
+        const teams = await DataManager.getTeams()
+        // Map data to match component state if necessary
+        // Assuming DataManager returns objects compatible or we map them here
+        setTeamMembers(teams)
+    }
 
-    // Save data
     useEffect(() => {
-        if (teamMembers.length > 0) {
-            localStorage.setItem('team_data', JSON.stringify(teamMembers))
-        }
-    }, [teamMembers])
+        loadTeams()
+    }, [])
 
     const handleAdd = () => {
         setEditingMember(null)
         setFormData({
             ...initialFormState,
-            eid: `EID${String(teamMembers.length).padStart(4, '0')}`,
+            eid: `EID${String(teamMembers.length + 1).padStart(4, '0')}`, // Simple local generation, potentially risky concurrency
         })
         setShowModal(true)
     }
@@ -98,37 +92,41 @@ export default function TeamPage() {
         setShowModal(true)
     }
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?')) {
-            setTeamMembers(teamMembers.filter(m => m.id !== id))
+            const success = await DataManager.deleteTeam(id)
+            if (success) {
+                await loadTeams()
+            } else {
+                alert('ลบข้อมูลไม่สำเร็จ')
+            }
         }
     }
 
-    const handleSave = (data) => {
-        if (editingMember) {
-            setTeamMembers(teamMembers.map(m => m.id === editingMember.id ? { ...data, id: m.id } : m))
-        } else {
-            const newId = teamMembers.length > 0 ? Math.max(...teamMembers.map(m => m.id)) + 1 : 1
-            setTeamMembers([...teamMembers, { ...data, id: newId }])
+    const handleSave = async (data) => {
+        // Clean up data before saving
+        const teamData = {
+            ...data,
+            id: editingMember ? editingMember.id : undefined // Let Supabase handle ID for new, or manage explicitly
         }
-        setShowModal(false)
+
+        const savedTeam = await DataManager.saveTeam(teamData)
+        if (savedTeam) {
+            await loadTeams()
+            setShowModal(false)
+        } else {
+            alert('บันทึกข้อมูลไม่สำเร็จ')
+        }
     }
 
     const filteredMembers = teamMembers.filter(m =>
         m.status === activeTab &&
-        (m.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (m.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (m.fullname && m.fullname.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            m.eid.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (m.team && m.team.toLowerCase().includes(searchTerm.toLowerCase())))
+            m.eid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (m.team?.toLowerCase().includes(searchTerm.toLowerCase())))
     )
-
-    const handleResetData = () => {
-        if (confirm('คุณต้องการรีเซ็ตข้อมูลทีมงานทั้งหมดหรือไม่?')) {
-            localStorage.setItem('team_data', JSON.stringify([]))
-            setTeamMembers([])
-            alert('รีเซ็ตข้อมูลทีมงานเรียบร้อยแล้ว')
-        }
-    }
+    // handleResetData removed
 
     return (
         <AppLayout
@@ -151,13 +149,7 @@ export default function TeamPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <button
-                                onClick={handleResetData}
-                                className="flex-1 sm:flex-none justify-center px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
-                            >
-                                <RotateCcw size={18} />
-                                Reset Data
-                            </button>
+
                             <button
                                 onClick={handleAdd}
                                 className="flex-1 sm:flex-none justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30"
