@@ -109,7 +109,7 @@ export default function TeamPage() {
             data.id = editingMember.id
         }
 
-        const result = await DataManager.saveEmployee(data)
+        result = await DataManager.saveEmployee(data)
 
         if (result && result.success) {
             await loadTeams()
