@@ -436,64 +436,109 @@ export default function TeamMemberModal({
                                     ].map((item) => (
                                         <div
                                             key={item.key}
-                                            className="relative border border-dashed border-secondary-300 rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:bg-secondary-50 transition-colors cursor-pointer overflow-hidden group"
-                                            onClick={() => document.getElementById(`file-${item.key}`).click()}
+                                            className="relative border border-dashed border-secondary-300 rounded-lg p-0 flex flex-col items-center justify-center hover:bg-secondary-50 transition-colors group h-48 bg-white"
                                         >
-                                            <input
-                                                type="file"
-                                                id={`file-${item.key}`}
-                                                className="hidden"
-                                                accept="image/*,application/pdf"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files[0]
-                                                    if (!file) return
+                                            {/* Main Click Area for Image/Camera */}
+                                            <div
+                                                className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer p-4"
+                                                onClick={() => document.getElementById(`file-img-${item.key}`).click()}
+                                            >
+                                                <input
+                                                    type="file"
+                                                    id={`file-img-${item.key}`}
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0]
+                                                        if (!file) return
+                                                        const url = await import('../lib/dataManager').then(m => m.DataManager.uploadFile(file, 'employees'))
+                                                        if (url) {
+                                                            const newPhotos = { ...(formData.photos || {}), [item.key]: url }
+                                                            setFormData({ ...formData, photos: newPhotos })
+                                                        }
+                                                    }}
+                                                />
 
-                                                    // Upload immediately
-                                                    const url = await import('../lib/dataManager').then(m => m.DataManager.uploadFile(file, 'employees'))
-                                                    if (url) {
-                                                        const newPhotos = { ...(formData.photos || {}), [item.key]: url }
-                                                        setFormData({ ...formData, photos: newPhotos })
-                                                    } else {
-                                                        alert('Upload failed. Please check if "employee-documents" bucket exists.')
-                                                    }
+                                                {/* PDF Input (Hidden) */}
+                                                <input
+                                                    type="file"
+                                                    id={`file-pdf-${item.key}`}
+                                                    className="hidden"
+                                                    accept="application/pdf"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0]
+                                                        if (!file) return
+                                                        const url = await import('../lib/dataManager').then(m => m.DataManager.uploadFile(file, 'employees'))
+                                                        if (url) {
+                                                            const newPhotos = { ...(formData.photos || {}), [item.key]: url }
+                                                            setFormData({ ...formData, photos: newPhotos })
+                                                        }
+                                                    }}
+                                                />
+
+                                                {formData.photos?.[item.key] ? (
+                                                    <div className="relative w-full h-full flex items-center justify-center rounded-md overflow-hidden">
+                                                        {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
+                                                            <div className="text-center p-2">
+                                                                <span className="block text-3xl mb-1">📄</span>
+                                                                <span className="text-xs font-medium text-gray-600 break-all">PDF Uploaded</span>
+                                                            </div>
+                                                        ) : (
+                                                            <img
+                                                                src={formData.photos[item.key]}
+                                                                alt={item.label}
+                                                                className="max-h-full max-w-full object-contain"
+                                                            />
+                                                        )}
+                                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <p className="text-white text-xs font-medium mb-1">แตะเพื่อเปลี่ยนรูป</p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="p-2 bg-secondary-100 rounded-full text-secondary-500 mb-2">
+                                                            <ImageIcon size={24} />
+                                                        </div>
+                                                        <span className="text-xs text-secondary-600 text-center font-medium">{item.label}</span>
+                                                        <span className="text-[10px] text-primary-500 mt-1">(แตะเพื่อถ่ายรูป / เลือกรูป)</span>
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {/* Separate PDF Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    document.getElementById(`file-pdf-${item.key}`).click()
                                                 }}
-                                            />
-
-                                            {formData.photos?.[item.key] ? (
-                                                <div className="relative w-full h-32 flex items-center justify-center bg-gray-100 rounded-md">
-                                                    {formData.photos[item.key].toLowerCase().endsWith('.pdf') ? (
-                                                        <span className="text-sm font-medium text-gray-600">PDF File</span>
-                                                    ) : (
-                                                        <img
-                                                            src={formData.photos[item.key]}
-                                                            className="w-full py-1 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors rounded-b-lg flex items-center justify-center gap-1"
-                                                        >
-                                                            <span>หรือ เลือกไฟล์ PDF</span>
-                                                        </button>
+                                                className="w-full py-2 text-[10px] text-secondary-500 border-t border-secondary-200 hover:bg-secondary-100 hover:text-secondary-700 transition-colors rounded-b-lg flex items-center justify-center gap-1 bg-gray-50 from-transparent"
+                                            >
+                                                <span>📂 หรือเลือกไฟล์ PDF</span>
+                                            </button>
                                         </div>
-                                            ))}
-                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            </div>
-                    )}
                         </div>
+                    )}
+                </div>
 
                 {/* Modal Footer */}
-                    <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
-                        >
-                            ยกเลิก
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
-                        >
-                            บันทึกข้อมูล
-                        </button>
-                    </div>
+                <div className="px-6 py-4 border-t border-secondary-200 flex justify-end gap-3 bg-secondary-50">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-white transition-colors font-medium"
+                    >
+                        ยกเลิก
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                    >
+                        บันทึกข้อมูล
+                    </button>
                 </div>
             </div>
-            )
+        </div>
+    )
 }
