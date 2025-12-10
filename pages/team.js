@@ -109,13 +109,14 @@ export default function TeamPage() {
             data.id = editingMember.id
         }
 
-        result = await DataManager.saveEmployee(data)
+        const result = await DataManager.saveEmployee(data)
 
-        if (result) {
+        if (result && result.success) {
             await loadTeams()
             setShowModal(false)
         } else {
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล')
+            console.error(result)
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (result?.error || 'Unknown error'))
         }
     }
 
