@@ -217,29 +217,21 @@ export default function OrderForm() {
         setCustomer({
             ...customer,
             ...c,
-            contact1: c.contact1 ? {
-                name: String(c.contact1.name || ''),
-                phone: String(c.contact1.phone || ''),
-                address: typeof c.contact1.address === 'string' ? c.contact1.address : (c.contact1.address ? JSON.stringify(c.contact1.address) : '')
-            } : { name: '', phone: '', address: '' },
-            contact2: c.contact2 ? {
-                name: String(c.contact2.name || ''),
-                phone: String(c.contact2.phone || ''),
-                address: typeof c.contact2.address === 'string' ? c.contact2.address : (c.contact2.address ? JSON.stringify(c.contact2.address) : '')
-            } : { name: '', phone: '', address: '' }
+            // Ensure arrays exist
+            contacts: Array.isArray(c.contacts) ? c.contacts : [],
+            addresses: Array.isArray(c.addresses) ? c.addresses : [],
+            taxInvoices: Array.isArray(c.taxInvoices) ? c.taxInvoices : []
         })
         setShowCustomerDropdown(false)
 
         // Auto-fill address if available
-        if (c.savedAddresses && c.savedAddresses.length > 0) {
-            const addr = c.savedAddresses[0]
+        if (c.addresses && c.addresses.length > 0) {
+            const addr = c.addresses[0]
             setJobInfo(prev => ({
                 ...prev,
-                installLocationName: addr.name || '',
+                installLocationName: addr.label || '',
                 installAddress: addr.address || '',
-                googleMapLink: addr.mapLink || '',
-                inspector1: addr.inspector1 || { name: '', phone: '' },
-                inspector2: addr.inspector2 || { name: '', phone: '' }
+                googleMapLink: addr.googleMapsLink || ''
             }))
         } else {
             // Reset job info if no address
@@ -247,9 +239,7 @@ export default function OrderForm() {
                 ...prev,
                 installLocationName: '',
                 installAddress: '',
-                googleMapLink: '',
-                inspector1: { name: '', phone: '' },
-                inspector2: { name: '', phone: '' }
+                googleMapLink: ''
             }))
         }
 
