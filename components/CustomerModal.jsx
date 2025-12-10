@@ -6,6 +6,7 @@ import {
 
 export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
     const [activeTab, setActiveTab] = useState('customer')
+    const [isSaving, setIsSaving] = useState(false)
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
@@ -39,8 +40,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
     }, [customer, isOpen])
 
     if (!isOpen) return null
-
-    const [isSaving, setIsSaving] = useState(false)
 
     const handleSave = async () => {
         if (!formData.name) return alert('กรุณาระบุชื่อลูกค้า')
