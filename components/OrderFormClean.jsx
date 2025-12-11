@@ -198,10 +198,25 @@ export default function OrderForm() {
                 const order = await DataManager.getOrderById(router.query.id)
 
                 if (order) {
-                    if (order.customerDetails) {
+                    // Fetch full customer data from customers table
+                    // (customer_details now only stores essential fields for optimization)
+                    if (order.customerDetails?.id) {
+                        const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
+                        if (fullCustomer) {
+                            setCustomer(fullCustomer)
+                        } else {
+                            // Fallback: use customer_details if getCustomerById fails
+                            setCustomer({
+                                ...order.customerDetails,
+                                contacts: Array.isArray(order.customerDetails.contacts) ? order.customerDetails.contacts : [],
+                                addresses: Array.isArray(order.customerDetails.addresses) ? order.customerDetails.addresses : [],
+                                taxInvoices: Array.isArray(order.customerDetails.taxInvoices) ? order.customerDetails.taxInvoices : []
+                            })
+                        }
+                    } else if (order.customerDetails) {
+                        // Backward compatibility: handle old orders with full customer_details
                         setCustomer({
                             ...order.customerDetails,
-                            // Ensure arrays exist to prevent data loss
                             contacts: Array.isArray(order.customerDetails.contacts) ? order.customerDetails.contacts : [],
                             addresses: Array.isArray(order.customerDetails.addresses) ? order.customerDetails.addresses : [],
                             taxInvoices: Array.isArray(order.customerDetails.taxInvoices) ? order.customerDetails.taxInvoices : []
