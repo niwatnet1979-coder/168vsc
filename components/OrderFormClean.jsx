@@ -398,7 +398,7 @@ export default function OrderForm() {
             showPopup: false,
             // Sync main job info to sub job if not separate
             subJob: jobInfo.jobType !== 'separate' ? {
-                ...newItems[index].subJob,
+                ...(newItems[index].subJob || {}),
                 jobType: jobInfo.jobType,
                 appointmentDate: jobInfo.appointmentDate,
                 completionDate: jobInfo.completionDate,
@@ -408,7 +408,7 @@ export default function OrderForm() {
                 distance: jobInfo.distance,
                 team: jobInfo.team,
                 description: jobInfo.note || newItems[index].subJob?.description
-            } : newItems[index].subJob
+            } : (newItems[index].subJob || {})
         }
         setItems(newItems)
     }
