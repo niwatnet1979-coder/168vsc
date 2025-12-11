@@ -107,7 +107,6 @@ export default function OrderForm() {
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
     const [vatRate, setVatRate] = useState(0.07)
-    const [deposit, setDeposit] = useState({ mode: 'percent', value: 50 })
     const [shippingFee, setShippingFee] = useState(0)
 
     const [paymentSchedule, setPaymentSchedule] = useState([])
@@ -226,12 +225,13 @@ export default function OrderForm() {
                     if (order.jobInfo) setJobInfo(order.jobInfo)
                     if (order.items) setItems(order.items)
                     if (order.discount) setDiscount(order.discount)
-                    if (order.deposit) setDeposit(order.deposit)
                     if (order.shippingFee) setShippingFee(order.shippingFee)
                     if (order.note) setNote(order.note)
                     if (order.activeCustomerContact) setActiveCustomerContact(order.activeCustomerContact)
                     if (order.selectedContact) setSelectedContact(order.selectedContact)
                     if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
+                    // Load payment schedule
+                    if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
                 } else {
                     console.warn(`Order ${router.query.id} not found in database.`)
                     // Optional: Redirect or show error, but preventing crash is priority
@@ -470,6 +470,10 @@ export default function OrderForm() {
     }
 
     const handleSaveOrder = async () => {
+        // Show confirmation dialog
+        const confirmed = window.confirm('ต้องการบันทึกออเดอร์นี้หรือไม่?')
+        if (!confirmed) return
+
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
         if (items.length === 0 || !items[0].code) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
 
@@ -565,7 +569,6 @@ export default function OrderForm() {
             customerDetails: finalCustomer,
             items: itemsWithJobIds,
             total: total,
-            deposit: depositAmount,
             status: 'Pending',
             jobInfo: jobInfo,
             taxInvoice: taxInvoice,
@@ -595,9 +598,6 @@ export default function OrderForm() {
     const afterDiscount = Math.max(0, subtotal + Number(shippingFee) - discountAmt)
     const vatAmt = afterDiscount * vatRate
     const total = afterDiscount + vatAmt
-    const depositAmount = deposit.mode === 'percent'
-        ? total * (Number(deposit.value) / 100)
-        : Number(deposit.value)
     // Calculate total paid from payment schedule
     const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
     const outstanding = Math.max(0, total - totalPaid)
