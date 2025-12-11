@@ -30,6 +30,7 @@ export default function ProductManagement() {
     const [viewMode, setViewMode] = useState('table')
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
+    const [expandedProducts, setExpandedProducts] = useState(new Set())
 
     const [isLoading, setIsLoading] = useState(true)
 
@@ -96,13 +97,23 @@ export default function ProductManagement() {
         XLSX.writeFile(wb, `Products_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)
     }
 
+    const toggleExpand = (productId) => {
+        const newExpanded = new Set(expandedProducts)
+        if (newExpanded.has(productId)) {
+            newExpanded.delete(productId)
+        } else {
+            newExpanded.add(productId)
+        }
+        setExpandedProducts(newExpanded)
+    }
+
     const handleDelete = async (id) => {
         if (confirm('ยืนยันการลบสินค้า?')) {
             const success = await DataManager.deleteProduct(id)
             if (success) {
                 setProducts(products.filter(p => p.id !== id))
             } else {
-                alert('ไม่สามารถลบสินค้าได้')
+                alert('ไม่สามารถลบสินค้าได้\n\nสินค้านี้อาจถูกใช้งานใน Order แล้ว\nกรุณาตรวจสอบ Console (F12) สำหรับรายละเอียด')
             }
         }
     }
@@ -115,8 +126,8 @@ export default function ProductManagement() {
     const handleAdd = () => {
         setCurrentProduct({
             id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
-            length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-            bulbType: '', light: '', remote: '', images: []
+            length: '', width: '', height: '', material: '', color: '',
+            images: []
         })
         setShowModal(true)
     }
@@ -251,46 +262,120 @@ export default function ProductManagement() {
                                                 product.color ? `สี${product.color}` : null
                                             ].filter(Boolean).join(' • ')
 
+                                            const hasVariants = product.variants && product.variants.length > 0
+                                            const isExpanded = expandedProducts.has(product.id)
+
                                             return (
-                                                <tr key={product.id} className="hover:bg-secondary-50 transition-colors">
-                                                    <td className="px-4 py-4 text-sm text-secondary-500 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="w-14 h-14 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex items-center justify-center">
-                                                            {(product.images && product.images[0]) ? (
-                                                                <img src={product.images[0]} alt={product.id} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <ImageIcon size={20} className="text-secondary-300" />
+                                                <>
+                                                    <tr key={product.id} className="hover:bg-secondary-50 transition-colors">
+                                                        <td className="px-4 py-4 text-sm text-secondary-500 text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                {hasVariants && (
+                                                                    <button
+                                                                        onClick={() => toggleExpand(product.id)}
+                                                                        className="p-1 hover:bg-secondary-200 rounded transition-colors"
+                                                                        title={isExpanded ? "ย่อ" : "ขยาย"}
+                                                                    >
+                                                                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                    </button>
+                                                                )}
+                                                                <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div className="w-14 h-14 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex items-center justify-center">
+                                                                {(product.images && product.images[0]) ? (
+                                                                    <img src={product.images[0]} alt={product.id} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <ImageIcon size={20} className="text-secondary-300" />
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
+                                                                {product.id}
+                                                            </Link>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="text-sm text-secondary-700 leading-relaxed">{productInfo || '-'}</div>
+                                                                {hasVariants && product.variants.length > 1 && (
+                                                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap">
+                                                                        {product.variants.length} สี
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {product.description && (
+                                                                <div className="text-xs text-secondary-400 mt-1 line-clamp-1">{product.description}</div>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
-                                                            {product.id}
-                                                        </Link>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="text-sm text-secondary-700 leading-relaxed">{productInfo || '-'}</div>
-                                                        {product.description && (
-                                                            <div className="text-xs text-secondary-400 mt-1 line-clamp-1">{product.description}</div>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <span className="text-sm font-semibold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>{product.stock || 0}</span>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <button onClick={() => handleEdit(product)} className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="แก้ไข">
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button onClick={() => handleDelete(product.id)} className="p-2 text-secondary-600 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors" title="ลบ">
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <span className="text-sm font-semibold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>{product.stock || 0}</span>
+                                                        </td>
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <button onClick={() => handleEdit(product)} className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="แก้ไข">
+                                                                    <Edit2 size={16} />
+                                                                </button>
+                                                                <button onClick={() => handleDelete(product.id)} className="p-2 text-secondary-600 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors" title="ลบ">
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {/* Expandable Variants Row */}
+                                                    {isExpanded && hasVariants && (
+                                                        <>
+                                                            {product.variants.map((variant, i) => (
+                                                                <tr key={`variant-${i}`} className="bg-secondary-50 border-t border-secondary-200">
+                                                                    {/* Empty # column */}
+                                                                    <td className="px-4 py-3"></td>
+
+                                                                    {/* Image */}
+                                                                    <td className="px-4 py-3">
+                                                                        <div className="w-14 h-14 rounded-lg border border-secondary-200 overflow-hidden bg-white flex items-center justify-center">
+                                                                            {variant.images && variant.images[0] ? (
+                                                                                <img src={variant.images[0]} alt={variant.color} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <ImageIcon size={20} className="text-secondary-300" />
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+
+                                                                    {/* Product Code */}
+                                                                    <td className="px-4 py-3">
+                                                                        <span className="font-mono text-sm text-secondary-500">{variant.id || '-'}</span>
+                                                                    </td>
+
+                                                                    {/* Info - Color */}
+                                                                    <td className="px-4 py-3">
+                                                                        <div className="text-sm text-secondary-700">
+                                                                            <span className="font-medium">{variant.color}</span>
+                                                                        </div>
+                                                                    </td>
+
+                                                                    {/* Price */}
+                                                                    <td className="px-4 py-3 text-right">
+                                                                        <span className="text-sm font-semibold text-secondary-900">฿{variant.price?.toLocaleString() || 0}</span>
+                                                                    </td>
+
+                                                                    {/* Stock */}
+                                                                    <td className="px-4 py-3 text-right">
+                                                                        <span className={`text-sm font-semibold ${variant.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                                                                            {variant.stock || 0}
+                                                                        </span>
+                                                                    </td>
+
+                                                                    {/* Empty Actions column */}
+                                                                    <td className="px-4 py-3"></td>
+                                                                </tr>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </>
                                             )
                                         })
                                     ) : (

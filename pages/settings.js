@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
+import { DataManager } from '../lib/dataManager'
 
 export default function SettingsPage() {
     const { data: session } = useSession()

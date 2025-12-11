@@ -365,8 +365,8 @@ export default function OrderForm() {
     const [currentSubJobItemIndex, setCurrentSubJobItemIndex] = useState(null)
     const [newProduct, setNewProduct] = useState({
         id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
-        length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-        bulbType: '', light: '', remote: '', images: []
+        length: '', width: '', height: '', material: '', color: '',
+        images: []
     })
     const [lastCreatedProduct, setLastCreatedProduct] = useState(null)
 
@@ -386,8 +386,8 @@ export default function OrderForm() {
             setShowProductModal(false)
             setNewProduct({
                 id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
-                length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-                bulbType: '', light: '', remote: '', images: []
+                length: '', width: '', height: '', material: '', color: '',
+                images: []
             })
 
             // Trigger auto-select in OrderItemModal
@@ -414,8 +414,6 @@ export default function OrderForm() {
             subcategory: product.subcategory,
             length: product.length, width: product.width, height: product.height,
             material: product.material, color: product.color,
-            crystalColor: product.crystalColor,
-            bulbType: product.bulbType, light: product.light,
             stock: product.stock,
             _searchTerm: undefined,
             showPopup: false,

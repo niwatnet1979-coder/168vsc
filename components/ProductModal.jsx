@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { X, Camera } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import VariantManager from './VariantManager'
 
 export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
         id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
-        length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-        bulbType: '', light: '', remote: '', images: []
+        length: '', width: '', height: '', material: '', color: '',
+        variants: [],
+        images: []
     })
 
     const [productTypes, setProductTypes] = useState([])
     const [materials, setMaterials] = useState([])
     const [materialColors, setMaterialColors] = useState([])
-    const [crystalColors, setCrystalColors] = useState([])
 
     const defaultProductTypes = [
         'XX ไม่ระบุ',
@@ -32,7 +33,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
     const defaultMaterials = ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้']
     const defaultMaterialColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
-    const defaultCrystalColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
 
     useEffect(() => {
         const loadOptions = async () => {
@@ -41,7 +41,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 setProductTypes(options.productTypes && options.productTypes.length > 0 ? options.productTypes : defaultProductTypes)
                 setMaterials(options.materials && options.materials.length > 0 ? options.materials : defaultMaterials)
                 setMaterialColors(options.materialColors && options.materialColors.length > 0 ? options.materialColors : defaultMaterialColors)
-                setCrystalColors(options.crystalColors && options.crystalColors.length > 0 ? options.crystalColors : defaultCrystalColors)
             } else {
                 // Fallback to defaults
                 setProductTypes(defaultProductTypes)
@@ -57,18 +56,20 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         if (product) {
             setFormData({
                 ...product,
+                variants: product.variants || [],
                 images: product.images || []
             })
         } else {
             setFormData({
                 id: '', category: '', name: '', subcategory: '', price: '', stock: '', description: '',
-                length: '', width: '', height: '', material: '', color: '', crystalColor: '',
-                bulbType: '', light: '', remote: '', images: []
+                length: '', width: '', height: '', material: '', color: '',
+                variants: [],
+                images: []
             })
         }
     }, [product, isOpen])
 
-    // Auto-generate ID when category changes
+    // Auto-generate Product ID based on category, dimensions, and material
     useEffect(() => {
         // Only generate if:
         // 1. We are in "Add New" mode (no product prop OR product has no ID)
@@ -84,7 +85,11 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
                 existingProducts.forEach(p => {
                     if (p.id && p.id.startsWith(prefix)) {
-                        const numPart = p.id.substring(2)
+                        // Extract base code (e.g., AA001 from AA001-80-80-120-ST)
+                        const parts = p.id.split('-')
+                        const basePart = parts[0] // AA001
+                        const numPart = basePart.substring(2) // 001
+
                         // Check if the rest is a number
                         if (/^\d+$/.test(numPart)) {
                             const num = parseInt(numPart, 10)
@@ -93,14 +98,33 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                     }
                 })
 
-                // Generate new ID: Prefix + (Max+1) padded to 3 digits
+                // Generate base code: Prefix + (Max+1) padded to 3 digits
                 const nextNum = maxNum + 1
-                const newId = `${prefix}${nextNum.toString().padStart(3, '0')}`
+                const baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
+
+                // Extract material code (first 2 chars before space)
+                let materialCode = ''
+                if (formData.material) {
+                    const materialParts = formData.material.trim().split(' ')
+                    if (materialParts[0].length >= 2) {
+                        materialCode = materialParts[0].substring(0, 2).toUpperCase()
+                    }
+                }
+
+                // Build full ID: BASE-L-W-H-MT
+                const length = formData.length || '00'
+                const width = formData.width || '00'
+                const height = formData.height || '00'
+
+                let newId = `${baseCode}-${length}-${width}-${height}`
+                if (materialCode) {
+                    newId += `-${materialCode}`
+                }
 
                 setFormData(prev => ({ ...prev, id: newId }))
             }
         }
-    }, [formData.category, product, existingProducts])
+    }, [formData.category, formData.length, formData.width, formData.height, formData.material, product, existingProducts])
 
     if (!isOpen) return null
 
@@ -142,14 +166,18 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">รหัสสินค้า *</label>
+                            <label className="block text-sm font-semibold text-secondary-700 mb-2">
+                                รหัสสินค้า *
+                                <span className="text-xs font-normal text-secondary-500 ml-2">(สร้างอัตโนมัติ)</span>
+                            </label>
                             <input
                                 type="text"
                                 value={formData.id}
-                                onChange={e => setFormData({ ...formData, id: e.target.value })}
-                                required
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+                                readOnly
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-secondary-50 font-mono text-secondary-700 cursor-not-allowed"
+                                placeholder="เลือกประเภท, ขนาด, วัสดุ เพื่อสร้างรหัส"
                             />
+                            <p className="text-xs text-secondary-500 mt-1">รูปแบบ: BASE-L-W-H-MT (เช่น AA001-80-80-120-ST)</p>
                         </div>
                     </div>
 
@@ -201,19 +229,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             >
                                 <option value="">เลือกสีวัสดุ</option>
                                 {materialColors.map((item, index) => (
-                                    <option key={index} value={item}>{item}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">สีคริสตัล</label>
-                            <select
-                                value={formData.crystalColor}
-                                onChange={e => setFormData({ ...formData, crystalColor: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                            >
-                                <option value="">เลือกสีคริสตัล</option>
-                                {crystalColors.map((item, index) => (
                                     <option key={index} value={item}>{item}</option>
                                 ))}
                             </select>
@@ -280,16 +295,20 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                                 accept="image/*"
                                                 capture="environment"
                                                 className="hidden"
-                                                onChange={(e) => {
+                                                onChange={async (e) => {
                                                     const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => {
+                                                    if (file && formData.id) {
+                                                        // Upload to Supabase Storage
+                                                        const imageUrl = await DataManager.uploadProductImage(file, formData.id);
+                                                        if (imageUrl) {
                                                             const newImages = [...(formData.images || [])];
-                                                            newImages[index] = reader.result;
+                                                            newImages[index] = imageUrl;
                                                             setFormData({ ...formData, images: newImages });
-                                                        };
-                                                        reader.readAsDataURL(file);
+                                                        } else {
+                                                            alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
+                                                        }
+                                                    } else if (!formData.id) {
+                                                        alert('กรุณาเลือกประเภทสินค้าก่อนอัพโหลดรูป');
                                                     }
                                                 }}
                                             />
@@ -300,7 +319,19 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-secondary-200">
+                    {/* Variant Management Section */}
+                    <div className="border-t border-secondary-200 pt-6">
+                        <VariantManager
+                            baseProductId={formData.id}
+                            material={formData.material}
+                            variants={formData.variants}
+                            onChange={(newVariants) => setFormData({ ...formData, variants: newVariants })}
+                            materialColors={materialColors}
+                        />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-6 border-t border-secondary-200">
                         <button type="button" onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
                             ยกเลิก
                         </button>

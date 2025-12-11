@@ -19,28 +19,21 @@ export default function OrderItemModal({
     onConsumeLastCreatedProduct
 }) {
     const [formData, setFormData] = useState({
-        code: '',
-        name: '',
-        description: '',
-        qty: 1,
-        unitPrice: 0,
-        image: null,
-        category: '',
-        subcategory: '',
-        subJob: null,
-        _searchTerm: '',
-        lightColor: '',
-        remote: '',
-        bulbType: '',
-        remark: ''
+        code: '', name: '', description: '', qty: 1, unitPrice: 0, image: null,
+        category: '', subcategory: '', subJob: null, _searchTerm: '',
+        lightColor: '', remote: '', bulbType: '', crystalColor: '', remark: '',
+        selectedVariant: null
     })
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
     const [searchResults, setSearchResults] = useState([])
+    const [productVariants, setProductVariants] = useState([])
+
     const [productOptions, setProductOptions] = useState({
         lightColors: [],
         remotes: [],
-        bulbTypes: []
+        bulbTypes: [],
+        crystalColors: []
     })
 
     useEffect(() => {
@@ -52,14 +45,16 @@ export default function OrderItemModal({
                     setProductOptions({
                         lightColors: options.lightColors || ['warm', 'cool', 'white', '3แสง'],
                         remotes: options.remotes || ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
-                        bulbTypes: options.bulbTypes || ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+                        bulbTypes: options.bulbTypes || ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module'],
+                        crystalColors: options.crystalColors || ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
                     })
                 } else {
                     // Fallback to defaults
                     setProductOptions({
                         lightColors: ['warm', 'cool', 'white', '3แสง'],
                         remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
-                        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module']
+                        bulbTypes: ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module'],
+                        crystalColors: ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
                     })
                 }
             }
@@ -72,8 +67,17 @@ export default function OrderItemModal({
                     lightColor: item.lightColor || '',
                     remote: item.remote || '',
                     bulbType: item.bulbType || '',
+                    crystalColor: item.crystalColor || '',
                     remark: item.remark || ''
                 })
+
+                // Load variants for the product
+                if (item.code && productsData) {
+                    const product = productsData.find(p => p.id === item.code)
+                    if (product && product.variants) {
+                        setProductVariants(product.variants)
+                    }
+                }
             } else {
                 // Reset for new item
                 setFormData({
@@ -90,6 +94,7 @@ export default function OrderItemModal({
                     lightColor: '',
                     remote: '',
                     bulbType: '',
+                    crystalColor: '',
                     remark: ''
                 })
             }
@@ -100,7 +105,7 @@ export default function OrderItemModal({
     useEffect(() => {
         // Auto-select newly created product
         if (lastCreatedProduct) {
-            handleSelectProduct(lastCreatedProduct)
+            selectProduct(lastCreatedProduct)
             if (onConsumeLastCreatedProduct) {
                 onConsumeLastCreatedProduct()
             }
@@ -125,27 +130,47 @@ export default function OrderItemModal({
         }
     }, [formData._searchTerm, showSearchPopup, productsData])
 
-    const handleSelectProduct = (product) => {
+    const selectProduct = (product) => {
+        // Set product variants if available
+        setProductVariants(product.variants || [])
+
         setFormData(prev => ({
             ...prev,
             code: product.id,
             name: product.name,
-            description: product.description || product.name,
+            description: product.description || '',
             unitPrice: product.price || 0,
             image: product.images?.[0] || null,
             category: product.category,
             subcategory: product.subcategory,
-            length: product.length,
-            width: product.width,
-            height: product.height,
-            material: product.material,
-            color: product.color,
+            subJob: null,
+            qty: 1,
+            lightColor: product.lightColor,
+            remote: product.remote,
             crystalColor: product.crystalColor,
             bulbType: product.bulbType,
             light: product.light,
+            selectedVariant: null,
             _searchTerm: product.name,
         }))
         setShowSearchPopup(false)
+    }
+
+    const handleVariantSelect = (variantId) => {
+        const variant = productVariants.find(v => v.id === variantId)
+        if (variant) {
+            setFormData(prev => ({
+                ...prev,
+                selectedVariant: variant,
+                unitPrice: variant.price || prev.unitPrice,
+                image: variant.images?.[0] || prev.image
+            }))
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                selectedVariant: null
+            }))
+        }
     }
 
     const handleSave = () => {
@@ -298,7 +323,7 @@ export default function OrderItemModal({
                                             searchResults.map(p => (
                                                 <div
                                                     key={p.id}
-                                                    onClick={() => handleSelectProduct(p)}
+                                                    onClick={() => selectProduct(p)}
                                                     className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                 >
                                                     <div className="font-bold text-secondary-900 text-sm">{p.name || ''}</div>
@@ -333,7 +358,8 @@ export default function OrderItemModal({
                     {/* Product Options Dropdowns & Remark */}
                     {formData.code && (
                         <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 space-y-4">
-                            <div className="grid grid-cols-3 gap-4">
+                            {/* Row 1: Light Color, Remote */}
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
                                     <select
@@ -360,15 +386,56 @@ export default function OrderItemModal({
                                         ))}
                                     </select>
                                 </div>
+                            </div>
+
+                            {/* Row 2: Variant (full width if exists) */}
+                            {productVariants.length > 0 && (
                                 <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">หลอดไฟ</label>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                                        สี (Variant)
+                                    </label>
+                                    <select
+                                        value={formData.selectedVariant?.id || ''}
+                                        onChange={(e) => handleVariantSelect(e.target.value)}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">สีหลัก (ราคาปกติ)</option>
+                                        {productVariants.map((variant, i) => (
+                                            <option key={i} value={variant.id}>
+                                                {variant.color} ฿{variant.price?.toLocaleString()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Row 3: Bulb Type, Crystal Color */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Bulb Type */}
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                                        ประเภทหลอดไฟ
+                                    </label>
                                     <select
                                         value={formData.bulbType}
                                         onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
                                         className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
                                     >
-                                        <option value="">-- เลือกหลอดไฟ --</option>
+                                        <option value="">เลือกประเภทหลอด</option>
                                         {productOptions.bulbTypes.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีคริสตัล</label>
+                                    <select
+                                        value={formData.crystalColor}
+                                        onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">-- เลือกสีคริสตัล --</option>
+                                        {productOptions.crystalColors.map((opt, i) => (
                                             <option key={i} value={opt}>{opt}</option>
                                         ))}
                                     </select>
