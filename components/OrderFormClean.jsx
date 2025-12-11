@@ -158,8 +158,6 @@ export default function OrderForm() {
         jobInfo.installAddress,
         jobInfo.googleMapLink,
         jobInfo.distance,
-        JSON.stringify(jobInfo.inspector1),
-        JSON.stringify(jobInfo.inspector2),
         jobInfo.team,
         jobInfo.note
     ])
@@ -180,8 +178,6 @@ export default function OrderForm() {
                         installAddress: jobInfo.installAddress,
                         googleMapLink: jobInfo.googleMapLink,
                         distance: jobInfo.distance,
-                        inspector1: jobInfo.inspector1,
-                        inspector2: jobInfo.inspector2,
                         team: jobInfo.team,
                         description: jobInfo.note || item.subJob?.description // Sync note if available, else keep existing or empty
                     }
@@ -410,8 +406,6 @@ export default function OrderForm() {
                 installAddress: jobInfo.installAddress,
                 googleMapLink: jobInfo.googleMapLink,
                 distance: jobInfo.distance,
-                inspector1: jobInfo.inspector1,
-                inspector2: jobInfo.inspector2,
                 team: jobInfo.team,
                 description: jobInfo.note || newItems[index].subJob?.description
             } : newItems[index].subJob
