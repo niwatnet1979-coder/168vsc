@@ -198,7 +198,15 @@ export default function OrderForm() {
                 const order = await DataManager.getOrderById(router.query.id)
 
                 if (order) {
-                    if (order.customerDetails) setCustomer(order.customerDetails)
+                    if (order.customerDetails) {
+                        setCustomer({
+                            ...order.customerDetails,
+                            // Ensure arrays exist to prevent data loss
+                            contacts: Array.isArray(order.customerDetails.contacts) ? order.customerDetails.contacts : [],
+                            addresses: Array.isArray(order.customerDetails.addresses) ? order.customerDetails.addresses : [],
+                            taxInvoices: Array.isArray(order.customerDetails.taxInvoices) ? order.customerDetails.taxInvoices : []
+                        })
+                    }
                     if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
                     if (order.jobInfo) setJobInfo(order.jobInfo)
                     if (order.items) setItems(order.items)
