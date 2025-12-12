@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
+import ProductCard from './ProductCard'
 
 
 export default function OrderItemModal({
@@ -249,66 +250,37 @@ export default function OrderItemModal({
                         </label>
 
                         {formData.code ? (
-                            <div className="bg-white border-2 border-primary-200 rounded-xl overflow-hidden shadow-sm">
-                                <div className="p-3 flex items-start gap-3">
-                                    {/* Product Image */}
-                                    <div className="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
-                                        {formData.image ? (
-                                            <img
-                                                src={formData.image}
-                                                alt={formData.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Package size={24} className="text-secondary-400" />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Product Info - 3 Lines */}
-                                    <div className="flex-1 min-w-0 space-y-1">
-                                        {/* Line 1: Product Code */}
-                                        <div className="font-bold text-primary-600 text-base truncate">
-                                            {formData.product_code || formData.code}
-                                        </div>
-
-                                        {/* Line 2: Name • Category • Subcategory • Material • Dimensions • Color Count */}
-                                        <div className="text-sm text-secondary-700 truncate">
-                                            {formData.name && <span>{formData.name}</span>}
-                                            {formData.category && <span> • {formData.category}</span>}
-                                            {formData.subcategory && <span> • {formData.subcategory}</span>}
-                                            {formData.material && <span> • {formData.material}</span>}
-                                            {(formData.length || formData.width || formData.height) && (
-                                                <span> • {[formData.width, formData.length, formData.height].filter(Boolean).join('×')} cm</span>
-                                            )}
-                                            {productVariants.length > 0 && (
-                                                <span> 🎨 {productVariants.length} สี</span>
-                                            )}
-                                        </div>
-
-                                        {/* Line 3: Description */}
-                                        <div className="text-sm text-secondary-500 truncate">
-                                            {formData.description || ''}
-                                        </div>
-                                    </div>
-
-                                    {/* Close Button */}
-                                    <button
-                                        onClick={() => setFormData(prev => ({
-                                            ...prev,
-                                            code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
-                                            image: null, length: '', width: '', height: '',
-                                            material: '', color: '', crystalColor: '',
-                                            bulbType: '', light: '', remote: '', category: '', subcategory: '',
-                                            selectedVariant: null
-                                        }))}
-                                        className="p-1.5 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all flex-shrink-0"
-                                        title="เลือกสินค้าใหม่"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
+                            <div className="relative">
+                                <ProductCard
+                                    product={{
+                                        name: formData.name,
+                                        product_code: formData.product_code || formData.code,
+                                        code: formData.code,
+                                        category: formData.category,
+                                        material: formData.material,
+                                        description: formData.description,
+                                        variants: productVariants
+                                    }}
+                                    variant="default"
+                                    showImage={true}
+                                    showPrice={true}
+                                    showStock={true}
+                                />
+                                {/* Close Button - Positioned absolutely */}
+                                <button
+                                    onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
+                                        image: null, length: '', width: '', height: '',
+                                        material: '', color: '', crystalColor: '',
+                                        bulbType: '', light: '', remote: '', category: '', subcategory: '',
+                                        selectedVariant: null
+                                    }))}
+                                    className="absolute top-2 right-2 p-1.5 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
+                                    title="เลือกสินค้าใหม่"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
                         ) : (
                             <div className="relative">

@@ -76,33 +76,32 @@ export default function OrderForm() {
         team: '',
         inspector1: { name: '', phone: '' },
         inspector2: { name: '', phone: '' },
-        distance: ''
+        distance: '',
+        description: '' // Added for job details/notes
     })
 
     const [items, setItems] = useState([])
     const [note, setNote] = useState('')
 
-    // Sync Job Info to Items
+    // Sync Job Info to Items (Real-time)
     useEffect(() => {
-        if (jobInfo.jobType === 'installation' || jobInfo.jobType === 'delivery') {
-            setItems(prevItems => prevItems.map(item => ({
-                ...item,
-                subJob: {
-                    ...item.subJob,
-                    jobType: jobInfo.jobType,
-                    appointmentDate: jobInfo.appointmentDate,
-                    completionDate: jobInfo.completionDate,
-                    installLocationName: jobInfo.installLocationName,
-                    installAddress: jobInfo.installAddress,
-                    googleMapLink: jobInfo.googleMapLink,
-                    distance: jobInfo.distance,
-                    inspector1: jobInfo.inspector1,
-                    inspector2: jobInfo.inspector2,
-                    team: jobInfo.team,
-                    description: note // Sync main job note to sub job description
-                }
-            })))
-        }
+        setItems(prevItems => prevItems.map(item => ({
+            ...item,
+            subJob: {
+                ...item.subJob,
+                jobType: jobInfo.jobType,
+                appointmentDate: jobInfo.appointmentDate,
+                completionDate: jobInfo.completionDate,
+                installLocationName: jobInfo.installLocationName,
+                installAddress: jobInfo.installAddress,
+                googleMapLink: jobInfo.googleMapLink,
+                distance: jobInfo.distance,
+                inspector1: jobInfo.inspector1,
+                inspector2: jobInfo.inspector2,
+                team: jobInfo.team,
+                description: note // Sync main job note to sub job description
+            }
+        })))
     }, [jobInfo, note])
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
@@ -520,11 +519,6 @@ export default function OrderForm() {
             }
 
             // Generate new ID
-            // Note: If we have multiple new items, we increment.
-            // Actually `lastJobNum` from `getNextJobId` is the *next* one.
-            // But if we loop, we need to increment for each *new* item.
-            // So let's decrement it by 1 first? No, use it then increment.
-
             const newJobId = `JB${(lastJobNum).toString().padStart(7, '0')}`
             lastJobNum++
 
@@ -536,13 +530,16 @@ export default function OrderForm() {
                 subJob: {
                     ...subJob,
                     jobId: newJobId, // Assign permanent Job ID
-                    // Inherit other props or set defaults if missing
-                    jobType: subJob.jobType || 'installation',
-                    appointmentDate: subJob.appointmentDate || '',
-                    team: subJob.team || '',
-                    description: subJob.description || '',
-                    inspector1: subJob.inspector1 || null,
-                    installAddress: subJob.installAddress || ''
+                    // Inherit from Main Job Info if subJob field is empty
+                    jobType: subJob.jobType || jobInfo.jobType || 'installation',
+                    appointmentDate: subJob.appointmentDate || jobInfo.appointmentDate || '',
+                    completionDate: subJob.completionDate || jobInfo.completionDate || null,
+                    team: subJob.team || jobInfo.team || '',
+                    description: subJob.description || jobInfo.description || '',
+                    inspector1: subJob.inspector1 || jobInfo.inspector1 || null,
+                    installAddress: subJob.installAddress || jobInfo.installAddress || '',
+                    googleMapLink: subJob.googleMapLink || jobInfo.googleMapLink || '',
+                    distance: subJob.distance || jobInfo.distance || null
                 }
             }
         })
@@ -555,7 +552,10 @@ export default function OrderForm() {
             items: itemsWithJobIds,
             total: total,
             status: 'Pending',
-            jobInfo: jobInfo,
+            jobInfo: {
+                ...jobInfo,
+                description: note // Sync note to jobInfo.description
+            },
             taxInvoice: taxInvoice,
             taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
             activeCustomerContact: activeCustomerContact,
@@ -1441,7 +1441,7 @@ export default function OrderForm() {
                                                 <div className="flex items-center gap-1 text-secondary-400">
                                                     <FileText size={12} />
                                                     <span className="truncate max-w-[300px]">
-                                                        {item.subJob?.description || '-'}
+                                                        {item.subJob?.description || jobInfo.description || '-'}
                                                     </span>
                                                 </div>
                                             </div>
