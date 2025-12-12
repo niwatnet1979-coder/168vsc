@@ -146,7 +146,7 @@ export default function ProductManagement() {
     }
 
     const handleSave = async (productData) => {
-        if (!productData.id) {
+        if (!productData.product_code && !productData.id) {
             alert('กรุณากรอกรหัสสินค้า')
             return
         }
@@ -351,8 +351,20 @@ export default function ProductManagement() {
                                                                         )
                                                                     }
                                                                 } else {
-                                                                    // Show main product price
-                                                                    return <span className="text-sm font-semibold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
+                                                                    // Show price range from variants
+                                                                    const variants = product.variants || []
+                                                                    if (variants.length === 0) return <span className="text-sm text-secondary-400">-</span>
+
+                                                                    const prices = variants.map(v => v.price || 0).filter(p => p > 0)
+                                                                    if (prices.length === 0) return <span className="text-sm text-secondary-400">-</span>
+
+                                                                    const minPrice = Math.min(...prices)
+                                                                    const maxPrice = Math.max(...prices)
+
+                                                                    if (minPrice === maxPrice) {
+                                                                        return <span className="text-sm font-semibold text-secondary-900">฿{minPrice.toLocaleString()}</span>
+                                                                    }
+                                                                    return <span className="text-sm font-semibold text-secondary-900">฿{minPrice.toLocaleString()} - ฿{maxPrice.toLocaleString()}</span>
                                                                 }
                                                             })()}
                                                         </td>
@@ -393,22 +405,71 @@ export default function ProductManagement() {
                                                                         </div>
                                                                     </td>
 
-                                                                    {/* Product Code */}
+                                                                    {/* Product Code with Dimensions */}
                                                                     <td className="px-4 py-3">
                                                                         <span className="font-mono text-sm text-secondary-500">
                                                                             {(() => {
-                                                                                // Compute variant ID dynamically: {product_code}-{colorCode}
+                                                                                // Format: AA001-D100x100x200-GD
                                                                                 const productCode = product.product_code || product.id || ''
+                                                                                const dims = variant.dimensions
                                                                                 const colorCode = variant.color ? variant.color.substring(0, 2).toUpperCase() : 'XX'
-                                                                                return productCode ? `${productCode}-${colorCode}` : '-'
+
+                                                                                let code = productCode
+                                                                                if (dims && (dims.length || dims.width || dims.height)) {
+                                                                                    const dimStr = `${dims.length || 0}x${dims.width || 0}x${dims.height || 0}`
+                                                                                    code += `-D${dimStr}`
+                                                                                }
+                                                                                code += `-${colorCode}`
+
+                                                                                return code || '-'
                                                                             })()}
                                                                         </span>
                                                                     </td>
 
-                                                                    {/* Info - Color */}
+                                                                    {/* Info - Full Details */}
                                                                     <td className="px-4 py-3">
                                                                         <div className="text-sm text-secondary-700">
-                                                                            <span className="font-medium">{variant.color}</span>
+                                                                            {/* Category • Name • Material • Dimensions • Color */}
+                                                                            {product.category && (
+                                                                                <span>
+                                                                                    {(() => {
+                                                                                        const cat = product.category
+                                                                                        // Remove prefix like "AA ", "01 ", "02 "
+                                                                                        if (cat.match(/^[A-Z]{2}\s/)) return cat.substring(3)
+                                                                                        if (cat.match(/^\d{2}\s/)) return cat.substring(3)
+                                                                                        return cat
+                                                                                    })()}
+                                                                                </span>
+                                                                            )}
+                                                                            {product.name && <span> • {product.name}</span>}
+                                                                            {product.material && (
+                                                                                <span>
+                                                                                    {' • '}
+                                                                                    {(() => {
+                                                                                        const mat = product.material
+                                                                                        // Remove prefix like "WD ", "ST ", "MT "
+                                                                                        if (mat.match(/^[A-Z]{2}\s/)) return mat.substring(3)
+                                                                                        return mat
+                                                                                    })()}
+                                                                                </span>
+                                                                            )}
+                                                                            {variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height) && (
+                                                                                <span> • {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
+                                                                            )}
+                                                                            {variant.color && (
+                                                                                <span>
+                                                                                    {' • '}
+                                                                                    {(() => {
+                                                                                        const col = variant.color
+                                                                                        // Remove prefix like "GD ", "SL "
+                                                                                        if (col.match(/^[A-Z]{2}\s/)) return col.substring(3)
+                                                                                        return col
+                                                                                    })()}
+                                                                                </span>
+                                                                            )}
+                                                                            {product.description && (
+                                                                                <div className="text-xs text-secondary-500 mt-1">{product.description}</div>
+                                                                            )}
                                                                         </div>
                                                                     </td>
 
@@ -489,10 +550,31 @@ export default function ProductManagement() {
                                                 {[product.category, product.subcategory].filter(Boolean).join(' • ') || '-'}
                                             </p>
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="text-lg font-bold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
-                                                <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                                                    คงเหลือ {product.stock || 0}
-                                                </span>
+                                                {(() => {
+                                                    const variants = product.variants || []
+                                                    if (variants.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+
+                                                    const prices = variants.map(v => v.price || 0).filter(p => p > 0)
+                                                    if (prices.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+
+                                                    const minPrice = Math.min(...prices)
+                                                    const maxPrice = Math.max(...prices)
+                                                    const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+
+                                                    return (
+                                                        <>
+                                                            <span className="text-lg font-bold text-secondary-900">
+                                                                {minPrice === maxPrice
+                                                                    ? `฿${minPrice.toLocaleString()}`
+                                                                    : `฿${minPrice.toLocaleString()} - ฿${maxPrice.toLocaleString()}`
+                                                                }
+                                                            </span>
+                                                            <span className={`text-sm font-semibold ${totalStock > 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                                                                คงเหลือ {totalStock}
+                                                            </span>
+                                                        </>
+                                                    )
+                                                })()}
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button onClick={() => handleEdit(product)} className="flex-1 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors flex items-center justify-center gap-2 font-medium text-sm">

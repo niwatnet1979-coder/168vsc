@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus, Edit2, Trash2, Camera, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Camera, X, Save } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 
 export default function VariantManager({
@@ -12,6 +12,11 @@ export default function VariantManager({
     const [editingIndex, setEditingIndex] = useState(null)
     const [variantForm, setVariantForm] = useState({
         color: '',
+        dimensions: {
+            length: '',
+            width: '',
+            height: ''
+        },
         price: '',
         stock: '',
         images: []
@@ -24,6 +29,11 @@ export default function VariantManager({
         setEditingIndex(variants.length)
         setVariantForm({
             color: '',
+            dimensions: {
+                length: '',
+                width: '',
+                height: ''
+            },
             price: '',
             stock: '',
             images: []
@@ -53,6 +63,11 @@ export default function VariantManager({
 
         const newVariant = {
             color: variantForm.color,
+            dimensions: {
+                length: variantForm.dimensions?.length || '',
+                width: variantForm.dimensions?.width || '',
+                height: variantForm.dimensions?.height || ''
+            },
             price: parseFloat(variantForm.price) || 0,
             stock: parseInt(variantForm.stock) || 0,
             images: variantForm.images || []
@@ -70,6 +85,11 @@ export default function VariantManager({
         setEditingIndex(null)
         setVariantForm({
             color: '',
+            dimensions: {
+                length: '',
+                width: '',
+                height: ''
+            },
             price: '',
             stock: '',
             images: []
@@ -114,10 +134,6 @@ export default function VariantManager({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold text-secondary-900">Variants - สีต่างๆ ({variants.length})</h3>
-                    <p className="text-sm text-secondary-600">สินค้าขนาดเดียวกัน แต่สีต่างกัน</p>
-                </div>
                 {editingIndex === null && (
                     <button
                         type="button"
@@ -125,7 +141,7 @@ export default function VariantManager({
                         className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                     >
                         <Plus size={16} />
-                        เพิ่มสี
+                        เพิ่ม Variant
                     </button>
                 )}
             </div>
@@ -140,6 +156,11 @@ export default function VariantManager({
                                     สี: {variant.color}
                                 </div>
                                 <div className="text-sm text-secondary-600 mt-1">
+                                    {variant.dimensions && (
+                                        <span className="mr-3">
+                                            📏 {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height} cm
+                                        </span>
+                                    )}
                                     ฿{variant.price?.toLocaleString()} | Stock: {variant.stock} | {variant.images?.length || 0} รูป
                                 </div>
                             </div>
@@ -168,7 +189,7 @@ export default function VariantManager({
             {editingIndex !== null && (
                 <div className="p-6 bg-white border-2 border-primary-500 rounded-lg space-y-4">
                     <h4 className="font-semibold text-secondary-900">
-                        {editingIndex < variants.length ? 'แก้ไข' : 'เพิ่ม'} สี
+                        {editingIndex < variants.length ? 'แก้ไข' : 'เพิ่ม'} Variant
                     </h4>
 
                     {/* Color */}
@@ -221,6 +242,64 @@ export default function VariantManager({
                                 )
                             })}
                         </select>
+                    </div>
+
+
+                    {/* Dimensions */}
+                    <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                            ขนาด (cm)
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div>
+                                <label className="block text-xs text-secondary-600 mb-1">ยาว (L)</label>
+                                <input
+                                    type="number"
+                                    value={variantForm.dimensions?.length || ''}
+                                    onChange={(e) => setVariantForm({
+                                        ...variantForm,
+                                        dimensions: {
+                                            ...variantForm.dimensions,
+                                            length: e.target.value
+                                        }
+                                    })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-secondary-600 mb-1">กว้าง (W)</label>
+                                <input
+                                    type="number"
+                                    value={variantForm.dimensions?.width || ''}
+                                    onChange={(e) => setVariantForm({
+                                        ...variantForm,
+                                        dimensions: {
+                                            ...variantForm.dimensions,
+                                            width: e.target.value
+                                        }
+                                    })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-secondary-600 mb-1">สูง (H)</label>
+                                <input
+                                    type="number"
+                                    value={variantForm.dimensions?.height || ''}
+                                    onChange={(e) => setVariantForm({
+                                        ...variantForm,
+                                        dimensions: {
+                                            ...variantForm.dimensions,
+                                            height: e.target.value
+                                        }
+                                    })}
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="0"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Price & Stock */}
@@ -290,9 +369,10 @@ export default function VariantManager({
                         <button
                             type="button"
                             onClick={handleSaveVariant}
-                            className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
                         >
-                            บันทึกสี
+                            <Save size={16} />
+                            บันทึก Variant
                         </button>
                         <button
                             type="button"
@@ -307,8 +387,8 @@ export default function VariantManager({
 
             {variants.length === 0 && editingIndex === null && (
                 <div className="p-8 text-center bg-secondary-50 rounded-lg border-2 border-dashed border-secondary-300">
-                    <p className="text-secondary-600">ยังไม่มีสีอื่น</p>
-                    <p className="text-sm text-secondary-500 mt-1">คลิก "เพิ่มสี" เพื่อเพิ่มสีของสินค้าขนาดนี้</p>
+                    <p className="text-secondary-600">ยังไม่มีข้อมูล Variant ของสินค้านี้</p>
+                    <p className="text-sm text-secondary-500 mt-1">คลิก "เพิ่ม Variant" เพื่อเพิ่มข้อมูลสินค้า</p>
                 </div>
             )}
         </div>

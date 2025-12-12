@@ -5,8 +5,12 @@ import VariantManager from './VariantManager'
 
 export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
-        id: '', category: '', subcategory: '', price: 0, stock: 0, description: '',
-        length: '', width: '', height: '', material: '', color: '',
+        id: '',
+        category: '',
+        name: '',
+        description: '',
+        material: '',
+        product_code: '',
         variants: [],
         images: []
     })
@@ -61,8 +65,12 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
             })
         } else {
             setFormData({
-                id: '', category: '', name: '', subcategory: '', price: '', stock: '', description: '',
-                length: '', width: '', height: '', material: '', color: '',
+                id: '',
+                category: '',
+                name: '',
+                description: '',
+                material: '',
+                product_code: '',
                 variants: [],
                 images: []
             })
@@ -76,7 +84,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
             const prefix = formData.category.substring(0, 2).toUpperCase()
 
             // Validate prefix is 2 letters/chars
-            if (prefix.length === 2 && prefix !== 'XX') {
+            if (prefix.length === 2) {
                 // Determine base code
                 let baseCode = ''
 
@@ -91,8 +99,8 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                         // Same category - keep existing base code
                         baseCode = existingBaseCode
                     } else {
-                        // Category changed - generate new base code for new category
-                        let maxNum = 0
+                        // Category changed - find smallest unused number
+                        const usedNumbers = new Set()
                         existingProducts.forEach(p => {
                             const checkId = p.product_code || p.id
                             if (checkId && checkId.startsWith(prefix)) {
@@ -100,17 +108,20 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                 const basePart = parts[0]
                                 const numPart = basePart.substring(2)
                                 if (/^\d+$/.test(numPart)) {
-                                    const num = parseInt(numPart, 10)
-                                    if (num > maxNum) maxNum = num
+                                    usedNumbers.add(parseInt(numPart, 10))
                                 }
                             }
                         })
-                        const nextNum = maxNum + 1
+                        // Find smallest unused number starting from 1
+                        let nextNum = 1
+                        while (usedNumbers.has(nextNum)) {
+                            nextNum++
+                        }
                         baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
                     }
                 } else {
-                    // New product - generate new base code
-                    let maxNum = 0
+                    // New product - find smallest unused number
+                    const usedNumbers = new Set()
 
                     existingProducts.forEach(p => {
                         const checkId = p.product_code || p.id
@@ -120,62 +131,26 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             const numPart = basePart.substring(2)
 
                             if (/^\d+$/.test(numPart)) {
-                                const num = parseInt(numPart, 10)
-                                if (num > maxNum) maxNum = num
+                                usedNumbers.add(parseInt(numPart, 10))
                             }
                         }
                     })
 
-                    const nextNum = maxNum + 1
+                    // Find smallest unused number starting from 1
+                    let nextNum = 1
+                    while (usedNumbers.has(nextNum)) {
+                        nextNum++
+                    }
                     baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
                 }
 
-                // Extract material code
-                let materialCode = ''
-                if (formData.material) {
-                    const materialParts = formData.material.trim().split(' ')
-                    if (materialParts[0].length >= 2) {
-                        materialCode = materialParts[0].substring(0, 2).toUpperCase()
-                    }
-                }
 
-                // Get dimensions
-                const length = formData.length
-                const width = formData.width
-                const height = formData.height
-
-                // If no dimensions provided, show only base code
-                if (!length && !width && !height) {
-                    setFormData(prev => ({
-                        ...prev,
-                        id: baseCode,
-                        product_code: baseCode
-                    }))
-                    return
-                }
-
-                // Build product_code: BASE-D{L}x{W}x{H}-MT
-                // Example: AA003-D10x20x30-WD
-                let dimensionParts = []
-                if (length) dimensionParts.push(length)
-                if (width) dimensionParts.push(width)
-                if (height) dimensionParts.push(height)
-
-                let newProductCode = baseCode
-                if (dimensionParts.length > 0) {
-                    newProductCode += `-D${dimensionParts.join('x')}`
-                }
-
-                // Add material code if provided
-                if (materialCode) {
-                    newProductCode += `-${materialCode}`
-                }
-
-                // Update both id and product_code for backward compatibility
+                // Product code is now just the base code (e.g., AA001)
+                // Dimensions are managed at variant level
                 setFormData(prev => ({
                     ...prev,
-                    id: newProductCode,
-                    product_code: newProductCode
+                    id: baseCode,
+                    product_code: baseCode
                 }))
             }
         }
@@ -185,11 +160,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        onSave({
-            ...formData,
-            price: Number(formData.price) || 0,
-            stock: Number(formData.stock) || 0
-        })
+        // Only send fields that exist in database
+        const { id, subcategory, price, stock, color, length, width, height, ...cleanData } = formData
+        onSave(cleanData)
     }
 
     return (
@@ -233,16 +206,65 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             <div>
                                 <label className="block text-sm font-semibold text-secondary-700 mb-2">
                                     รหัสสินค้า *
-                                    <span className="text-xs font-normal text-secondary-500 ml-2">(สร้างอัตโนมัติ)</span>
+                                    <span className="text-xs font-normal text-secondary-500 ml-2">(แก้ไขเลข 3 หลักท้ายได้)</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.product_code || formData.id || ''}
-                                    readOnly
-                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-secondary-50 font-mono text-secondary-700 cursor-not-allowed"
-                                    placeholder="เลือกประเภท, ขนาด, วัสดุ เพื่อสร้างรหัส"
+                                    onChange={(e) => {
+                                        let input = e.target.value.toUpperCase()
+
+                                        // Limit to 5 characters max
+                                        if (input.length > 5) return
+
+                                        // If user tries to edit first 2 chars, prevent it
+                                        const currentCode = formData.product_code || formData.id || ''
+                                        if (currentCode.length >= 2 && input.length >= 2) {
+                                            // Keep first 2 chars from category
+                                            const prefix = formData.category ? formData.category.substring(0, 2) : currentCode.substring(0, 2)
+                                            input = prefix + input.substring(2)
+                                        }
+
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            id: input,
+                                            product_code: input
+                                        }))
+                                    }}
+                                    onBlur={(e) => {
+                                        const code = e.target.value
+                                        const match = code.match(/^([A-Z]{2})(\d{3})$/)
+
+                                        if (!match) {
+                                            alert('รูปแบบรหัสไม่ถูกต้อง ต้องเป็น AA### (5 หลัก เช่น AA001)')
+                                            return
+                                        }
+
+                                        // Check for duplicates
+                                        const isDuplicate = existingProducts.some(p => {
+                                            const checkId = p.product_code || p.id
+                                            if (product && checkId === (product.product_code || product.id)) {
+                                                return false
+                                            }
+                                            return checkId === code
+                                        })
+
+                                        if (isDuplicate) {
+                                            alert(`รหัส ${code} ถูกใช้งานแล้ว กรุณาเลือกเลขอื่น`)
+                                            if (product) {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    id: product.product_code || product.id,
+                                                    product_code: product.product_code || product.id
+                                                }))
+                                            }
+                                        }
+                                    }}
+                                    maxLength={5}
+                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-white font-mono text-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    placeholder="AA001"
                                 />
-                                <p className="text-xs text-secondary-500 mt-1">รูปแบบ: BASE-L-W-H-MT (เช่น AA001-80-80-120-ST)</p>
+                                <p className="text-xs text-secondary-500 mt-1">รูปแบบ: AA### (5 หลัก เช่น AA001) - 2 หลักแรกมาจากประเภท, แก้ไขเฉพาะเลข 3 หลักท้ายได้</p>
                             </div>
                         </div>
 
@@ -256,20 +278,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
-                                <input type="text" value={formData.length} onChange={e => setFormData({ ...formData, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
-                                <input type="text" value={formData.width} onChange={e => setFormData({ ...formData, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
-                                <input type="text" value={formData.height} onChange={e => setFormData({ ...formData, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                            </div>
-                        </div>
 
                         {/* Material Only - Color managed in Variants */}
                         <div>
@@ -291,14 +299,14 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
                         </div>
 
-                        {/* Always show helper text - price, stock, color, and images managed in Variants */}
+                        {/* Always show helper text - dimensions, price, stock, color, and images managed in Variants */}
                         <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                             <p className="text-sm text-primary-700 flex items-center gap-2 font-medium">
                                 <span>💡</span>
-                                <span>สี, ราคา, สต็อก และรูปภาพ ถูกกำหนดในแต่ละสี (Variants)</span>
+                                <span>ขนาด, สี, ราคา, สต็อก และรูปภาพ ถูกกำหนดในแต่ละ Variant</span>
                             </p>
                             <p className="text-xs text-primary-600 mt-1 ml-6">
-                                กรุณาคลิก "เพิ่มสี" ด้านล่างเพื่อเพิ่มข้อมูลสินค้า
+                                กรุณาคลิก "เพิ่มสี" ด้านล่างเพื่อเพิ่มข้อมูลสินค้า (ขนาดและสีต่างๆ)
                             </p>
                         </div>
 

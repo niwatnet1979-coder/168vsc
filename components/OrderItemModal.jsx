@@ -134,32 +134,30 @@ export default function OrderItemModal({
         // Set product variants if available
         setProductVariants(product.variants || [])
 
-        // Calculate base price: use product price, or first variant price if product price is 0
-        const basePrice = product.price || (product.variants?.[0]?.price) || 0
+        // Calculate base price from first variant only (product.price is deprecated)
+        const basePrice = (product.variants?.[0]?.price) || 0
 
         setFormData(prev => ({
             ...prev,
             // New UUID-based reference
-            product_id: product.uuid || product.id,  // UUID for stable reference
-            product_code: product.product_code || product.id,  // Human-readable code for display
+            product_id: product.uuid || product.product_code,  // UUID for stable reference
+            product_code: product.product_code,  // Human-readable code for display
 
             // Legacy field (deprecated but kept for backward compatibility)
-            code: product.product_code || product.id,
+            code: product.product_code,
 
             name: product.name,
             description: product.description || '',
-            basePrice: basePrice,  // Store base price (from product or first variant)
-            unitPrice: basePrice,
-            image: product.variants?.[0]?.images?.[0] || product.images?.[0] || null,
             category: product.category,
             subcategory: product.subcategory,
-            subJob: null,
-            qty: 1,
-            lightColor: product.lightColor,
-            remote: product.remote,
-            crystalColor: product.crystalColor,
-            bulbType: product.bulbType,
-            light: product.light,
+            material: product.material,
+
+            basePrice: basePrice,  // Store base price (from first variant)
+            unitPrice: basePrice,
+            qty: prev.qty || 1,
+            discount: prev.discount || 0,
+
+            // Reset variant selection
             selectedVariant: null,
             _searchTerm: product.name,
         }))
@@ -202,12 +200,26 @@ export default function OrderItemModal({
         }
     }
 
+
     const handleSave = () => {
         if (!formData.product_id && !formData.code && !formData.name) {
             alert('กรุณาระบุสินค้า')
             return
         }
-        onSave(formData)
+
+        // Flatten variant data into item for compatibility
+        const itemData = {
+            ...formData,
+            // If variant selected, use its data
+            color: formData.selectedVariant?.color || '',
+            stock: formData.selectedVariant?.stock || 0,
+            dimensions: formData.selectedVariant?.dimensions || null,
+            // unitPrice already set from variant
+        }
+
+        console.log('[OrderItemModal] Saving item:', itemData)
+
+        onSave(itemData)
         onClose()
     }
 
@@ -426,17 +438,17 @@ export default function OrderItemModal({
                             {productVariants.length > 0 && (
                                 <div>
                                     <label className="block text-xs font-medium text-secondary-700 mb-1">
-                                        สี (Variant)
+                                        Variant
                                     </label>
                                     <select
                                         value={formData.selectedVariantIndex ?? ''}
                                         onChange={(e) => handleVariantSelect(e.target.value)}
                                         className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
                                     >
-                                        <option value="">-- เลือกสี --</option>
+                                        <option value="">-- เลือก Variant --</option>
                                         {productVariants.map((variant, i) => (
                                             <option key={i} value={i}>
-                                                {variant.color} ฿{variant.price?.toLocaleString()}
+                                                {variant.color} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
                                             </option>
                                         ))}
                                     </select>

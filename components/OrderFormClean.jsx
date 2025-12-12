@@ -384,18 +384,21 @@ export default function OrderForm() {
 
     const selectProduct = (index, product) => {
         const newItems = [...items]
+        // Use first variant's price as default
+        const defaultPrice = product.variants?.[0]?.price || 0
+
         newItems[index] = {
             ...newItems[index],
-            code: product.id,
+            code: product.product_code,
             name: product.name,
             description: product.description || product.name,
-            unitPrice: product.price || 0,
-            image: product.images?.[0] || null,
+            unitPrice: defaultPrice,
+            image: product.variants?.[0]?.images?.[0] || null,
             category: product.category,
             subcategory: product.subcategory,
             length: product.length, width: product.width, height: product.height,
-            material: product.material, color: product.color,
-            stock: product.stock,
+            material: product.material,
+            stock: product.variants?.[0]?.stock || 0,
             _searchTerm: undefined,
             showPopup: false,
             // Sync main job info to sub job if not separate
@@ -455,6 +458,9 @@ export default function OrderForm() {
 
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
         if (items.length === 0 || !items[0].code) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
+
+        console.log('[OrderForm] Saving order with items:', items)
+        console.log('[OrderForm] First item structure:', items[0])
 
         // Determine customer ID (create new if needed)
         let actualCustomerId = customer.id
