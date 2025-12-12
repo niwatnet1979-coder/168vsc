@@ -72,13 +72,42 @@ export default function OrderItemModal({
                     remark: item.remark || ''
                 })
 
-                // Load variants for the product
-                if (item.code && productsData) {
-                    const product = productsData.find(p => p.id === item.code)
-                    if (product && product.variants) {
-                        setProductVariants(product.variants)
+                // Fetch fresh product data from database for real-time updates
+                const fetchProductData = async () => {
+                    if (item.product_id || item.product_code || item.code) {
+                        try {
+                            // Try to get product by UUID first, then by product_code
+                            const products = await DataManager.getProducts()
+                            const product = products.find(p =>
+                                p.uuid === item.product_id ||
+                                p.product_code === item.product_code ||
+                                p.product_code === item.code ||
+                                p.id === item.code
+                            )
+
+                            if (product && product.variants) {
+                                console.log('[OrderItemModal] Loaded product variants:', product.variants)
+                                setProductVariants(product.variants)
+
+                                // Update image if available
+                                if (product.variants.length > 0 && product.variants[0].images?.[0]) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        image: product.variants[0].images[0]
+                                    }))
+                                }
+                            } else {
+                                console.warn('[OrderItemModal] Product not found or has no variants')
+                                setProductVariants([])
+                            }
+                        } catch (error) {
+                            console.error('[OrderItemModal] Error fetching product:', error)
+                            setProductVariants([])
+                        }
                     }
                 }
+
+                fetchProductData()
             } else {
                 // Reset for new item
                 setFormData({
@@ -183,7 +212,12 @@ export default function OrderItemModal({
                     selectedVariant: variant,
                     selectedVariantIndex: parseInt(variantIndex),
                     unitPrice: variant.price || prev.unitPrice,
-                    image: variant.images?.[0] || prev.image
+                    image: variant.images?.[0] || prev.image,
+                    // Reset optional fields to empty when selecting new variant
+                    lightColor: '',
+                    crystalColor: '',
+                    bulbType: '',
+                    remote: ''
                 }
             })
         } else {

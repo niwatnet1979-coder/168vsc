@@ -226,9 +226,25 @@ export default function MobilePage() {
                             </span>
                         </div>
 
-                        {/* Row 3: Product Name */}
-                        <div className="mt-2 text-xs font-medium text-secondary-900 bg-secondary-50 px-2 py-1 rounded inline-block self-start border border-secondary-100 max-w-full truncate">
-                            {job.productName || job.productId}
+
+                        {/* Row 3: Product Details */}
+                        <div className="text-xs text-secondary-700 leading-tight space-y-1 mt-1">
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-secondary-900 truncate">{job.productName}</span>
+                                <span className="text-[10px] font-mono text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded border border-secondary-200 flex-shrink-0">
+                                    {job.productId}
+                                </span>
+                            </div>
+
+                            {/* Specs Combined Line */}
+                            <div className="text-secondary-600 truncate">
+                                <span>{job.product?.category || '-'}</span>
+                                {(job.product?.width || job.product?.length || job.product?.height) && (
+                                    <span> • {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
+                                )}
+                                {job.product?.material && <span> • {job.product.material}</span>}
+                                {job.product?.color && <span> • {job.product.color}</span>}
+                            </div>
                         </div>
                     </div>
                 </div>

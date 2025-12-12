@@ -213,19 +213,34 @@ export default function PaymentEntryModal({
                             className="hidden"
                             onChange={(e) => {
                                 const file = e.target.files?.[0]
-                                if (file) setFormData({ ...formData, slip: file })
+                                if (file) {
+                                    setFormData({ ...formData, slip: file })
+                                }
                             }}
                         />
-                        <button
-                            type="button"
-                            onClick={() => document.getElementById('slip-upload').click()}
-                            className={`w-full px-3 py-2 text-sm border-2 border-dashed rounded-lg ${formData.slip
-                                ? 'border-success-500 bg-success-50 text-success-700'
-                                : 'border-secondary-300 hover:border-secondary-400'
-                                }`}
-                        >
-                            {formData.slip ? formData.slip.name || 'มีรูปสลิปแล้ว' : 'อัพโหลดสลิป'}
-                        </button>
+
+                        {/* Show image preview if slip exists */}
+                        {formData.slip ? (
+                            <div className="relative border-2 border-success-500 rounded-lg overflow-hidden bg-success-50">
+                                <img
+                                    src={typeof formData.slip === 'string' ? formData.slip : URL.createObjectURL(formData.slip)}
+                                    alt="Payment Slip"
+                                    className="w-full h-48 object-contain cursor-pointer"
+                                    onClick={() => document.getElementById('slip-upload').click()}
+                                />
+                                <div className="absolute bottom-0 left-0 right-0 bg-success-700 bg-opacity-90 text-white text-xs py-1 px-2 text-center">
+                                    คลิกเพื่อเปลี่ยนรูป
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => document.getElementById('slip-upload').click()}
+                                className="w-full px-3 py-2 text-sm border-2 border-dashed border-secondary-300 hover:border-secondary-400 rounded-lg"
+                            >
+                                อัพโหลดสลิป
+                            </button>
+                        )}
                     </div>
 
                     {/* Signature Pads */}

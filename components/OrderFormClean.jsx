@@ -81,7 +81,6 @@ export default function OrderForm() {
     })
 
     const [items, setItems] = useState([])
-    const [note, setNote] = useState('')
 
     // Sync Job Info to Items (Real-time)
     useEffect(() => {
@@ -99,10 +98,10 @@ export default function OrderForm() {
                 inspector1: jobInfo.inspector1,
                 inspector2: jobInfo.inspector2,
                 team: jobInfo.team,
-                description: note // Sync main job note to sub job description
+                description: jobInfo.description // Use jobInfo.description directly
             }
         })))
-    }, [jobInfo, note])
+    }, [jobInfo]) // Only jobInfo as dependency
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
     const [vatRate, setVatRate] = useState(0.07)
@@ -221,11 +220,44 @@ export default function OrderForm() {
                         })
                     }
                     if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
-                    if (order.jobInfo) setJobInfo(order.jobInfo)
-                    if (order.items) setItems(order.items)
+                    if (order.jobInfo) {
+                        setJobInfo({
+                            ...order.jobInfo,
+                            description: order.note || order.jobInfo.description || ''
+                        })
+                    }
+
+                    // Load items and fetch product images
+                    if (order.items) {
+                        // Fetch all products to get images
+                        const products = await DataManager.getProducts()
+
+                        const itemsWithImages = order.items.map(item => {
+                            // Try to find product and get image from variants
+                            const product = products.find(p =>
+                                p.uuid === item.product_id ||
+                                p.product_code === item.product_code ||
+                                p.product_code === item.code
+                            )
+
+                            if (product && product.variants && product.variants.length > 0) {
+                                // Get image from first variant if item doesn't have image
+                                if (!item.image && product.variants[0].images && product.variants[0].images[0]) {
+                                    return {
+                                        ...item,
+                                        image: product.variants[0].images[0]
+                                    }
+                                }
+                            }
+
+                            return item
+                        })
+
+                        setItems(itemsWithImages)
+                    }
+
                     if (order.discount) setDiscount(order.discount)
                     if (order.shippingFee) setShippingFee(order.shippingFee)
-                    if (order.note) setNote(order.note)
                     if (order.activeCustomerContact) setActiveCustomerContact(order.activeCustomerContact)
                     if (order.selectedContact) setSelectedContact(order.selectedContact)
                     if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
@@ -552,17 +584,14 @@ export default function OrderForm() {
             items: itemsWithJobIds,
             total: total,
             status: 'Pending',
-            jobInfo: {
-                ...jobInfo,
-                description: note // Sync note to jobInfo.description
-            },
+            jobInfo: jobInfo, // jobInfo.description already contains the note
             taxInvoice: taxInvoice,
             taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
             activeCustomerContact: activeCustomerContact,
             selectedContact: selectedContact,
             discount: discount,
             shippingFee: shippingFee,
-            note: note,
+            note: jobInfo.description, // Save description as note for backward compatibility
             paymentSchedule: paymentSchedule || [] // Ensure it exists
         }
 
@@ -834,8 +863,8 @@ export default function OrderForm() {
                                 onChange={setJobInfo}
                                 customer={customer}
                                 availableTeams={availableTeams}
-                                note={note}
-                                onNoteChange={setNote}
+                                note={jobInfo.description}
+                                onNoteChange={(value) => setJobInfo(prev => ({ ...prev, description: value }))}
                             />
                         </div>
 
@@ -1399,21 +1428,21 @@ export default function OrderForm() {
                                                 <div className="flex items-center gap-1">
                                                     <UserCheck size={12} />
                                                     <span>
-                                                        {item.subJob?.inspector1?.name || '-'}
-                                                        {item.subJob?.inspector1?.phone && ` (${item.subJob.inspector1.phone})`}
+                                                        {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) || '-'}
+                                                        {(item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone})`}
                                                     </span>
                                                 </div>
 
-                                                {(item.subJob?.distance || item.subJob?.installLocationName) && (
+                                                {((item.subJob?.distance || jobInfo.distance) || (item.subJob?.installLocationName || jobInfo.installLocationName)) && (
                                                     <div className="flex items-center gap-1 text-secondary-500">
-                                                        {item.subJob?.distance && <span>{item.subJob.distance} Km</span>}
-                                                        {item.subJob?.installLocationName && <span>{item.subJob.installLocationName}</span>}
+                                                        {(item.subJob?.distance || jobInfo.distance) && <span>{item.subJob?.distance || jobInfo.distance} Km</span>}
+                                                        {(item.subJob?.installLocationName || jobInfo.installLocationName) && <span>{item.subJob?.installLocationName || jobInfo.installLocationName}</span>}
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-1">
                                                     <MapPin size={12} className="flex-shrink-0" />
                                                     <span>
-                                                        {item.subJob?.installAddress || item.subJob?.installLocationName || '-'}
+                                                        {item.subJob?.installAddress || jobInfo.installAddress || item.subJob?.installLocationName || jobInfo.installLocationName || '-'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1450,11 +1479,11 @@ export default function OrderForm() {
                                             <div className="flex items-center gap-3 flex-shrink-0">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar size={12} />
-                                                    <span>{item.subJob?.appointmentDate ? new Date(item.subJob.appointmentDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                    <span>{(item.subJob?.appointmentDate || jobInfo.appointmentDate) ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleDateString('th-TH') : '-'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1 text-green-700">
                                                     <CheckCircle size={12} />
-                                                    <span>{item.subJob?.completionDate ? new Date(item.subJob.completionDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                    <span>{(item.subJob?.completionDate || jobInfo.completionDate) ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH') : '-'}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1635,19 +1664,32 @@ export default function OrderForm() {
                             setShowPaymentModal(false)
                             setEditingPaymentIndex(null)
                         }}
-                        onSave={(paymentData) => {
-                            // Calculate base amount for percentage (total minus other payments, excluding current if editing)
+                        onSave={async (paymentData) => {
+                            // Upload slip if it's a File object
+                            let slipUrl = paymentData.slip
+                            if (paymentData.slip && paymentData.slip instanceof File) {
+                                console.log('[OrderFormClean] Uploading payment slip...')
+                                const paymentIndex = editingPaymentIndex !== null ? editingPaymentIndex : paymentSchedule.length
+                                // Use existing orderId or generate temporary one for new orders
+                                const uploadOrderId = router.query.id || `TEMP-${Date.now()}`
+                                slipUrl = await DataManager.uploadPaymentSlip(paymentData.slip, uploadOrderId, paymentIndex)
+                                if (!slipUrl) {
+                                    alert('ไม่สามารถอัพโหลดรูปสลิปได้ กรุณาลองใหม่อีกครั้ง')
+                                    return
+                                }
+                                console.log('[OrderFormClean] Slip uploaded:', slipUrl)
+                            }
+
+                            // Calculate amount based on mode
                             const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
-                                // Exclude the payment being edited
                                 if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
                                     return sum
                                 }
                                 return sum + (parseFloat(p.amount) || 0)
                             }, 0)
-                            const baseAmount = total - otherPaymentsTotal
-
+                            const remainingForThis = total - otherPaymentsTotal
                             const calculatedAmount = paymentData.amountMode === 'percent'
-                                ? (baseAmount * (parseFloat(paymentData.percentValue) || 0)) / 100
+                                ? (remainingForThis * (parseFloat(paymentData.percentValue) || 0)) / 100
                                 : parseFloat(paymentData.amount) || 0
 
                             if (editingPaymentIndex !== null) {
@@ -1655,6 +1697,7 @@ export default function OrderForm() {
                                 const newSchedule = [...paymentSchedule]
                                 newSchedule[editingPaymentIndex] = {
                                     ...paymentData,
+                                    slip: slipUrl, // Store URL instead of File
                                     amount: calculatedAmount
                                 }
                                 setPaymentSchedule(newSchedule)
@@ -1662,6 +1705,7 @@ export default function OrderForm() {
                                 // Add new payment
                                 setPaymentSchedule([...paymentSchedule, {
                                     ...paymentData,
+                                    slip: slipUrl, // Store URL instead of File
                                     amount: calculatedAmount
                                 }])
                             }

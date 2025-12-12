@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
+import { DataManager } from '../lib/dataManager'
 import {
     ArrowLeft,
     Calendar,
@@ -27,46 +28,50 @@ export default function JobDetailPage() {
     useEffect(() => {
         if (!id) return
 
-        const loadJobDetails = () => {
-            // Read from jobs_data instead of orders_data
-            const savedJobs = localStorage.getItem('jobs_data')
-            if (!savedJobs) {
+        const loadJobDetails = async () => {
+            try {
+                // Use DataManager to get job details from DB
+                const jobData = await DataManager.getJobById(id)
+
+                if (jobData) {
+                    // Start: Fix "Invalid Date" by handling timestamp string correctly
+                    let dateStr = jobData.jobDate
+                    if (dateStr && dateStr.includes('T')) {
+                        dateStr = dateStr.split('T')[0]
+                    }
+                    const appointment = dateStr ? `${dateStr}T${jobData.jobTime || '09:00'}` : '-'
+                    // End: Fix "Invalid Date"
+
+                    setJob({
+                        uniqueId: jobData.uniqueId,
+                        orderId: jobData.orderId,
+                        customer: {
+                            name: jobData.customer?.name || jobData.customerName || 'Unknown',
+                            phone: jobData.customer?.phone || '-',
+                            address: jobData.address || jobData.customer?.address || '-'
+                        },
+                        product: {
+                            id: jobData.product?.id || jobData.productId,
+                            name: jobData.product?.name || jobData.productName,
+                            image: jobData.product?.image || jobData.product?.image_url || jobData.productImage,
+                            price: jobData.product?.price || 0
+                        },
+                        jobType: jobData.rawJobType || jobData.jobType,
+                        appointmentDate: appointment,
+                        team: jobData.team || jobData.assignedTeam || '-',
+                        inspector: jobData.inspector || '-',
+                        description: jobData.notes || jobData.description || '-',
+                        status: jobData.status || 'Pending'
+                    })
+                } else {
+                    setJob(null)
+                }
+            } catch (error) {
+                console.error('Error loading job details:', error)
                 setJob(null)
+            } finally {
                 setLoading(false)
-                return
             }
-
-            const jobs = JSON.parse(savedJobs)
-            const foundJob = jobs.find(j => j.id === id)
-
-            if (foundJob) {
-                // Transform to match expected structure
-                setJob({
-                    uniqueId: foundJob.id,
-                    orderId: foundJob.orderId,
-                    customer: {
-                        name: foundJob.customerName || 'Unknown',
-                        phone: '-', // Will be fetched from customers_data if needed
-                        address: foundJob.address || '-'
-                    },
-                    product: {
-                        id: foundJob.productId,
-                        name: foundJob.productName,
-                        image: foundJob.productImage,
-                        price: 0 // Can be fetched from products_data if needed
-                    },
-                    jobType: foundJob.rawJobType || foundJob.jobType,
-                    appointmentDate: foundJob.jobDate ? `${foundJob.jobDate}T${foundJob.jobTime || '09:00'}` : '-',
-                    team: foundJob.assignedTeam || '-',
-                    inspector: '-', // Can be added to jobs_data later
-                    description: foundJob.notes || '-',
-                    status: foundJob.status || 'Pending'
-                })
-            } else {
-                setJob(null)
-            }
-
-            setLoading(false)
         }
 
         loadJobDetails()

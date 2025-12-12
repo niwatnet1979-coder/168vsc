@@ -532,58 +532,101 @@ export default function ProductManagement() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {paginatedProducts.length > 0 ? (
                                 paginatedProducts.map((product) => (
-                                    <div key={product.id} className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden hover:shadow-lg transition-shadow group">
+                                    <div key={product.id} className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden hover:shadow-lg transition-shadow group flex flex-col">
                                         <div className="aspect-square bg-secondary-50 relative overflow-hidden">
-                                            {(product.images && product.images[0]) ? (
-                                                <img src={product.images[0]} alt={product.id} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <ImageIcon size={48} className="text-secondary-300" />
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                // Try main product image first
+                                                if (product.images && product.images[0]) {
+                                                    return <img src={product.images[0]} alt={product.id} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                }
+                                                // Fallback to first variant image
+                                                if (product.variants && product.variants.length > 0 && product.variants[0].images && product.variants[0].images[0]) {
+                                                    return <img src={product.variants[0].images[0]} alt={product.id} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                                }
+                                                // No image available
+                                                return (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <ImageIcon size={48} className="text-secondary-300" />
+                                                    </div>
+                                                )
+                                            })()}
                                         </div>
-                                        <div className="p-4">
-                                            <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline block mb-2">
-                                                {product.id}
-                                            </Link>
-                                            <p className="text-sm text-secondary-600 mb-3 line-clamp-2 min-h-[2.5rem]">
-                                                {[product.category, product.subcategory].filter(Boolean).join(' • ') || '-'}
-                                            </p>
-                                            <div className="flex items-center justify-between mb-3">
+                                        <div className="p-4 flex flex-col flex-1">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
+                                                    {product.product_code || product.id}
+                                                </Link>
+                                                {product.variants && product.variants.length > 0 && (
+                                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap flex items-center gap-1">
+                                                        🎨 {product.variants.length} สี
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="text-sm text-secondary-700 leading-relaxed mb-4 min-h-[3rem]">
                                                 {(() => {
-                                                    const variants = product.variants || []
-                                                    if (variants.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+                                                    // Use exact same logic as Table View (Line 270+)
 
-                                                    const prices = variants.map(v => v.price || 0).filter(p => p > 0)
-                                                    if (prices.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+                                                    // Extract category name without prefix
+                                                    const categoryName = product.category ? product.category.split(' ').slice(1).join(' ') : null
+                                                    // Extract material name without prefix
+                                                    const materialName = product.material ? product.material.split(' ').slice(1).join(' ') || product.material : null
 
-                                                    const minPrice = Math.min(...prices)
-                                                    const maxPrice = Math.max(...prices)
-                                                    const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+                                                    const info = [
+                                                        categoryName,
+                                                        product.name,
+                                                        product.subcategory,
+                                                        materialName,
+                                                        (product.length || product.width || product.height) ? `${product.length || '-'}×${product.width || '-'}×${product.height || '-'} cm` : null
+                                                    ].filter(Boolean).join(' • ')
 
-                                                    return (
-                                                        <>
-                                                            <span className="text-lg font-bold text-secondary-900">
-                                                                {minPrice === maxPrice
-                                                                    ? `฿${minPrice.toLocaleString()}`
-                                                                    : `฿${minPrice.toLocaleString()} - ฿${maxPrice.toLocaleString()}`
-                                                                }
-                                                            </span>
-                                                            <span className={`text-sm font-semibold ${totalStock > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                                                                คงเหลือ {totalStock}
-                                                            </span>
-                                                        </>
-                                                    )
+                                                    return info || '-'
                                                 })()}
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => handleEdit(product)} className="flex-1 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
-                                                    <Edit2 size={14} />
-                                                    แก้ไข
-                                                </button>
-                                                <button onClick={() => handleDelete(product.id)} className="px-3 py-2 bg-danger-50 text-danger-700 rounded-lg hover:bg-danger-100 transition-colors" title="ลบ">
-                                                    <Trash2 size={14} />
-                                                </button>
+
+                                            {product.description && (
+                                                <div className="text-xs text-secondary-500 mb-3 line-clamp-2">
+                                                    {product.description}
+                                                </div>
+                                            )}
+
+                                            <div className="mt-auto">
+                                                <div className="flex items-center justify-between mb-3 border-t border-secondary-100 pt-3">
+                                                    {(() => {
+                                                        const variants = product.variants || []
+                                                        if (variants.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+
+                                                        const prices = variants.map(v => v.price || 0).filter(p => p > 0)
+                                                        if (prices.length === 0) return <span className="text-lg font-bold text-secondary-400">-</span>
+
+                                                        const minPrice = Math.min(...prices)
+                                                        const maxPrice = Math.max(...prices)
+                                                        const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+
+                                                        return (
+                                                            <>
+                                                                <span className="text-base font-bold text-secondary-900">
+                                                                    {minPrice === maxPrice
+                                                                        ? `฿${minPrice.toLocaleString()}`
+                                                                        : `฿${minPrice.toLocaleString()} - ฿${maxPrice.toLocaleString()}`
+                                                                    }
+                                                                </span>
+                                                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${totalStock > 0 ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-700'}`}>
+                                                                    คงเหลือ {totalStock}
+                                                                </span>
+                                                            </>
+                                                        )
+                                                    })()}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => handleEdit(product)} className="flex-1 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
+                                                        <Edit2 size={14} />
+                                                        แก้ไข
+                                                    </button>
+                                                    <button onClick={() => handleDelete(product.id)} className="px-3 py-2 bg-danger-50 text-danger-700 rounded-lg hover:bg-danger-100 transition-colors" title="ลบ">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
