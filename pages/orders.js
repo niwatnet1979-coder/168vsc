@@ -98,19 +98,17 @@ export default function OrdersListPage() {
     }
 
     const getJobTypeColor = (type) => {
-        switch (type) {
-            case 'ติดตั้ง': return 'bg-danger-50 text-danger-700 border-danger-100'
-            case 'ส่งของ': return 'bg-warning-50 text-warning-700 border-warning-100'
-            default: return 'bg-primary-50 text-primary-700 border-primary-100'
-        }
+        if (!type) return 'bg-primary-50 text-primary-700 border-primary-100'
+        if (type.includes('ติดตั้ง')) return 'bg-danger-50 text-danger-700 border-danger-100'
+        if (type.includes('ส่งของ') || type.includes('ขนส่ง')) return 'bg-warning-50 text-warning-700 border-warning-100'
+        return 'bg-primary-50 text-primary-700 border-primary-100'
     }
 
     const getJobTypeIcon = (type) => {
-        switch (type) {
-            case 'ติดตั้ง': return <Wrench size={14} className="mr-1" />
-            case 'ส่งของ': return <Truck size={14} className="mr-1" />
-            default: return <Package size={14} className="mr-1" />
-        }
+        if (!type) return <Package size={14} className="mr-1" />
+        if (type.includes('ติดตั้ง')) return <Wrench size={14} className="mr-1" />
+        if (type.includes('ส่งของ') || type.includes('ขนส่ง')) return <Truck size={14} className="mr-1" />
+        return <Package size={14} className="mr-1" />
     }
 
     return (

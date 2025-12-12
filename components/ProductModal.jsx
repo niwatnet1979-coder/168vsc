@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Camera } from 'lucide-react'
+import { X, Camera, Trash2 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import VariantManager from './VariantManager'
 
@@ -69,40 +69,68 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         }
     }, [product, isOpen])
 
-    // Auto-generate Product ID based on category, dimensions, and material
+    // Auto-generate Product Code based on category, dimensions, and material
     useEffect(() => {
-        // Only generate if:
-        // 1. We are in "Add New" mode (no product prop OR product has no ID)
-        // 2. A category is selected
-        // 3. The category has a valid prefix format (2 chars)
-        if ((!product || !product.id) && formData.category) {
+        // Generate product_code whenever category, dimensions, or material changes
+        if (formData.category) {
             const prefix = formData.category.substring(0, 2).toUpperCase()
 
             // Validate prefix is 2 letters/chars
-            if (prefix.length === 2 && prefix !== 'XX') { // Skip XX or invalid
-                // Find max number for this prefix
-                let maxNum = 0
+            if (prefix.length === 2 && prefix !== 'XX') {
+                // Determine base code
+                let baseCode = ''
 
-                existingProducts.forEach(p => {
-                    if (p.id && p.id.startsWith(prefix)) {
-                        // Extract base code (e.g., AA001 from AA001-80-80-120-ST)
-                        const parts = p.id.split('-')
-                        const basePart = parts[0] // AA001
-                        const numPart = basePart.substring(2) // 001
+                if (product && product.product_code) {
+                    // Editing existing product
+                    const parts = product.product_code.split('-')
+                    const existingBaseCode = parts[0] // e.g., "AA001"
+                    const existingPrefix = existingBaseCode.substring(0, 2) // e.g., "AA"
 
-                        // Check if the rest is a number
-                        if (/^\d+$/.test(numPart)) {
-                            const num = parseInt(numPart, 10)
-                            if (num > maxNum) maxNum = num
-                        }
+                    // If category prefix changed, generate new base code
+                    if (existingPrefix === prefix) {
+                        // Same category - keep existing base code
+                        baseCode = existingBaseCode
+                    } else {
+                        // Category changed - generate new base code for new category
+                        let maxNum = 0
+                        existingProducts.forEach(p => {
+                            const checkId = p.product_code || p.id
+                            if (checkId && checkId.startsWith(prefix)) {
+                                const parts = checkId.split('-')
+                                const basePart = parts[0]
+                                const numPart = basePart.substring(2)
+                                if (/^\d+$/.test(numPart)) {
+                                    const num = parseInt(numPart, 10)
+                                    if (num > maxNum) maxNum = num
+                                }
+                            }
+                        })
+                        const nextNum = maxNum + 1
+                        baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
                     }
-                })
+                } else {
+                    // New product - generate new base code
+                    let maxNum = 0
 
-                // Generate base code: Prefix + (Max+1) padded to 3 digits
-                const nextNum = maxNum + 1
-                const baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
+                    existingProducts.forEach(p => {
+                        const checkId = p.product_code || p.id
+                        if (checkId && checkId.startsWith(prefix)) {
+                            const parts = checkId.split('-')
+                            const basePart = parts[0]
+                            const numPart = basePart.substring(2)
 
-                // Extract material code (first 2 chars before space)
+                            if (/^\d+$/.test(numPart)) {
+                                const num = parseInt(numPart, 10)
+                                if (num > maxNum) maxNum = num
+                            }
+                        }
+                    })
+
+                    const nextNum = maxNum + 1
+                    baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
+                }
+
+                // Extract material code
                 let materialCode = ''
                 if (formData.material) {
                     const materialParts = formData.material.trim().split(' ')
@@ -111,17 +139,44 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                     }
                 }
 
-                // Build full ID: BASE-L-W-H-MT
-                const length = formData.length || '00'
-                const width = formData.width || '00'
-                const height = formData.height || '00'
+                // Get dimensions
+                const length = formData.length
+                const width = formData.width
+                const height = formData.height
 
-                let newId = `${baseCode}-${length}-${width}-${height}`
-                if (materialCode) {
-                    newId += `-${materialCode}`
+                // If no dimensions provided, show only base code
+                if (!length && !width && !height) {
+                    setFormData(prev => ({
+                        ...prev,
+                        id: baseCode,
+                        product_code: baseCode
+                    }))
+                    return
                 }
 
-                setFormData(prev => ({ ...prev, id: newId }))
+                // Build product_code: BASE-D{L}x{W}x{H}-MT
+                // Example: AA003-D10x20x30-WD
+                let dimensionParts = []
+                if (length) dimensionParts.push(length)
+                if (width) dimensionParts.push(width)
+                if (height) dimensionParts.push(height)
+
+                let newProductCode = baseCode
+                if (dimensionParts.length > 0) {
+                    newProductCode += `-D${dimensionParts.join('x')}`
+                }
+
+                // Add material code if provided
+                if (materialCode) {
+                    newProductCode += `-${materialCode}`
+                }
+
+                // Update both id and product_code for backward compatibility
+                setFormData(prev => ({
+                    ...prev,
+                    id: newProductCode,
+                    product_code: newProductCode
+                }))
             }
         }
     }, [formData.category, formData.length, formData.width, formData.height, formData.material, product, existingProducts])
@@ -139,74 +194,84 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="sticky top-0 bg-white border-b border-secondary-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-                    <h2 className="text-2xl font-bold text-secondary-900">
-                        {product && product.id ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}
-                    </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-secondary-100 rounded-lg">
-                        <X size={24} className="text-secondary-500" />
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                {/* Header - Fixed */}
+                <div className="bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-secondary-900">
+                            {product && product.id ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}
+                        </h2>
+                        {product && product.uuid && (
+                            <p className="text-xs text-secondary-400 font-mono mt-1">
+                                UUID: {product.uuid}
+                            </p>
+                        )}
+                    </div>
+                    <button onClick={onClose} className="text-secondary-500 hover:text-secondary-700">
+                        <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทสินค้า *</label>
-                            <select
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                required
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                            >
-                                <option value="">เลือกประเภทสินค้า</option>
-                                {productTypes.map((type, index) => (
-                                    <option key={index} value={type}>{type}</option>
-                                ))}
-                            </select>
+                {/* Body - Scrollable */}
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto min-h-0">
+                    <div className="p-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทสินค้า *</label>
+                                <select
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                    required
+                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                >
+                                    <option value="">เลือกประเภทสินค้า</option>
+                                    {productTypes.map((type, index) => (
+                                        <option key={index} value={type}>{type}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">
+                                    รหัสสินค้า *
+                                    <span className="text-xs font-normal text-secondary-500 ml-2">(สร้างอัตโนมัติ)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.product_code || formData.id || ''}
+                                    readOnly
+                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-secondary-50 font-mono text-secondary-700 cursor-not-allowed"
+                                    placeholder="เลือกประเภท, ขนาด, วัสดุ เพื่อสร้างรหัส"
+                                />
+                                <p className="text-xs text-secondary-500 mt-1">รูปแบบ: BASE-L-W-H-MT (เช่น AA001-80-80-120-ST)</p>
+                            </div>
                         </div>
+
                         <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">
-                                รหัสสินค้า *
-                                <span className="text-xs font-normal text-secondary-500 ml-2">(สร้างอัตโนมัติ)</span>
-                            </label>
+                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ชื่อสินค้า</label>
                             <input
                                 type="text"
-                                value={formData.id}
-                                readOnly
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-secondary-50 font-mono text-secondary-700 cursor-not-allowed"
-                                placeholder="เลือกประเภท, ขนาด, วัสดุ เพื่อสร้างรหัส"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                             />
-                            <p className="text-xs text-secondary-500 mt-1">รูปแบบ: BASE-L-W-H-MT (เช่น AA001-80-80-120-ST)</p>
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-secondary-700 mb-2">ชื่อสินค้า</label>
-                        <input
-                            type="text"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                    </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
+                                <input type="text" value={formData.length} onChange={e => setFormData({ ...formData, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
+                                <input type="text" value={formData.width} onChange={e => setFormData({ ...formData, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
+                                <input type="text" value={formData.height} onChange={e => setFormData({ ...formData, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                            </div>
+                        </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ยาว (cm)</label>
-                            <input type="text" value={formData.length} onChange={e => setFormData({ ...formData, length: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">กว้าง (cm)</label>
-                            <input type="text" value={formData.width} onChange={e => setFormData({ ...formData, width: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">สูง (cm)</label>
-                            <input type="text" value={formData.height} onChange={e => setFormData({ ...formData, height: e.target.value })} className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
+                        {/* Material Only - Color managed in Variants */}
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">ประเภทวัสดุ</label>
                             <select
@@ -220,126 +285,74 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                 ))}
                             </select>
                         </div>
+
                         <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">สีวัสดุ</label>
-                            <select
-                                value={formData.color}
-                                onChange={e => setFormData({ ...formData, color: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                            <label className="block text-sm font-semibold text-secondary-700 mb-2">รายละเอียด</label>
+                            <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                        </div>
+
+                        {/* Always show helper text - price, stock, color, and images managed in Variants */}
+                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                            <p className="text-sm text-primary-700 flex items-center gap-2 font-medium">
+                                <span>💡</span>
+                                <span>สี, ราคา, สต็อก และรูปภาพ ถูกกำหนดในแต่ละสี (Variants)</span>
+                            </p>
+                            <p className="text-xs text-primary-600 mt-1 ml-6">
+                                กรุณาคลิก "เพิ่มสี" ด้านล่างเพื่อเพิ่มข้อมูลสินค้า
+                            </p>
+                        </div>
+
+                        {/* Variant Management Section */}
+                        <div className="border-t border-secondary-200 pt-6">
+                            <VariantManager
+                                baseProductId={formData.product_code || formData.id}
+                                material={formData.material}
+                                variants={formData.variants}
+                                onChange={(newVariants) => setFormData({ ...formData, variants: newVariants })}
+                                materialColors={materialColors}
+                                mainProductColor={formData.color}
+                            />
+                        </div>
+                    </div>
+                </form>
+
+                {/* Footer - Fixed */}
+                <div className="bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between">
+                    <div>
+                        {product && product.uuid && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (confirm('ต้องการลบสินค้านี้?')) {
+                                        DataManager.deleteProduct(product.uuid)
+                                        onClose()
+                                        window.location.reload()
+                                    }
+                                }}
+                                className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
                             >
-                                <option value="">เลือกสีวัสดุ</option>
-                                {materialColors.map((item, index) => (
-                                    <option key={index} value={item}>{item}</option>
-                                ))}
-                            </select>
-                        </div>
+                                <Trash2 size={16} />
+                                ลบ
+                            </button>
+                        )}
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-secondary-700 mb-2">รายละเอียด</label>
-                        <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">ราคา (บาท)</label>
-                            <input
-                                type="number"
-                                value={formData.price}
-                                onChange={e => setFormData({ ...formData, price: e.target.value === '' ? '' : Number(e.target.value) })}
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-secondary-700 mb-2">สต้อคคงเหลือ</label>
-                            <input
-                                type="number"
-                                value={formData.stock}
-                                onChange={e => setFormData({ ...formData, stock: e.target.value === '' ? '' : Number(e.target.value) })}
-                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Image Upload Section */}
-                    <div>
-                        <label className="block text-sm font-semibold text-secondary-700 mb-2">รูปภาพสินค้า (สูงสุด 5 รูป)</label>
-                        <div className="grid grid-cols-5 gap-3">
-                            {[0, 1, 2, 3, 4].map((index) => (
-                                <div key={index} className="relative aspect-square border-2 border-dashed border-secondary-300 rounded-lg overflow-hidden hover:border-primary-500 transition-colors">
-                                    {formData.images && formData.images[index] ? (
-                                        <>
-                                            <img
-                                                src={formData.images[index]}
-                                                alt={`Product ${index + 1}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const newImages = [...(formData.images || [])];
-                                                    newImages.splice(index, 1);
-                                                    setFormData({ ...formData, images: newImages });
-                                                }}
-                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-secondary-50">
-                                            <Camera size={24} className="text-secondary-400 mb-1" />
-                                            <span className="text-xs text-secondary-500">เพิ่มรูป</span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                capture="environment"
-                                                className="hidden"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file && formData.id) {
-                                                        // Upload to Supabase Storage
-                                                        const imageUrl = await DataManager.uploadProductImage(file, formData.id);
-                                                        if (imageUrl) {
-                                                            const newImages = [...(formData.images || [])];
-                                                            newImages[index] = imageUrl;
-                                                            setFormData({ ...formData, images: newImages });
-                                                        } else {
-                                                            alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ');
-                                                        }
-                                                    } else if (!formData.id) {
-                                                        alert('กรุณาเลือกประเภทสินค้าก่อนอัพโหลดรูป');
-                                                    }
-                                                }}
-                                            />
-                                        </label>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Variant Management Section */}
-                    <div className="border-t border-secondary-200 pt-6">
-                        <VariantManager
-                            baseProductId={formData.id}
-                            material={formData.material}
-                            variants={formData.variants}
-                            onChange={(newVariants) => setFormData({ ...formData, variants: newVariants })}
-                            materialColors={materialColors}
-                        />
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-6 border-t border-secondary-200">
-                        <button type="button" onClick={onClose} className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium">
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
+                        >
                             ยกเลิก
                         </button>
-                        <button type="submit" className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30">
+                        <button
+                            type="submit"
+                            onClick={handleSubmit}
+                            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+                        >
                             บันทึก
                         </button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     )

@@ -134,13 +134,23 @@ export default function OrderItemModal({
         // Set product variants if available
         setProductVariants(product.variants || [])
 
+        // Calculate base price: use product price, or first variant price if product price is 0
+        const basePrice = product.price || (product.variants?.[0]?.price) || 0
+
         setFormData(prev => ({
             ...prev,
-            code: product.id,
+            // New UUID-based reference
+            product_id: product.uuid || product.id,  // UUID for stable reference
+            product_code: product.product_code || product.id,  // Human-readable code for display
+
+            // Legacy field (deprecated but kept for backward compatibility)
+            code: product.product_code || product.id,
+
             name: product.name,
             description: product.description || '',
-            unitPrice: product.price || 0,
-            image: product.images?.[0] || null,
+            basePrice: basePrice,  // Store base price (from product or first variant)
+            unitPrice: basePrice,
+            image: product.variants?.[0]?.images?.[0] || product.images?.[0] || null,
             category: product.category,
             subcategory: product.subcategory,
             subJob: null,
@@ -156,25 +166,44 @@ export default function OrderItemModal({
         setShowSearchPopup(false)
     }
 
-    const handleVariantSelect = (variantId) => {
-        const variant = productVariants.find(v => v.id === variantId)
+    const handleVariantSelect = (variantIndex) => {
+        console.log('=== handleVariantSelect ===')
+        console.log('variantIndex:', variantIndex, 'type:', typeof variantIndex)
+        console.log('productVariants:', productVariants)
+
+        // Use index instead of ID to avoid ID format issues
+        const variant = variantIndex !== '' ? productVariants[parseInt(variantIndex)] : null
+        console.log('Found variant:', variant)
+
         if (variant) {
-            setFormData(prev => ({
-                ...prev,
-                selectedVariant: variant,
-                unitPrice: variant.price || prev.unitPrice,
-                image: variant.images?.[0] || prev.image
-            }))
+            console.log('Setting variant price:', variant.price)
+            setFormData(prev => {
+                console.log('Previous formData:', prev)
+                return {
+                    ...prev,
+                    selectedVariant: variant,
+                    selectedVariantIndex: parseInt(variantIndex),
+                    unitPrice: variant.price || prev.unitPrice,
+                    image: variant.images?.[0] || prev.image
+                }
+            })
         } else {
-            setFormData(prev => ({
-                ...prev,
-                selectedVariant: null
-            }))
+            console.log('No variant selected, resetting to base price')
+            // Reset to base price when no variant selected
+            setFormData(prev => {
+                console.log('Previous basePrice:', prev.basePrice)
+                return {
+                    ...prev,
+                    selectedVariant: null,
+                    selectedVariantIndex: null,
+                    unitPrice: prev.basePrice || prev.unitPrice
+                }
+            })
         }
     }
 
     const handleSave = () => {
-        if (!formData.code && !formData.name) {
+        if (!formData.product_id && !formData.code && !formData.name) {
             alert('กรุณาระบุสินค้า')
             return
         }
@@ -188,7 +217,7 @@ export default function OrderItemModal({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto flex flex-col">
+            <div className="bg-white rounded-xl shadow-xl w-[512px] h-[600px] flex flex-col">
                 {/* Header */}
                 <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between z-10">
                     <h2 className="text-lg font-bold text-secondary-900">
@@ -208,12 +237,10 @@ export default function OrderItemModal({
                         </label>
 
                         {formData.code ? (
-
-                            <div className="bg-white border border-secondary-200 rounded-xl overflow-hidden shadow-sm group hover:shadow-md transition-shadow">
-                                {/* Flex Container: Image (Left) + Content (Right) */}
-                                <div className="flex">
-                                    {/* Left: Product Image */}
-                                    <div className="w-24 bg-secondary-50 flex items-center justify-center border-r border-secondary-100 flex-shrink-0">
+                            <div className="bg-white border-2 border-primary-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="p-3 flex items-start gap-3">
+                                    {/* Product Image */}
+                                    <div className="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
                                         {formData.image ? (
                                             <img
                                                 src={formData.image}
@@ -221,84 +248,54 @@ export default function OrderItemModal({
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <Package size={32} className="text-secondary-300" />
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <Package size={24} className="text-secondary-400" />
+                                            </div>
                                         )}
                                     </div>
 
-                                    {/* Right: Info & Details */}
-                                    <div className="flex-1 min-w-0">
-                                        {/* Header Row */}
-                                        <div className="p-3 border-b border-secondary-100 flex justify-between items-start gap-2">
-                                            <div className="min-w-0">
-                                                <div className="font-bold text-secondary-900 text-sm truncate">{formData.name}</div>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500">
-                                                        {formData.code}
-                                                    </span>
-                                                    <span className="font-bold text-primary-700 text-sm">
-                                                        {currency(formData.unitPrice)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => setFormData(prev => ({
-                                                    ...prev,
-                                                    code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
-                                                    image: null, length: '', width: '', height: '',
-                                                    material: '', color: '', crystalColor: '',
-                                                    bulbType: '', light: '', remote: ''
-                                                }))}
-                                                className="p-1.5 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
-                                                title="เลือกสินค้าใหม่"
-                                            >
-                                                <X size={16} />
-                                            </button>
+                                    {/* Product Info - 3 Lines */}
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        {/* Line 1: Product Code */}
+                                        <div className="font-bold text-primary-600 text-base truncate">
+                                            {formData.product_code || formData.code}
                                         </div>
 
-                                        {/* Compact Details Grid */}
-                                        <div className="p-2 gap-2 text-[10px] text-secondary-600">
-                                            {/* Attributes Line */}
-                                            <div className="flex flex-wrap gap-x-3 gap-y-1 items-center leading-tight">
-                                                {(formData.length || formData.width || formData.height) && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Box size={10} className="text-secondary-400" />
-                                                        <span className="truncate max-w-[100px] font-medium">{formData.width || '-'}x{formData.length || '-'}x{formData.height || '-'}</span>
-                                                    </div>
-                                                )}
-                                                {formData.material && (
-                                                    <div className="flex items-center gap-1">
-                                                        <span className="text-secondary-300">|</span>
-                                                        <span className="truncate max-w-[80px]">{formData.material}</span>
-                                                    </div>
-                                                )}
-                                                {(formData.color || formData.crystalColor) && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Palette size={10} className="text-secondary-400" />
-                                                        <span className="truncate max-w-[80px]">{formData.color} {formData.crystalColor}</span>
-                                                    </div>
-                                                )}
-                                                {(formData.bulbType || formData.light) && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Zap size={10} className="text-secondary-400" />
-                                                        <span className="truncate max-w-[80px]">{formData.bulbType} {formData.light}</span>
-                                                    </div>
-                                                )}
-                                                {formData.remote && (
-                                                    <div className="flex items-center gap-1">
-                                                        <Power size={10} className="text-secondary-400" />
-                                                        <span className="truncate max-w-[80px]">{formData.remote}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Description Line (Truncated) */}
-                                            {formData.description && formData.description !== formData.name && (
-                                                <div className="mt-1.5 pt-1.5 border-t border-secondary-100 line-clamp-1 hover:line-clamp-none transition-all cursor-default text-secondary-500">
-                                                    {formData.description}
-                                                </div>
+                                        {/* Line 2: Name • Category • Subcategory • Material • Dimensions • Color Count */}
+                                        <div className="text-sm text-secondary-700 truncate">
+                                            {formData.name && <span>{formData.name}</span>}
+                                            {formData.category && <span> • {formData.category}</span>}
+                                            {formData.subcategory && <span> • {formData.subcategory}</span>}
+                                            {formData.material && <span> • {formData.material}</span>}
+                                            {(formData.length || formData.width || formData.height) && (
+                                                <span> • {[formData.width, formData.length, formData.height].filter(Boolean).join('×')} cm</span>
+                                            )}
+                                            {productVariants.length > 0 && (
+                                                <span> 🎨 {productVariants.length} สี</span>
                                             )}
                                         </div>
+
+                                        {/* Line 3: Description */}
+                                        <div className="text-sm text-secondary-500 truncate">
+                                            {formData.description || ''}
+                                        </div>
                                     </div>
+
+                                    {/* Close Button */}
+                                    <button
+                                        onClick={() => setFormData(prev => ({
+                                            ...prev,
+                                            code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
+                                            image: null, length: '', width: '', height: '',
+                                            material: '', color: '', crystalColor: '',
+                                            bulbType: '', light: '', remote: '', category: '', subcategory: '',
+                                            selectedVariant: null
+                                        }))}
+                                        className="p-1.5 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all flex-shrink-0"
+                                        title="เลือกสินค้าใหม่"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
                             </div>
                         ) : (
@@ -324,12 +321,79 @@ export default function OrderItemModal({
                                                 <div
                                                     key={p.id}
                                                     onClick={() => selectProduct(p)}
-                                                    className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                    className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 flex items-start gap-3"
                                                 >
-                                                    <div className="font-bold text-secondary-900 text-sm">{p.name || ''}</div>
-                                                    <div className="flex justify-between mt-1">
-                                                        <div className="text-xs text-secondary-500">{p.id}</div>
-                                                        <div className="text-xs font-bold text-primary-600">{currency(p.price)}</div>
+                                                    {/* Product Image */}
+                                                    <div className="w-12 h-12 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
+                                                        {(() => {
+                                                            // Try to get image from first variant, fallback to product images
+                                                            const imageUrl = p.variants?.[0]?.images?.[0] || p.images?.[0]
+                                                            return imageUrl ? (
+                                                                <img
+                                                                    src={imageUrl}
+                                                                    alt={p.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Package size={20} className="text-secondary-400" />
+                                                                </div>
+                                                            )
+                                                        })()}
+                                                    </div>
+
+                                                    {/* Product Info - 3 Lines */}
+                                                    <div className="flex-1 min-w-0 space-y-0.5">
+                                                        {/* Line 1: Product Code + Price Range */}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="font-bold text-primary-600 text-sm truncate">
+                                                                {p.product_code || p.id}
+                                                            </div>
+                                                            <div className="text-sm font-bold text-primary-600 flex-shrink-0">
+                                                                {(() => {
+                                                                    if (p.variants && p.variants.length > 0) {
+                                                                        const prices = p.variants.map(v => v.price || 0)
+                                                                        const minPrice = Math.min(...prices)
+                                                                        const maxPrice = Math.max(...prices)
+                                                                        if (minPrice === maxPrice) {
+                                                                            return currency(minPrice)
+                                                                        }
+                                                                        return `${currency(minPrice)} - ${currency(maxPrice)}`
+                                                                    }
+                                                                    return currency(p.price || 0)
+                                                                })()}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Line 2: Name • Category • Subcategory • Material • Dimensions • Color Count */}
+                                                        <div className="text-xs text-secondary-700 truncate">
+                                                            {p.name && <span>{p.name}</span>}
+                                                            {p.category && <span> • {p.category}</span>}
+                                                            {p.subcategory && <span> • {p.subcategory}</span>}
+                                                            {p.material && <span> • {p.material}</span>}
+                                                            {(p.length || p.width || p.height) && (
+                                                                <span> • {[p.length, p.width, p.height].filter(Boolean).join('×')} cm</span>
+                                                            )}
+                                                            {p.variants && p.variants.length > 0 && (
+                                                                <span> 🎨 {p.variants.length} สี</span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Line 3: Description + Stock */}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="text-xs text-secondary-500 truncate flex-1">
+                                                                {p.description || ''}
+                                                            </div>
+                                                            <div className="text-xs text-secondary-500 flex-shrink-0">
+                                                                {(() => {
+                                                                    if (p.variants && p.variants.length > 0) {
+                                                                        const totalStock = p.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+                                                                        return `คงเหลือ: ${totalStock}`
+                                                                    }
+                                                                    return `คงเหลือ: ${p.stock || 0}`
+                                                                })()}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))
@@ -358,7 +422,28 @@ export default function OrderItemModal({
                     {/* Product Options Dropdowns & Remark */}
                     {formData.code && (
                         <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 space-y-4">
-                            {/* Row 1: Light Color, Remote */}
+                            {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
+                            {productVariants.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                                        สี (Variant)
+                                    </label>
+                                    <select
+                                        value={formData.selectedVariantIndex ?? ''}
+                                        onChange={(e) => handleVariantSelect(e.target.value)}
+                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    >
+                                        <option value="">-- เลือกสี --</option>
+                                        {productVariants.map((variant, i) => (
+                                            <option key={i} value={i}>
+                                                {variant.color} ฿{variant.price?.toLocaleString()}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* Row 2: Light Color, Crystal Color */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
@@ -374,42 +459,21 @@ export default function OrderItemModal({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีคริสตัล</label>
                                     <select
-                                        value={formData.remote}
-                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                        value={formData.crystalColor}
+                                        onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
                                         className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
                                     >
-                                        <option value="">-- เลือกรีโมท --</option>
-                                        {productOptions.remotes.map((opt, i) => (
+                                        <option value="">-- เลือกสีคริสตัล --</option>
+                                        {productOptions.crystalColors.map((opt, i) => (
                                             <option key={i} value={opt}>{opt}</option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            {/* Row 2: Variant (full width if exists) */}
-                            {productVariants.length > 0 && (
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
-                                        สี (Variant)
-                                    </label>
-                                    <select
-                                        value={formData.selectedVariant?.id || ''}
-                                        onChange={(e) => handleVariantSelect(e.target.value)}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">สีหลัก (ราคาปกติ)</option>
-                                        {productVariants.map((variant, i) => (
-                                            <option key={i} value={variant.id}>
-                                                {variant.color} ฿{variant.price?.toLocaleString()}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-
-                            {/* Row 3: Bulb Type, Crystal Color */}
+                            {/* Row 3: Bulb Type, Remote */}
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Bulb Type */}
                                 <div>
@@ -428,14 +492,14 @@ export default function OrderItemModal({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีคริสตัล</label>
+                                    <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
                                     <select
-                                        value={formData.crystalColor}
-                                        onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
+                                        value={formData.remote}
+                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
                                         className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
                                     >
-                                        <option value="">-- เลือกสีคริสตัล --</option>
-                                        {productOptions.crystalColors.map((opt, i) => (
+                                        <option value="">-- เลือกรีโมท --</option>
+                                        {productOptions.remotes.map((opt, i) => (
                                             <option key={i} value={opt}>{opt}</option>
                                         ))}
                                     </select>

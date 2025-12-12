@@ -6,27 +6,26 @@ export default function VariantManager({
     baseProductId,
     variants = [],
     onChange,
-    materialColors = []
+    materialColors = [],
+    mainProductColor = ''
 }) {
     const [editingIndex, setEditingIndex] = useState(null)
     const [variantForm, setVariantForm] = useState({
         color: '',
-        price: 0,
-        stock: 0,
+        price: '',
+        stock: '',
         images: []
     })
 
-    const generateVariantId = (variant) => {
-        const colorCode = variant.color ? variant.color.substring(0, 3).toUpperCase() : 'XXX'
-        return `${baseProductId}-${colorCode}`
-    }
+    // Note: Variant ID is NOT stored, it's computed dynamically as: {product_code}-{colorCode}
+    // This ensures variant IDs always reflect the current product_code
 
     const handleAddVariant = () => {
         setEditingIndex(variants.length)
         setVariantForm({
             color: '',
-            price: 0,
-            stock: 0,
+            price: '',
+            stock: '',
             images: []
         })
     }
@@ -53,8 +52,11 @@ export default function VariantManager({
         }
 
         const newVariant = {
-            ...variantForm,
-            id: generateVariantId(variantForm)
+            color: variantForm.color,
+            price: parseFloat(variantForm.price) || 0,
+            stock: parseInt(variantForm.stock) || 0,
+            images: variantForm.images || []
+            // NOTE: No 'id' field - it will be computed dynamically when needed
         }
 
         const newVariants = [...variants]
@@ -68,8 +70,8 @@ export default function VariantManager({
         setEditingIndex(null)
         setVariantForm({
             color: '',
-            price: 0,
-            stock: 0,
+            price: '',
+            stock: '',
             images: []
         })
     }
@@ -181,21 +183,43 @@ export default function VariantManager({
                             required
                         >
                             <option value="">เลือกสี</option>
-                            {materialColors
-                                .filter(color => {
-                                    // When editing, allow current color
-                                    if (editingIndex < variants.length && variants[editingIndex]?.color === color) {
-                                        return true
-                                    }
-                                    // Filter out already used colors (excluding current editing one)
-                                    const usedColors = variants
-                                        .filter((_, idx) => idx !== editingIndex)
-                                        .map(v => v.color)
-                                    return !usedColors.includes(color)
-                                })
-                                .map((color, i) => (
-                                    <option key={i} value={color}>{color}</option>
-                                ))}
+                            {materialColors.map((color, i) => {
+                                // Check if this is the current variant's color (when editing)
+                                const isCurrentColor = editingIndex < variants.length && variants[editingIndex]?.color === color
+
+                                // Check if color is used by main product
+                                // Handle cases where:
+                                // - dropdown color: "GD ทอง" but mainProductColor: "ทอง"
+                                // - OR exact match: "ทอง" === "ทอง"
+                                const isMainProductColor = mainProductColor && (
+                                    color === mainProductColor || // Exact match
+                                    color.includes(mainProductColor) || // Dropdown has prefix (e.g., "GD ทอง" includes "ทอง")
+                                    mainProductColor.includes(color) // Main product has prefix (unlikely but safe)
+                                )
+
+                                // Check if color is used by other variants
+                                const usedByOtherVariants = variants
+                                    .filter((_, idx) => idx !== editingIndex)
+                                    .some(v =>
+                                        v.color === color ||
+                                        color.includes(v.color) ||
+                                        v.color.includes(color)
+                                    )
+
+                                // Disable if used by main product or other variants (but not if it's current color)
+                                const isDisabled = !isCurrentColor && (isMainProductColor || usedByOtherVariants)
+
+                                return (
+                                    <option
+                                        key={i}
+                                        value={color}
+                                        disabled={isDisabled}
+                                        style={isDisabled ? { color: '#9ca3af' } : {}}
+                                    >
+                                        {color}{isDisabled ? ' (ใช้แล้ว)' : ''}
+                                    </option>
+                                )
+                            })}
                         </select>
                     </div>
 
@@ -206,8 +230,9 @@ export default function VariantManager({
                             <input
                                 type="number"
                                 value={variantForm.price}
-                                onChange={(e) => setVariantForm({ ...variantForm, price: parseFloat(e.target.value) || 0 })}
+                                onChange={(e) => setVariantForm({ ...variantForm, price: e.target.value })}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="0"
                             />
                         </div>
                         <div>
@@ -215,8 +240,9 @@ export default function VariantManager({
                             <input
                                 type="number"
                                 value={variantForm.stock}
-                                onChange={(e) => setVariantForm({ ...variantForm, stock: parseInt(e.target.value) || 0 })}
+                                onChange={(e) => setVariantForm({ ...variantForm, stock: e.target.value })}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="0"
                             />
                         </div>
                     </div>

@@ -48,6 +48,7 @@ export default function JobInfoCard({
                         disabled={readOnly}
                         className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
                     >
+                        <option value="">-- เลือกประเภทงาน --</option>
                         {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
                         {!excludeJobTypes.includes('delivery') && <option value="delivery">ขนส่ง (Delivery)</option>}
                         {!excludeJobTypes.includes('separate') && <option value="separate">งานแยก (Separate)</option>}

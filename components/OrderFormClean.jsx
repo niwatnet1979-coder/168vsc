@@ -66,7 +66,7 @@ export default function OrderForm() {
 
 
     const [jobInfo, setJobInfo] = useState({
-        jobType: 'installation',
+        jobType: '',
         orderDate: new Date().toISOString().split('T')[0],
         appointmentDate: '',
         completionDate: '',
@@ -264,25 +264,6 @@ export default function OrderForm() {
             taxInvoices: Array.isArray(c.taxInvoices) ? c.taxInvoices : []
         })
         setShowCustomerDropdown(false)
-
-        // Auto-fill address if available
-        if (c.addresses && c.addresses.length > 0) {
-            const addr = c.addresses[0]
-            setJobInfo(prev => ({
-                ...prev,
-                installLocationName: addr.label || '',
-                installAddress: addr.address || '',
-                googleMapLink: addr.googleMapsLink || ''
-            }))
-        } else {
-            // Reset job info if no address
-            setJobInfo(prev => ({
-                ...prev,
-                installLocationName: '',
-                installAddress: '',
-                googleMapLink: ''
-            }))
-        }
 
         // Reset contacts
         setSelectedContact(null)
@@ -1349,10 +1330,11 @@ export default function OrderForm() {
                                                         <span>{item.material}</span>
                                                     </div>
                                                 )}
-                                                {item.color && (
+                                                {/* Color - Show variant color if selected, otherwise product color */}
+                                                {(item.selectedVariant?.color || item.color) && (
                                                     <div className="flex items-center gap-1" title="สี">
                                                         <Palette size={12} />
-                                                        <span>{item.color}</span>
+                                                        <span>{item.selectedVariant?.color || item.color}</span>
                                                     </div>
                                                 )}
                                                 {/* Crystal Data (Mock/Field check) */}
@@ -1437,16 +1419,16 @@ export default function OrderForm() {
                                         <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
                                             {/* LEFT Group: Job Type, Team, Details */}
                                             <div className="flex items-center gap-4">
-                                                {/* Job Type (Swapped from Row 3) */}
+                                                {/* Job Type - Use subJob if available, otherwise use main jobInfo */}
                                                 <div className="flex items-center gap-1">
-                                                    {item.subJob?.jobType === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
-                                                    <span>{item.subJob?.jobType === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
+                                                    {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
+                                                    <span>{(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
                                                 </div>
 
-                                                {/* Team (Swapped from Row 3) */}
+                                                {/* Team - Use subJob if available, otherwise use main jobInfo */}
                                                 <div className="flex items-center gap-1">
                                                     <Users size={12} />
-                                                    <span>{item.subJob?.team || '-'}</span>
+                                                    <span>{item.subJob?.team || jobInfo.team || '-'}</span>
                                                 </div>
 
                                                 {/* Details/Note */}

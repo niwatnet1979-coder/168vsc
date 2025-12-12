@@ -107,6 +107,19 @@ export default function ProductManagement() {
         setExpandedProducts(newExpanded)
     }
 
+    // Helper function to calculate variant summary
+    const getVariantSummary = (variants) => {
+        if (!variants || variants.length === 0) return null
+
+        const colorCount = variants.length
+        const prices = variants.map(v => v.price || 0).filter(p => p > 0)
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
+        const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+
+        return { colorCount, minPrice, maxPrice, totalStock }
+    }
+
     const handleDelete = async (id) => {
         if (confirm('ยืนยันการลบสินค้า?')) {
             const success = await DataManager.deleteProduct(id)
@@ -254,12 +267,18 @@ export default function ProductManagement() {
                                 <tbody className="divide-y divide-secondary-100">
                                     {paginatedProducts.length > 0 ? (
                                         paginatedProducts.map((product, index) => {
+                                            // Extract category name without prefix (e.g., "โคมไฟระย้า" from "AA โคมไฟระย้า")
+                                            const categoryName = product.category ? product.category.split(' ').slice(1).join(' ') : null
+
+                                            // Extract material name without prefix (e.g., "ไม้" from "WD ไม้")
+                                            const materialName = product.material ? product.material.split(' ').slice(1).join(' ') || product.material : null
+
                                             const productInfo = [
-                                                product.category,
+                                                categoryName,
+                                                product.name,
                                                 product.subcategory,
-                                                product.material,
-                                                (product.length || product.width || product.height) ? `${product.length || '-'}×${product.width || '-'}×${product.height || '-'} cm` : null,
-                                                product.color ? `สี${product.color}` : null
+                                                materialName,
+                                                (product.length || product.width || product.height) ? `${product.length || '-'}×${product.width || '-'}×${product.height || '-'} cm` : null
                                             ].filter(Boolean).join(' • ')
 
                                             const hasVariants = product.variants && product.variants.length > 0
@@ -284,24 +303,31 @@ export default function ProductManagement() {
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <div className="w-14 h-14 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex items-center justify-center">
-                                                                {(product.images && product.images[0]) ? (
-                                                                    <img src={product.images[0]} alt={product.id} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <ImageIcon size={20} className="text-secondary-300" />
-                                                                )}
+                                                                {(() => {
+                                                                    // Try main product image first
+                                                                    if (product.images && product.images[0]) {
+                                                                        return <img src={product.images[0]} alt={product.product_code || product.id} className="w-full h-full object-cover" />
+                                                                    }
+                                                                    // Fallback to first variant image
+                                                                    if (product.variants && product.variants.length > 0 && product.variants[0].images && product.variants[0].images[0]) {
+                                                                        return <img src={product.variants[0].images[0]} alt={product.product_code || product.id} className="w-full h-full object-cover" />
+                                                                    }
+                                                                    // No image available
+                                                                    return <ImageIcon size={20} className="text-secondary-300" />
+                                                                })()}
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
-                                                                {product.id}
+                                                                {product.product_code || product.id}
                                                             </Link>
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="text-sm text-secondary-700 leading-relaxed">{productInfo || '-'}</div>
-                                                                {hasVariants && product.variants.length > 1 && (
-                                                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap">
-                                                                        {product.variants.length} สี
+                                                                {hasVariants && (
+                                                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap flex items-center gap-1">
+                                                                        🎨 {product.variants.length} สี
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -310,10 +336,32 @@ export default function ProductManagement() {
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-4 text-right">
-                                                            <span className="text-sm font-semibold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
+                                                            {(() => {
+                                                                const summary = getVariantSummary(product.variants)
+                                                                if (summary) {
+                                                                    // Show price range for variants
+                                                                    if (summary.minPrice === summary.maxPrice) {
+                                                                        return <span className="text-sm font-semibold text-secondary-900">฿{summary.minPrice.toLocaleString()}</span>
+                                                                    } else {
+                                                                        return (
+                                                                            <div className="text-sm font-semibold text-secondary-900">
+                                                                                <div>฿{summary.minPrice.toLocaleString()}</div>
+                                                                                <div className="text-xs text-secondary-500">- ฿{summary.maxPrice.toLocaleString()}</div>
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                } else {
+                                                                    // Show main product price
+                                                                    return <span className="text-sm font-semibold text-secondary-900">฿{product.price?.toLocaleString() || 0}</span>
+                                                                }
+                                                            })()}
                                                         </td>
                                                         <td className="px-4 py-4 text-right">
-                                                            <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>{product.stock || 0}</span>
+                                                            {(() => {
+                                                                const summary = getVariantSummary(product.variants)
+                                                                const stockValue = summary ? summary.totalStock : (product.stock || 0)
+                                                                return <span className={`text-sm font-semibold ${stockValue > 0 ? 'text-success-600' : 'text-danger-600'}`}>{stockValue}</span>
+                                                            })()}
                                                         </td>
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-center justify-center gap-2">
@@ -347,7 +395,14 @@ export default function ProductManagement() {
 
                                                                     {/* Product Code */}
                                                                     <td className="px-4 py-3">
-                                                                        <span className="font-mono text-sm text-secondary-500">{variant.id || '-'}</span>
+                                                                        <span className="font-mono text-sm text-secondary-500">
+                                                                            {(() => {
+                                                                                // Compute variant ID dynamically: {product_code}-{colorCode}
+                                                                                const productCode = product.product_code || product.id || ''
+                                                                                const colorCode = variant.color ? variant.color.substring(0, 2).toUpperCase() : 'XX'
+                                                                                return productCode ? `${productCode}-${colorCode}` : '-'
+                                                                            })()}
+                                                                        </span>
                                                                     </td>
 
                                                                     {/* Info - Color */}
