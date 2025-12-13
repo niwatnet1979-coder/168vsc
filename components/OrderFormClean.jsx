@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling, Lightbulb
 } from 'lucide-react'
 import AppLayout from './AppLayout'
 import { DataManager } from '../lib/dataManager'
@@ -1328,25 +1328,28 @@ export default function OrderForm() {
                                                 </span>
                                                 {/* Name */}
                                                 <span className="font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
+
+                                                {/* Price & Stock - Moved from Right */}
+                                                <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                                                    <div className="flex items-center gap-1">
+                                                        <div className="text-secondary-500 font-medium text-[11px]">
+                                                            {currency(item.unitPrice || 0)}
+                                                        </div>
+                                                        <div className="text-secondary-400 text-[10px]">
+                                                            x {item.qty || 1}
+                                                        </div>
+                                                        <div className="font-bold text-primary-700 text-[11px] ml-1">
+                                                            {currency((item.unitPrice || 0) * (item.qty || 0))}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        Stock: {item.stock || 0}
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             {/* RIGHT: Stock & Price */}
-                                            <div className="flex items-center gap-3 flex-shrink-0">
-                                                <div className="flex items-center gap-1 text-right">
-                                                    <div className="text-secondary-500 font-medium text-[11px]">
-                                                        {currency(item.unitPrice || 0)}
-                                                    </div>
-                                                    <div className="text-secondary-400 text-[10px]">
-                                                        x {item.qty || 1}
-                                                    </div>
-                                                    <div className="font-bold text-primary-700 text-[11px] ml-1">
-                                                        {currency((item.unitPrice || 0) * (item.qty || 0))}
-                                                    </div>
-                                                </div>
-                                                <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    Stock: {item.stock || 0}
-                                                </span>
-                                            </div>
+
                                         </div>
 
                                         {/* Row 2: Specs & Description */}
@@ -1411,20 +1414,22 @@ export default function OrderForm() {
                                                 )}
                                                 {item.bulbType && (
                                                     <div className="flex items-center gap-1" title="ขั้วหลอด">
-                                                        <Zap size={12} />
+                                                        <Lightbulb size={12} />
                                                         <span>{item.bulbType}</span>
+                                                    </div>
+                                                )}
+                                                {/* Description / Remark - Moved to follow Bulb Type */}
+                                                {(item.remark || item.description) && (
+                                                    <div className="flex items-center gap-1 text-secondary-500" title="หมายเหตุ">
+                                                        <FileText size={12} />
+                                                        <span className="truncate max-w-[200px]">
+                                                            {item.remark || item.description}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
                                             {/* RIGHT: Description */}
-                                            {item.description && (
-                                                <div className="flex items-center gap-1 flex-shrink-0 max-w-[40%]" title={item.description}>
-                                                    <FileText size={12} />
-                                                    <span className="truncate">
-                                                        {item.description}
-                                                    </span>
-                                                </div>
-                                            )}
+
                                         </div>
 
                                         {/* Row 3: Job Info & Dates */}
@@ -1468,13 +1473,25 @@ export default function OrderForm() {
                                         <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
                                             {/* LEFT Group: Job Type, Team, Details */}
                                             <div className="flex items-center gap-4">
-                                                {/* Job Type - Use subJob if available, otherwise use main jobInfo */}
+                                                {/* Job Type */}
                                                 <div className="flex items-center gap-1">
                                                     {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
                                                     <span>{(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
                                                 </div>
 
-                                                {/* Team - Use subJob if available, otherwise use main jobInfo */}
+                                                {/* Dates - Moved to 2nd position */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar size={12} />
+                                                        <span>{(item.subJob?.appointmentDate || jobInfo.appointmentDate) ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 text-green-700">
+                                                        <CheckCircle size={12} />
+                                                        <span>{(item.subJob?.completionDate || jobInfo.completionDate) ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Team */}
                                                 <div className="flex items-center gap-1">
                                                     <Users size={12} />
                                                     <span>{item.subJob?.team || jobInfo.team || '-'}</span>
@@ -1490,16 +1507,7 @@ export default function OrderForm() {
                                             </div>
 
                                             {/* RIGHT: Dates (Moved from Row 3) */}
-                                            <div className="flex items-center gap-3 flex-shrink-0">
-                                                <div className="flex items-center gap-1">
-                                                    <Calendar size={12} />
-                                                    <span>{(item.subJob?.appointmentDate || jobInfo.appointmentDate) ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleDateString('th-TH') : '-'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1 text-green-700">
-                                                    <CheckCircle size={12} />
-                                                    <span>{(item.subJob?.completionDate || jobInfo.completionDate) ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH') : '-'}</span>
-                                                </div>
-                                            </div>
+
                                         </div>
 
                                         {/* Row 5: SNs */}
