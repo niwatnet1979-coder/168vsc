@@ -17,7 +17,8 @@ export default function PaymentSummaryCard({
     onEdit,
     onSave,
     onCancel,
-    hideControls = false
+    hideControls = false,
+    otherOutstandingOrders = []
 }) {
     const [localShipping, setLocalShipping] = React.useState(shippingFee)
     const [localDiscount, setLocalDiscount] = React.useState(discount)
@@ -149,6 +150,25 @@ export default function PaymentSummaryCard({
                 </div>
 
                 {/* Payment Schedule List */}
+                {otherOutstandingOrders.length > 0 && (
+                    <div className="pt-5 border-t border-secondary-200">
+                        <div className="space-y-2 mb-3">
+                            {otherOutstandingOrders.map((order) => (
+                                <div key={order.id} className="flex justify-between text-sm text-secondary-600">
+                                    <span>{order.id}</span>
+                                    <span className="font-medium text-warning-600">{currency(order.outstanding)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-between text-base font-bold text-secondary-900 pt-2 border-t border-dashed border-secondary-200">
+                            <span>รวมยอดทุกออเดอร์</span>
+                            <span className="text-warning-600">
+                                {currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="pt-5 border-t border-secondary-200">
                     <h3 className="text-sm font-bold text-secondary-900 mb-4">รายการการชำระเงิน</h3>
 

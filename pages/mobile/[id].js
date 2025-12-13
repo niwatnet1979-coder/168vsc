@@ -41,6 +41,7 @@ export default function MobileJobDetail() {
     const [job, setJob] = useState(null)
     const [customer, setCustomer] = useState(null)
     const [product, setProduct] = useState(null)
+    const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
 
@@ -62,6 +63,31 @@ export default function MobileJobDetail() {
             // Get job from DataManager (Async) - now includes all joined data
             const jobs = await DataManager.getJobs()
             const foundJob = jobs.find(j => j.id === id)
+
+            if (!foundJob) {
+                setLoading(false)
+                return
+            }
+
+            // Fetch other orders for this customer (for outstanding balance check)
+            let otherOutstanding = []
+            if (foundJob.customerId) {
+                const customerOrders = await DataManager.getOrdersByCustomerId(foundJob.customerId)
+                otherOutstanding = customerOrders
+                    .filter(o => o.id !== foundJob.orderId) // Exclude current order
+                    .map(o => {
+                        const paid = o.paymentSchedule.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                        const total = Number(o.totalAmount) || 0
+                        return {
+                            id: o.id,
+                            total: total,
+                            paid: paid,
+                            outstanding: Math.max(0, total - paid)
+                        }
+                    })
+                    .filter(o => o.outstanding > 0) // Only show if debt exists
+            }
+            setOtherOutstandingOrders(otherOutstanding)
 
             if (!foundJob) {
                 setLoading(false)
@@ -448,6 +474,7 @@ export default function MobileJobDetail() {
                                     onEdit={() => setIsEditingPayment(true)}
                                     // Controls now handled by Header
                                     hideControls={true}
+                                    otherOutstandingOrders={otherOutstandingOrders}
 
                                     onSave={handleSavePaymentSummary}
                                     onCancel={() => {
