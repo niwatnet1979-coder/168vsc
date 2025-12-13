@@ -111,101 +111,122 @@ export default function PaymentEntryModal({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col transform transition-all scale-100">
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-secondary-900">
+                <div className="flex-none bg-white border-b border-secondary-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                    <h2 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
+                        {isEditing ? (
+                            <span className="w-1.5 h-6 bg-primary-600 rounded-full inline-block"></span>
+                        ) : (
+                            <span className="w-1.5 h-6 bg-success-600 rounded-full inline-block"></span>
+                        )}
                         {isEditing ? 'แก้ไขการชำระเงิน' : 'เพิ่มการชำระเงิน'}
                     </h2>
-                    <button onClick={onClose} className="text-secondary-500 hover:text-secondary-700">
-                        <X size={20} />
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-50 rounded-full transition-colors"
+                    >
+                        <X size={24} />
                     </button>
                 </div>
 
-                {/* Body */}
-                <Card useBase={false} className="p-4">
+                {/* Body - Scrollable Area */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-secondary-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     {/* Date */}
                     <div>
-                        <label className="block text-xs font-medium text-secondary-700 mb-1">
+                        <label className="block text-sm font-bold text-secondary-700 mb-2">
                             วันที่ชำระ <span className="text-danger-500">*</span>
                         </label>
                         <input
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px]"
+                            className="w-full px-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50 focus:bg-white transition-all font-medium text-secondary-900"
                         />
                     </div>
 
-                    {/* Amount Mode Toggle & Value */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">
-                                ประเภท
-                            </label>
-                            <select
-                                value={formData.amountMode}
-                                onChange={(e) => setFormData({ ...formData, amountMode: e.target.value })}
-                                className="w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                            >
-                                <option value="percent">เปอร์เซ็นต์ (%)</option>
-                                <option value="amount">ยอดเงิน (฿)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">
-                                {formData.amountMode === 'percent' ? 'เปอร์เซ็นต์' : 'ยอดเงิน'}
-                            </label>
-                            <input
-                                type="number"
-                                value={formData.amountMode === 'percent' ? formData.percentValue : formData.amount}
-                                onChange={(e) => {
-                                    if (formData.amountMode === 'percent') {
-                                        setFormData({ ...formData, percentValue: e.target.value })
-                                    } else {
-                                        setFormData({ ...formData, amount: e.target.value })
-                                    }
-                                }}
-                                className="w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right"
-                                placeholder={formData.amountMode === 'percent' ? '50' : '0.00'}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Calculated Amount & Remaining */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ยอดชำระ</label>
-                            <div className="px-3 py-2 text-sm bg-primary-50 border border-primary-300 rounded-lg text-right font-bold text-primary-700">
-                                {currency(calculatedAmount)}
+                    {/* Amount Section */}
+                    <div className="bg-secondary-50 p-4 rounded-xl border border-secondary-200 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-secondary-600 uppercase tracking-wider mb-2">
+                                    ประเภท
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.amountMode}
+                                        onChange={(e) => setFormData({ ...formData, amountMode: e.target.value })}
+                                        className="w-full px-4 py-2.5 text-sm font-medium border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
+                                    >
+                                        <option value="percent">เปอร์เซ็นต์ (%)</option>
+                                        <option value="amount">ยอดเงิน (฿)</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary-500">
+                                        ▼
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-secondary-600 uppercase tracking-wider mb-2">
+                                    {formData.amountMode === 'percent' ? 'เปอร์เซ็นต์' : 'ยอดเงิน'}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.amountMode === 'percent' ? formData.percentValue : formData.amount}
+                                    onChange={(e) => {
+                                        if (formData.amountMode === 'percent') {
+                                            setFormData({ ...formData, percentValue: e.target.value })
+                                        } else {
+                                            setFormData({ ...formData, amount: e.target.value })
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2.5 text-sm font-bold border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right bg-white"
+                                    placeholder={formData.amountMode === 'percent' ? '50' : '0.00'}
+                                />
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">คงค้าง</label>
-                            <div className="px-3 py-2 text-sm bg-secondary-50 border border-secondary-300 rounded-lg text-right font-bold text-secondary-900">
-                                {currency(calculatedRemaining)}
+
+                        {/* Calculated Results */}
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-secondary-200 border-dashed">
+                            <div>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">ยอดชำระจริง</label>
+                                <div className="text-lg font-bold text-primary-600">
+                                    {currency(calculatedAmount)}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">คงเหลือหลังชำระ</label>
+                                <div className="text-lg font-medium text-secondary-900">
+                                    {currency(calculatedRemaining)}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Payment Method */}
                     <div>
-                        <label className="block text-xs font-medium text-secondary-700 mb-1">ชำระโดย</label>
-                        <select
-                            value={formData.paymentMethod}
-                            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                            className="w-full px-3 py-2 text-sm border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        >
-                            <option value="โอน">โอน</option>
-                            <option value="บัตรเครดิต">บัตรเครดิต</option>
-                            <option value="เงินสด">เงินสด</option>
-                        </select>
+                        <label className="block text-sm font-bold text-secondary-700 mb-2">ช่องทางชำระ</label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {['โอน', 'บัตรเครดิต', 'เงินสด'].map((method) => (
+                                <button
+                                    key={method}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, paymentMethod: method })}
+                                    className={`py-2.5 px-3 rounded-xl border text-sm font-bold transition-all ${formData.paymentMethod === method
+                                        ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-200'
+                                        : 'border-secondary-200 bg-white text-secondary-600 hover:border-secondary-300 hover:bg-secondary-50'
+                                        }`}
+                                >
+                                    {method}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Slip Upload */}
                     <div>
-                        <label className="block text-xs font-medium text-secondary-700 mb-1">สลิป</label>
+                        <label className="block text-sm font-bold text-secondary-700 mb-2">หลักฐานการโอน</label>
                         <input
                             type="file"
                             accept="image/*"
@@ -219,76 +240,71 @@ export default function PaymentEntryModal({
                             }}
                         />
 
-                        {/* Show image preview if slip exists */}
                         {formData.slip ? (
-                            <div className="relative border-2 border-success-500 rounded-lg overflow-hidden bg-success-50">
+                            <div className="relative rounded-xl overflow-hidden border border-secondary-200 group">
                                 <img
                                     src={typeof formData.slip === 'string' ? formData.slip : URL.createObjectURL(formData.slip)}
                                     alt="Payment Slip"
-                                    className="w-full h-48 object-contain cursor-pointer"
+                                    className="w-full h-48 object-cover cursor-pointer transition-transform group-hover:scale-105"
                                     onClick={() => document.getElementById('slip-upload').click()}
                                 />
-                                <div className="absolute bottom-0 left-0 right-0 bg-success-700 bg-opacity-90 text-white text-xs py-1 px-2 text-center">
+                                <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm text-white text-xs py-2 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     คลิกเพื่อเปลี่ยนรูป
                                 </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setFormData({ ...formData, slip: null })
+                                    }}
+                                    className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-danger-500 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
                             </div>
                         ) : (
-                            <button
-                                type="button"
+                            <div
                                 onClick={() => document.getElementById('slip-upload').click()}
-                                className="w-full px-3 py-2 text-sm border-2 border-dashed border-secondary-300 hover:border-secondary-400 rounded-lg"
+                                className="border-2 border-dashed border-secondary-300 rounded-xl p-6 flex flex-col items-center justify-center text-secondary-400 hover:border-primary-500 hover:bg-primary-50/50 hover:text-primary-500 transition-all cursor-pointer gap-2"
                             >
-                                อัพโหลดสลิป
-                            </button>
+                                <div className="p-3 bg-secondary-100 rounded-full group-hover:bg-primary-100 transition-colors">
+                                    <Trash2 size={24} className="hidden" /> {/* Dummy icon */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                                </div>
+                                <span className="font-medium text-sm">อัพโหลดรูปสลิป</span>
+                            </div>
                         )}
                     </div>
 
                     {/* Signature Pads */}
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Receiver Signature */}
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นพนักงาน</label>
-                            <div className="border-2 border-secondary-300 rounded-lg overflow-hidden">
-                                <SignatureCanvas
-                                    ref={receiverSigRef}
-                                    canvasProps={{
-                                        className: 'w-full h-24 bg-white'
-                                    }}
-                                />
+                    <div className="grid grid-cols-2 gap-4">
+                        {[
+                            { label: 'ลายเซ็นพนักงาน', ref: receiverSigRef, key: 'receiverSignature' },
+                            { label: 'ลายเซ็นลูกค้า', ref: payerSigRef, key: 'payerSignature' }
+                        ].map((sig) => (
+                            <div key={sig.key} className="flex flex-col">
+                                <label className="block text-xs font-bold text-secondary-600 mb-2 uppercase tracking-wider">{sig.label}</label>
+                                <div className="border border-secondary-300 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow transition-shadow">
+                                    <SignatureCanvas
+                                        ref={sig.ref}
+                                        canvasProps={{
+                                            className: 'w-full h-24 bg-white'
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => sig.ref.current?.clear()}
+                                    className="self-end mt-1 text-xs text-secondary-400 hover:text-danger-500 font-medium transition-colors"
+                                >
+                                    ล้างลายเซ็น
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => receiverSigRef.current?.clear()}
-                                className="mt-1 text-xs text-danger-500 hover:text-danger-700"
-                            >
-                                ล้าง
-                            </button>
-                        </div>
-
-                        {/* Payer Signature */}
-                        <div>
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ลายเซ็นลูกค้า</label>
-                            <div className="border-2 border-secondary-300 rounded-lg overflow-hidden">
-                                <SignatureCanvas
-                                    ref={payerSigRef}
-                                    canvasProps={{
-                                        className: 'w-full h-24 bg-white'
-                                    }}
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => payerSigRef.current?.clear()}
-                                className="mt-1 text-xs text-danger-500 hover:text-danger-700"
-                            >
-                                ล้าง
-                            </button>
-                        </div>
+                        ))}
                     </div>
-                </Card>
+                </div>
 
                 {/* Footer */}
-                <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between">
+                <div className="flex-none bg-white border-t border-secondary-100 px-6 py-4 flex gap-3 justify-between items-center rounded-b-2xl z-10">
                     <div>
                         {isEditing && onDelete && (
                             <button
@@ -298,23 +314,23 @@ export default function PaymentEntryModal({
                                         onClose()
                                     }
                                 }}
-                                className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
+                                className="p-2 text-secondary-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors flex items-center gap-1"
+                                title="ลบรายการ"
                             >
-                                <Trash2 size={16} />
-                                ลบ
+                                <Trash2 size={20} />
                             </button>
                         )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 w-full sm:w-auto">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
+                            className="flex-1 sm:flex-none px-5 py-2.5 text-sm border border-secondary-300 rounded-xl hover:bg-secondary-50 font-bold text-secondary-700 transition-colors"
                         >
                             ยกเลิก
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+                            className="flex-1 sm:flex-none px-8 py-2.5 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-lg shadow-primary-500/30 transition-all hover:-translate-y-0.5"
                         >
                             บันทึก
                         </button>

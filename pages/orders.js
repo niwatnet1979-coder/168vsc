@@ -37,8 +37,42 @@ export default function OrdersListPage() {
             // Use DataManager to get normalized orders with joined customer data
             const allOrders = await DataManager.getOrders()
 
+            // 1. Calculate individual outstanding for each order
+            const ordersWithOutstanding = allOrders.map(order => {
+                const total = Number(order.totalAmount) || 0
+                const paid = Number(order.deposit) || 0
+                const outstanding = Math.max(0, total - paid)
+                return {
+                    ...order,
+                    individualOutstanding: outstanding
+                }
+            })
+
+            // 2. Sum outstanding balance by customer
+            const customerDebtMap = {}
+            ordersWithOutstanding.forEach(order => {
+                // Skip Cancelled orders
+                if (order.status && order.status.toLowerCase() === 'cancelled') return
+
+                // Determine key: prioritize customerId, fallback to Name
+                const key = order.customerId || order.customerName || 'Unknown'
+                if (!customerDebtMap[key]) {
+                    customerDebtMap[key] = 0
+                }
+                customerDebtMap[key] += order.individualOutstanding
+            })
+
+            // 3. Attach total customer debt to each order
+            const finalOrders = ordersWithOutstanding.map(order => {
+                const key = order.customerId || order.customerName || 'Unknown'
+                return {
+                    ...order,
+                    totalCustomerOutstanding: customerDebtMap[key] || 0
+                }
+            })
+
             // Sort by date (newest first)
-            const sortedOrders = allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            const sortedOrders = finalOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
             setOrders(sortedOrders)
         } catch (error) {
@@ -49,6 +83,21 @@ export default function OrdersListPage() {
 
     useEffect(() => {
         loadOrders()
+
+        // Realtime Subscription
+        if (DataManager.supabase) {
+            const subscription = DataManager.supabase
+                .channel('orders_list_changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+                    console.log('Realtime Order Update:', payload)
+                    loadOrders()
+                })
+                .subscribe()
+
+            return () => {
+                DataManager.supabase.removeChannel(subscription)
+            }
+        }
     }, [])
 
     const filteredOrders = orders.filter(order => {
@@ -237,7 +286,7 @@ export default function OrdersListPage() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">รายการ</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">มัดจำ</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดค้างชำระ</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
@@ -265,7 +314,9 @@ export default function OrdersListPage() {
                                                 <div className="text-sm font-bold text-primary-700">฿{(order.totalAmount || order.total || 0).toLocaleString()}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div className="text-sm text-secondary-600">฿{(order.deposit || 0).toLocaleString()}</div>
+                                                <div className={`text-sm ${(order.totalCustomerOutstanding || 0) > 0 ? 'text-warning-600 font-bold' : 'text-success-600'}`}>
+                                                    ฿{(order.totalCustomerOutstanding || 0).toLocaleString()}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(order.jobType)}`}>

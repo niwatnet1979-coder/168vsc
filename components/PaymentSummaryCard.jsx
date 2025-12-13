@@ -145,7 +145,7 @@ export default function PaymentSummaryCard({
                 </div>
 
                 <div className="flex justify-between text-xl font-bold text-primary-700 pt-5 border-t border-secondary-200">
-                    <span>ยอดรวมทั้งสิ้น</span>
+                    <span>ยอดรวมออเดอร์นี้</span>
                     <span>{currency(total)}</span>
                 </div>
 
@@ -163,7 +163,7 @@ export default function PaymentSummaryCard({
                         <div className="flex justify-between text-base font-bold text-secondary-900 pt-2 border-t border-dashed border-secondary-200">
                             <span>รวมยอดทุกออเดอร์</span>
                             <span className="text-warning-600">
-                                {currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
+                                {currency(total + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
                             </span>
                         </div>
                     </div>
@@ -208,7 +208,7 @@ export default function PaymentSummaryCard({
                     {/* Outstanding Balance */}
                     <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
                         <span>รวมยอดค้างชำระ</span>
-                        <span>{currency(outstanding)}</span>
+                        <span>{currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}</span>
                     </div>
 
                     {/* Actions */}
