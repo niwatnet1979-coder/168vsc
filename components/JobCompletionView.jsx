@@ -18,10 +18,12 @@ export default function JobCompletionView({ job, onSave }) {
             if (data) {
                 setRating(data.rating || 5)
                 setComment(data.comment || '')
-                setMediaItems(data.media || [])
-                // Signature: we can't easily load signature back into canvas to edit, 
-                // but we could show a preview if needed. 
-                // For now, canvas stays empty for new signature or we assume if signed, it's done.
+                // Assign unique IDs to loaded media items since invalid/missing IDs cause React key duplication and bulk delete issues
+                const loadedMedia = (data.media || []).map(item => ({
+                    ...item,
+                    id: item.id || (Date.now() + Math.random().toString(36).substr(2, 9))
+                }))
+                setMediaItems(loadedMedia)
             } else {
                 // Backward compatibility: check notes
                 if (job?.notes && job.notes.includes('[COMPLETION_REPORT]')) {
@@ -31,7 +33,12 @@ export default function JobCompletionView({ job, onSave }) {
                             const report = JSON.parse(reportMatch[1])
                             setRating(report.rating || 5)
                             setComment(report.comment || '')
-                            setMediaItems(report.media || [])
+                            // Assign unique IDs here too
+                            const loadedMedia = (report.media || []).map(item => ({
+                                ...item,
+                                id: item.id || (Date.now() + Math.random().toString(36).substr(2, 9))
+                            }))
+                            setMediaItems(loadedMedia)
                         }
                     } catch (e) {
                         console.error('Error parsing legacy completion report', e)
@@ -41,6 +48,14 @@ export default function JobCompletionView({ job, onSave }) {
         }
         loadCompletionData()
     }, [job])
+
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 B'
+        const k = 1024
+        const sizes = ['B', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+    }
 
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files)
@@ -64,13 +79,47 @@ export default function JobCompletionView({ job, onSave }) {
             console.warn('GPS specific error', err)
         }
 
-        const newItems = files.map(file => ({
-            id: Date.now() + Math.random(),
-            file,
-            preview: URL.createObjectURL(file),
-            type: file.type.startsWith('video') ? 'video' : 'image',
-            note: '',
-            location: location
+        const newItems = await Promise.all(files.map(async (file) => {
+            const preview = URL.createObjectURL(file)
+            const type = file.type.startsWith('video') ? 'video' : 'image'
+            let meta = ''
+
+            if (type === 'video') {
+                try {
+                    meta = await new Promise((resolve) => {
+                        const video = document.createElement('video')
+                        video.preload = 'metadata'
+                        video.onloadedmetadata = () => {
+                            resolve(`${video.videoWidth}x${video.videoHeight}`)
+                        }
+                        video.onerror = () => resolve('')
+                        video.src = preview
+                    })
+                } catch (e) {
+                    console.error('Error getting video meta', e)
+                }
+            } else if (type === 'image') {
+                try {
+                    meta = await new Promise((resolve) => {
+                        const img = new Image()
+                        img.onload = () => resolve(`${img.width}x${img.height}`)
+                        img.onerror = () => resolve('')
+                        img.src = preview
+                    })
+                } catch (e) { }
+            }
+
+            return {
+                id: Date.now() + Math.random().toString(36).substr(2, 9),
+                file,
+                preview,
+                type,
+                note: '',
+                location: location,
+                resolution: meta,
+                size: formatFileSize(file.size),
+                status: 'pending' // pending, uploading, success
+            }
         }))
 
         setMediaItems(prev => [...prev, ...newItems])
@@ -106,20 +155,45 @@ export default function JobCompletionView({ job, onSave }) {
                 // But we didn't fetch url to state.
             }
 
-            // 2. Upload Media Items
-            const uploadedMedia = await Promise.all(mediaItems.map(async (item) => {
-                if (item.url) return item // Already uploaded
+            // 2. Upload Media Items with Progress
+            // We clone items to result array to keep track
+            const finalMediaItems = []
 
-                const url = await DataManager.uploadJobMedia(item.file, job.id)
-                if (!url) throw new Error('ไม่สามารถอัพโหลดไฟล์ได้ (กรุณาตรวจสอบ Storage Policy)')
-                return {
-                    url,
-                    type: item.type,
-                    note: item.note,
-                    location: item.location,
-                    timestamp: new Date().toISOString()
+            for (const item of mediaItems) {
+                if (item.url) {
+                    finalMediaItems.push(item)
+                    continue
                 }
-            }))
+
+                // Update status to uploading
+                setMediaItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'uploading' } : p))
+
+                try {
+                    const url = await DataManager.uploadJobMedia(item.file, job.id)
+                    if (!url) throw new Error('Upload failed')
+
+                    // Update status to success
+                    setMediaItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'success' } : p))
+
+                    finalMediaItems.push({
+                        url,
+                        type: item.type,
+                        note: item.note,
+                        location: item.location,
+                        timestamp: new Date().toISOString(),
+                        resolution: item.resolution,
+                        size: item.size
+                    })
+                } catch (error) {
+                    console.error('Upload error', error)
+                    setMediaItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'error' } : p))
+                    // If one fails, should we stop? or continue?
+                    // For now, allow partial save or throw?
+                    // Request implies knowing "when finished".
+                    // If error, we throw to abort save?
+                    throw new Error(`ไม่สามารถอัพโหลดไฟล์ (${item.type}) ได้`)
+                }
+            }
 
             // 3. Save to job_completions table
             const completionData = {
@@ -127,7 +201,7 @@ export default function JobCompletionView({ job, onSave }) {
                 signature_url: signatureUrl || job.signatureImage, // Fallback to job's existing sig if not redrawn
                 rating,
                 comment,
-                media: uploadedMedia
+                media: finalMediaItems
             }
 
             const successCompletion = await DataManager.saveJobCompletion(completionData)
@@ -255,6 +329,39 @@ export default function JobCompletionView({ job, onSave }) {
                                         <MapPin size={12} />
                                         {item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}
                                     </div>
+                                )}
+                                <div className="absolute top-2 left-2 flex gap-1">
+                                    {item.resolution && (
+                                        <div className="px-2 py-1 bg-black/60 text-white text-xs rounded">
+                                            {item.resolution}
+                                        </div>
+                                    )}
+                                    {item.size && (
+                                        <div className="px-2 py-1 bg-black/60 text-white text-xs rounded">
+                                            {item.size}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Upload Status Overlay */}
+                                {item.status === 'uploading' && (
+                                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-2"></div>
+                                        <span className="text-xs font-medium">กำลังอัปโหลด...</span>
+                                    </div>
+                                )}
+                                {item.status === 'success' && (
+                                    <div className="absolute inset-0 bg-green-500/30 flex items-center justify-center">
+                                        <div className="bg-green-500 text-white p-2 rounded-full shadow-lg">
+                                            <Save size={20} />
+                                        </div>
+                                    </div>
+                                )}
+                                {!item.status && item.url && (
+                                    /* Previously saved items don't have 'status' field, assume success or just show nothing */
+                                    /* Maybe show a small 'Saved' icon? User wants to know when finished. */
+                                    /* If reloading from DB, they are 'saved'. */
+                                    null
                                 )}
                             </div>
 
