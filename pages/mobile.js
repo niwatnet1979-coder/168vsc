@@ -327,9 +327,7 @@ export default function MobilePage() {
                                     </span>
                                 )}
 
-                                {job.product?.color && (
-                                    <span className="text-secondary-500">• {job.product.color}</span>
-                                )}
+
                             </span>
                         </div>
 
