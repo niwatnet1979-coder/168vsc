@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Camera, MapPin, X, Star, Save, Upload, Video } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
-import DataManager from '../lib/dataManager'
+import { DataManager } from '../lib/dataManager'
 
 export default function JobCompletionView({ job, onSave }) {
     const [mediaItems, setMediaItems] = useState([])
@@ -10,34 +10,47 @@ export default function JobCompletionView({ job, onSave }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const sigCanvas = useRef({})
 
-    // Load existing completion data if any (from notes)
+    // Load existing completion data from job_completions table
     useEffect(() => {
-        if (job?.notes && job.notes.includes('[COMPLETION_REPORT]')) {
-            try {
-                // Extract JSON from notes
-                const reportMatch = job.notes.match(/\[COMPLETION_REPORT\]\s*(\{.*\})/)
-                if (reportMatch && reportMatch[1]) {
-                    const report = JSON.parse(reportMatch[1])
-                    setRating(report.rating || 5)
-                    setComment(report.comment || '')
-                    setMediaItems(report.media || [])
+        const loadCompletionData = async () => {
+            if (!job?.id) return
+            const data = await DataManager.getJobCompletion(job.id)
+            if (data) {
+                setRating(data.rating || 5)
+                setComment(data.comment || '')
+                setMediaItems(data.media || [])
+                // Signature: we can't easily load signature back into canvas to edit, 
+                // but we could show a preview if needed. 
+                // For now, canvas stays empty for new signature or we assume if signed, it's done.
+            } else {
+                // Backward compatibility: check notes
+                if (job?.notes && job.notes.includes('[COMPLETION_REPORT]')) {
+                    try {
+                        const reportMatch = job.notes.match(/\[COMPLETION_REPORT\]\s*(\{.*\})/)
+                        if (reportMatch && reportMatch[1]) {
+                            const report = JSON.parse(reportMatch[1])
+                            setRating(report.rating || 5)
+                            setComment(report.comment || '')
+                            setMediaItems(report.media || [])
+                        }
+                    } catch (e) {
+                        console.error('Error parsing legacy completion report', e)
+                    }
                 }
-            } catch (e) {
-                console.error('Error parsing completion report', e)
             }
         }
+        loadCompletionData()
     }, [job])
 
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files)
         if (files.length === 0) return
 
-        setIsSubmitting(true) // Show loading state while processing initial file read
+        setIsSubmitting(true)
 
-        // Get current location once for this batch (or per file if needed, but batch is faster)
         let location = null
         try {
-            location = await new Promise((resolve, reject) => {
+            location = await new Promise((resolve) => {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
                     (err) => {
@@ -53,10 +66,7 @@ export default function JobCompletionView({ job, onSave }) {
 
         const newItems = files.map(file => ({
             id: Date.now() + Math.random(),
-            file, // Raw file to upload later or now? Better upload on Save to avoid junk? 
-            // Request: "save as file in storage supabase". 
-            // If we don't upload now, we can't show "real" preview if it's video easily without URL object.
-            // URL.createObjectURL works for preview.
+            file,
             preview: URL.createObjectURL(file),
             type: file.type.startsWith('video') ? 'video' : 'image',
             note: '',
@@ -80,28 +90,25 @@ export default function JobCompletionView({ job, onSave }) {
 
         setIsSubmitting(true)
         try {
-            // 1. Upload Signature if changed (or existing)
-            let signatureUrl = job.signatureImage // Keep existing
+            // 1. Upload Signature if drawn
+            let signatureUrl = null
             if (!sigCanvas.current.isEmpty()) {
-                // Upload signature
                 const sigDataUrl = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png')
-                // Convert DataURL to Blob
                 const res = await fetch(sigDataUrl)
                 const blob = await res.blob()
                 const file = new File([blob], 'signature.png', { type: 'image/png' })
-
-                // Use generic file upload or slip? Creating a consistent one.
-                // Re-using uploadPaymentSlip logic or the new uploadJobMedia? 
-                // Let's use uploadJobMedia for consistency but it goes to 'job-media' bucket.
-                // Usually signature goes to 'signature_image_url' column, so we just need a URL.
                 signatureUrl = await DataManager.uploadJobMedia(file, job.id)
+            } else {
+                // If not signed now, maybe use existing from DB? 
+                // We'll rely on what's passed or fetch fresh? 
+                // For simplicity: if new signature drawn, update it. If not, keep old (if we fetched it).
+                // But we didn't fetch url to state.
             }
 
             // 2. Upload Media Items
             const uploadedMedia = await Promise.all(mediaItems.map(async (item) => {
                 if (item.url) return item // Already uploaded
 
-                // Upload file
                 const url = await DataManager.uploadJobMedia(item.file, job.id)
                 return {
                     url,
@@ -112,36 +119,31 @@ export default function JobCompletionView({ job, onSave }) {
                 }
             }))
 
-            // 3. Construct Report Data
-            const completionReport = {
+            // 3. Save to job_completions table
+            const completionData = {
+                job_id: job.id,
+                signature_url: signatureUrl || job.signatureImage, // Fallback to job's existing sig if not redrawn
                 rating,
                 comment,
-                media: uploadedMedia,
-                inspector_timestamp: new Date().toISOString()
+                media: uploadedMedia
             }
 
-            // 4. Save to DB
-            // We append to notes because we don't have a specific column yet
-            // Format: [COMPLETION_REPORT] { JSON }
-            // First remove old report if any
-            let newNotes = job.notes || ''
-            newNotes = newNotes.replace(/\[COMPLETION_REPORT\]\s*\{.*\}/s, '').trim()
-            newNotes = `${newNotes}\n\n[COMPLETION_REPORT] ${JSON.stringify(completionReport)}`
+            const successCompletion = await DataManager.saveJobCompletion(completionData)
+            if (!successCompletion) throw new Error('Failed to save completion data')
 
-            const success = await DataManager.saveJob({
+            // 4. Update Job Status & Legacy Signature Column
+            const successJob = await DataManager.saveJob({
                 ...job,
-                notes: newNotes,
-                signatureImage: signatureUrl, // Updates the column
-                status: 'Done' // Auto complete? Or just save? Request says "บันทึกงาน" (Record Job), implying completion.
-                // Let's keep status update optional or separate. 
-                // User request "บันทึกงาน" usually means "Save Record".
+                status: 'Done',
+                signatureImage: completionData.signature_url,
+                // We don't append to notes anymore! Cleaner.
             })
 
-            if (success) {
+            if (successJob) {
                 alert('บันทึกข้อมูลเรียบร้อยแล้ว')
                 if (onSave) onSave()
             } else {
-                throw new Error('Database save failed')
+                throw new Error('Failed to update job status')
             }
 
         } catch (error) {
@@ -236,9 +238,9 @@ export default function JobCompletionView({ job, onSave }) {
                             {/* Media Preview */}
                             <div className="relative aspect-video bg-black">
                                 {item.type === 'video' ? (
-                                    <video src={item.preview} controls className="w-full h-full object-contain" />
+                                    <video src={item.preview || item.url} controls className="w-full h-full object-contain" />
                                 ) : (
-                                    <img src={item.preview} alt="Work" className="w-full h-full object-contain" />
+                                    <img src={item.preview || item.url} alt="Work" className="w-full h-full object-contain" />
                                 )}
                                 <button
                                     onClick={() => removeMedia(item.id)}
@@ -277,14 +279,7 @@ export default function JobCompletionView({ job, onSave }) {
                     className={`w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 shadow-lg ${isSubmitting ? 'bg-gray-400' : 'bg-primary-600 hover:bg-primary-700'
                         }`}
                 >
-                    {isSubmitting ? (
-                        <>กำลังบันทึก...</>
-                    ) : (
-                        <>
-                            <Save size={20} />
-                            บันทึกงาน
-                        </>
-                    )}
+                    {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกงาน'}
                 </button>
             </div>
 
