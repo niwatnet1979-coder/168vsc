@@ -239,7 +239,7 @@ export default function JobCompletionView({ job, onSave }) {
                             {/* Media Preview */}
                             <div className="relative aspect-video bg-black">
                                 {item.type === 'video' ? (
-                                    <video src={item.preview || item.url} controls className="w-full h-full object-contain" />
+                                    <video src={item.preview || item.url} controls playsInline preload="metadata" className="w-full h-full object-contain" />
                                 ) : (
                                     <img src={item.preview || item.url} alt="Work" className="w-full h-full object-contain" />
                                 )}
