@@ -5,7 +5,7 @@ import { DataManager } from '../lib/dataManager'
 import ProductCard from './ProductCard'
 
 
-export default function OrderItemModal({
+const OrderItemModal = React.forwardRef(({
     isOpen,
     onClose,
     onSave,
@@ -15,12 +15,13 @@ export default function OrderItemModal({
 
     isEditing = false,
     isInline = false, // New prop for inline display
+    hideControls = false, // New prop to hide internal buttons
 
     onOpenSubJob, // Callback to open the sub-job modal
     onAddNewProduct, // Callback to open new product modal
     lastCreatedProduct = null,
     onConsumeLastCreatedProduct
-}) {
+}, ref) => {
     const [formData, setFormData] = useState({
         code: '', name: '', description: '', qty: 1, unitPrice: 0, image: null,
         category: '', subcategory: '', subJob: null, _searchTerm: '',
@@ -195,6 +196,11 @@ export default function OrderItemModal({
         }))
         setShowSearchPopup(false)
     }
+
+    // Expose triggerSave to parent
+    React.useImperativeHandle(ref, () => ({
+        triggerSave: () => handleSave()
+    }))
 
     const handleVariantSelect = (variantIndex) => {
         console.log('=== handleVariantSelect ===')
@@ -582,39 +588,43 @@ export default function OrderItemModal({
                 </div>
 
                 {/* Footer */}
-                <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between z-10">
-                    <div>
-                        {isEditing && onDelete && (
+                {!hideControls && (
+                    <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between z-10">
+                        <div>
+                            {isEditing && onDelete && (
+                                <button
+                                    onClick={() => {
+                                        if (confirm('ต้องการลบรายการนี้?')) {
+                                            onDelete()
+                                            onClose()
+                                        }
+                                    }}
+                                    className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
+                                >
+                                    <Trash2 size={16} />
+                                    ลบ
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex gap-2">
                             <button
-                                onClick={() => {
-                                    if (confirm('ต้องการลบรายการนี้?')) {
-                                        onDelete()
-                                        onClose()
-                                    }
-                                }}
-                                className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
                             >
-                                <Trash2 size={16} />
-                                ลบ
+                                ยกเลิก
                             </button>
-                        )}
+                            <button
+                                onClick={handleSave}
+                                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+                            >
+                                บันทึก
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
-                        >
-                            ยกเลิก
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
-                        >
-                            บันทึก
-                        </button>
-                    </div>
-                </div>
+                )}
             </div>
         </Wrapper>
     )
-}
+})
+
+export default OrderItemModal

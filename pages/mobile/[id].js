@@ -54,6 +54,7 @@ export default function MobileJobDetail() {
 
     // Ref for JobCompletionView (must be declared before conditional returns)
     const jobCompletionRef = useRef(null)
+    const orderItemModalRef = useRef(null)
 
     const loadJobDetails = async () => {
         if (!id) return
@@ -250,14 +251,33 @@ export default function MobileJobDetail() {
                                     บันทึก
                                 </button>
 
-                                {/* Product: Edit */}
-                                {activeTab === 'product' && !isEditingProduct && (
-                                    <button
-                                        onClick={() => setIsEditingProduct(true)}
-                                        className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
-                                    >
-                                        แก้ไข
-                                    </button>
+                                {/* Product: Edit / Save / Cancel */}
+                                {activeTab === 'product' && (
+                                    <>
+                                        {!isEditingProduct ? (
+                                            <button
+                                                onClick={() => setIsEditingProduct(true)}
+                                                className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                            >
+                                                แก้ไข
+                                            </button>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setIsEditingProduct(false)}
+                                                    className="text-xs font-bold text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50 px-3 py-1.5 rounded-lg shadow-sm"
+                                                >
+                                                    ยกเลิก
+                                                </button>
+                                                <button
+                                                    onClick={() => orderItemModalRef.current?.triggerSave()}
+                                                    className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                                >
+                                                    บันทึก
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Payment: Edit / Save / Cancel */}
@@ -344,18 +364,7 @@ export default function MobileJobDetail() {
                                     showHeader={false}
                                     readOnly={true}
                                 />
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-secondary-200">
-                                    <h3 className="font-bold text-secondary-900 mb-2">หมายเหตุงาน</h3>
-                                    <textarea
-                                        className="w-full text-sm text-secondary-600 p-2 bg-secondary-50 rounded-lg border border-secondary-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                        rows={3}
-                                        note={job.notes}
-                                        onNoteChange={() => { }}
-                                        showCompletionDate={true}
-                                        showHeader={false}
-                                        readOnly={true}
-                                    />
-                                </div>
+
                             </div>
                         )}
 
@@ -378,10 +387,12 @@ export default function MobileJobDetail() {
                                     />
                                 ) : (
                                     <OrderItemModal
+                                        ref={orderItemModalRef}
                                         isOpen={true}
                                         onClose={() => setIsEditingProduct(false)}
                                         isInline={true}
                                         isEditing={true}
+                                        hideControls={true} // Hide internal buttons
                                         item={{
                                             ...job.product,
                                             code: job.productId,
