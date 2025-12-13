@@ -8,19 +8,26 @@ import AppLayout from '../../components/AppLayout'
 import { DataManager } from '../../lib/dataManager'
 import {
     ArrowLeft,
-    User,
     Package,
     CreditCard,
     FileText,
-    Phone,
-    MapPin,
-    Calendar,
-    Clock,
     Wrench,
     Truck,
     Camera,
     Upload
 } from 'lucide-react'
+import JobInfoCard from '../../components/JobInfoCard'
+import OrderItemModal from '../../components/OrderItemModal'
+import PaymentSummaryCard from '../../components/PaymentSummaryCard'
+import PaymentEntryModal from '../../components/PaymentEntryModal'
+
+const formatDateForInput = (isoString) => {
+    if (!isoString) return ''
+    const date = new Date(isoString)
+    if (isNaN(date.getTime())) return '' // Invalid date
+    const pad = (n) => n < 10 ? '0' + n : n
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 export default function MobileJobDetail() {
     const router = useRouter()
@@ -32,6 +39,10 @@ export default function MobileJobDetail() {
     const [product, setProduct] = useState(null)
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
+
+    // Payment Modal State
+    const [showPaymentModal, setShowPaymentModal] = useState(false)
+    const [editingPaymentIndex, setEditingPaymentIndex] = useState(null)
 
     useEffect(() => {
         if (!id) return
@@ -62,6 +73,92 @@ export default function MobileJobDetail() {
         loadJobDetails()
     }, [id])
 
+    const handleSavePayment = async (paymentData) => {
+        if (!job || !job.order) return
+
+        let slipUrl = paymentData.slip
+        // Upload slip if it's a File object
+        if (paymentData.slip && paymentData.slip instanceof File) {
+            try {
+                const paymentIndex = editingPaymentIndex !== null ? editingPaymentIndex : (job.order.paymentSchedule?.length || 0)
+                // Use job.order.id for upload
+                slipUrl = await DataManager.uploadPaymentSlip(paymentData.slip, job.order.id, paymentIndex)
+            } catch (error) {
+                console.error('Error uploading slip:', error)
+                alert('ไม่สามารถอัพโหลดรูปสลิปได้')
+                return
+            }
+        }
+
+        const currentSchedule = job.order.paymentSchedule || []
+        let newSchedule = [...currentSchedule]
+
+        const totalOrderAmount = job.order.total || 0
+
+        // Calculate amount just like in OrderForm
+        const otherPaymentsTotal = currentSchedule.reduce((sum, p, idx) => {
+            if (editingPaymentIndex !== null && idx === editingPaymentIndex) return sum
+            return sum + (Number(p.amount) || 0)
+        }, 0)
+
+        const remainingForThis = totalOrderAmount - otherPaymentsTotal
+        const calculatedAmount = paymentData.amountMode === 'percent'
+            ? (remainingForThis * (parseFloat(paymentData.percentValue) || 0)) / 100
+            : parseFloat(paymentData.amount) || 0
+
+        const finalPaymentData = {
+            ...paymentData,
+            slip: slipUrl,
+            amount: calculatedAmount
+        }
+
+        if (editingPaymentIndex !== null) {
+            newSchedule[editingPaymentIndex] = finalPaymentData
+        } else {
+            newSchedule.push(finalPaymentData)
+        }
+
+        // Optimistic update
+        const updatedOrder = { ...job.order, paymentSchedule: newSchedule }
+        const updatedJob = { ...job, order: updatedOrder }
+        setJob(updatedJob)
+
+        // Persist to DB
+        // We only update the order's payment schedule
+        // DataManager.saveOrder expects full order data. 
+        // We should ensure we pass enough data directly or if saveOrder handles partial updates.
+        // saveOrder logic: upsert into orders.
+        try {
+            await DataManager.saveOrder(updatedOrder)
+            setShowPaymentModal(false)
+            setEditingPaymentIndex(null)
+        } catch (error) {
+            console.error('Error saving payment:', error)
+            alert('บันทึกข้อมูลไม่สำเร็จ')
+            // Revert on error? For now just alert.
+        }
+    }
+
+    const handleDeletePayment = async () => {
+        if (editingPaymentIndex === null || !job.order) return
+
+        const newSchedule = job.order.paymentSchedule.filter((_, i) => i !== editingPaymentIndex)
+
+        // Optimistic update
+        const updatedOrder = { ...job.order, paymentSchedule: newSchedule }
+        const updatedJob = { ...job, order: updatedOrder }
+        setJob(updatedJob)
+
+        try {
+            await DataManager.saveOrder(updatedOrder)
+            setShowPaymentModal(false)
+            setEditingPaymentIndex(null)
+        } catch (error) {
+            console.error('Error deleting payment:', error)
+            alert('ลบข้อมูลไม่สำเร็จ')
+        }
+    }
+
     if (loading) {
         return (
             <ProtectedRoute>
@@ -90,7 +187,7 @@ export default function MobileJobDetail() {
     }
 
     const tabs = [
-        { id: 'customer', label: 'ข้อมูลลูกค้า', icon: User },
+        { id: 'customer', label: 'ข้อมูลงานย่อย', icon: Wrench },
         { id: 'product', label: 'ข้อมูลสินค้า', icon: Package },
         { id: 'payment', label: 'การชำระเงิน', icon: CreditCard },
         { id: 'other', label: 'อื่นๆ', icon: FileText }
@@ -151,266 +248,108 @@ export default function MobileJobDetail() {
 
                         {/* Tab Content */}
                         <div className="p-4">
-                            {/* Tab 1: Customer Details */}
+                            {/* Tab 1: Sub Job Details (Replaced Customer Info) */}
                             {activeTab === 'customer' && (
                                 <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-secondary-900 mb-4">ข้อมูลลูกค้า</h2>
-
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">ชื่อลูกค้า</label>
-                                            <div className="text-base font-medium text-secondary-900">{job.customerName}</div>
-                                        </div>
-
-                                        {customer && (
-                                            <>
-                                                {customer.phone && (
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">เบอร์โทรศัพท์</label>
-                                                        <div className="flex items-center gap-2 text-secondary-900">
-                                                            <Phone size={16} className="text-secondary-400" />
-                                                            <a href={`tel:${customer.phone}`} className="text-primary-600 hover:underline">
-                                                                {customer.phone}
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex gap-3">
-                                                    <MapPin className="text-secondary-400 mt-0.5 flex-shrink-0" size={18} />
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-secondary-500 uppercase mb-0.5">ที่อยู่ติดตั้ง/จัดส่ง</label>
-                                                        <div className="text-secondary-900">
-                                                            {(() => {
-                                                                if (job.address && job.address !== '-') return job.address
-                                                                if (job.order?.address && job.order.address !== '-') return job.order.address
-                                                                if (job.customer?.address && job.customer.address !== '-') return job.customer.address
-                                                                if (job.customer?.addresses?.length > 0) return job.customer.addresses[0].address
-                                                                return '-'
-                                                            })()}
-                                                        </div>
-                                                        {/* Google Maps Link */}
-                                                        {(() => {
-                                                            const addr = job.address && job.address !== '-' ? job.address :
-                                                                (job.order?.address && job.order.address !== '-' ? job.order.address :
-                                                                    (job.customer?.address && job.customer.address !== '-' ? job.customer.address :
-                                                                        (job.customer?.addresses?.length > 0 ? job.customer.addresses[0].address : null)))
-
-                                                            if (!addr) return null
-
-                                                            return (
-                                                                <a
-                                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="inline-flex items-center gap-1 text-xs text-primary-600 mt-1 hover:underline"
-                                                                >
-                                                                    เปิดในแผนที่
-                                                                </a>
-                                                            )
-                                                        })()}
-                                                    </div>
-                                                </div>
-
-                                                {customer.email && (
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">อีเมล</label>
-                                                        <div className="text-secondary-900">{customer.email}</div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">วันที่นัดหมาย</label>
-                                                <div className="flex items-center gap-2 text-secondary-900">
-                                                    <Calendar size={16} className="text-secondary-400" />
-                                                    <span>{job.jobDate || '-'}</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">เวลา</label>
-                                                <div className="flex items-center gap-2 text-secondary-900">
-                                                    <Clock size={16} className="text-secondary-400" />
-                                                    <span>{job.jobTime || '-'}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">ทีมงาน</label>
-                                            <div className="text-secondary-900">{job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-')}</div>
-                                        </div>
-
-                                        {/* Additional Customer Info */}
-                                        {customer && (
-                                            <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100 mt-4">
-                                                <h3 className="text-sm font-semibold text-secondary-900 mb-2">ข้อมูลเพิ่มเติม</h3>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">ประเภทลูกค้า</span>
-                                                        <span className="text-secondary-900 font-medium">{customer.customerType || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">เลขผู้เสียภาษี</span>
-                                                        <span className="text-secondary-900 font-medium">{customer.taxId || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">ผู้ติดต่อ</span>
-                                                        <span className="text-secondary-900 font-medium">{customer.contactPerson || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">Line ID</span>
-                                                        <span className="text-secondary-900 font-medium">{customer.lineId || '-'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <JobInfoCard
+                                        data={{
+                                            jobType: job.jobType,
+                                            appointmentDate: formatDateForInput(job.jobDate),
+                                            completionDate: formatDateForInput(job.completionDate || job.order?.job_info?.completionDate),
+                                            installLocationName: job.order?.job_info?.installLocationName || '',
+                                            installAddress: job.address,
+                                            googleMapLink: job.googleMapLink || '',
+                                            distance: job.distance || '',
+                                            inspector1: job.order?.job_info?.inspector1 || { name: '', phone: '' },
+                                            team: job.assignedTeam
+                                        }}
+                                        onChange={() => { }} // ReadOnly
+                                        customer={customer || {}} // Pass customer for inspector selection if needed (though read only)
+                                        availableTeams={[job.assignedTeam]} // Just show the assigned team
+                                        note={job.notes}
+                                        onNoteChange={() => { }}
+                                        showCompletionDate={true}
+                                        showHeader={false}
+                                        readOnly={true}
+                                    />
                                 </div>
                             )}
 
-                            {/* Tab 2: Product Details */}
+                            {/* Tab 2: Product Details (Replaced with Edit Component) */}
                             {activeTab === 'product' && (
-                                <div className="space-y-6">
-                                    <h2 className="text-lg font-bold text-secondary-900">ข้อมูลสินค้า</h2>
-
-                                    {/* Main Info */}
-                                    <div className="flex gap-4">
-                                        <div className="w-20 h-20 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0">
-                                            {job.productImage ? (
-                                                <img src={job.productImage} alt={job.productName} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <Package size={32} className="text-secondary-300" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-secondary-900 mb-1">{job.productName}</h3>
-                                            <p className="text-sm text-secondary-500 font-mono mb-2">{job.productId}</p>
-                                            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                                                {product?.category || 'ไม่ระบุหมวดหมู่'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Detailed Specs */}
-                                    {(() => {
-                                        const displayProduct = product || { name: job.productName, id: job.productId }
-                                        return (
-                                            <div className="bg-secondary-50 rounded-xl p-4 space-y-3 border border-secondary-100">
-                                                <h3 className="text-sm font-semibold text-secondary-900 mb-2">คุณสมบัติสินค้า</h3>
-
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">หมวดหมู่ย่อย</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.subcategory || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">ราคา</span>
-                                                        <span className="text-secondary-900 font-medium">฿{displayProduct.price?.toLocaleString() || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">ขนาด (กxยxส)</span>
-                                                        <span className="text-secondary-900 font-medium">
-                                                            {(displayProduct.width || displayProduct.length || displayProduct.height)
-                                                                ? `${displayProduct.width || '-'} x ${displayProduct.length || '-'} x ${displayProduct.height || '-'} cm`
-                                                                : '-'}
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">วัสดุ</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.material || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">สีโครงสร้าง</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.color || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">สีคริสตัล</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.crystalColor || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">ประเภทหลอดไฟ</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.bulbType || '-'}</span>
-                                                    </div>
-                                                    <div>
-                                                        <span className="block text-secondary-500 text-xs mb-1">แสงไฟ</span>
-                                                        <span className="text-secondary-900 font-medium">{displayProduct.light || '-'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })()}
-
-                                    {/* Description */}
-                                    {(job.product?.description || product?.description) && (
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">รายละเอียดเพิ่มเติม</label>
-                                            <div className="text-sm text-secondary-700 leading-relaxed bg-white p-3 rounded-lg border border-secondary-200">
-                                                {product?.description || job.product?.description}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Job Notes */}
-                                    {job.notes && (
-                                        <div>
-                                            <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">หมายเหตุงาน</label>
-                                            <div className="p-3 bg-warning-50 rounded-lg text-warning-800 border border-warning-100 text-sm">
-                                                {job.notes}
-                                            </div>
-                                        </div>
-                                    )}
+                                <div className="h-[600px]">
+                                    <OrderItemModal
+                                        isOpen={true}
+                                        onClose={() => { }}
+                                        isInline={true}
+                                        isEditing={true}
+                                        item={{
+                                            ...job.product,
+                                            code: job.productId,
+                                            product_code: job.productId,
+                                            name: job.productName,
+                                            // Ensure numeric values
+                                            qty: 1,
+                                            unitPrice: job.product?.price || 0,
+                                            image: job.productImage,
+                                            // Pass variants if available in product object, else let modal fetch them
+                                        }}
+                                        onSave={(updatedItem) => {
+                                            console.log('Product Update Simulated:', updatedItem)
+                                            // In a real scenario, this would call DataManager.updateJobProduct or similar
+                                            alert('บันทึกข้อมูลแล้ว (Simulation)')
+                                        }}
+                                        productsData={[]} // Let it fetch or pass if available? passing empty array forces it to fetch if logic allows, or we relies on item.code to fetch
+                                    />
                                 </div>
                             )}
 
-                            {/* Tab 3: Payment & Photos */}
+                            {/* Tab 3: Payment (Replaced with PaymentSummaryCard) */}
                             {activeTab === 'payment' && (
-                                <div className="space-y-6">
-                                    <h2 className="text-lg font-bold text-secondary-900">การชำระเงิน & อัพโหลดรูป</h2>
+                                <div className="h-full">
+                                    <PaymentSummaryCard
+                                        subtotal={
+                                            job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
+                                            job.order?.total || 0
+                                        }
+                                        shippingFee={job.order?.shippingFee || 0}
+                                        discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                                        vatRate={0.07}
+                                        paymentSchedule={job.order?.paymentSchedule || []}
+                                        readOnly={false}
+                                        onAddPayment={() => {
+                                            setEditingPaymentIndex(null)
+                                            setShowPaymentModal(true)
+                                        }}
+                                        onEditPayment={(index) => {
+                                            setEditingPaymentIndex(index)
+                                            setShowPaymentModal(true)
+                                        }}
+                                    />
 
-                                    {/* Pending Jobs */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-secondary-700 mb-2">งานค้างชำระของลูกค้านี้</h3>
-                                        <div className="bg-secondary-50 rounded-lg p-4 border border-secondary-200">
-                                            <p className="text-sm text-secondary-600">ยังไม่มีข้อมูล</p>
-                                        </div>
-                                    </div>
-
-                                    {/* QR Code */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-secondary-700 mb-2">QR Code รับชำระเงิน</h3>
-                                        <div className="bg-white rounded-lg p-4 border border-secondary-200 text-center">
-                                            <div className="w-48 h-48 mx-auto bg-secondary-100 rounded-lg flex items-center justify-center">
-                                                <p className="text-secondary-500 text-sm">QR Code</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Payment Slip Upload */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-secondary-700 mb-2">อัพโหลดสลิปจ่ายเงิน</h3>
-                                        <button className="w-full py-3 px-4 border-2 border-dashed border-secondary-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
-                                            <div className="flex flex-col items-center gap-2 text-secondary-600">
-                                                <Camera size={24} />
-                                                <span className="text-sm">ถ่ายรูป / เลือกรูป</span>
-                                            </div>
-                                        </button>
-                                    </div>
-
-                                    {/* Installation Photos Upload */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-secondary-700 mb-2">รูปงานติดตั้ง/ขนส่ง</h3>
-                                        <button className="w-full py-3 px-4 border-2 border-dashed border-secondary-300 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors">
-                                            <div className="flex flex-col items-center gap-2 text-secondary-600">
-                                                <Upload size={24} />
-                                                <span className="text-sm">อัพโหลดรูปงาน</span>
-                                            </div>
-                                        </button>
-                                    </div>
+                                    {/* Payment Entry Modal */}
+                                    {showPaymentModal && (
+                                        <PaymentEntryModal
+                                            isOpen={showPaymentModal}
+                                            onClose={() => {
+                                                setShowPaymentModal(false)
+                                                setEditingPaymentIndex(null)
+                                            }}
+                                            onSave={handleSavePayment}
+                                            onDelete={handleDeletePayment}
+                                            payment={editingPaymentIndex !== null ? (job.order?.paymentSchedule?.[editingPaymentIndex] || null) : null}
+                                            remainingBalance={(() => {
+                                                const total = job.order?.total || 0
+                                                const currentSchedule = job.order?.paymentSchedule || []
+                                                const otherPaymentsTotal = currentSchedule.reduce((sum, p, idx) => {
+                                                    if (editingPaymentIndex !== null && idx === editingPaymentIndex) return sum
+                                                    return sum + (Number(p.amount) || 0)
+                                                }, 0)
+                                                return total - otherPaymentsTotal
+                                            })()}
+                                            isEditing={editingPaymentIndex !== null}
+                                        />
+                                    )}
                                 </div>
                             )}
 

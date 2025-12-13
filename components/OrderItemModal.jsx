@@ -12,7 +12,9 @@ export default function OrderItemModal({
     onDelete,
     item = null,
     productsData = [],
+
     isEditing = false,
+    isInline = false, // New prop for inline display
 
     onOpenSubJob, // Callback to open the sub-job modal
     onAddNewProduct, // Callback to open new product modal
@@ -262,22 +264,28 @@ export default function OrderItemModal({
         onClose()
     }
 
-    if (!isOpen) return null
+    if (!isOpen && !isInline) return null
 
     const total = (Number(formData.qty) || 0) * (Number(formData.unitPrice) || 0)
 
+    const Wrapper = isInline ? 'div' : 'div'
+    const wrapperProps = isInline ? { className: "w-full h-full bg-secondary-50 flex flex-col" } : { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" }
+    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-xl shadow-xl w-[512px] h-[600px] flex flex-col" }
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-[512px] h-[600px] flex flex-col">
+        <Wrapper {...wrapperProps}>
+            <div {...containerProps}>
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between z-10">
-                    <h2 className="text-lg font-bold text-secondary-900">
-                        {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
-                    </h2>
-                    <button onClick={onClose} className="text-secondary-500 hover:text-secondary-700">
-                        <X size={20} />
-                    </button>
-                </div>
+                {!isInline && (
+                    <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between z-10">
+                        <h2 className="text-lg font-bold text-secondary-900">
+                            {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
+                        </h2>
+                        <button onClick={onClose} className="text-secondary-500 hover:text-secondary-700">
+                            <X size={20} />
+                        </button>
+                    </div>
+                )}
 
                 {/* Body */}
                 <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
@@ -607,6 +615,6 @@ export default function OrderItemModal({
                     </div>
                 </div>
             </div>
-        </div>
+        </Wrapper>
     )
 }
