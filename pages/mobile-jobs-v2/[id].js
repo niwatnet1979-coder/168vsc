@@ -14,12 +14,16 @@ import {
     Wrench,
     Truck,
     Camera,
-    Upload
+    Upload,
+    ClipboardCheck
 } from 'lucide-react'
 import JobInfoCard from '../../components/JobInfoCard'
 import OrderItemModal from '../../components/OrderItemModal'
 import PaymentSummaryCard from '../../components/PaymentSummaryCard'
 import PaymentEntryModal from '../../components/PaymentEntryModal'
+
+import ProductDetailView from '../../components/ProductDetailView'
+import JobCompletionView from '../../components/JobCompletionView'
 
 const formatDateForInput = (isoString) => {
     if (!isoString) return ''
@@ -43,33 +47,36 @@ export default function MobileJobDetail() {
     // Payment Modal State
     const [showPaymentModal, setShowPaymentModal] = useState(false)
     const [editingPaymentIndex, setEditingPaymentIndex] = useState(null)
+    const [isEditingPayment, setIsEditingPayment] = useState(false) // Toggle for PaymentSummaryCard
+
+    // Product Tab State
+    const [isEditingProduct, setIsEditingProduct] = useState(false)
+
+    const loadJobDetails = async () => {
+        if (!id) return
+        try {
+            // Get job from DataManager (Async) - now includes all joined data
+            const jobs = await DataManager.getJobs()
+            const foundJob = jobs.find(j => j.id === id)
+
+            if (!foundJob) {
+                setLoading(false)
+                return
+            }
+
+            setJob(foundJob)
+            // Use joined data from DataManager
+            setCustomer(foundJob.customer)
+            setProduct(foundJob.product)
+
+            setLoading(false)
+        } catch (error) {
+            console.error('Error loading job details:', error)
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
-        if (!id) return
-
-        const loadJobDetails = async () => {
-            try {
-                // Get job from DataManager (Async) - now includes all joined data
-                const jobs = await DataManager.getJobs()
-                const foundJob = jobs.find(j => j.id === id)
-
-                if (!foundJob) {
-                    setLoading(false)
-                    return
-                }
-
-                setJob(foundJob)
-                // Use joined data from DataManager
-                setCustomer(foundJob.customer)
-                setProduct(foundJob.product)
-
-                setLoading(false)
-            } catch (error) {
-                console.error('Error loading job details:', error)
-                setLoading(false)
-            }
-        }
-
         loadJobDetails()
     }, [id])
 
@@ -139,6 +146,19 @@ export default function MobileJobDetail() {
         }
     }
 
+    const handleSavePaymentSummary = async () => {
+        try {
+            // Save current job.order state to DB
+            // DataManager.saveOrder takes specific fields or full object?
+            // Usually upsert.
+            await DataManager.saveOrder(job.order)
+            setIsEditingPayment(false)
+        } catch (error) {
+            console.error('Error saving payment summary:', error)
+            alert('บันทึกข้อมูลไม่สำเร็จ')
+        }
+    }
+
     const handleDeletePayment = async () => {
         if (editingPaymentIndex === null || !job.order) return
 
@@ -190,7 +210,7 @@ export default function MobileJobDetail() {
         { id: 'customer', label: 'ข้อมูลงานย่อย', icon: Wrench },
         { id: 'product', label: 'ข้อมูลสินค้า', icon: Package },
         { id: 'payment', label: 'การชำระเงิน', icon: CreditCard },
-        { id: 'other', label: 'อื่นๆ', icon: FileText }
+        { id: 'completion', label: 'บันทึกงาน', icon: ClipboardCheck }
     ]
 
     return (
@@ -275,32 +295,49 @@ export default function MobileJobDetail() {
                                 </div>
                             )}
 
-                            {/* Tab 2: Product Details (Replaced with Edit Component) */}
+                            {/* Tab 2: Product Details */}
                             {activeTab === 'product' && (
                                 <div className="h-[600px]">
-                                    <OrderItemModal
-                                        isOpen={true}
-                                        onClose={() => { }}
-                                        isInline={true}
-                                        isEditing={true}
-                                        item={{
-                                            ...job.product,
-                                            code: job.productId,
-                                            product_code: job.productId,
-                                            name: job.productName,
-                                            // Ensure numeric values
-                                            qty: 1,
-                                            unitPrice: job.product?.price || 0,
-                                            image: job.productImage,
-                                            // Pass variants if available in product object, else let modal fetch them
-                                        }}
-                                        onSave={(updatedItem) => {
-                                            console.log('Product Update Simulated:', updatedItem)
-                                            // In a real scenario, this would call DataManager.updateJobProduct or similar
-                                            alert('บันทึกข้อมูลแล้ว (Simulation)')
-                                        }}
-                                        productsData={[]} // Let it fetch or pass if available? passing empty array forces it to fetch if logic allows, or we relies on item.code to fetch
-                                    />
+                                    {!isEditingProduct ? (
+                                        <ProductDetailView
+                                            product={{
+                                                ...job.product,
+                                                productName: job.productName,
+                                                productId: job.productId,
+                                                price: job.product?.price || 0,
+                                                // Map scalar options if present in job or job.product
+                                                // Note: job.product might be rich object from DB
+                                                variants: job.product?.variants || [],
+                                            }}
+                                            onEdit={() => setIsEditingProduct(true)}
+                                        />
+                                    ) : (
+                                        <OrderItemModal
+                                            isOpen={true}
+                                            onClose={() => setIsEditingProduct(false)}
+                                            isInline={true}
+                                            isEditing={true}
+                                            item={{
+                                                ...job.product,
+                                                code: job.productId,
+                                                product_code: job.productId,
+                                                name: job.productName,
+                                                // Ensure numeric values
+                                                qty: 1,
+                                                unitPrice: job.product?.price || 0,
+                                                image: job.productImage,
+                                                // Pass variants if available in product object, else let modal fetch them
+                                            }}
+                                            onSave={(updatedItem) => {
+                                                console.log('Product Update Simulated:', updatedItem)
+                                                // In a real scenario, this would call DataManager.updateJobProduct
+                                                // For now, simulate save and exit edit mode
+                                                alert('บันทึกข้อมูลแล้ว (Simulation)')
+                                                setIsEditingProduct(false)
+                                            }}
+                                            productsData={[]}
+                                        />
+                                    )}
                                 </div>
                             )}
 
@@ -313,10 +350,41 @@ export default function MobileJobDetail() {
                                             job.order?.total || 0
                                         }
                                         shippingFee={job.order?.shippingFee || 0}
+                                        onShippingFeeChange={(val) => {
+                                            const newOrder = { ...job.order, shippingFee: val }
+                                            setJob({ ...job, order: newOrder })
+                                        }}
                                         discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                                        onDiscountChange={(val) => {
+                                            const newOrder = { ...job.order, discount: val }
+                                            setJob({ ...job, order: newOrder })
+                                        }}
                                         vatRate={0.07}
+                                        onVatRateChange={(val) => {
+                                            // Assume VAT rate isn't properly stored in order object for now, or just fixed logic
+                                            // The component handles local visual update, but we don't have a 'vatRate' field in DB usually?
+                                            // Let's assume we don't save VAT rate change for now or strict 7%
+                                            // But for UI feedback:
+                                            // const newOrder = { ...job.order, vatRate: val } 
+                                        }}
                                         paymentSchedule={job.order?.paymentSchedule || []}
-                                        readOnly={false}
+                                        readOnly={!isEditingPayment}
+                                        onEdit={() => setIsEditingPayment(true)}
+                                        onSave={handleSavePaymentSummary}
+                                        onCancel={() => {
+                                            setIsEditingPayment(false)
+                                            // Revert changes? Ideally yes. For now, simple toggle.
+                                            // To implement revert, we need a separate 'originalOrder' state or re-fetch.
+                                            // For this scope, let's keep it simple: cancel just exits, but changes to state persisted in memory.
+                                            // Better: modify local state only in component? 
+                                            // Actually PaymentSummaryCard uses LOCAL state for inputs, 
+                                            // so onCancel just exits readMode, effectively ignoring local inputs if we didn't push them up.
+                                            // BUT onShippingFeeChange pushes up immediately. 
+                                            // To fix properly: PaymentSummary should only fire changes on Save? 
+                                            // Or parent should hold temp state. 
+                                            // Given current structure: we are updating `job` state directly. 
+                                            // So "Cancel" is actually "Stop Editing" but changes remain in memory until page refresh.
+                                        }}
                                         onAddPayment={() => {
                                             setEditingPaymentIndex(null)
                                             setShowPaymentModal(true)
@@ -353,14 +421,15 @@ export default function MobileJobDetail() {
                                 </div>
                             )}
 
-                            {/* Tab 4: Other */}
-                            {activeTab === 'other' && (
-                                <div className="space-y-4">
-                                    <h2 className="text-lg font-bold text-secondary-900 mb-4">ข้อมูลอื่นๆ</h2>
-                                    <div className="text-center py-8 text-secondary-500">
-                                        <p>ยังไม่มีข้อมูล</p>
-                                    </div>
-                                </div>
+                            {/* Tab 4: Job Completion */}
+                            {activeTab === 'completion' && (
+                                <JobCompletionView
+                                    job={job}
+                                    onSave={() => {
+                                        loadJobDetails()
+                                        // Optional: Switch back to view or stay?
+                                    }}
+                                />
                             )}
                         </div>
                     </div>

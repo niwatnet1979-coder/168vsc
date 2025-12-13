@@ -13,20 +13,38 @@ export default function PaymentSummaryCard({
     paymentSchedule = [],
     onEditPayment,
     onAddPayment,
-    readOnly = false
+    readOnly = false,
+    onEdit,
+    onSave,
+    onCancel
 }) {
-    // Calculations
-    // Ensure numeric values
-    const numSubtotal = Number(subtotal) || 0
-    const numShippingFee = Number(shippingFee) || 0
-    const numDiscountValue = Number(discount?.value) || 0
+    const [localShipping, setLocalShipping] = React.useState(shippingFee)
+    const [localDiscount, setLocalDiscount] = React.useState(discount)
+    const [localVatRate, setLocalVatRate] = React.useState(vatRate)
 
-    const discountAmt = discount?.mode === 'percent'
+    React.useEffect(() => {
+        setLocalShipping(shippingFee)
+        setLocalDiscount(discount)
+        setLocalVatRate(vatRate)
+    }, [shippingFee, discount, vatRate])
+
+    // Internal handlers to update parent immediately or local state
+    const handleShippingChange = (val) => {
+        setLocalShipping(val)
+        if (onShippingFeeChange) onShippingFeeChange(val)
+    }
+
+    // Calculations use LOCAL state for immediate feedback during edit
+    const numSubtotal = Number(subtotal) || 0
+    const numShippingFee = Number(localShipping) || 0
+    const numDiscountValue = Number(localDiscount?.value) || 0
+
+    const discountAmt = localDiscount?.mode === 'percent'
         ? (numSubtotal + numShippingFee) * (numDiscountValue / 100)
         : numDiscountValue
 
     const afterDiscount = Math.max(0, numSubtotal + numShippingFee - discountAmt)
-    const vatAmt = afterDiscount * vatRate
+    const vatAmt = afterDiscount * localVatRate
     const total = afterDiscount + vatAmt
 
     const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
@@ -44,53 +62,84 @@ export default function PaymentSummaryCard({
                     <span>รวมเป็นเงิน</span>
                     <span>{currency(numSubtotal)}</span>
                 </div>
+
+                {/* Shipping Fee */}
                 <div className="flex justify-between items-center text-secondary-600">
                     <span>ค่าขนส่ง</span>
-                    <input
-                        type="number"
-                        value={shippingFee}
-                        onChange={e => onShippingFeeChange && onShippingFeeChange(Number(e.target.value))}
-                        disabled={readOnly}
-                        className={`w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm ${readOnly ? 'bg-gray-100' : ''}`}
-                    />
-                </div>
-                <div className="flex justify-between items-center text-secondary-600">
-                    <span>ส่วนลด</span>
-                    <div className="flex gap-1">
-                        <select
-                            value={discount?.mode || 'percent'}
-                            onChange={e => onDiscountChange && onDiscountChange({ ...discount, mode: e.target.value })}
-                            disabled={readOnly}
-                            className={`border border-secondary-300 rounded text-xs px-1 ${readOnly ? 'bg-gray-100' : ''}`}
-                        >
-                            <option value="percent">%</option>
-                            <option value="amount">฿</option>
-                        </select>
+                    {readOnly ? (
+                        <span className="font-medium text-secondary-900">{numShippingFee > 0 ? currency(numShippingFee) : '-'}</span>
+                    ) : (
                         <input
                             type="number"
-                            value={discount?.value || 0}
-                            onChange={e => onDiscountChange && onDiscountChange({ ...discount, value: Number(e.target.value) })}
-                            disabled={readOnly}
-                            className={`w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm ${readOnly ? 'bg-gray-100' : ''}`}
+                            value={localShipping}
+                            onChange={e => handleShippingChange(Number(e.target.value))}
+                            className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
                         />
-                    </div>
+                    )}
                 </div>
+
+                {/* Discount */}
+                <div className="flex justify-between items-center text-secondary-600">
+                    <span>ส่วนลด</span>
+                    {readOnly ? (
+                        <span className="font-medium text-secondary-900">
+                            {numDiscountValue > 0
+                                ? (localDiscount.mode === 'percent' ? `${numDiscountValue}% (${currency(discountAmt)})` : currency(discountAmt))
+                                : '-'}
+                        </span>
+                    ) : (
+                        <div className="flex gap-1">
+                            <select
+                                value={localDiscount?.mode || 'percent'}
+                                onChange={e => {
+                                    const newDiscount = { ...localDiscount, mode: e.target.value }
+                                    setLocalDiscount(newDiscount)
+                                    if (onDiscountChange) onDiscountChange(newDiscount)
+                                }}
+                                className="border border-secondary-300 rounded text-xs px-1"
+                            >
+                                <option value="percent">%</option>
+                                <option value="amount">฿</option>
+                            </select>
+                            <input
+                                type="number"
+                                value={localDiscount?.value || 0}
+                                onChange={e => {
+                                    const newDiscount = { ...localDiscount, value: Number(e.target.value) }
+                                    setLocalDiscount(newDiscount)
+                                    if (onDiscountChange) onDiscountChange(newDiscount)
+                                }}
+                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                            />
+                        </div>
+                    )}
+                </div>
+
                 <div className="flex justify-between text-secondary-900 font-medium pt-3 border-t border-secondary-100">
                     <span>หลังหักส่วนลด</span>
                     <span>{currency(afterDiscount)}</span>
                 </div>
+
+                {/* VAT */}
                 <div className="flex justify-between items-center text-secondary-600">
                     <span className="flex items-center gap-2">
                         ภาษีมูลค่าเพิ่ม (7%)
-                        <input
-                            type="checkbox"
-                            checked={vatRate > 0}
-                            onChange={e => onVatRateChange && onVatRateChange(e.target.checked ? 0.07 : 0)}
-                            disabled={readOnly}
-                            className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                        />
+                        {!readOnly && (
+                            <input
+                                type="checkbox"
+                                checked={localVatRate > 0}
+                                onChange={e => {
+                                    const newRate = e.target.checked ? 0.07 : 0
+                                    setLocalVatRate(newRate)
+                                    if (onVatRateChange) onVatRateChange(newRate)
+                                }}
+                                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                            />
+                        )}
                     </span>
-                    <span>{currency(vatAmt)}</span>
+                    <span className={localVatRate > 0 ? "" : "text-gray-400"}>
+                        {localVatRate > 0 ? currency(vatAmt) : '-'}
+                    </span>
                 </div>
 
                 <div className="flex justify-between text-xl font-bold text-primary-700 pt-5 border-t border-secondary-200">
@@ -103,7 +152,7 @@ export default function PaymentSummaryCard({
                     <h3 className="text-sm font-bold text-secondary-900 mb-4">รายการการชำระเงิน</h3>
 
                     {/* Payment List */}
-                    {paymentSchedule.length > 0 && (
+                    {paymentSchedule.length > 0 ? (
                         <div className="space-y-3 mb-4">
                             {paymentSchedule.map((payment, index) => (
                                 <div
@@ -120,6 +169,8 @@ export default function PaymentSummaryCard({
                                 </div>
                             ))}
                         </div>
+                    ) : (
+                        <div className="text-center text-gray-400 mb-4 text-xs font-light">ยังไม่มีรายการชำระเงิน</div>
                     )}
 
                     {/* Add Payment Button */}
@@ -137,6 +188,34 @@ export default function PaymentSummaryCard({
                     <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
                         <span>รวมยอดค้างชำระ</span>
                         <span>{currency(outstanding)}</span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-6 flex gap-2">
+                        {readOnly ? (
+                            <button
+                                onClick={onEdit}
+                                className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
+                            >
+                                <span>✎</span>
+                                แก้ไขข้อมูล
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={onCancel}
+                                    className="flex-1 py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={onSave}
+                                    className="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm"
+                                >
+                                    บันทึก
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
