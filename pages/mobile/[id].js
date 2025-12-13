@@ -217,242 +217,243 @@ export default function MobileJobDetail() {
         <ProtectedRoute>
             <AppLayout
                 renderHeader={({ setIsSidebarOpen }) => (
-                    <header className="h-16 bg-white border-b border-secondary-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
-                        <div className="flex items-center gap-3">
-                            <button
-                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
-                                onClick={() => setIsSidebarOpen(true)}
-                            >
-                                <div className="sr-only">Menu</div>
-                                {/* Re-import Menu if needed or assume it's available via Lucide imports? 
+                    <div className="bg-white sticky top-0 z-30 shadow-sm">
+                        {/* Top Header */}
+                        <header className="h-16 border-b border-secondary-200 flex items-center justify-between px-4 lg:px-8">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                    onClick={() => setIsSidebarOpen(true)}
+                                >
+                                    <div className="sr-only">Menu</div>
+                                    {/* Re-import Menu if needed or assume it's available via Lucide imports? 
                                     Wait, Menu is not imported in this file. I need to add Menu to imports. 
                                     But existing default header uses Menu. 
                                     I need to import Menu here. */}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-                            </button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                                </button>
 
-                            <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600">
-                                <ArrowLeft size={20} className="mr-1" />
-                                <span className="hidden sm:inline">กลับ</span>
-                            </Link>
+                                <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600">
+                                    <ArrowLeft size={20} className="mr-1" />
+                                    <span className="hidden sm:inline">กลับ</span>
+                                </Link>
 
-                            <div className="border-l border-secondary-300 h-6 mx-2 hidden sm:block"></div>
+                                <div className="border-l border-secondary-300 h-6 mx-2 hidden sm:block"></div>
 
-                            <div>
-                                <h1 className="text-lg font-bold text-secondary-900 leading-tight">{job.id}</h1>
-                                <p className="text-xs text-secondary-500">Order: {job.orderId}</p>
+                                <div>
+                                    <h1 className="text-lg font-bold text-secondary-900 leading-tight">{job.id}</h1>
+                                    <p className="text-xs text-secondary-500">Order: {job.orderId}</p>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="flex items-center gap-2">
-                            {job.rawJobType === 'installation' ? (
-                                <Wrench size={18} className="text-primary-600" />
-                            ) : (
-                                <Truck size={18} className="text-warning-600" />
-                            )}
-                            <span className="text-xs font-medium bg-secondary-100 px-2 py-1 rounded-full">{job.jobType}</span>
-                        </div>
-                    </header>
-                )}
-            >
-                <Head>
-                    <title>Job {job.id} - Mobile Jobs</title>
-                </Head>
+                            <div className="flex items-center gap-2">
+                                {job.rawJobType === 'installation' ? (
+                                    <Wrench size={18} className="text-primary-600" />
+                                ) : (
+                                    <Truck size={18} className="text-warning-600" />
+                                )}
+                                <span className="text-xs font-medium bg-secondary-100 px-2 py-1 rounded-full">{job.jobType}</span>
+                            </div>
+                        </header>
 
-                <div className="space-y-4 pb-20 pt-4">
-
-                    {/* Tabs */}
-                    <div className="bg-white rounded-lg border border-secondary-200 overflow-hidden">
-                        <div className="flex overflow-x-auto">
+                        {/* Tabs (Sticky) */}
+                        <div className="flex overflow-x-auto border-b border-secondary-200 hide-scrollbar">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon
                                 return (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === tab.id
+                                        className={`flex-1 min-w-[100px] px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
                                             ? 'border-primary-600 text-primary-600 bg-primary-50'
                                             : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
                                             }`}
                                     >
                                         <div className="flex items-center justify-center gap-2">
                                             <Icon size={16} />
-                                            <span className="hidden sm:inline">{tab.label}</span>
+                                            <span>{tab.label}</span>
                                         </div>
                                     </button>
                                 )
                             })}
                         </div>
+                    </div>
+                )}
+            >
+                <Head>
+                    <title>Job {job.id} - Mobile Jobs</title>
+                </Head>
 
-                        {/* Tab Content */}
-                        <div className="p-4">
-                            {/* Tab 1: Sub Job Details (Replaced Customer Info) */}
-                            {activeTab === 'customer' && (
-                                <div className="space-y-4">
-                                    <JobInfoCard
-                                        data={{
-                                            jobType: job.jobType,
-                                            appointmentDate: formatDateForInput(job.jobDate),
-                                            completionDate: formatDateForInput(job.completionDate || job.order?.job_info?.completionDate),
-                                            installLocationName: job.order?.job_info?.installLocationName || '',
-                                            installAddress: job.address,
-                                            googleMapLink: job.googleMapLink || '',
-                                            distance: job.distance || '',
-                                            inspector1: job.order?.job_info?.inspector1 || { name: '', phone: '' },
-                                            team: job.assignedTeam
+                {/* Content Area (Scrollable) */}
+                <div className="space-y-4 pb-20 pt-2">
+                    {/* Tab Content */}
+                    <div className="bg-white rounded-lg border border-secondary-200 p-4 min-h-[50vh]">
+                        {/* Tab 1: Sub Job Details (Replaced Customer Info) */}
+                        {activeTab === 'customer' && (
+                            <div className="space-y-4">
+                                <JobInfoCard
+                                    data={{
+                                        jobType: job.jobType,
+                                        appointmentDate: formatDateForInput(job.jobDate),
+                                        completionDate: formatDateForInput(job.completionDate || job.order?.job_info?.completionDate),
+                                        installLocationName: job.order?.job_info?.installLocationName || '',
+                                        installAddress: job.address,
+                                        googleMapLink: job.googleMapLink || '',
+                                        distance: job.distance || '',
+                                        inspector1: job.order?.job_info?.inspector1 || { name: '', phone: '' },
+                                        team: job.assignedTeam
+                                    }}
+                                    onChange={() => { }} // ReadOnly
+                                    customer={customer || {}} // Pass customer for inspector selection if needed (though read only)
+                                    availableTeams={[job.assignedTeam]} // Just show the assigned team
+                                    note={job.notes}
+                                    onNoteChange={() => { }}
+                                    showCompletionDate={true}
+                                    showHeader={false}
+                                    readOnly={true}
+                                />
+                            </div>
+                        )}
+
+                        {/* Tab 2: Product Details */}
+                        {activeTab === 'product' && (
+                            <div className="h-[600px]">
+                                {!isEditingProduct ? (
+                                    <ProductDetailView
+                                        product={{
+                                            ...job.product,
+                                            productName: job.productName,
+                                            productId: job.productId,
+                                            price: job.product?.price || 0,
+                                            // Map scalar options if present in job or job.product
+                                            // Note: job.product might be rich object from DB
+                                            variants: job.product?.variants || [],
                                         }}
-                                        onChange={() => { }} // ReadOnly
-                                        customer={customer || {}} // Pass customer for inspector selection if needed (though read only)
-                                        availableTeams={[job.assignedTeam]} // Just show the assigned team
-                                        note={job.notes}
-                                        onNoteChange={() => { }}
-                                        showCompletionDate={true}
-                                        showHeader={false}
-                                        readOnly={true}
+                                        onEdit={() => setIsEditingProduct(true)}
                                     />
-                                </div>
-                            )}
-
-                            {/* Tab 2: Product Details */}
-                            {activeTab === 'product' && (
-                                <div className="h-[600px]">
-                                    {!isEditingProduct ? (
-                                        <ProductDetailView
-                                            product={{
-                                                ...job.product,
-                                                productName: job.productName,
-                                                productId: job.productId,
-                                                price: job.product?.price || 0,
-                                                // Map scalar options if present in job or job.product
-                                                // Note: job.product might be rich object from DB
-                                                variants: job.product?.variants || [],
-                                            }}
-                                            onEdit={() => setIsEditingProduct(true)}
-                                        />
-                                    ) : (
-                                        <OrderItemModal
-                                            isOpen={true}
-                                            onClose={() => setIsEditingProduct(false)}
-                                            isInline={true}
-                                            isEditing={true}
-                                            item={{
-                                                ...job.product,
-                                                code: job.productId,
-                                                product_code: job.productId,
-                                                name: job.productName,
-                                                // Ensure numeric values
-                                                qty: 1,
-                                                unitPrice: job.product?.price || 0,
-                                                image: job.productImage,
-                                                // Pass variants if available in product object, else let modal fetch them
-                                            }}
-                                            onSave={(updatedItem) => {
-                                                console.log('Product Update Simulated:', updatedItem)
-                                                // In a real scenario, this would call DataManager.updateJobProduct
-                                                // For now, simulate save and exit edit mode
-                                                alert('บันทึกข้อมูลแล้ว (Simulation)')
-                                                setIsEditingProduct(false)
-                                            }}
-                                            productsData={[]}
-                                        />
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Tab 3: Payment (Replaced with PaymentSummaryCard) */}
-                            {activeTab === 'payment' && (
-                                <div className="h-full">
-                                    <PaymentSummaryCard
-                                        subtotal={
-                                            job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
-                                            job.order?.total || 0
-                                        }
-                                        shippingFee={job.order?.shippingFee || 0}
-                                        onShippingFeeChange={(val) => {
-                                            const newOrder = { ...job.order, shippingFee: val }
-                                            setJob({ ...job, order: newOrder })
+                                ) : (
+                                    <OrderItemModal
+                                        isOpen={true}
+                                        onClose={() => setIsEditingProduct(false)}
+                                        isInline={true}
+                                        isEditing={true}
+                                        item={{
+                                            ...job.product,
+                                            code: job.productId,
+                                            product_code: job.productId,
+                                            name: job.productName,
+                                            // Ensure numeric values
+                                            qty: 1,
+                                            unitPrice: job.product?.price || 0,
+                                            image: job.productImage,
+                                            // Pass variants if available in product object, else let modal fetch them
                                         }}
-                                        discount={job.order?.discount || { mode: 'percent', value: 0 }}
-                                        onDiscountChange={(val) => {
-                                            const newOrder = { ...job.order, discount: val }
-                                            setJob({ ...job, order: newOrder })
+                                        onSave={(updatedItem) => {
+                                            console.log('Product Update Simulated:', updatedItem)
+                                            // In a real scenario, this would call DataManager.updateJobProduct
+                                            // For now, simulate save and exit edit mode
+                                            alert('บันทึกข้อมูลแล้ว (Simulation)')
+                                            setIsEditingProduct(false)
                                         }}
-                                        vatRate={0.07}
-                                        onVatRateChange={(val) => {
-                                            // Assume VAT rate isn't properly stored in order object for now, or just fixed logic
-                                            // The component handles local visual update, but we don't have a 'vatRate' field in DB usually?
-                                            // Let's assume we don't save VAT rate change for now or strict 7%
-                                            // But for UI feedback:
-                                            // const newOrder = { ...job.order, vatRate: val } 
-                                        }}
-                                        paymentSchedule={job.order?.paymentSchedule || []}
-                                        readOnly={!isEditingPayment}
-                                        onEdit={() => setIsEditingPayment(true)}
-                                        onSave={handleSavePaymentSummary}
-                                        onCancel={() => {
-                                            setIsEditingPayment(false)
-                                            // Revert changes? Ideally yes. For now, simple toggle.
-                                            // To implement revert, we need a separate 'originalOrder' state or re-fetch.
-                                            // For this scope, let's keep it simple: cancel just exits, but changes to state persisted in memory.
-                                            // Better: modify local state only in component? 
-                                            // Actually PaymentSummaryCard uses LOCAL state for inputs, 
-                                            // so onCancel just exits readMode, effectively ignoring local inputs if we didn't push them up.
-                                            // BUT onShippingFeeChange pushes up immediately. 
-                                            // To fix properly: PaymentSummary should only fire changes on Save? 
-                                            // Or parent should hold temp state. 
-                                            // Given current structure: we are updating `job` state directly. 
-                                            // So "Cancel" is actually "Stop Editing" but changes remain in memory until page refresh.
-                                        }}
-                                        onAddPayment={() => {
-                                            setEditingPaymentIndex(null)
-                                            setShowPaymentModal(true)
-                                        }}
-                                        onEditPayment={(index) => {
-                                            setEditingPaymentIndex(index)
-                                            setShowPaymentModal(true)
-                                        }}
+                                        productsData={[]}
                                     />
+                                )}
+                            </div>
+                        )}
 
-                                    {/* Payment Entry Modal */}
-                                    {showPaymentModal && (
-                                        <PaymentEntryModal
-                                            isOpen={showPaymentModal}
-                                            onClose={() => {
-                                                setShowPaymentModal(false)
-                                                setEditingPaymentIndex(null)
-                                            }}
-                                            onSave={handleSavePayment}
-                                            onDelete={handleDeletePayment}
-                                            payment={editingPaymentIndex !== null ? (job.order?.paymentSchedule?.[editingPaymentIndex] || null) : null}
-                                            remainingBalance={(() => {
-                                                const total = job.order?.total || 0
-                                                const currentSchedule = job.order?.paymentSchedule || []
-                                                const otherPaymentsTotal = currentSchedule.reduce((sum, p, idx) => {
-                                                    if (editingPaymentIndex !== null && idx === editingPaymentIndex) return sum
-                                                    return sum + (Number(p.amount) || 0)
-                                                }, 0)
-                                                return total - otherPaymentsTotal
-                                            })()}
-                                            isEditing={editingPaymentIndex !== null}
-                                        />
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Tab 4: Job Completion */}
-                            {activeTab === 'completion' && (
-                                <JobCompletionView
-                                    job={job}
-                                    onSave={() => {
-                                        loadJobDetails()
-                                        // Optional: Switch back to view or stay?
+                        {/* Tab 3: Payment (Replaced with PaymentSummaryCard) */}
+                        {activeTab === 'payment' && (
+                            <div className="h-full">
+                                <PaymentSummaryCard
+                                    subtotal={
+                                        job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
+                                        job.order?.total || 0
+                                    }
+                                    shippingFee={job.order?.shippingFee || 0}
+                                    onShippingFeeChange={(val) => {
+                                        const newOrder = { ...job.order, shippingFee: val }
+                                        setJob({ ...job, order: newOrder })
+                                    }}
+                                    discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                                    onDiscountChange={(val) => {
+                                        const newOrder = { ...job.order, discount: val }
+                                        setJob({ ...job, order: newOrder })
+                                    }}
+                                    vatRate={0.07}
+                                    onVatRateChange={(val) => {
+                                        // Assume VAT rate isn't properly stored in order object for now, or just fixed logic
+                                        // The component handles local visual update, but we don't have a 'vatRate' field in DB usually?
+                                        // Let's assume we don't save VAT rate change for now or strict 7%
+                                        // But for UI feedback:
+                                        // const newOrder = { ...job.order, vatRate: val } 
+                                    }}
+                                    paymentSchedule={job.order?.paymentSchedule || []}
+                                    readOnly={!isEditingPayment}
+                                    onEdit={() => setIsEditingPayment(true)}
+                                    onSave={handleSavePaymentSummary}
+                                    onCancel={() => {
+                                        setIsEditingPayment(false)
+                                        // Revert changes? Ideally yes. For now, simple toggle.
+                                        // To implement revert, we need a separate 'originalOrder' state or re-fetch.
+                                        // For this scope, let's keep it simple: cancel just exits, but changes to state persisted in memory.
+                                        // Better: modify local state only in component? 
+                                        // Actually PaymentSummaryCard uses LOCAL state for inputs, 
+                                        // so onCancel just exits readMode, effectively ignoring local inputs if we didn't push them up.
+                                        // BUT onShippingFeeChange pushes up immediately. 
+                                        // To fix properly: PaymentSummary should only fire changes on Save? 
+                                        // Or parent should hold temp state. 
+                                        // Given current structure: we are updating `job` state directly. 
+                                        // So "Cancel" is actually "Stop Editing" but changes remain in memory until page refresh.
+                                    }}
+                                    onAddPayment={() => {
+                                        setEditingPaymentIndex(null)
+                                        setShowPaymentModal(true)
+                                    }}
+                                    onEditPayment={(index) => {
+                                        setEditingPaymentIndex(index)
+                                        setShowPaymentModal(true)
                                     }}
                                 />
-                            )}
-                        </div>
+
+                                {/* Payment Entry Modal */}
+                                {showPaymentModal && (
+                                    <PaymentEntryModal
+                                        isOpen={showPaymentModal}
+                                        onClose={() => {
+                                            setShowPaymentModal(false)
+                                            setEditingPaymentIndex(null)
+                                        }}
+                                        onSave={handleSavePayment}
+                                        onDelete={handleDeletePayment}
+                                        payment={editingPaymentIndex !== null ? (job.order?.paymentSchedule?.[editingPaymentIndex] || null) : null}
+                                        remainingBalance={(() => {
+                                            const total = job.order?.total || 0
+                                            const currentSchedule = job.order?.paymentSchedule || []
+                                            const otherPaymentsTotal = currentSchedule.reduce((sum, p, idx) => {
+                                                if (editingPaymentIndex !== null && idx === editingPaymentIndex) return sum
+                                                return sum + (Number(p.amount) || 0)
+                                            }, 0)
+                                            return total - otherPaymentsTotal
+                                        })()}
+                                        isEditing={editingPaymentIndex !== null}
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        {/* Tab 4: Job Completion */}
+                        {activeTab === 'completion' && (
+                            <JobCompletionView
+                                job={job}
+                                onSave={() => {
+                                    loadJobDetails()
+                                    // Optional: Switch back to view or stay?
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
             </AppLayout>
-        </ProtectedRoute>
+        </ProtectedRoute >
     )
 }
