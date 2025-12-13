@@ -111,6 +111,7 @@ export default function JobCompletionView({ job, onSave }) {
                 if (item.url) return item // Already uploaded
 
                 const url = await DataManager.uploadJobMedia(item.file, job.id)
+                if (!url) throw new Error('ไม่สามารถอัพโหลดไฟล์ได้ (กรุณาตรวจสอบ Storage Policy)')
                 return {
                     url,
                     type: item.type,
