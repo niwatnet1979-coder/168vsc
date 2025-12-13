@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Camera, MapPin, X, Star, Save, Upload, Video } from 'lucide-react'
+import { Camera, MapPin, X, Star, Save, Upload, Video, Calendar, Smartphone, FileText, Image } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
 import VideoRecorderModal from './VideoRecorderModal'
@@ -344,9 +344,13 @@ export default function JobCompletionView({ job, onSave }) {
 
             {/* Media Section */}
             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
-                <h3 className="font-bold text-lg text-secondary-900 mb-4 flex justify-between items-center bg-white">
-                    <span>รูปภาพ / วีดีโอการทำงาน</span>
-                    <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 text-secondary-900 font-bold text-lg">
+                        <Image className="text-primary-600" size={24} />
+                        <span>รูปภาพและวิดีโอ</span>
+                    </div>
+
+                    <div className="flex gap-2 self-end sm:self-auto">
                         <button
                             onClick={() => setShowVideoRecorder(true)}
                             className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
@@ -367,7 +371,7 @@ export default function JobCompletionView({ job, onSave }) {
                             />
                         </label>
                     </div>
-                </h3>
+                </div>
 
                 <VideoRecorderModal
                     isOpen={showVideoRecorder}
@@ -418,14 +422,17 @@ export default function JobCompletionView({ job, onSave }) {
                             </div>
 
                             {/* Media Info Row */}
-                            <div className="px-3 pt-2 text-xs text-secondary-500 flex flex-wrap gap-2 items-center">
+                            <div className="px-3 pt-2 flex flex-wrap gap-2 items-center text-[10px] text-gray-500">
                                 {/* 1. Date/Time */}
-                                <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
-                                    {new Date(item.timestamp || new Date()).toLocaleString('th-TH', {
-                                        day: '2-digit', month: '2-digit', year: 'numeric',
-                                        hour: '2-digit', minute: '2-digit'
-                                    })}
-                                </span>
+                                <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full whitespace-nowrap">
+                                    <Calendar size={10} className="text-gray-400" />
+                                    <span>
+                                        {new Date(item.timestamp || new Date()).toLocaleString('th-TH', {
+                                            day: '2-digit', month: '2-digit', year: '2-digit',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
 
                                 {/* 2. GPS Location */}
                                 {item.location && (
@@ -433,26 +440,28 @@ export default function JobCompletionView({ job, onSave }) {
                                         href={`https://www.google.com/maps/search/?api=1&query=${item.location.lat},${item.location.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 truncate max-w-[150px] hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-colors cursor-pointer"
+                                        className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full truncate max-w-[140px] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-colors cursor-pointer"
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        <MapPin size={10} />
-                                        {item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}
+                                        <MapPin size={10} className="text-gray-400" />
+                                        <span>{item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}</span>
                                     </a>
                                 )}
 
                                 {/* 3. Resolution */}
                                 {item.resolution && (
-                                    <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                                        {item.resolution}
-                                    </span>
+                                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
+                                        <Smartphone size={10} className="text-gray-400" />
+                                        <span>{item.resolution}</span>
+                                    </div>
                                 )}
 
                                 {/* 4. File Size */}
                                 {item.size && (
-                                    <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                                        {item.size}
-                                    </span>
+                                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
+                                        <FileText size={10} className="text-gray-400" />
+                                        <span>{item.size}</span>
+                                    </div>
                                 )}
                             </div>
 
