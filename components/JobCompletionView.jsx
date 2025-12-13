@@ -118,7 +118,8 @@ export default function JobCompletionView({ job, onSave }) {
                 location: location,
                 resolution: meta,
                 size: formatFileSize(file.size),
-                status: 'pending' // pending, uploading, success
+                status: 'pending', // pending, uploading, success
+                timestamp: new Date().toISOString()
             }
         }))
 
@@ -324,25 +325,6 @@ export default function JobCompletionView({ job, onSave }) {
                                 >
                                     <X size={16} />
                                 </button>
-                                {item.location && (
-                                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded flex items-center gap-1">
-                                        <MapPin size={12} />
-                                        {item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}
-                                    </div>
-                                )}
-                                <div className="absolute top-2 left-2 flex gap-1">
-                                    {item.resolution && (
-                                        <div className="px-2 py-1 bg-black/60 text-white text-xs rounded">
-                                            {item.resolution}
-                                        </div>
-                                    )}
-                                    {item.size && (
-                                        <div className="px-2 py-1 bg-black/60 text-white text-xs rounded">
-                                            {item.size}
-                                        </div>
-                                    )}
-                                </div>
-
                                 {/* Upload Status Overlay */}
                                 {item.status === 'uploading' && (
                                     <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
@@ -358,10 +340,47 @@ export default function JobCompletionView({ job, onSave }) {
                                     </div>
                                 )}
                                 {!item.status && item.url && (
-                                    /* Previously saved items don't have 'status' field, assume success or just show nothing */
-                                    /* Maybe show a small 'Saved' icon? User wants to know when finished. */
-                                    /* If reloading from DB, they are 'saved'. */
+                                    /* Saved items */
                                     null
+                                )}
+                            </div>
+
+                            {/* Media Info Row */}
+                            <div className="px-3 pt-2 text-xs text-secondary-500 flex flex-wrap gap-2 items-center">
+                                {/* 1. Date/Time */}
+                                <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap">
+                                    {new Date(item.timestamp || new Date()).toLocaleString('th-TH', {
+                                        day: '2-digit', month: '2-digit', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit'
+                                    })}
+                                </span>
+
+                                {/* 2. GPS Location */}
+                                {item.location && (
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${item.location.lat},${item.location.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 truncate max-w-[150px] hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-colors cursor-pointer"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <MapPin size={10} />
+                                        {item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}
+                                    </a>
+                                )}
+
+                                {/* 3. Resolution */}
+                                {item.resolution && (
+                                    <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                        {item.resolution}
+                                    </span>
+                                )}
+
+                                {/* 4. File Size */}
+                                {item.size && (
+                                    <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                        {item.size}
+                                    </span>
                                 )}
                             </div>
 
