@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
+import { useJobs } from '../hooks/useJobs'
 import {
     Calendar,
     CheckCircle,
@@ -21,87 +22,77 @@ import {
 } from 'lucide-react'
 
 export default function JobQueuePage() {
+    const { jobs: allJobs, loading } = useJobs() // Hook
     const [jobs, setJobs] = useState([])
     const [filter, setFilter] = useState('all') // all, pending-install, pending-delivery, completed
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
-    // Load data from DataManager
+    // Sync allJobs to local formatted state and apply filters
     useEffect(() => {
-        const loadJobs = async () => {
-            try {
-                // Use DataManager to get normalized jobs (Async)
-                const allJobs = await DataManager.getJobs()
+        // 1. Map Data
+        const formattedJobs = allJobs.map(job => ({
+            uniqueId: job.id,
+            orderId: job.orderId,
+            customer: job.customerName,
+            product: {
+                id: job.productId,
+                name: job.productName || 'สินค้าไม่ระบุ',
+                image: job.productImage || null
+            },
+            jobType: job.jobType,
+            rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
+            assignedTeam: job.assignedTeam, // Needed for filtering
+            appointmentDate: job.jobDate ? `${job.jobDate}T${job.jobTime || '09:00'}` : '-',
+            team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'),
+            inspector: job.inspectorName || '-',
+            address: job.address,
+            status: job.status === 'Completed' ? 'เสร็จสิ้น' :
+                job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
+            priority: job.priority || 'Medium'
+        }))
 
-                // Filter out orphaned jobs if needed (though DB should enforce this)
-                // For now, assume DataManager returns valid data.
-                const validJobs = allJobs
+        // 2. Sort by appointment date
+        formattedJobs.sort((a, b) => {
+            if (a.appointmentDate === '-') return 1
+            if (b.appointmentDate === '-') return -1
+            return new Date(a.appointmentDate) - new Date(b.appointmentDate)
+        })
 
-                const formattedJobs = validJobs.map(job => ({
-                    uniqueId: job.id,
-                    orderId: job.orderId,
-                    customer: job.customerName,
-                    product: {
-                        id: job.productId,
-                        name: job.productName || 'สินค้าไม่ระบุ',
-                        image: job.productImage || null
-                    },
-                    jobType: job.jobType,
-                    rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
-                    appointmentDate: job.jobDate ? `${job.jobDate}T${job.jobTime || '09:00'}` : '-',
-                    team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'), // Fix 'Team A' display if still present
-                    inspector: job.inspectorName || '-',
-                    address: job.address,
-                    status: job.status === 'Completed' ? 'เสร็จสิ้น' :
-                        job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
-                    priority: job.priority || 'Medium'
-                }))
+        // 3. Filter Logic
+        const filteredDocs = formattedJobs.filter(job => {
+            // Search filter
+            const matchesSearch =
+                job.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                job.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (job.product.name && job.product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (job.team && job.team.toLowerCase().includes(searchTerm.toLowerCase()))
 
-                // Sort by appointment date
-                formattedJobs.sort((a, b) => {
-                    if (a.appointmentDate === '-') return 1
-                    if (b.appointmentDate === '-') return -1
-                    return new Date(a.appointmentDate) - new Date(b.appointmentDate)
-                })
+            if (!matchesSearch) return false
 
-                setJobs(formattedJobs)
-            } catch (error) {
-                console.error('Error loading jobs:', error)
-                setJobs([])
+            // Status/Type filter
+            switch (filter) {
+                case 'pending-install':
+                    return job.rawJobType === 'installation' && job.status !== 'เสร็จสิ้น'
+                case 'pending-delivery':
+                    return job.rawJobType === 'delivery' && job.status !== 'เสร็จสิ้น'
+                case 'completed':
+                    return job.status === 'เสร็จสิ้น'
+                case 'all':
+                default:
+                    return true
             }
-        }
+        })
 
-        loadJobs()
-        window.addEventListener('storage', loadJobs)
-        return () => window.removeEventListener('storage', loadJobs)
-    }, [])
+        setJobs(filteredDocs)
+    }, [allJobs, filter, searchTerm]) // Re-run when realtime data, filter, or search changes
 
-    // Filter logic
-    const filteredJobs = jobs.filter(job => {
-        // Search filter
-        const matchesSearch =
-            job.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (job.product.name && job.product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (job.team && job.team.toLowerCase().includes(searchTerm.toLowerCase()))
-
-        if (!matchesSearch) return false
-
-        // Status/Type filter
-        switch (filter) {
-            case 'pending-install':
-                return job.rawJobType === 'installation' && job.status !== 'เสร็จสิ้น'
-            case 'pending-delivery':
-                return job.rawJobType === 'delivery' && job.status !== 'เสร็จสิ้น'
-            case 'completed':
-                return job.status === 'เสร็จสิ้น'
-            case 'all':
-            default:
-                return true
-        }
-    })
+    // No need for separate filteredJobs logic since we set it to 'jobs' state above
+    // But pagination below relies on 'filteredJobs' variable name from previous code.
+    // Let's alias state 'jobs' as 'filteredJobs' for compatibility with pagination code below
+    const filteredJobs = jobs
 
     // Pagination
     const totalPages = Math.ceil(filteredJobs.length / itemsPerPage)

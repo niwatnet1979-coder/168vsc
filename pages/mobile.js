@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import AppLayout from '../components/AppLayout'
+import { useJobs } from '../hooks/useJobs'
 
 // Helper to format date
 const formatDate = (dateString, timeString) => {
@@ -40,9 +41,9 @@ const formatDate = (dateString, timeString) => {
 export default function MobilePage() {
     const router = useRouter()
     const { data: session } = useSession()
+    const { jobs: allJobs, loading } = useJobs() // Hook
     const [activeTab, setActiveTab] = useState('installation') // 'previous', 'installation', 'delivery'
     const [jobs, setJobs] = useState([])
-    const [loading, setLoading] = useState(true)
 
     const [selectedTeam, setSelectedTeam] = useState('ทั้งหมด')
     const [availableTeams, setAvailableTeams] = useState([])
@@ -50,6 +51,14 @@ export default function MobilePage() {
     // Get user role and team
     const userRole = session?.user?.role
     const userTeam = session?.user?.team
+
+    // Update available teams when allJobs changes
+    useEffect(() => {
+        if (allJobs.length > 0) {
+            const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
+            setAvailableTeams(['ทั้งหมด', ...teams])
+        }
+    }, [allJobs])
 
     // Auto-select team with Normalization
     useEffect(() => {
@@ -71,95 +80,84 @@ export default function MobilePage() {
     }, [userTeam])
 
 
-
-    // Load Data
+    // Load/Filter Data
     useEffect(() => {
-        loadJobs()
-    }, [activeTab, selectedTeam])
+        filterJobs()
+    }, [activeTab, selectedTeam, allJobs]) // Re-run when realtime update or filter changes
 
-    const loadJobs = async () => {
-        setLoading(true)
-        try {
-            // Get all jobs from DataManager
-            const allJobs = await DataManager.getJobs()
+    const filterJobs = () => {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
 
-            // Extract unique teams
-            const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
-            setAvailableTeams(['ทั้งหมด', ...teams])
+        // Extract teams logic moved to its own effect, but we need team list for normalization below if needed
+        const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
 
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
+        let filteredJobs = allJobs.filter(job => {
+            // Type Filter
+            const jobDate = new Date(job.jobDate)
+            const isCompleted = job.status === 'completed'
+            const isInstallation = job.jobType === 'ติดตั้ง' || job.jobType === 'installation'
+            const isDelivery = job.jobType === 'ขนส่ง' || job.jobType === 'delivery' || job.jobType === 'delivery_installation'
 
-            let filteredJobs = allJobs.filter(job => {
-                // Type Filter
-                const jobDate = new Date(job.jobDate)
-                const isCompleted = job.status === 'completed'
-                const isInstallation = job.jobType === 'ติดตั้ง' || job.jobType === 'installation'
-                const isDelivery = job.jobType === 'ขนส่ง' || job.jobType === 'delivery' || job.jobType === 'delivery_installation'
-
-                // Tab Logic
-                let matchesTab = false
-                if (activeTab === 'previous') {
-                    matchesTab = isCompleted || jobDate < today
-                } else if (activeTab === 'installation') {
-                    // SHOW ALL pending installations regardless of date for now to ensure visibility
-                    // or stick to >= today? User said "Real data", implying they want to see what's in V2.
-                    // V2 shows EVERYTHING. Let's show everything pending.
-                    matchesTab = !isCompleted && isInstallation
-                } else if (activeTab === 'delivery') {
-                    matchesTab = !isCompleted && isDelivery
-                }
-
-                return matchesTab
-            })
-
-            // Team Filter Logic with Fallback
-            let effectiveTeam = selectedTeam
-
-            // Normalize "Team X" to "ทีม X" if needed for matching
-            const normalizeTeam = (t) => {
-                if (!t) return 'ทั้งหมด'
-                if (t.toLowerCase() === 'team a') return 'ทีม A'
-                if (t.toLowerCase() === 'team b') return 'ทีม B'
-                if (t.toLowerCase() === 'team c') return 'ทีม C'
-                if (t.startsWith('Team ')) {
-                    const thaiName = 'ทีม ' + t.substring(5)
-                    if (teams.includes(thaiName)) return thaiName
-                }
-                return t
+            // Tab Logic
+            let matchesTab = false
+            if (activeTab === 'previous') {
+                matchesTab = isCompleted || jobDate < today
+            } else if (activeTab === 'installation') {
+                // SHOW ALL pending installations regardless of date for now to ensure visibility
+                // or stick to >= today? User said "Real data", implying they want to see what's in V2.
+                // V2 shows EVERYTHING. Let's show everything pending.
+                matchesTab = !isCompleted && isInstallation
+            } else if (activeTab === 'delivery') {
+                matchesTab = !isCompleted && isDelivery
             }
 
-            // Logic to handle Fallback to All if team not found
-            if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
-                const normalized = normalizeTeam(effectiveTeam)
-                if (teams.includes(normalized)) {
-                    effectiveTeam = normalized
-                    if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
-                } else {
-                    // Fallback to ALL
-                    effectiveTeam = 'ทั้งหมด'
-                    if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
-                }
+            return matchesTab
+        })
+
+        // Team Filter Logic with Fallback
+        let effectiveTeam = selectedTeam
+
+        // Normalize "Team X" to "ทีม X" if needed for matching
+        const normalizeTeam = (t) => {
+            if (!t) return 'ทั้งหมด'
+            if (t.toLowerCase() === 'team a') return 'ทีม A'
+            if (t.toLowerCase() === 'team b') return 'ทีม B'
+            if (t.toLowerCase() === 'team c') return 'ทีม C'
+            if (t.startsWith('Team ')) {
+                const thaiName = 'ทีม ' + t.substring(5)
+                // We just use string matching here
+                return thaiName
             }
-
-            if (effectiveTeam !== 'ทั้งหมด') {
-                filteredJobs = filteredJobs.filter(job => job.assignedTeam === effectiveTeam)
-            }
-
-            // Sort
-            filteredJobs.sort((a, b) => {
-                const dateA = new Date(`${a.jobDate}T${a.jobTime}`)
-                const dateB = new Date(`${b.jobDate}T${b.jobTime}`)
-                return activeTab === 'previous' ? dateB - dateA : dateA - dateB
-            })
-
-            setJobs(filteredJobs)
-            setLoading(false)
-        } catch (error) {
-            console.error('Error loading jobs:', error)
-            setJobs([])
-            setLoading(false)
+            return t
         }
+
+        // Logic to handle Fallback to All if team not found
+        // We use the derived teams list from allJobs
+        if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
+            const normalized = normalizeTeam(effectiveTeam)
+            if (teams.includes(normalized)) {
+                effectiveTeam = normalized
+                if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
+            } else {
+                // Fallback to ALL
+                effectiveTeam = 'ทั้งหมด'
+                if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
+            }
+        }
+
+        if (effectiveTeam !== 'ทั้งหมด') {
+            filteredJobs = filteredJobs.filter(job => job.assignedTeam === effectiveTeam)
+        }
+
+        // Sort
+        filteredJobs.sort((a, b) => {
+            const dateA = new Date(`${a.jobDate}T${a.jobTime}`)
+            const dateB = new Date(`${b.jobDate}T${b.jobTime}`)
+            return activeTab === 'previous' ? dateB - dateA : dateA - dateB
+        })
+
+        setJobs(filteredJobs)
     }
 
     // Tab Button Component

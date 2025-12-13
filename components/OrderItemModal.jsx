@@ -248,7 +248,11 @@ export default function OrderItemModal({
             // If variant selected, use its data
             color: formData.selectedVariant?.color || '',
             stock: formData.selectedVariant?.stock || 0,
-            dimensions: formData.selectedVariant?.dimensions || null,
+            // Flatten dimensions for OrderForm
+            width: formData.selectedVariant?.dimensions?.width || formData.width || '',
+            length: formData.selectedVariant?.dimensions?.length || formData.length || '',
+            height: formData.selectedVariant?.dimensions?.height || formData.height || '',
+            // dimensions: formData.selectedVariant?.dimensions || null, // No longer needed as nested object
             // unitPrice already set from variant
         }
 

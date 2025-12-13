@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
+import { useJobs } from '../hooks/useJobs'
 import {
     Wrench,
     Truck,
@@ -22,16 +23,23 @@ import {
 export default function MobileJobsV2() {
     const router = useRouter()
     const { data: session } = useSession()
+    const { jobs: allJobs, loading } = useJobs() // Use Hook
     const [selectedTeam, setSelectedTeam] = useState('ทั้งหมด')
-    const [availableTeams, setAvailableTeams] = useState([])
-    const [jobs, setJobs] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [jobs, setJobs] = useState([]) // filtered jobs
 
     // Get user role and team
     const userRole = session?.user?.role
     const userTeam = session?.user?.team
 
+    const [availableTeams, setAvailableTeams] = useState([])
 
+    // Update available teams when allJobs changes
+    useEffect(() => {
+        if (allJobs.length > 0) {
+            const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
+            setAvailableTeams(['ทั้งหมด', ...teams])
+        }
+    }, [allJobs])
 
     useEffect(() => {
         if (userTeam) {
@@ -54,93 +62,72 @@ export default function MobileJobsV2() {
     }, [userTeam])
 
     useEffect(() => {
-        loadJobs()
-    }, [selectedTeam, userRole]) // Reload when filter changes
+        filterJobs()
+    }, [selectedTeam, userRole, allJobs]) // Re-run when jobs (realtime), filter, or role changes
 
-    const loadJobs = async () => {
-        try {
-            // Get all jobs from DataManager (Async)
-            const allJobs = await DataManager.getJobs()
+    const filterJobs = () => {
+        // Relaxed: Show all jobs even if orderId is missing, to prevent data disappearance
+        // If we strictly filter `orderIds.has(job.orderId)`, jobs with broken links vanish.
+        const validJobs = allJobs
 
-            // Extract unique teams for filter
-            const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
-            setAvailableTeams(['ทั้งหมด', ...teams])
+        // Filter by role/selection
+        let filteredJobs = validJobs
 
-            // Relaxed: Show all jobs even if orderId is missing, to prevent data disappearance
-            // If we strictly filter `orderIds.has(job.orderId)`, jobs with broken links vanish.
-            const validJobs = allJobs
+        // If logged in as non-admin, restrict to their team (unless they are admin, who can see all)
+        // But if NOT logged in (session is null), allow selecting any team
+        // Admin or Public User (or V2 Logged In): Filter by selectedTeam
+        // We removed strict userRole enforcement for V2 to prevent data disappearing if team doesn't match
+        // Verify selectedTeam exists in available teams, otherwise fallback or normalize
+        let effectiveTeam = selectedTeam
 
-            // Filter by role/selection
-            let filteredJobs = validJobs
-
-            // If logged in as non-admin, restrict to their team (unless they are admin, who can see all)
-            // But if NOT logged in (session is null), allow selecting any team
-            // Admin or Public User (or V2 Logged In): Filter by selectedTeam
-            // We removed strict userRole enforcement for V2 to prevent data disappearing if team doesn't match
-            // Verify selectedTeam exists in available teams, otherwise fallback or normalize
-            let effectiveTeam = selectedTeam
-
-            // Normalize "Team X" to "ทีม X" if needed for matching
-            const normalizeTeam = (t) => {
-                if (!t) return 'ทั้งหมด'
-                if (t.toLowerCase() === 'team a') return 'ทีม A'
-                if (t.toLowerCase() === 'team b') return 'ทีม B'
-                if (t.toLowerCase() === 'team c') return 'ทีม C'
-                // Add logic to check if 'Team X' exists in availableTeams as 'ทีม X'
-                if (t.startsWith('Team ')) {
-                    const thaiName = 'ทีม ' + t.substring(5)
-                    if (teams.includes(thaiName)) return thaiName
-                }
-                return t
+        // Normalize "Team X" to "ทีม X" if needed for matching
+        const normalizeTeam = (t) => {
+            if (!t) return 'ทั้งหมด'
+            if (t.toLowerCase() === 'team a') return 'ทีม A'
+            if (t.toLowerCase() === 'team b') return 'ทีม B'
+            if (t.toLowerCase() === 'team c') return 'ทีม C'
+            // Add logic to check if 'Team X' exists in availableTeams as 'ทีม X'
+            if (t.startsWith('Team ')) {
+                const thaiName = 'ทีม ' + t.substring(5)
+                // We access availableTeams state here, but better to recalc or trust logic
+                // For simplicity, we just use string matching logic
+                return thaiName
             }
-
-            // If selectedTeam isn't in the list (and isn't All), try to normalize
-            if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
-                const normalized = normalizeTeam(effectiveTeam)
-                if (teams.includes(normalized)) {
-                    effectiveTeam = normalized
-                    // Update state so dropdown matches too (optional but good UI)
-                    if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
-                } else {
-                    // Fallback: Team not found even after normalization? Default to ALL
-                    effectiveTeam = 'ทั้งหมด'
-                    if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
-                }
-            } else {
-                // Check if it is "Team A" format but not in list?
-                if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
-                    // Safety net: If selectedTeam is some randome string not in teams, default to All
-                    effectiveTeam = 'ทั้งหมด'
-                    setSelectedTeam('ทั้งหมด')
-                }
-            }
-
-
-            // If not "All", filter by team
-            if (effectiveTeam !== 'ทั้งหมด') {
-                const teamFiltered = validJobs.filter(job => job.assignedTeam === effectiveTeam)
-                // Fallback: If strict filter returns NONE, but we have jobs, maybe the Team Name is still slightly off?
-                // Or maybe default to showing ALL if the specific team has no jobs? (User preference)
-                // For now, trust the filter.
-                filteredJobs = teamFiltered
-            } else {
-                filteredJobs = validJobs
-            }
-
-            // Sort by date (nearest first)
-            filteredJobs.sort((a, b) => {
-                const dateA = new Date(`${a.jobDate}T${a.jobTime}`)
-                const dateB = new Date(`${b.jobDate}T${b.jobTime}`)
-                return dateA - dateB
-            })
-
-            setJobs(filteredJobs)
-            setLoading(false)
-        } catch (error) {
-            console.error('Error loading jobs:', error)
-            setJobs([])
-            setLoading(false)
+            return t
         }
+
+        const teams = [...new Set(allJobs.map(j => j.assignedTeam).filter(t => t && t !== '-'))].sort()
+
+        // If selectedTeam isn't in the list (and isn't All), try to normalize
+        if (effectiveTeam !== 'ทั้งหมด' && !teams.includes(effectiveTeam)) {
+            const normalized = normalizeTeam(effectiveTeam)
+            if (teams.includes(normalized)) {
+                effectiveTeam = normalized
+                // Update state so dropdown matches too (optional but good UI)
+                if (effectiveTeam !== selectedTeam) setSelectedTeam(effectiveTeam)
+            } else {
+                // Fallback: Team not found even after normalization? Default to ALL
+                effectiveTeam = 'ทั้งหมด'
+                if (selectedTeam !== 'ทั้งหมด') setSelectedTeam('ทั้งหมด')
+            }
+        }
+
+        // If not "All", filter by team
+        if (effectiveTeam !== 'ทั้งหมด') {
+            const teamFiltered = validJobs.filter(job => job.assignedTeam === effectiveTeam)
+            filteredJobs = teamFiltered
+        } else {
+            filteredJobs = validJobs
+        }
+
+        // Sort by date (nearest first)
+        filteredJobs.sort((a, b) => {
+            const dateA = new Date(`${a.jobDate}T${a.jobTime}`)
+            const dateB = new Date(`${b.jobDate}T${b.jobTime}`)
+            return dateA - dateB
+        })
+
+        setJobs(filteredJobs)
     }
 
     // Determine card color based on completion status

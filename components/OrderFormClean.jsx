@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling
 } from 'lucide-react'
 import AppLayout from './AppLayout'
 import { DataManager } from '../lib/dataManager'
@@ -383,7 +383,7 @@ export default function OrderForm() {
     const [lastCreatedProduct, setLastCreatedProduct] = useState(null)
 
     const handleSaveNewProduct = async (productData) => {
-        if (!productData.id) {
+        if (!productData.product_code && !productData.id) {
             alert('กรุณากรอกรหัสสินค้า')
             return
         }
@@ -1308,11 +1308,13 @@ export default function OrderForm() {
                                     </div>
 
                                     {/* RIGHT: Content 5 Rows Redesign */}
+                                    {/* RIGHT: Content 5 Rows Redesign */}
                                     <div className="flex-1 min-w-0 p-3 space-y-3">
                                         {/* Row 1: Header Info & Price */}
                                         <div className="flex justify-between items-start gap-2 w-full">
                                             {/* LEFT: Product Info */}
                                             <div className="flex flex-wrap items-center gap-2 min-w-0">
+
                                                 {/* Category */}
                                                 {(item.category || item.subcategory) && (
                                                     <span className="text-secondary-500 font-medium text-xs">
@@ -1326,14 +1328,6 @@ export default function OrderForm() {
                                                 </span>
                                                 {/* Name */}
                                                 <span className="font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
-                                                {/* Dimensions */}
-                                                {(item.width || item.length || item.height) && (
-                                                    <span className="text-secondary-600 font-medium whitespace-nowrap text-xs">
-                                                        {item.width ? `W:${item.width} ` : ''}
-                                                        {item.length ? `L:${item.length} ` : ''}
-                                                        {item.height ? `H:${item.height}` : ''}
-                                                    </span>
-                                                )}
                                             </div>
 
                                             {/* RIGHT: Stock & Price */}
@@ -1359,6 +1353,26 @@ export default function OrderForm() {
                                         <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
                                             {/* LEFT: Specs */}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                {/* Dimensions - Moved from Row 1 */}
+                                                {(() => {
+                                                    const w = item.width || item.dimensions?.width
+                                                    const l = item.length || item.dimensions?.length
+                                                    const h = item.height || item.dimensions?.height
+
+                                                    if (w || l || h) {
+                                                        return (
+                                                            <div className="flex items-center gap-1" title="ขนาด">
+                                                                <Scaling size={12} />
+                                                                <span>
+                                                                    {w ? `W:${w} ` : ''}
+                                                                    {l ? `L:${l} ` : ''}
+                                                                    {h ? `H:${h}` : ''}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    return null
+                                                })()}
                                                 {item.material && (
                                                     <div className="flex items-center gap-1" title="วัสดุ">
                                                         <Layers size={12} />
@@ -1538,7 +1552,7 @@ export default function OrderForm() {
                             lastCreatedProduct={lastCreatedProduct}
                             onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
                         />
-                    </div>
+                    </div >
 
                     {/* Map Popup Modal */}
                     {
