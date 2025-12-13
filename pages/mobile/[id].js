@@ -224,47 +224,88 @@ export default function MobileJobDetail() {
                 renderHeader={({ setIsSidebarOpen }) => (
                     <div className="bg-white sticky top-0 z-30 shadow-sm">
                         {/* Top Header */}
-                        <header className="h-16 border-b border-secondary-200 flex items-center justify-between px-4 lg:px-8">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
-                                    onClick={() => setIsSidebarOpen(true)}
-                                >
-                                    <div className="sr-only">Menu</div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-                                </button>
+                        <header className="h-16 border-b border-secondary-200 relative flex items-center justify-between px-4">
+                            {/* Left: Menu */}
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg z-10"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <div className="sr-only">Menu</div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                            </button>
 
-                                <div>
-                                    <h1 className="text-lg font-bold text-secondary-900 leading-tight">{job.id}</h1>
-                                    <p className="text-xs text-secondary-500">Order: {job.orderId}</p>
-                                </div>
+                            {/* Center: Title */}
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full pointer-events-none">
+                                <h1 className="text-base font-bold text-secondary-900 leading-tight">{job.id}</h1>
+                                <p className="text-[10px] text-secondary-500">Order: {job.orderId}</p>
                             </div>
 
-                            <button
-                                onClick={() => jobCompletionRef.current?.triggerSave()}
-                                className={`text - sm font - bold text - white bg - primary - 600 hover: bg - primary - 700 px - 4 py - 2 rounded - lg shadow - sm transition - opacity ${activeTab === 'completion' ? 'opacity-100' : 'opacity-0 pointer-events-none'} `}
-                            >
-                                บันทึก
-                            </button>
+                            {/* Right: Actions (Save/Edit) */}
+                            <div className="flex gap-2 z-10">
+                                {/* Completion: Save */}
+                                <button
+                                    onClick={() => jobCompletionRef.current?.triggerSave()}
+                                    className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${activeTab === 'completion' ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}
+                                >
+                                    บันทึก
+                                </button>
+
+                                {/* Product: Edit */}
+                                {activeTab === 'product' && !isEditingProduct && (
+                                    <button
+                                        onClick={() => setIsEditingProduct(true)}
+                                        className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                    >
+                                        แก้ไข
+                                    </button>
+                                )}
+
+                                {/* Payment: Edit / Save / Cancel */}
+                                {activeTab === 'payment' && (
+                                    <>
+                                        {!isEditingPayment ? (
+                                            <button
+                                                onClick={() => setIsEditingPayment(true)}
+                                                className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                            >
+                                                แก้ไข
+                                            </button>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setIsEditingPayment(false)}
+                                                    className="text-xs font-bold text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50 px-3 py-1.5 rounded-lg shadow-sm"
+                                                >
+                                                    ยกเลิก
+                                                </button>
+                                                <button
+                                                    onClick={handleSavePaymentSummary}
+                                                    className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                                >
+                                                    บันทึก
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </header>
 
-                        {/* Tabs (Sticky) */}
-                        <div className="flex overflow-x-auto border-b border-secondary-200 hide-scrollbar">
+                        {/* Tabs (Grid for Balance) */}
+                        <div className="grid grid-cols-4 border-b border-secondary-200">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon
                                 return (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex - 1 min - w - [100px] px - 4 py - 3 text - sm font - medium transition - colors border - b - 2 whitespace - nowrap ${activeTab === tab.id
+                                        className={`flex flex-col items-center justify-center py-2 px-1 text-[10px] sm:text-xs font-medium transition-colors border-b-2 ${activeTab === tab.id
                                             ? 'border-primary-600 text-primary-600 bg-primary-50'
                                             : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
-                                            } `}
+                                            }`}
                                     >
-                                        <div className="flex items-center justify-center gap-2">
-                                            <Icon size={16} />
-                                            <span>{tab.label}</span>
-                                        </div>
+                                        <Icon size={18} className="mb-1" />
+                                        <span className="truncate w-full text-center">{tab.label}</span>
                                     </button>
                                 )
                             })}
@@ -272,15 +313,14 @@ export default function MobileJobDetail() {
                     </div>
                 )}
             >
-                <Head>
-                    <title>Job {job.id} - Mobile Jobs</title>
-                </Head>
+                <div className="bg-secondary-50 min-h-screen pb-20">
+                    <Head>
+                        <title>Job {job.id} | Mobile</title>
+                    </Head>
 
-                {/* Content Area (Scrollable) */}
-                <div className="space-y-4 pb-20 pt-2">
-                    {/* Tab Content */}
-                    <div className="bg-white rounded-lg border border-secondary-200 p-4 min-h-[50vh]">
-                        {/* Tab 1: Sub Job Details (Replaced Customer Info) */}
+                    <div className="max-w-md mx-auto p-4 space-y-4">
+
+                        {/* Tab 1: Customer Details */}
                         {activeTab === 'customer' && (
                             <div className="space-y-4">
                                 <JobInfoCard
@@ -304,6 +344,18 @@ export default function MobileJobDetail() {
                                     showHeader={false}
                                     readOnly={true}
                                 />
+                                <div className="bg-white p-4 rounded-xl shadow-sm border border-secondary-200">
+                                    <h3 className="font-bold text-secondary-900 mb-2">หมายเหตุงาน</h3>
+                                    <textarea
+                                        className="w-full text-sm text-secondary-600 p-2 bg-secondary-50 rounded-lg border border-secondary-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                        rows={3}
+                                        note={job.notes}
+                                        onNoteChange={() => { }}
+                                        showCompletionDate={true}
+                                        showHeader={false}
+                                        readOnly={true}
+                                    />
+                                </div>
                             </div>
                         )}
 
@@ -322,6 +374,7 @@ export default function MobileJobDetail() {
                                             variants: job.product?.variants || [],
                                         }}
                                         onEdit={() => setIsEditingProduct(true)}
+                                        hideEditButton={true}
                                     />
                                 ) : (
                                     <OrderItemModal
@@ -382,6 +435,9 @@ export default function MobileJobDetail() {
                                     paymentSchedule={job.order?.paymentSchedule || []}
                                     readOnly={!isEditingPayment}
                                     onEdit={() => setIsEditingPayment(true)}
+                                    // Controls now handled by Header
+                                    hideControls={true}
+
                                     onSave={handleSavePaymentSummary}
                                     onCancel={() => {
                                         setIsEditingPayment(false)

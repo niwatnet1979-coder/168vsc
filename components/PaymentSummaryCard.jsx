@@ -16,7 +16,8 @@ export default function PaymentSummaryCard({
     readOnly = false,
     onEdit,
     onSave,
-    onCancel
+    onCancel,
+    hideControls = false
 }) {
     const [localShipping, setLocalShipping] = React.useState(shippingFee)
     const [localDiscount, setLocalDiscount] = React.useState(discount)
@@ -191,32 +192,34 @@ export default function PaymentSummaryCard({
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-6 flex gap-2">
-                        {readOnly ? (
-                            <button
-                                onClick={onEdit}
-                                className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
-                            >
-                                <span>✎</span>
-                                แก้ไขข้อมูล
-                            </button>
-                        ) : (
-                            <>
+                    {!hideControls && (
+                        <div className="mt-6 flex gap-2">
+                            {readOnly ? (
                                 <button
-                                    onClick={onCancel}
-                                    className="flex-1 py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50"
+                                    onClick={onEdit}
+                                    className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
                                 >
-                                    ยกเลิก
+                                    <span>✎</span>
+                                    แก้ไขข้อมูล
                                 </button>
-                                <button
-                                    onClick={onSave}
-                                    className="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm"
-                                >
-                                    บันทึก
-                                </button>
-                            </>
-                        )}
-                    </div>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={onCancel}
+                                        className="flex-1 py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        onClick={onSave}
+                                        className="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm"
+                                    >
+                                        บันทึก
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

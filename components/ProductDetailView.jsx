@@ -3,7 +3,7 @@ import { Wrench } from 'lucide-react'
 import ProductCard from './ProductCard'
 import { currency } from '../lib/utils'
 
-export default function ProductDetailView({ product, onEdit }) {
+export default function ProductDetailView({ product, onEdit, hideEditButton = false }) {
     if (!product) return null
 
     // Helper to safety check strings
@@ -105,15 +105,17 @@ export default function ProductDetailView({ product, onEdit }) {
             </div>
 
             {/* Edit Button */}
-            <div className="mt-6">
-                <button
-                    onClick={onEdit}
-                    className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
-                >
-                    <Wrench size={18} />
-                    แก้ไขข้อมูล
-                </button>
-            </div>
+            {!hideEditButton && (
+                <div className="mt-6">
+                    <button
+                        onClick={onEdit}
+                        className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
+                    >
+                        <Wrench size={18} />
+                        แก้ไขข้อมูล
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
