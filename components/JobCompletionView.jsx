@@ -92,8 +92,9 @@ export default function JobCompletionView({ job, onSave }) {
         try {
             // 1. Upload Signature if drawn
             let signatureUrl = null
-            if (!sigCanvas.current.isEmpty()) {
-                const sigDataUrl = sigCanvas.current.getTrimmedCanvas().toDataURL('image/png')
+            if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+                // Use toDataURL directly to avoid trim_canvas dependency issues
+                const sigDataUrl = sigCanvas.current.toDataURL('image/png')
                 const res = await fetch(sigDataUrl)
                 const blob = await res.blob()
                 const file = new File([blob], 'signature.png', { type: 'image/png' })

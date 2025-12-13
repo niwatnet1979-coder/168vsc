@@ -197,8 +197,8 @@ export default function MobileJobDetail() {
                 <AppLayout>
                     <div className="text-center py-12">
                         <p className="text-secondary-500">ไม่พบข้อมูลงาน</p>
-                        <Link href="/mobile-jobs-v2" className="mt-4 inline-block text-primary-600 hover:underline">
-                            กลับไปหน้า Mobile Jobs
+                        <Link href="/mobile" className="mt-4 inline-block text-primary-600 hover:underline">
+                            กลับไปหน้า Mobile
                         </Link>
                     </div>
                 </AppLayout>
@@ -223,7 +223,7 @@ export default function MobileJobDetail() {
                 <div className="space-y-4 pb-20">
                     {/* Header */}
                     <div className="sticky top-0 bg-secondary-50 z-10 pb-4">
-                        <Link href="/mobile-jobs-v2" className="inline-flex items-center text-secondary-500 hover:text-primary-600 mb-2">
+                        <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600 mb-2">
                             <ArrowLeft size={20} className="mr-2" />
                             กลับ
                         </Link>

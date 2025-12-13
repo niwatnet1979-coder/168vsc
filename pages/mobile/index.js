@@ -20,9 +20,9 @@ import {
     Map,
     FileText
 } from 'lucide-react'
-import { DataManager } from '../lib/dataManager'
-import AppLayout from '../components/AppLayout'
-import { useJobs } from '../hooks/useJobs'
+import { DataManager } from '../../lib/dataManager'
+import AppLayout from '../../components/AppLayout'
+import { useJobs } from '../../hooks/useJobs'
 
 // Helper to format date
 // Helper to format date
@@ -229,7 +229,7 @@ export default function MobilePage() {
         const bgColor = isInstallation ? 'bg-blue-50' : 'bg-orange-50'
 
         return (
-            <Link href={`/mobile-jobs-v2/${job.id}`} className="block bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden active:scale-[0.98] transition-transform">
+            <Link href={`/mobile/${job.id}`} className="block bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden active:scale-[0.98] transition-transform">
                 <div className="flex">
                     {/* Left: Image */}
                     <div className="w-24 h-24 bg-secondary-100 flex-shrink-0 relative">
