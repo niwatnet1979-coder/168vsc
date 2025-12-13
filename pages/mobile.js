@@ -271,7 +271,9 @@ export default function MobilePage() {
                                     return (
                                         <div className="flex items-center gap-1 border-l border-secondary-300 pl-2 ml-1 text-secondary-600">
                                             <UserCheck size={12} />
-                                            <a href={`tel:${inspector.phone}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{inspector.phone}</a>
+                                            <a href={`tel:${inspector.phone}`} className="p-1 bg-primary-50 text-primary-600 rounded-full hover:bg-primary-100 border border-primary-200" onClick={(e) => e.stopPropagation()}>
+                                                <Phone size={10} fill="currentColor" />
+                                            </a>
                                         </div>
                                     )
                                 }
@@ -331,15 +333,19 @@ export default function MobilePage() {
                             </span>
                         </div>
 
-                        {/* Row 4: Installation Details */}
-                        {job.notes && (
-                            <div className="text-xs text-secondary-600 bg-secondary-50 px-2 py-1.5 rounded border border-secondary-100 flex items-start gap-1">
-                                <FileText size={14} className="text-secondary-400 flex-shrink-0 mt-0.5" />
-                                <span className="italic">{job.notes}</span>
-                            </div>
-                        )}
+
                     </div>
                 </div>
+
+                {/* Row 4: Installation Details (Full Width) */}
+                {job.notes && (
+                    <div className="px-3 pb-3">
+                        <div className="text-xs text-secondary-600 bg-secondary-50 px-2 py-1.5 rounded border border-secondary-100 flex items-start gap-1">
+                            <FileText size={14} className="text-secondary-400 flex-shrink-0 mt-0.5" />
+                            <span className="italic leading-relaxed">{job.notes}</span>
+                        </div>
+                    </div>
+                )}
             </Link>
         )
     }
