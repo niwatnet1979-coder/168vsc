@@ -294,8 +294,9 @@ export default function MobileJobsV2() {
 
                                                 {/* Inspector (Try to find) */}
                                                 {(() => {
-                                                    const addr = job.customer?.addresses?.find(a => a.address === displayAddress)
-                                                    const inspector = addr?.inspector1
+                                                    // Only get from Order specific Job Info as requested
+                                                    const inspector = job.order?.job_info?.inspector1
+
                                                     if (inspector?.name) {
                                                         return (
                                                             <div className="flex items-center gap-1 text-secondary-600 border-l border-secondary-300 pl-2 ml-1">

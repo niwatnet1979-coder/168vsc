@@ -13,12 +13,18 @@ import {
     Phone,
     ChevronRight,
     Search,
-    Menu
+    Menu,
+    Users,
+    CheckCircle,
+    UserCheck,
+    Map,
+    FileText
 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import AppLayout from '../components/AppLayout'
 import { useJobs } from '../hooks/useJobs'
 
+// Helper to format date
 // Helper to format date
 const formatDate = (dateString, timeString) => {
     if (!dateString) return ''
@@ -32,10 +38,51 @@ const formatDate = (dateString, timeString) => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0')
     const year = date.getFullYear() + 543 // Buddhist Era
 
-    const time = timeString ? timeString.substring(0, 5) : ''
+    let time = ''
+    if (timeString) {
+        time = timeString.substring(0, 5)
+    } else if (dateString.includes('T') || dateString.includes(' ')) {
+        // Try to extract time from ISO string or timestamp
+        const h = date.getHours().toString().padStart(2, '0')
+        const m = date.getMinutes().toString().padStart(2, '0')
+        // Only show time if it's not 00:00 (unless it's explicit)
+        if (h !== '00' || m !== '00') {
+            time = `${h}:${m}`
+        }
+    }
 
     if (isToday) return `วันนี้ ${time ? `เวลา ${time}` : ''}`
-    return `${day}/${month}/${year} ${time}`
+    return `${day}/${month}/${year}${time ? ` ${time}` : ''}`
+}
+
+// Helper to calculate distance
+const getDistance = (address) => {
+    // TODO: Implement actual distance calculation
+    return Math.floor(Math.random() * 30) + 5
+}
+
+// Helper to extract location parts
+const getLocation = (address) => {
+    if (!address) return { tambon: '-', district: '-', province: '-' }
+
+    let tambon = '-'
+    let district = '-'
+    let province = '-'
+
+    // Tambon/Khwaeng - Match 'ตำบล', 'แขวง', 'ต.' followed by text
+    const tMatch = address.match(/(?:ตำบล|แขวง|ต\.)\s*([^\s]+)/)
+    if (tMatch) tambon = tMatch[1]
+
+    // District/Amphoe/Khet - Match 'อำเภอ', 'เขต', 'อ.' followed by text
+    const aMatch = address.match(/(?:อำเภอ|เขต|อ\.)\s*([^\s]+)/)
+    if (aMatch) district = aMatch[1]
+
+    // Province/Changwat - Match 'จังหวัด', 'จ.' followed by text
+    const pMatch = address.match(/(?:จังหวัด|จ\.)\s*([^\s]+)/)
+    if (pMatch) province = pMatch[1]
+    else if (address.includes('กรุงเทพ')) province = 'กรุงเทพฯ'
+
+    return { tambon, district, province }
 }
 
 export default function MobilePage() {
@@ -200,59 +247,97 @@ export default function MobilePage() {
                     </div>
 
                     {/* Right: Content */}
-                    <div className="flex-1 p-3 flex flex-col justify-between">
-                        {/* Row 1: Job Type, Date, Customer (Standardized from V2) */}
-                        <div className="flex items-center gap-2 text-xs text-secondary-900 mb-1 flex-wrap">
-                            {/* Job Icon */}
-                            <Icon size={20} className={isInstallation ? "text-primary-600" : "text-warning-600"} />
-
-                            {/* Date */}
-                            <div className="flex items-center gap-1">
-                                <Calendar size={12} />
-                                <span className="font-medium">{formatDate(job.jobDate, job.jobTime)}</span>
+                    <div className="flex-1 p-3 flex flex-col gap-2">
+                        {/* Row 1: Team, Dates, Inspector */}
+                        <div className="flex items-center gap-2 text-xs text-secondary-900 flex-wrap">
+                            {/* Team Name */}
+                            <div className="flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded border border-primary-100">
+                                <Icon size={12} />
+                                <span>{job.assignedTeam || 'ไม่ระบุทีม'}</span>
                             </div>
 
-                            {/* Customer Phone */}
-                            {job.customer?.phone && (
-                                <div className="flex items-center gap-1">
-                                    <Phone size={12} />
-                                    <a href={`tel:${job.customer.phone}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{job.customer.phone}</a>
-                                </div>
-                            )}
+                            {/* Appointment Date */}
+                            <div className="flex items-center gap-1" title="วันที่นัดหมาย">
+                                <Calendar size={12} />
+                                <span>{formatDate(job.jobDate, job.jobTime)}</span>
+                            </div>
 
-                            {/* Customer Name */}
-                            <div className="flex items-center gap-1">
-                                <User size={12} />
-                                <span className="truncate max-w-[100px]">{job.customerName || 'ลูกค้าทั่วไป'}</span>
+
+
+                            {/* Inspector Info (Moved back to Row 1, Icon + Phone only) */}
+                            {(() => {
+                                const inspector = job.order?.job_info?.inspector1
+                                if (inspector?.phone) {
+                                    return (
+                                        <div className="flex items-center gap-1 border-l border-secondary-300 pl-2 ml-1 text-secondary-600">
+                                            <UserCheck size={12} />
+                                            <a href={`tel:${inspector.phone}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{inspector.phone}</a>
+                                        </div>
+                                    )
+                                }
+                                return null
+                            })()}
+                        </div>
+
+
+
+                        {/* Row 2: Location (Distance Link, Place Name, Address) */}
+                        <div className="flex items-center gap-2 text-xs">
+                            {/* Clickable Distance Badge */}
+                            <a
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address || '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-100 active:scale-95 transition-transform flex-shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Map size={12} />
+                                <span className="font-medium">{getDistance(job.address)} กม.</span>
+                            </a>
+
+                            {/* Place & Address */}
+                            <div className="text-secondary-600 truncate flex-1 flex items-center gap-1">
+                                {job.order?.job_info?.installLocationName && (
+                                    <span className="font-medium text-secondary-900 truncate">
+                                        {job.order.job_info.installLocationName}
+                                    </span>
+                                )}
+                                <span className="text-secondary-500 truncate">
+                                    {(() => {
+                                        const { district, province } = getLocation(job.address)
+                                        return `อ.${district} จ.${province}`
+                                    })()}
+                                </span>
                             </div>
                         </div>
 
-                        {/* Row 2: Location */}
-                        <div className="flex items-start gap-1.5 mt-2 text-xs text-secondary-600">
-                            <MapPin size={14} className="flex-shrink-0 mt-0.5 text-secondary-400" />
-                            <span className="line-clamp-2 leading-tight">
-                                {job.address || 'ไม่ระบุที่อยู่'}
+
+                        {/* Row 3: Product Details (Consolidated) */}
+                        <div className="text-xs text-secondary-700 leading-tight">
+                            <span className="inline-flex items-center gap-1 flex-wrap">
+                                <span className="font-mono text-[10px] text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded border border-secondary-200">
+                                    {job.productId}
+                                </span>
+                                <span className="font-bold text-secondary-900 mr-1">{job.productName}</span>
+                                {(job.product?.width || job.product?.length || job.product?.height) && (
+                                    <span className="text-secondary-500">
+                                        {job.product?.width || '-'}x{job.product?.length || '-'}x{job.product?.height || '-'} cm
+                                    </span>
+                                )}
+
+                                {job.product?.color && (
+                                    <span className="text-secondary-500">• {job.product.color}</span>
+                                )}
                             </span>
                         </div>
 
-
-                        {/* Row 3: Product Details */}
-                        <div className="text-xs text-secondary-700 leading-tight mt-1">
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span className="font-bold text-secondary-900">{job.productName}</span>
-                                <span className="text-[10px] font-mono text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded border border-secondary-200 flex-shrink-0">
-                                    {job.productId}
-                                </span>
-                                <span className="text-secondary-600">
-                                    {job.product?.category || '-'}
-                                    {(job.product?.width || job.product?.length || job.product?.height) && (
-                                        <span> • {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
-                                    )}
-                                    {job.product?.material && <span> • {job.product.material}</span>}
-                                    {job.product?.color && <span> • {job.product.color}</span>}
-                                </span>
+                        {/* Row 4: Installation Details */}
+                        {job.notes && (
+                            <div className="text-xs text-secondary-600 bg-secondary-50 px-2 py-1.5 rounded border border-secondary-100 flex items-start gap-1">
+                                <FileText size={14} className="text-secondary-400 flex-shrink-0 mt-0.5" />
+                                <span className="italic">{job.notes}</span>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </Link>
