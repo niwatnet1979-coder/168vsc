@@ -4,13 +4,19 @@ import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
 import VideoRecorderModal from './VideoRecorderModal'
 
-export default function JobCompletionView({ job, onSave }) {
+const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
     const [mediaItems, setMediaItems] = useState([])
     const [rating, setRating] = useState(5)
     const [comment, setComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showVideoRecorder, setShowVideoRecorder] = useState(false)
     const sigCanvas = useRef({})
+
+    React.useImperativeHandle(ref, () => ({
+        triggerSave: () => handleSave()
+    }))
+
+    // ... existing logic ...
 
     // ... (rest of the existing useEffect code) ...
     // Note: I need to be careful with replace_file_content not to overwrite the middle. 
@@ -101,7 +107,7 @@ export default function JobCompletionView({ job, onSave }) {
                         const video = document.createElement('video')
                         video.preload = 'metadata'
                         video.onloadedmetadata = () => {
-                            resolve(`${video.videoWidth}x${video.videoHeight}`)
+                            resolve(`${video.videoWidth}x${video.videoHeight} `)
                         }
                         video.onerror = () => resolve('')
                         video.src = preview
@@ -113,7 +119,7 @@ export default function JobCompletionView({ job, onSave }) {
                 try {
                     meta = await new Promise((resolve) => {
                         const img = new Image()
-                        img.onload = () => resolve(`${img.width}x${img.height}`)
+                        img.onload = () => resolve(`${img.width}x${img.height} `)
                         img.onerror = () => resolve('')
                         img.src = preview
                     })
@@ -160,7 +166,7 @@ export default function JobCompletionView({ job, onSave }) {
                 const video = document.createElement('video')
                 video.preload = 'metadata'
                 video.onloadedmetadata = () => {
-                    resolve(`${video.videoWidth}x${video.videoHeight}`)
+                    resolve(`${video.videoWidth}x${video.videoHeight} `)
                 }
                 video.onerror = () => resolve('')
                 video.src = preview
@@ -248,7 +254,7 @@ export default function JobCompletionView({ job, onSave }) {
                     // For now, allow partial save or throw?
                     // Request implies knowing "when finished".
                     // If error, we throw to abort save?
-                    throw new Error(`ไม่สามารถอัพโหลดไฟล์ (${item.type}) ได้`)
+                    throw new Error(`ไม่สามารถอัพโหลดไฟล์(${item.type}) ได้`)
                 }
             }
 
@@ -322,7 +328,7 @@ export default function JobCompletionView({ job, onSave }) {
                             <button
                                 key={star}
                                 onClick={() => setRating(star)}
-                                className={`p-1 transition-transform active:scale-95 ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                className={`p - 1 transition - transform active: scale - 95 ${rating >= star ? 'text-yellow-400' : 'text-gray-300'} `}
                             >
                                 <Star fill={rating >= star ? "currentColor" : "none"} size={32} />
                             </button>
@@ -344,33 +350,31 @@ export default function JobCompletionView({ job, onSave }) {
 
             {/* Media Section */}
             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 text-secondary-900 font-bold text-lg">
-                        <Image className="text-primary-600" size={24} />
-                        <span>รูปภาพและวิดีโอ</span>
-                    </div>
+                <div className="flex items-center gap-2 text-secondary-900 font-bold text-lg mb-4">
+                    <Image className="text-primary-600" size={24} />
+                    <span>รูปภาพและวิดีโอ</span>
+                </div>
 
-                    <div className="flex gap-2 self-end sm:self-auto">
-                        <button
-                            onClick={() => setShowVideoRecorder(true)}
-                            className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
-                        >
-                            <Video size={18} />
-                            ถ่ายวิดีโอ (HD)
-                        </button>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    <button
+                        onClick={() => setShowVideoRecorder(true)}
+                        className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors border border-red-100"
+                    >
+                        <Video size={18} />
+                        <span className="truncate">ถ่ายวิดีโอ (HD)</span>
+                    </button>
 
-                        <label className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer hover:bg-primary-100 transition-colors">
-                            <Camera size={18} />
-                            เพิ่มรูป/วิดีโอ
-                            <input
-                                type="file"
-                                accept="image/*,video/*"
-                                multiple
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                        </label>
-                    </div>
+                    <label className="flex items-center justify-center gap-2 bg-primary-50 text-primary-600 px-3 py-2.5 rounded-lg text-sm font-medium cursor-pointer hover:bg-primary-100 transition-colors border border-primary-100 text-center">
+                        <Camera size={18} />
+                        <span className="truncate">เพิ่มรูป/วิดีโอ</span>
+                        <input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleFileUpload}
+                        />
+                    </label>
                 </div>
 
                 <VideoRecorderModal
@@ -445,28 +449,32 @@ export default function JobCompletionView({ job, onSave }) {
                                     >
                                         <MapPin size={10} className="text-gray-400" />
                                         <span>{item.location.lat.toFixed(6)}, {item.location.lng.toFixed(6)}</span>
-                                    </a>
+                                    </a >
                                 )}
 
                                 {/* 3. Resolution */}
-                                {item.resolution && (
-                                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
-                                        <Smartphone size={10} className="text-gray-400" />
-                                        <span>{item.resolution}</span>
-                                    </div>
-                                )}
+                                {
+                                    item.resolution && (
+                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
+                                            <Smartphone size={10} className="text-gray-400" />
+                                            <span>{item.resolution}</span>
+                                        </div>
+                                    )
+                                }
 
                                 {/* 4. File Size */}
-                                {item.size && (
-                                    <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
-                                        <FileText size={10} className="text-gray-400" />
-                                        <span>{item.size}</span>
-                                    </div>
-                                )}
-                            </div>
+                                {
+                                    item.size && (
+                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 px-2 py-1 rounded-full">
+                                            <FileText size={10} className="text-gray-400" />
+                                            <span>{item.size}</span>
+                                        </div>
+                                    )
+                                }
+                            </div >
 
                             {/* Note Input */}
-                            <div className="p-3">
+                            < div className="p-3" >
                                 <input
                                     type="text"
                                     value={item.note}
@@ -474,35 +482,13 @@ export default function JobCompletionView({ job, onSave }) {
                                     placeholder="คำอธิบายรูปภาพ..."
                                     className="w-full p-2 border border-secondary-300 rounded text-sm focus:outline-none focus:border-primary-500"
                                 />
-                            </div>
-                        </div>
+                            </div >
+                        </div >
                     ))}
-                </div>
-            </div>
-
-            {/* Sticky Bottom Save Button */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-secondary-200 shadow-lg z-20 md:hidden">
-                <button
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    className={`w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 shadow-lg ${isSubmitting ? 'bg-gray-400' : 'bg-primary-600 hover:bg-primary-700'
-                        }`}
-                >
-                    {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกงาน'}
-                </button>
-            </div>
-
-            {/* Desktop Button (if viewed on desktop) */}
-            <div className="hidden md:block">
-                <button
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    className={`w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 shadow-lg ${isSubmitting ? 'bg-gray-400' : 'bg-primary-600 hover:bg-primary-700'
-                        }`}
-                >
-                    {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกงาน'}
-                </button>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     )
-}
+})
+
+export default JobCompletionView

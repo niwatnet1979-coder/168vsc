@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import Head from 'next/head'
@@ -30,7 +30,7 @@ const formatDateForInput = (isoString) => {
     const date = new Date(isoString)
     if (isNaN(date.getTime())) return '' // Invalid date
     const pad = (n) => n < 10 ? '0' + n : n
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+    return `${date.getFullYear()} -${pad(date.getMonth() + 1)} -${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())} `
 }
 
 export default function MobileJobDetail() {
@@ -51,6 +51,9 @@ export default function MobileJobDetail() {
 
     // Product Tab State
     const [isEditingProduct, setIsEditingProduct] = useState(false)
+
+    // Ref for JobCompletionView (must be declared before conditional returns)
+    const jobCompletionRef = useRef(null)
 
     const loadJobDetails = async () => {
         if (!id) return
@@ -213,6 +216,8 @@ export default function MobileJobDetail() {
         { id: 'completion', label: 'บันทึกงาน', icon: ClipboardCheck }
     ]
 
+
+
     return (
         <ProtectedRoute>
             <AppLayout
@@ -226,19 +231,8 @@ export default function MobileJobDetail() {
                                     onClick={() => setIsSidebarOpen(true)}
                                 >
                                     <div className="sr-only">Menu</div>
-                                    {/* Re-import Menu if needed or assume it's available via Lucide imports? 
-                                    Wait, Menu is not imported in this file. I need to add Menu to imports. 
-                                    But existing default header uses Menu. 
-                                    I need to import Menu here. */}
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
                                 </button>
-
-                                <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600">
-                                    <ArrowLeft size={20} className="mr-1" />
-                                    <span className="hidden sm:inline">กลับ</span>
-                                </Link>
-
-                                <div className="border-l border-secondary-300 h-6 mx-2 hidden sm:block"></div>
 
                                 <div>
                                     <h1 className="text-lg font-bold text-secondary-900 leading-tight">{job.id}</h1>
@@ -246,14 +240,12 @@ export default function MobileJobDetail() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                {job.rawJobType === 'installation' ? (
-                                    <Wrench size={18} className="text-primary-600" />
-                                ) : (
-                                    <Truck size={18} className="text-warning-600" />
-                                )}
-                                <span className="text-xs font-medium bg-secondary-100 px-2 py-1 rounded-full">{job.jobType}</span>
-                            </div>
+                            <button
+                                onClick={() => jobCompletionRef.current?.triggerSave()}
+                                className={`text - sm font - bold text - white bg - primary - 600 hover: bg - primary - 700 px - 4 py - 2 rounded - lg shadow - sm transition - opacity ${activeTab === 'completion' ? 'opacity-100' : 'opacity-0 pointer-events-none'} `}
+                            >
+                                บันทึก
+                            </button>
                         </header>
 
                         {/* Tabs (Sticky) */}
@@ -264,10 +256,10 @@ export default function MobileJobDetail() {
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex-1 min-w-[100px] px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === tab.id
+                                        className={`flex - 1 min - w - [100px] px - 4 py - 3 text - sm font - medium transition - colors border - b - 2 whitespace - nowrap ${activeTab === tab.id
                                             ? 'border-primary-600 text-primary-600 bg-primary-50'
                                             : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
-                                            }`}
+                                            } `}
                                     >
                                         <div className="flex items-center justify-center gap-2">
                                             <Icon size={16} />
@@ -444,11 +436,9 @@ export default function MobileJobDetail() {
                         {/* Tab 4: Job Completion */}
                         {activeTab === 'completion' && (
                             <JobCompletionView
+                                ref={jobCompletionRef}
                                 job={job}
-                                onSave={() => {
-                                    loadJobDetails()
-                                    // Optional: Switch back to view or stay?
-                                }}
+                                onSave={() => router.push('/mobile')}
                             />
                         )}
                     </div>
