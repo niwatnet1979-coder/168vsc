@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
+import { DebugProvider } from '../contexts/DebugContext'
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
@@ -13,7 +14,9 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
         <meta name="theme-color" content="#4F46E5" />
       </Head>
       <SessionProvider session={session}>
-        <Component {...pageProps} />
+        <DebugProvider>
+          <Component {...pageProps} />
+        </DebugProvider>
       </SessionProvider>
     </>
   )

@@ -5,6 +5,7 @@ import Card from './Card'
 import ContactSelector from './ContactSelector'
 import { calculateDistance, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import DataSourceTooltip from './DataSourceTooltip'
 
 export default function JobInfoCard({
     data,
@@ -60,29 +61,33 @@ export default function JobInfoCard({
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-2">ทีม</label>
                             <div className="relative">
-                                <select
-                                    value={data.team}
-                                    onChange={(e) => handleUpdate({ team: e.target.value })}
-                                    disabled={readOnly}
-                                    className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
-                                >
-                                    <option value="">-- เลือกทีม --</option>
-                                    {availableTeams.map((team, idx) => (
-                                        <option key={idx} value={team}>{team}</option>
-                                    ))}
-                                </select>
+                                <DataSourceTooltip isRealtime={false} source="input">
+                                    <select
+                                        value={data.team}
+                                        onChange={(e) => handleUpdate({ team: e.target.value })}
+                                        disabled={readOnly}
+                                        className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                    >
+                                        <option value="">-- เลือกทีม --</option>
+                                        {availableTeams.map((team, idx) => (
+                                            <option key={idx} value={team}>{team}</option>
+                                        ))}
+                                    </select>
+                                </DataSourceTooltip>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
                             </div>
                         </div>
                         <div className="min-w-0">
                             <label className="block text-sm font-medium text-secondary-700 mb-2">วันที่นัดหมาย</label>
-                            <input
-                                type="datetime-local"
-                                value={data.appointmentDate || ''}
-                                onChange={e => handleUpdate({ appointmentDate: e.target.value })}
-                                disabled={readOnly}
-                                className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
-                            />
+                            <DataSourceTooltip isRealtime={false} source="input">
+                                <input
+                                    type="datetime-local"
+                                    value={data.appointmentDate || ''}
+                                    onChange={e => handleUpdate({ appointmentDate: e.target.value })}
+                                    disabled={readOnly}
+                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                />
+                            </DataSourceTooltip>
                         </div>
                         {showCompletionDate && (
                             <div className="min-w-0">
@@ -209,19 +214,21 @@ export default function JobInfoCard({
 
                             {/* Selected Address Details Card */}
                             {(data.installAddress || data.installLocationName) && (
-                                <AddressCard
-                                    title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
-                                    address={data.installAddress}
-                                    distance={data.distance}
-                                    mapLink={data.googleMapLink}
-                                    onClear={!readOnly ? () => handleUpdate({
-                                        installLocationName: '',
-                                        installAddress: '',
-                                        googleMapLink: '',
-                                        distance: ''
-                                    }) : undefined}
-                                    variant="primary"
-                                />
+                                <DataSourceTooltip isRealtime={false} source="input/google_maps">
+                                    <AddressCard
+                                        title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
+                                        address={data.installAddress}
+                                        distance={data.distance}
+                                        mapLink={data.googleMapLink}
+                                        onClear={!readOnly ? () => handleUpdate({
+                                            installLocationName: '',
+                                            installAddress: '',
+                                            googleMapLink: '',
+                                            distance: ''
+                                        }) : undefined}
+                                        variant="primary"
+                                    />
+                                </DataSourceTooltip>
                             )}
                             {/* Inspector Selection (From Customer Contacts) */}
                             <ContactSelector

@@ -22,15 +22,17 @@ import {
     Lightbulb,
     Package,
     Briefcase,
-    CreditCard
-
+    CreditCard,
+    Bug
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
 import { DataManager } from '../lib/dataManager'
+import { useDebug } from '../contexts/DebugContext'
 
 export default function SettingsPage() {
     const { data: session } = useSession()
+    const { isMouseDebugEnabled, toggleMouseDebug } = useDebug()
     const [activeTab, setActiveTab] = useState('general')
     const [users, setUsers] = useState([])
     const [shopSettings, setShopSettings] = useState({
@@ -251,7 +253,8 @@ export default function SettingsPage() {
                                     { id: 'general', label: 'ข้อมูลร้านค้า', icon: Store },
                                     { id: 'system', label: 'การตั้งค่าระบบ', icon: Globe },
                                     { id: 'options', label: 'ประเภทข้อมูล', icon: List },
-                                    { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell }
+                                    { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell },
+                                    { id: 'debug', label: 'Debug Mode', icon: Bug }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -331,8 +334,6 @@ export default function SettingsPage() {
                                 </div>
                             )}
 
-
-
                             {activeTab === 'system' && (
                                 <div className="space-y-6">
                                     <div className="border-b border-secondary-200 pb-4">
@@ -376,7 +377,6 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             )}
-
 
                             {activeTab === 'options' && (
                                 <div className="space-y-6">
@@ -435,6 +435,42 @@ export default function SettingsPage() {
                                 </div>
                             )}
 
+                            {activeTab === 'debug' && (
+                                <div className="space-y-6">
+                                    <div className="border-b border-secondary-200 pb-4">
+                                        <h2 className="text-xl font-bold text-secondary-900">Debug Mode (สำหรับนักพัฒนา)</h2>
+                                        <p className="text-secondary-500 text-sm mt-1">เครื่องมือตรวจสอบข้อมูลและสถานะของระบบ</p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between p-4 border border-secondary-200 rounded-lg">
+                                            <div>
+                                                <h3 className="font-medium text-secondary-900 flex items-center gap-2">
+                                                    <Bug size={18} className="text-warning-500" />
+                                                    Mouse Debug Mode
+                                                </h3>
+                                                <p className="text-sm text-secondary-500">แสดงแหล่งที่มาของข้อมูล (Snapshot / Realtime) เมื่อเอาเมาส์ไปวาง</p>
+                                            </div>
+                                            <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                                <input
+                                                    type="checkbox"
+                                                    name="mouseDebug"
+                                                    id="mouseDebug"
+                                                    checked={isMouseDebugEnabled}
+                                                    onChange={e => toggleMouseDebug(e.target.checked)}
+                                                    className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                                    style={{ right: isMouseDebugEnabled ? '0' : 'auto', left: isMouseDebugEnabled ? 'auto' : '0' }}
+                                                />
+                                                <label
+                                                    htmlFor="mouseDebug"
+                                                    className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${isMouseDebugEnabled ? 'bg-warning-500' : 'bg-secondary-300'}`}
+                                                ></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 </div>
@@ -442,3 +478,4 @@ export default function SettingsPage() {
         </AppLayout >
     )
 }
+

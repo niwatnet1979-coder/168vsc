@@ -1,6 +1,7 @@
 import React from 'react'
 import { CreditCard, Plus } from 'lucide-react'
 import { currency } from '../lib/utils'
+import DataSourceTooltip from './DataSourceTooltip'
 
 export default function PaymentSummaryCard({
     subtotal = 0,
@@ -62,21 +63,27 @@ export default function PaymentSummaryCard({
             <div className="flex-1 space-y-5 text-sm">
                 <div className="flex justify-between text-secondary-600">
                     <span>รวมเป็นเงิน</span>
-                    <span>{currency(numSubtotal)}</span>
+                    <DataSourceTooltip isRealtime={false} source="calculated">
+                        <span>{currency(numSubtotal)}</span>
+                    </DataSourceTooltip>
                 </div>
 
                 {/* Shipping Fee */}
                 <div className="flex justify-between items-center text-secondary-600">
                     <span>ค่าขนส่ง</span>
                     {readOnly ? (
-                        <span className="font-medium text-secondary-900">{numShippingFee > 0 ? currency(numShippingFee) : '-'}</span>
+                        <DataSourceTooltip isRealtime={false} source="saved">
+                            <span className="font-medium text-secondary-900">{numShippingFee > 0 ? currency(numShippingFee) : '-'}</span>
+                        </DataSourceTooltip>
                     ) : (
-                        <input
-                            type="number"
-                            value={localShipping}
-                            onChange={e => handleShippingChange(Number(e.target.value))}
-                            className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                        />
+                        <DataSourceTooltip isRealtime={false} source="input">
+                            <input
+                                type="number"
+                                value={localShipping}
+                                onChange={e => handleShippingChange(Number(e.target.value))}
+                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                            />
+                        </DataSourceTooltip>
                     )}
                 </div>
 
@@ -146,7 +153,9 @@ export default function PaymentSummaryCard({
 
                 <div className="flex justify-between text-xl font-bold text-primary-700 pt-5 border-t border-secondary-200">
                     <span>ยอดรวมออเดอร์นี้</span>
-                    <span>{currency(total)}</span>
+                    <DataSourceTooltip isRealtime={false} source="calculated">
+                        <span>{currency(total)}</span>
+                    </DataSourceTooltip>
                 </div>
 
                 {/* Payment Schedule List */}
@@ -208,7 +217,9 @@ export default function PaymentSummaryCard({
                     {/* Outstanding Balance */}
                     <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
                         <span>รวมยอดค้างชำระ</span>
-                        <span>{currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}</span>
+                        <DataSourceTooltip isRealtime={false} source="calculated">
+                            <span>{currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}</span>
+                        </DataSourceTooltip>
                     </div>
 
                     {/* Actions */}

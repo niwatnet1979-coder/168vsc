@@ -3,6 +3,7 @@ import { X, Trash2 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { currency } from '../lib/utils'
 import Card from './Card'
+import DataSourceTooltip from './DataSourceTooltip'
 
 export default function PaymentEntryModal({
     isOpen,
@@ -192,13 +193,17 @@ export default function PaymentEntryModal({
                             <div>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ยอดชำระจริง</label>
                                 <div className="text-lg font-bold text-primary-600">
-                                    {currency(calculatedAmount)}
+                                    <DataSourceTooltip isRealtime={false} source="calculated">
+                                        {currency(calculatedAmount)}
+                                    </DataSourceTooltip>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">คงเหลือหลังชำระ</label>
                                 <div className="text-lg font-medium text-secondary-900">
-                                    {currency(calculatedRemaining)}
+                                    <DataSourceTooltip isRealtime={false} source="calculated">
+                                        {currency(calculatedRemaining)}
+                                    </DataSourceTooltip>
                                 </div>
                             </div>
                         </div>

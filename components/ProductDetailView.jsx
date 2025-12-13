@@ -2,6 +2,7 @@ import React from 'react'
 import { Wrench } from 'lucide-react'
 import ProductCard from './ProductCard'
 import { currency } from '../lib/utils'
+import DataSourceTooltip from './DataSourceTooltip'
 
 export default function ProductDetailView({ product, onEdit, hideEditButton = false }) {
     if (!product) return null
@@ -32,11 +33,13 @@ export default function ProductDetailView({ product, onEdit, hideEditButton = fa
         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4 h-full flex flex-col">
             {/* Product Card Summary */}
             <div className="mb-4">
-                <ProductCard
-                    product={displayProduct}
-                    showPrice={true}
-                    showStock={true}
-                />
+                <DataSourceTooltip isRealtime={false} source="Job Snapshot">
+                    <ProductCard
+                        product={displayProduct}
+                        showPrice={true}
+                        showStock={true}
+                    />
+                </DataSourceTooltip>
             </div>
 
             <div className="flex-1 space-y-4">
@@ -71,11 +74,15 @@ export default function ProductDetailView({ product, onEdit, hideEditButton = fa
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
                         <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
-                        <div className="text-sm text-secondary-900">{val(product.lightColor)}</div>
+                        <DataSourceTooltip isRealtime={false} source="Snapshot Value">
+                            <div className="text-sm text-secondary-900">{val(product.lightColor)}</div>
+                        </DataSourceTooltip>
                     </div>
                     <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
                         <label className="block text-xs font-medium text-secondary-500 mb-1">สีคริสตัล</label>
-                        <div className="text-sm text-secondary-900">{val(product.crystalColor)}</div>
+                        <DataSourceTooltip isRealtime={false} source="Snapshot Value">
+                            <div className="text-sm text-secondary-900">{val(product.crystalColor)}</div>
+                        </DataSourceTooltip>
                     </div>
                     <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
                         <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทหลอดไฟ</label>
@@ -98,9 +105,11 @@ export default function ProductDetailView({ product, onEdit, hideEditButton = fa
                     <div className="text-sm text-secondary-600">
                         {product.qty || 1} x {currency(product.unitPrice || product.price)}
                     </div>
-                    <div className="text-lg font-bold text-primary-600">
-                        {currency((product.qty || 1) * (product.unitPrice || product.price || 0))}
-                    </div>
+                    <DataSourceTooltip isRealtime={false} source="Calculated Snapshot">
+                        <div className="text-lg font-bold text-primary-600">
+                            {currency((product.qty || 1) * (product.unitPrice || product.price || 0))}
+                        </div>
+                    </DataSourceTooltip>
                 </div>
             </div>
 
