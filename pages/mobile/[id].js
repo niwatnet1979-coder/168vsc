@@ -215,33 +215,51 @@ export default function MobileJobDetail() {
 
     return (
         <ProtectedRoute>
-            <AppLayout>
+            <AppLayout
+                renderHeader={({ setIsSidebarOpen }) => (
+                    <header className="h-16 bg-white border-b border-secondary-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+                        <div className="flex items-center gap-3">
+                            <button
+                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg"
+                                onClick={() => setIsSidebarOpen(true)}
+                            >
+                                <div className="sr-only">Menu</div>
+                                {/* Re-import Menu if needed or assume it's available via Lucide imports? 
+                                    Wait, Menu is not imported in this file. I need to add Menu to imports. 
+                                    But existing default header uses Menu. 
+                                    I need to import Menu here. */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                            </button>
+
+                            <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600">
+                                <ArrowLeft size={20} className="mr-1" />
+                                <span className="hidden sm:inline">กลับ</span>
+                            </Link>
+
+                            <div className="border-l border-secondary-300 h-6 mx-2 hidden sm:block"></div>
+
+                            <div>
+                                <h1 className="text-lg font-bold text-secondary-900 leading-tight">{job.id}</h1>
+                                <p className="text-xs text-secondary-500">Order: {job.orderId}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {job.rawJobType === 'installation' ? (
+                                <Wrench size={18} className="text-primary-600" />
+                            ) : (
+                                <Truck size={18} className="text-warning-600" />
+                            )}
+                            <span className="text-xs font-medium bg-secondary-100 px-2 py-1 rounded-full">{job.jobType}</span>
+                        </div>
+                    </header>
+                )}
+            >
                 <Head>
                     <title>Job {job.id} - Mobile Jobs</title>
                 </Head>
 
-                <div className="space-y-4 pb-20">
-                    {/* Header */}
-                    <div className="sticky top-0 bg-secondary-50 z-10 pb-4">
-                        <Link href="/mobile" className="inline-flex items-center text-secondary-500 hover:text-primary-600 mb-2">
-                            <ArrowLeft size={20} className="mr-2" />
-                            กลับ
-                        </Link>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold text-secondary-900">{job.id}</h1>
-                                <p className="text-sm text-secondary-500">Order: {job.orderId}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {job.rawJobType === 'installation' ? (
-                                    <Wrench size={20} className="text-primary-600" />
-                                ) : (
-                                    <Truck size={20} className="text-warning-600" />
-                                )}
-                                <span className="text-sm font-medium">{job.jobType}</span>
-                            </div>
-                        </div>
-                    </div>
+                <div className="space-y-4 pb-20 pt-4">
 
                     {/* Tabs */}
                     <div className="bg-white rounded-lg border border-secondary-200 overflow-hidden">
