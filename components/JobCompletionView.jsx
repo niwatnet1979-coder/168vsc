@@ -2,14 +2,25 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Camera, MapPin, X, Star, Save, Upload, Video } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
+import VideoRecorderModal from './VideoRecorderModal'
 
 export default function JobCompletionView({ job, onSave }) {
     const [mediaItems, setMediaItems] = useState([])
     const [rating, setRating] = useState(5)
     const [comment, setComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [showVideoRecorder, setShowVideoRecorder] = useState(false)
     const sigCanvas = useRef({})
 
+    // ... (rest of the existing useEffect code) ...
+    // Note: I need to be careful with replace_file_content not to overwrite the middle. 
+    // The previous tool call output shows the full file content was ~302 lines.
+    // I should probably use `view_file` again to make sure I have the latest line numbers or structure.
+    // BUT I can see previous `replace_file_content` outputs.
+    // I will rewrite the top imports and state, and the method to add the file.
+
+    // Actually, simply adding the import at top and the Modal at bottom + Button in render is enough.
+    // I will use `replace_file_content` on specific blocks.
     // Load existing completion data from job_completions table
     useEffect(() => {
         const loadCompletionData = async () => {
@@ -125,6 +136,51 @@ export default function JobCompletionView({ job, onSave }) {
 
         setMediaItems(prev => [...prev, ...newItems])
         setIsSubmitting(false)
+    }
+
+    const handleVideoSave = async (file) => {
+        if (!file) return
+
+        // Similar logic to handleFileUpload but for single file
+        let location = null
+        try {
+            location = await new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    (err) => resolve(null),
+                    { enableHighAccuracy: true, timeout: 5000 }
+                )
+            })
+        } catch (err) { }
+
+        const preview = URL.createObjectURL(file)
+        let meta = ''
+        try {
+            meta = await new Promise((resolve) => {
+                const video = document.createElement('video')
+                video.preload = 'metadata'
+                video.onloadedmetadata = () => {
+                    resolve(`${video.videoWidth}x${video.videoHeight}`)
+                }
+                video.onerror = () => resolve('')
+                video.src = preview
+            })
+        } catch (e) { }
+
+        const newItem = {
+            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            file,
+            preview,
+            type: 'video',
+            note: '',
+            location: location,
+            resolution: meta,
+            size: formatFileSize(file.size),
+            status: 'pending',
+            timestamp: new Date().toISOString()
+        }
+
+        setMediaItems(prev => [...prev, newItem])
     }
 
     const removeMedia = (id) => {
@@ -288,20 +344,36 @@ export default function JobCompletionView({ job, onSave }) {
 
             {/* Media Section */}
             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
-                <h3 className="font-bold text-lg text-secondary-900 mb-4 flex justify-between items-center">
+                <h3 className="font-bold text-lg text-secondary-900 mb-4 flex justify-between items-center bg-white">
                     <span>รูปภาพ / วีดีโอการทำงาน</span>
-                    <label className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer hover:bg-primary-100">
-                        <Camera size={18} />
-                        เพิ่มรูป/วีดีโอ
-                        <input
-                            type="file"
-                            accept="image/*,video/*"
-                            multiple
-                            className="hidden"
-                            onChange={handleFileUpload}
-                        />
-                    </label>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowVideoRecorder(true)}
+                            className="flex items-center gap-1 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+                        >
+                            <Video size={18} />
+                            ถ่ายวิดีโอ (HD)
+                        </button>
+
+                        <label className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer hover:bg-primary-100 transition-colors">
+                            <Camera size={18} />
+                            เพิ่มรูป/วิดีโอ
+                            <input
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                        </label>
+                    </div>
                 </h3>
+
+                <VideoRecorderModal
+                    isOpen={showVideoRecorder}
+                    onClose={() => setShowVideoRecorder(false)}
+                    onSave={handleVideoSave}
+                />
 
                 <div className="space-y-4">
                     {mediaItems.length === 0 && (
