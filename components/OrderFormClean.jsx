@@ -1433,14 +1433,8 @@ export default function OrderForm() {
                                         </div>
 
                                         {/* Row 3: Job Info & Dates */}
-                                        <div
-                                            className="flex justify-between items-center gap-4 text-xs text-secondary-600 cursor-pointer hover:bg-secondary-50 p-1 -m-1 rounded"
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setCurrentSubJobItemIndex(idx)
-                                                setShowSubJobModal(true)
-                                            }}
-                                        >
+                                        {/* Row 3: Job Info & Dates */}
+                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
                                             {/* LEFT: Job Info: Inspector, Location */}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                                 {/* Inspector (Swapped from Row 4) */}
@@ -1474,20 +1468,35 @@ export default function OrderForm() {
                                             {/* LEFT Group: Job Type, Team, Details */}
                                             <div className="flex items-center gap-4">
                                                 {/* Job Type */}
-                                                <div className="flex items-center gap-1">
-                                                    {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={12} /> : <Wrench size={12} />}
-                                                    <span>{(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? 'ขนส่ง' : 'ติดตั้ง'}</span>
+                                                <div
+                                                    className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 rounded transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setCurrentSubJobItemIndex(idx)
+                                                        setShowSubJobModal(true)
+                                                    }}
+                                                    title="แก้ไขข้อมูลงานย่อย"
+                                                >
+                                                    {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
                                                 </div>
 
                                                 {/* Dates - Moved to 2nd position */}
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex items-center gap-1">
                                                         <Calendar size={12} />
-                                                        <span>{(item.subJob?.appointmentDate || jobInfo.appointmentDate) ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                        <span>
+                                                            {(item.subJob?.appointmentDate || jobInfo.appointmentDate)
+                                                                ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                : '-'}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center gap-1 text-green-700">
                                                         <CheckCircle size={12} />
-                                                        <span>{(item.subJob?.completionDate || jobInfo.completionDate) ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleDateString('th-TH') : '-'}</span>
+                                                        <span>
+                                                            {(item.subJob?.completionDate || jobInfo.completionDate)
+                                                                ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                : '-'}
+                                                        </span>
                                                     </div>
                                                 </div>
 
