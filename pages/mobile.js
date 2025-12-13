@@ -201,19 +201,30 @@ export default function MobilePage() {
 
                     {/* Right: Content */}
                     <div className="flex-1 p-3 flex flex-col justify-between">
-                        {/* Row 1: Title & Time */}
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-sm font-bold text-secondary-900 line-clamp-1">
-                                    {job.customerName || 'ลูกค้าทั่วไป'}
-                                </h3>
-                                <div className="flex items-center gap-1 text-xs text-secondary-500 mt-0.5">
-                                    <ClockIcon time={job.jobTime} />
-                                    <span>{formatDate(job.jobDate, job.jobTime)}</span>
-                                </div>
+                        {/* Row 1: Job Type, Date, Customer (Standardized from V2) */}
+                        <div className="flex items-center gap-2 text-xs text-secondary-900 mb-1 flex-wrap">
+                            {/* Job Icon */}
+                            <Icon size={20} className={isInstallation ? "text-primary-600" : "text-warning-600"} />
+
+                            {/* Date */}
+                            <div className="flex items-center gap-1">
+                                <Calendar size={12} />
+                                <span className="font-medium">{formatDate(job.jobDate, job.jobTime)}</span>
                             </div>
-                            {/* Price or Status could go here, for now using chevron */}
-                            <ChevronRight size={18} className="text-secondary-400" />
+
+                            {/* Customer Phone */}
+                            {job.customer?.phone && (
+                                <div className="flex items-center gap-1">
+                                    <Phone size={12} />
+                                    <a href={`tel:${job.customer.phone}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{job.customer.phone}</a>
+                                </div>
+                            )}
+
+                            {/* Customer Name */}
+                            <div className="flex items-center gap-1">
+                                <User size={12} />
+                                <span className="truncate max-w-[100px]">{job.customerName || 'ลูกค้าทั่วไป'}</span>
+                            </div>
                         </div>
 
                         {/* Row 2: Location */}
@@ -226,22 +237,20 @@ export default function MobilePage() {
 
 
                         {/* Row 3: Product Details */}
-                        <div className="text-xs text-secondary-700 leading-tight space-y-1 mt-1">
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-secondary-900 truncate">{job.productName}</span>
+                        <div className="text-xs text-secondary-700 leading-tight mt-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="font-bold text-secondary-900">{job.productName}</span>
                                 <span className="text-[10px] font-mono text-secondary-500 bg-secondary-100 px-1.5 py-0.5 rounded border border-secondary-200 flex-shrink-0">
                                     {job.productId}
                                 </span>
-                            </div>
-
-                            {/* Specs Combined Line */}
-                            <div className="text-secondary-600 truncate">
-                                <span>{job.product?.category || '-'}</span>
-                                {(job.product?.width || job.product?.length || job.product?.height) && (
-                                    <span> • {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
-                                )}
-                                {job.product?.material && <span> • {job.product.material}</span>}
-                                {job.product?.color && <span> • {job.product.color}</span>}
+                                <span className="text-secondary-600">
+                                    {job.product?.category || '-'}
+                                    {(job.product?.width || job.product?.length || job.product?.height) && (
+                                        <span> • {job.product.width || '-'}x{job.product.length || '-'}x{job.product.height || '-'} cm</span>
+                                    )}
+                                    {job.product?.material && <span> • {job.product.material}</span>}
+                                    {job.product?.color && <span> • {job.product.color}</span>}
+                                </span>
                             </div>
                         </div>
                     </div>
