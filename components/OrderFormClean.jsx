@@ -1466,10 +1466,10 @@ export default function OrderForm() {
                                         {/* Row 4: Job Type, Team, Details & Dates */}
                                         <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
                                             {/* LEFT Group: Job Type, Team, Details */}
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
                                                 {/* Job Type */}
                                                 <div
-                                                    className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 rounded transition-colors"
+                                                    className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 -ml-1 rounded transition-colors"
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         setCurrentSubJobItemIndex(idx)
