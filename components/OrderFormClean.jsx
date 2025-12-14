@@ -825,19 +825,19 @@ export default function OrderForm() {
                                                 {customer.line && (
                                                     <div className="flex items-center gap-2 text-secondary-700 text-xs">
                                                         <MessageCircle size={12} className="text-[#06c755] shrink-0" />
-                                                        <span className="truncate">Line: {customer.line}</span>
+                                                        <span className="truncate">{customer.line}</span>
                                                     </div>
                                                 )}
                                                 {customer.facebook && (
                                                     <div className="flex items-center gap-2 text-secondary-700 text-xs">
                                                         <Facebook size={12} className="text-[#1877F2] shrink-0" />
-                                                        <span className="truncate">FB: {customer.facebook}</span>
+                                                        <span className="truncate">{customer.facebook}</span>
                                                     </div>
                                                 )}
                                                 {customer.instagram && (
                                                     <div className="flex items-center gap-2 text-secondary-700 text-xs">
                                                         <Instagram size={12} className="text-[#E1306C] shrink-0" />
-                                                        <span className="truncate">IG: {customer.instagram}</span>
+                                                        <span className="truncate">{customer.instagram}</span>
                                                     </div>
                                                 )}
                                             </div>
