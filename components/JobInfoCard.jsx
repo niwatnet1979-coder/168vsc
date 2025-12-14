@@ -19,7 +19,9 @@ export default function JobInfoCard({
     showHeader = true,
     excludeJobTypes = [],
     readOnly = false,
-    className = ''
+    className = '',
+    onAddNewAddress, // New prop
+    onAddNewInspector // New prop
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
@@ -243,6 +245,7 @@ export default function JobInfoCard({
                             placeholder="ค้นหาสถานที่ติดตั้ง..."
                             readOnly={readOnly}
                             addressClassName="text-xs"
+                            onAddNew={onAddNewAddress} // Pass through
                         />
 
                         {/* Inspector Selection */}
@@ -263,6 +266,7 @@ export default function JobInfoCard({
                                     })
                                 }}
                                 isReadOnly={readOnly}
+                                onAddNew={onAddNewInspector} // Pass through
                             />
                         </div>
                     </>

@@ -401,13 +401,39 @@ export default function OrderForm() {
                     fullAddress = p.join(' ')
                 }
 
-                setTaxInvoiceDeliveryAddress({
-                    type: 'custom',
-                    label: newAddr.label,
-                    address: fullAddress,
-                    googleMapLink: newAddr.googleMapsLink,
-                    distance: ''
-                })
+                if (addingContactFor === 'taxInvoiceDeliveryAddress') {
+                    setTaxInvoiceDeliveryAddress({
+                        type: 'custom',
+                        label: newAddr.label,
+                        address: fullAddress,
+                        googleMapLink: newAddr.googleMapsLink,
+                        distance: ''
+                    })
+                } else if (addingContactFor === 'installAddress') {
+                    setJobInfo(prev => ({
+                        ...prev,
+                        installLocationName: newAddr.label,
+                        installAddress: fullAddress,
+                        googleMapLink: newAddr.googleMapsLink,
+                        distance: ''
+                    }))
+                }
+            }
+        }
+
+        // Check for new INSPECTOR (Contact)
+        const prevContacts = customer.contacts || []
+        const newContacts = updatedCustomer.contacts || []
+        if (newContacts.length > prevContacts.length && addingContactFor === 'inspector') {
+            const newContact = newContacts.find(n => !prevContacts.some(p => p.id === n.id))
+            if (newContact) {
+                setJobInfo(prev => ({
+                    ...prev,
+                    inspector1: {
+                        name: newContact.name,
+                        phone: newContact.phone || ''
+                    }
+                }))
             }
         }
 
@@ -463,6 +489,20 @@ export default function OrderForm() {
         if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มที่อยู่')
         setCustomerModalTab('address')
         setAddingContactFor('taxInvoiceDeliveryAddress')
+        setShowEditCustomerModal(true)
+    }
+
+    const handleAddNewInstallAddress = () => {
+        if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มสถานที่ติดตั้ง')
+        setCustomerModalTab('address')
+        setAddingContactFor('installAddress')
+        setShowEditCustomerModal(true)
+    }
+
+    const handleAddNewInspector = () => {
+        if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มผู้ตรวจงาน')
+        setCustomerModalTab('contacts')
+        setAddingContactFor('inspector')
         setShowEditCustomerModal(true)
     }
 
@@ -964,6 +1004,8 @@ export default function OrderForm() {
                                 availableTeams={availableTeams}
                                 note={jobInfo.description}
                                 onNoteChange={(value) => setJobInfo(prev => ({ ...prev, description: value }))}
+                                onAddNewAddress={handleAddNewInstallAddress}
+                                onAddNewInspector={handleAddNewInspector}
                             />
                         </div>
 
