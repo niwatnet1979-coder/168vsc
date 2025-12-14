@@ -258,6 +258,15 @@ export default function ProductManagement() {
                                         <th onClick={() => requestSort('price')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
                                             <div className="flex items-center justify-end gap-2">ราคา {getSortIcon('price')}</div>
                                         </th>
+                                        <th onClick={() => requestSort('total_purchased')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                            <div className="flex items-center justify-end gap-2">ซื้อสะสม {getSortIcon('total_purchased')}</div>
+                                        </th>
+                                        <th onClick={() => requestSort('total_sold')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                            <div className="flex items-center justify-end gap-2">ขายสะสม {getSortIcon('total_sold')}</div>
+                                        </th>
+                                        <th onClick={() => requestSort('total_lost')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                            <div className="flex items-center justify-end gap-2">สูญหาย {getSortIcon('total_lost')}</div>
+                                        </th>
                                         <th onClick={() => requestSort('stock')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
                                             <div className="flex items-center justify-end gap-2">คงเหลือ {getSortIcon('stock')}</div>
                                         </th>
@@ -369,6 +378,21 @@ export default function ProductManagement() {
                                                             })()}
                                                         </td>
                                                         <td className="px-4 py-4 text-right">
+                                                            <span className="text-sm text-secondary-600 font-medium">
+                                                                {product.total_purchased ? product.total_purchased.toLocaleString() : '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <span className="text-sm text-secondary-600 font-medium">
+                                                                {product.total_sold ? product.total_sold.toLocaleString() : '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
+                                                            <span className={`text-sm font-semibold ${product.total_lost > 0 ? 'text-danger-600' : 'text-secondary-400'}`}>
+                                                                {product.total_lost > 0 ? `- ${product.total_lost}` : '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right">
                                                             {(() => {
                                                                 const summary = getVariantSummary(product.variants)
                                                                 const stockValue = summary ? summary.totalStock : (product.stock || 0)
@@ -477,6 +501,15 @@ export default function ProductManagement() {
                                                                     <td className="px-4 py-3 text-right">
                                                                         <span className="text-sm font-semibold text-secondary-900">฿{variant.price?.toLocaleString() || 0}</span>
                                                                     </td>
+                                                                    <td className="px-4 py-3 text-right">
+                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-right">
+                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                    </td>
+                                                                    <td className="px-4 py-3 text-right">
+                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                    </td>
 
                                                                     {/* Stock */}
                                                                     <td className="px-4 py-3 text-right">
@@ -496,7 +529,7 @@ export default function ProductManagement() {
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan="7" className="px-4 py-12 text-center text-secondary-500">
+                                            <td colSpan="10" className="px-4 py-12 text-center text-secondary-500">
                                                 <Package size={48} className="mx-auto mb-3 text-secondary-300" />
                                                 <p className="text-lg font-medium">ไม่พบสินค้า</p>
                                             </td>

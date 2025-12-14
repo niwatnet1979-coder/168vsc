@@ -16,7 +16,11 @@ import {
     BarChart3,
     Briefcase,
     Smartphone,
-    UserCog
+    UserCog,
+    ShoppingBag,
+
+    Box,
+    CheckCircle
 } from 'lucide-react';
 import packageJson from '../package.json';
 
@@ -55,6 +59,10 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         { name: 'Order Entry', icon: ShoppingCart, path: '/order' },
         { name: 'Orders List', icon: FileText, path: '/orders' },
         { name: 'Products', icon: Package, path: '/products' },
+        { name: 'Inventory', icon: Box, path: '/inventory' },
+        { name: 'Purchasing', icon: ShoppingBag, path: '/purchasing' },
+        { name: 'Quality Control', icon: CheckCircle, path: '/qc' },
+
         { name: 'Customers', icon: Users, path: '/customers' },
         { name: 'Team', icon: UserCog, path: '/team' },
         { name: 'Jobs', icon: Briefcase, path: '/jobs' },

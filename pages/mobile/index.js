@@ -18,9 +18,13 @@ import {
     CheckCircle,
     UserCheck,
     Map,
-    FileText
+    FileText,
+    Package,
+    ClipboardList,
+    QrCode
 } from 'lucide-react'
 import { DataManager } from '../../lib/dataManager'
+import { supabase } from '../../lib/supabaseClient'
 import AppLayout from '../../components/AppLayout'
 import { useJobs } from '../../hooks/useJobs'
 
@@ -89,8 +93,13 @@ export default function MobilePage() {
     const router = useRouter()
     const { data: session } = useSession()
     const { jobs: allJobs, loading } = useJobs() // Hook
-    const [activeTab, setActiveTab] = useState('installation') // 'previous', 'installation', 'delivery'
+    const [activeTab, setActiveTab] = useState('installation') // 'previous', 'installation', 'delivery', 'stock', 'shipping'
     const [jobs, setJobs] = useState([])
+    const [stockItems, setStockItems] = useState([])
+    const [stockLoading, setStockLoading] = useState(false)
+    const [shippingPlans, setShippingPlans] = useState([])
+    const [shippingLoading, setShippingLoading] = useState(false)
+    const [selectedPlanDetails, setSelectedPlanDetails] = useState(null) // If a plan is selected for scanning
 
     const [selectedTeam, setSelectedTeam] = useState('ทั้งหมด')
     const [availableTeams, setAvailableTeams] = useState([])
@@ -129,8 +138,104 @@ export default function MobilePage() {
 
     // Load/Filter Data
     useEffect(() => {
-        filterJobs()
+        if (activeTab === 'stock') {
+            loadTeamStock()
+        } else if (activeTab === 'shipping') {
+            loadShippingPlans()
+            setSelectedPlanDetails(null)
+        } else {
+            filterJobs()
+        }
     }, [activeTab, selectedTeam, allJobs]) // Re-run when realtime update or filter changes
+
+    const loadShippingPlans = async () => {
+        setShippingLoading(true)
+        // Fetch active plans (not completed)
+        const { data } = await supabase
+            .from('shipping_plans')
+            .select(`*, items:shipping_plan_items(count)`)
+            .neq('status', 'completed') // Show draft, confirmed, shipped
+            .order('plan_date', { ascending: true })
+        setShippingPlans(data || [])
+        setShippingLoading(false)
+    }
+
+    const loadPlanDetails = async (planId) => {
+        const { data } = await supabase
+            .from('shipping_plans')
+            .select(`*, items:shipping_plan_items(*, order:orders(*))`)
+            .eq('id', planId)
+            .single()
+        setSelectedPlanDetails(data)
+    }
+
+    const handleShippingScan = async (qrCode) => {
+        if (!selectedPlanDetails) return
+        // QR Code format: ORDER-UUID or just UUID?
+        // Assuming we verify against order_id or tracking_number (if applicable)
+        // For now, let's assume we scan the Order ID or a code that maps to it.
+        // Simple match: scanned code matches an order's id or customer name?
+        // Let's search in the items list.
+
+        const match = selectedPlanDetails.items.find(i =>
+            i.order_id === qrCode ||
+            i.order?.customer_name === qrCode ||
+            (i.order?.order_number && qrCode.includes(i.order.order_number))
+        )
+
+        if (match) {
+            // Update status
+            await supabase.from('shipping_plan_items').update({
+                status: 'verified',
+                scanned_at: new Date().toISOString()
+            }).eq('id', match.id)
+
+            // Reload
+            loadPlanDetails(selectedPlanDetails.id)
+            alert(`Verified: ${match.order?.customer_name}`)
+        } else {
+            alert('Item not found in this plan!')
+        }
+    }
+
+    const loadTeamStock = async () => {
+        setStockLoading(true)
+        // Fetch inventory where current_location matches selectedTeam (or all if admin)
+        // For simplicity, we just filter by the currently selected team in the dropdown
+        // If 'ทั้งหมด', maybe show nothing or all? Let's show all for now but usually specific team is better.
+
+        // Normalize team name for DB query if necessary.
+        // DataManager.getInventoryItems returns all items. We might need a filter.
+        // Let's assume DataManager has getInventoryItems.
+
+        let query = supabase.from('inventory_items').select('*, product:products(*)')
+
+        if (selectedTeam !== 'ทั้งหมด') {
+            // Location usually matches Team Name exactly in this system
+            query = query.eq('current_location', selectedTeam)
+        }
+
+        const { data, error } = await query
+
+        if (data) {
+            // Group by Product
+            const grouped = {}
+            data.forEach(item => {
+                const pid = item.product_id
+                if (!grouped[pid]) {
+                    grouped[pid] = {
+                        product: item.product,
+                        count: 0,
+                        items: []
+                    }
+                }
+                grouped[pid].count++
+                grouped[pid].items.push(item)
+            })
+            setStockItems(Object.values(grouped))
+        }
+        setStockLoading(false)
+    }
 
     const filterJobs = () => {
         const today = new Date()
@@ -410,6 +515,8 @@ export default function MobilePage() {
                         <TabButton id="previous" label="งานก่อนหน้า" icon={History} />
                         <TabButton id="installation" label="งานติดตั้ง" icon={Wrench} />
                         <TabButton id="delivery" label="งานจัดส่ง" icon={Truck} />
+                        <TabButton id="stock" label="สต็อค" icon={Package} />
+                        <TabButton id="shipping" label="ขนส่ง" icon={ClipboardList} />
                     </div>
                 </nav>
             )}
@@ -426,13 +533,130 @@ export default function MobilePage() {
                         {activeTab === 'previous' && 'งานที่ทำเสร็จแล้ว'}
                         {activeTab === 'installation' && 'งานติดตั้งที่ต้องทำ'}
                         {activeTab === 'delivery' && 'งานจัดส่งที่ต้องทำ'}
+                        {activeTab === 'shipping' && (selectedPlanDetails ? 'ตรวจสอบสินค้า' : 'แผนการขนส่ง')}
+                        {activeTab === 'stock' && `สต็อคของ: ${selectedTeam}`}
                     </h2>
                     <span className="text-xs text-secondary-500 bg-secondary-100 px-2 py-0.5 rounded-full">
-                        {jobs.length} งาน
+                        {activeTab === 'stock' ? stockItems.length + ' รายการ' :
+                            activeTab === 'shipping' ? shippingPlans.length + ' แผน' :
+                                jobs.length + ' งาน'}
                     </span>
                 </div>
 
-                {loading ? (
+                {activeTab === 'stock' ? (
+                    stockLoading ? (
+                        <div className="text-center py-12 text-secondary-500">Loading Stock...</div>
+                    ) : stockItems.length === 0 ? (
+                        <div className="text-center py-12 text-secondary-400">
+                            <Package size={48} className="mx-auto mb-2 opacity-50" />
+                            <p>ไม่พบสินค้าในสต็อคของ {selectedTeam}</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {stockItems.map((group, idx) => (
+                                <div key={idx} className="bg-white p-3 rounded-xl border border-secondary-200 shadow-sm flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center shrink-0">
+                                        {group.product?.image ? <img src={group.product.image} className="w-full h-full object-cover rounded-lg" /> : <Package size={20} className="text-secondary-400" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-sm text-secondary-900 line-clamp-1">{group.product?.name || 'Unknown Product'}</h4>
+                                        <p className="text-xs text-secondary-500">{group.product?.code}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="block text-xl font-bold text-primary-600">{group.count}</span>
+                                        <span className="text-[10px] text-secondary-400">ชิ้น</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )
+                ) : activeTab === 'shipping' ? (
+                    selectedPlanDetails ? (
+                        <div className="space-y-4">
+                            {/* Header / Back */}
+                            <button onClick={() => setSelectedPlanDetails(null)} className="text-sm text-secondary-500 flex items-center gap-1 mb-2">
+                                <ChevronRight className="rotate-180" size={16} /> กลับไปรายชื่อแผน
+                            </button>
+
+                            <div className="bg-primary-50 p-4 rounded-xl border border-primary-100">
+                                <h3 className="font-bold text-lg text-primary-900">{selectedPlanDetails.courier}</h3>
+                                <div className="text-sm text-primary-700 mt-1">
+                                    {selectedPlanDetails.driver_name && <div>คนขับ: {selectedPlanDetails.driver_name}</div>}
+                                    {selectedPlanDetails.license_plate && <div>ทะเบียน: {selectedPlanDetails.license_plate}</div>}
+                                </div>
+
+                                {/* Scan Input */}
+                                <div className="mt-4 flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Scan Order QR/ID..."
+                                        className="flex-1 p-2 rounded border border-primary-300 text-sm"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleShippingScan(e.target.value)
+                                                e.target.value = ''
+                                            }
+                                        }}
+                                    />
+                                    <button className="bg-primary-600 text-white p-2 rounded">
+                                        <QrCode size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Items List */}
+                            <div className="space-y-2">
+                                {selectedPlanDetails.items.map(item => (
+                                    <div key={item.id} className={`p-3 rounded-lg border flex justify-between items-center
+                                        ${item.status === 'verified' ? 'bg-success-50 border-success-200' : 'bg-white border-secondary-200'}`}>
+                                        <div>
+                                            <p className="font-bold text-sm">{item.order?.customer_name}</p>
+                                            <p className="text-xs text-secondary-500">{item.order?.job_info?.installLocationName || 'No Location'}</p>
+                                        </div>
+                                        {item.status === 'verified' ? (
+                                            <CheckCircle className="text-success-600" size={20} />
+                                        ) : (
+                                            <span className="text-xs bg-secondary-100 text-secondary-500 px-2 py-1 rounded">Pending</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {shippingPlans.map(plan => (
+                                <button
+                                    key={plan.id}
+                                    onClick={() => loadPlanDetails(plan.id)}
+                                    className="w-full bg-white p-4 rounded-xl border border-secondary-200 shadow-sm flex items-center justify-between hover:bg-secondary-50"
+                                >
+                                    <div className="text-left">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`px-2 py-0.5 text-[10px] rounded font-bold
+                                                ${plan.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                {plan.status.toUpperCase()}
+                                            </span>
+                                            <span className="text-xs text-secondary-500">
+                                                {new Date(plan.plan_date).toLocaleDateString('th-TH')}
+                                            </span>
+                                        </div>
+                                        <h4 className="font-bold text-secondary-900">{plan.courier}</h4>
+                                        <p className="text-xs text-secondary-500">
+                                            {plan.items?.[0]?.count || 0} ออเดอร์
+                                        </p>
+                                    </div>
+                                    <ChevronRight className="text-secondary-400" />
+                                </button>
+                            ))}
+                            {shippingPlans.length === 0 && (
+                                <div className="text-center py-12 text-secondary-400">
+                                    <ClipboardList size={48} className="mx-auto mb-2 opacity-50" />
+                                    <p>ยังไม่มีแผนการขนส่งเร็วๆ นี้</p>
+                                </div>
+                            )}
+                        </div>
+                    )
+                ) : loading ? (
                     <div className="flex flex-col items-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-2"></div>
                         <p className="text-sm text-secondary-500">กำลังโหลด...</p>
@@ -460,6 +684,6 @@ export default function MobilePage() {
                     padding-bottom: env(safe-area-inset-bottom);
                 }
             `}</style>
-        </AppLayout>
+        </AppLayout >
     )
 }
