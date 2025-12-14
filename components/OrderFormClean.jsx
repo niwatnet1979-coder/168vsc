@@ -760,114 +760,102 @@ export default function OrderForm() {
 
                                     {/* Customer Details Card */}
                                     {customer.id && (
-                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-4">
-                                            {/* Header with Name */}
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-3">
+                                            {/* Header: Avatar, Name, Code */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-base shadow-sm">
-                                                        {String(customer.name).charAt(0).toUpperCase()}
+                                                    <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm relative overflow-hidden shrink-0">
+                                                        {customer.image ? (
+                                                            <img src={customer.image} alt={customer.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            String(customer.name).charAt(0).toUpperCase()
+                                                        )}
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-bold text-secondary-900 text-sm leading-tight">{String(customer.name)}</h3>
-                                                        <p className="text-xs text-secondary-500 mt-0.5">รหัส: {customer.id || '-'}</p>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-bold text-secondary-900 text-sm leading-tight">{String(customer.name)}</h3>
+                                                            {customer.mediaSource && (
+                                                                <span className="px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-medium rounded border border-primary-200">
+                                                                    {(() => {
+                                                                        const options = [
+                                                                            { id: 'facebook', label: 'Facebook', icon: <Facebook size={10} /> },
+                                                                            { id: 'line', label: 'Line', icon: <MessageCircle size={10} /> },
+                                                                            { id: 'google', label: 'Google', icon: <Search size={10} /> },
+                                                                            { id: 'tiktok', label: 'Tiktok', icon: <Video size={10} /> },
+                                                                            { id: 'instagram', label: 'Instagram', icon: <Instagram size={10} /> },
+                                                                            { id: 'walkin', label: 'Walk-in', icon: <User size={10} /> },
+                                                                            { id: 'referral', label: 'บอกต่อ', icon: <Users size={10} /> },
+                                                                            { id: 'other', label: 'อื่นๆ', icon: <Globe size={10} /> }
+                                                                        ];
+                                                                        const source = options.find(o => o.id === customer.mediaSource);
+                                                                        return (
+                                                                            <span className="flex items-center gap-1">
+                                                                                {source?.icon}
+                                                                                {source?.label || customer.mediaSource}
+                                                                            </span>
+                                                                        );
+                                                                    })()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-secondary-500 mt-0.5 font-mono">CODE: {customer.id || '-'}</p>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => setCustomer({})}
-                                                    className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-
-                                            {/* Contact Information */}
-
-                                            <div className="space-y-3">
-                                                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-                                                    <div className="flex items-center gap-2 text-secondary-600">
-                                                        <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
-                                                            <Phone size={14} className="text-primary-600" />
-                                                        </div>
-                                                        <span className="font-medium text-secondary-900">{customer.phone || '-'}</span>
-                                                    </div>
-
-                                                    {customer.email && (
-                                                        <div className="flex items-center gap-2 text-secondary-600">
-                                                            <div className="w-6 h-6 bg-primary-50 rounded flex items-center justify-center flex-shrink-0">
-                                                                <Mail size={14} className="text-primary-600" />
-                                                            </div>
-                                                            <span className="font-medium text-secondary-900 truncate max-w-[200px]">{String(customer.email)}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {customer.line && (
-                                                        <div className="flex items-center gap-2 text-secondary-600">
-                                                            <div className="w-6 h-6 bg-[#06c755]/10 rounded flex items-center justify-center flex-shrink-0">
-                                                                <MessageCircle size={14} className="text-[#06c755]" />
-                                                            </div>
-                                                            <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.line}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {customer.facebook && (
-                                                        <div className="flex items-center gap-2 text-secondary-600">
-                                                            <div className="w-6 h-6 bg-[#1877F2]/10 rounded flex items-center justify-center flex-shrink-0">
-                                                                <Facebook size={14} className="text-[#1877F2]" />
-                                                            </div>
-                                                            <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.facebook}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {customer.instagram && (
-                                                        <div className="flex items-center gap-2 text-secondary-600">
-                                                            <div className="w-6 h-6 bg-[#E1306C]/10 rounded flex items-center justify-center flex-shrink-0">
-                                                                <Instagram size={14} className="text-[#E1306C]" />
-                                                            </div>
-                                                            <span className="font-medium text-secondary-900 truncate max-w-[200px]">{customer.instagram}</span>
-                                                        </div>
-                                                    )}
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => {
+                                                            // Open edit modal logic if needed? Only create/select is here. 
+                                                            // For now just keep the close button as per request.
+                                                            // But user UI showed an Edit button in other screenshots.
+                                                            // The previous code had a simple X.
+                                                            setCustomer({});
+                                                        }}
+                                                        className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {/* Address */}
+                                            {/* Contact Grid - Compact */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 pt-1 border-t border-secondary-200/50">
+                                                <div className="flex items-center gap-2 text-secondary-700 text-xs">
+                                                    <Phone size={12} className="text-secondary-400 shrink-0" />
+                                                    <span className="truncate">{customer.phone || '-'}</span>
+                                                </div>
+                                                {customer.email && (
+                                                    <div className="flex items-center gap-2 text-secondary-700 text-xs">
+                                                        <Mail size={12} className="text-secondary-400 shrink-0" />
+                                                        <span className="truncate">{customer.email}</span>
+                                                    </div>
+                                                )}
+                                                {customer.line && (
+                                                    <div className="flex items-center gap-2 text-secondary-700 text-xs">
+                                                        <MessageCircle size={12} className="text-[#06c755] shrink-0" />
+                                                        <span className="truncate">Line: {customer.line}</span>
+                                                    </div>
+                                                )}
+                                                {customer.facebook && (
+                                                    <div className="flex items-center gap-2 text-secondary-700 text-xs">
+                                                        <Facebook size={12} className="text-[#1877F2] shrink-0" />
+                                                        <span className="truncate">FB: {customer.facebook}</span>
+                                                    </div>
+                                                )}
+                                                {customer.instagram && (
+                                                    <div className="flex items-center gap-2 text-secondary-700 text-xs">
+                                                        <Instagram size={12} className="text-[#E1306C] shrink-0" />
+                                                        <span className="truncate">IG: {customer.instagram}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Address - Simple Text */}
                                             {customer.address && (
-                                                <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 mt-4">
-                                                    <h4 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">ที่อยู่</h4>
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                            <MapPin size={16} className="text-primary-600" />
-                                                        </div>
-                                                        <p className="text-sm text-secondary-700 leading-relaxed">{customer.address}</p>
+                                                <div className="pt-2 border-t border-secondary-200/50">
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin size={12} className="text-secondary-400 mt-0.5 shrink-0" />
+                                                        <p className="text-xs text-secondary-600 leading-relaxed max-w-lg">{customer.address}</p>
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {/* Footer: Media Source */}
-                                            {customer.mediaSource && (
-                                                <div className="bg-primary-50/50 border-t border-primary-100 -mx-5 -mb-5 px-5 py-3 mt-5 rounded-b-xl flex items-center gap-3">
-                                                    <span className="text-xs text-secondary-500 font-medium">รู้จักเราผ่าน:</span>
-                                                    {(() => {
-                                                        const options = [
-                                                            { id: 'FB', label: 'Facebook', icon: Facebook, color: 'text-[#1877F2]', bg: 'bg-[#1877F2]/10', border: 'border-[#1877F2]/20' },
-                                                            { id: 'LINE@', label: 'LINE@', icon: MessageCircle, color: 'text-[#06c755]', bg: 'bg-[#06c755]/10', border: 'border-[#06c755]/20' },
-                                                            { id: 'GOOGLE', label: 'Google', icon: Globe, color: 'text-[#DB4437]', bg: 'bg-[#DB4437]/10', border: 'border-[#DB4437]/20' },
-                                                            { id: 'OFFLINE', label: 'หน้าร้าน', icon: Users, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-                                                            { id: 'FREND', label: 'เพื่อนแนะนำ', icon: User, color: 'text-purple-500', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-                                                            { id: 'OTHER', label: 'อื่นๆ', icon: MoreHorizontal, color: 'text-gray-500', bg: 'bg-gray-500/10', border: 'border-gray-500/20' }
-                                                        ]
-                                                        const option = options.find(o => o.id === customer.mediaSource)
-                                                        if (!option) return null
-
-                                                        const Icon = option.icon
-                                                        const label = customer.mediaSource === 'OTHER' && customer.mediaSourceOther ? customer.mediaSourceOther : option.label
-
-                                                        return (
-                                                            <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${option.bg} ${option.border} ${option.color}`}>
-                                                                <Icon size={12} />
-                                                                <span>{label}</span>
-                                                            </div>
-                                                        )
-                                                    })()}
                                                 </div>
                                             )}
                                         </div>
