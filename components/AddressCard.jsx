@@ -50,7 +50,6 @@ export default function AddressCard({
                             {title}
                         </h4>
                         {badge}
-                        {/* DEBUG: {variant} */}
                         {(distance || mapLink) && (
                             mapLink ? (
                                 <a
