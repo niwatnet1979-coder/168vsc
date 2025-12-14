@@ -94,17 +94,26 @@ export default function ContactSelector({
                                 <User size={16} />
                             </div>
                         )}
-                        <div className="text-sm min-w-0">
-                            <div className="font-medium text-secondary-900 truncate">{value.name}</div>
-                            <div className="text-xs text-secondary-500 flex items-center gap-2 truncate">
-                                {value.position && <span>{value.position}</span>}
-                                {value.phone && (
-                                    <>
-                                        {value.position && <span className="w-1 h-1 bg-secondary-300 rounded-full"></span>}
-                                        <span className="flex items-center gap-1"><Phone size={10} /> {value.phone}</span>
-                                    </>
-                                )}
-                            </div>
+                        <div className="text-sm min-w-0 flex-1">
+                            {variant === 'seamless' ? (
+                                <div className="flex items-baseline gap-2 truncate">
+                                    <span className="font-medium text-secondary-900">{value.name}</span>
+                                    {value.phone && <span className="text-xs text-secondary-500">({value.phone})</span>}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="font-medium text-secondary-900 truncate">{value.name}</div>
+                                    <div className="text-xs text-secondary-500 flex items-center gap-2 truncate">
+                                        {value.position && <span>{value.position}</span>}
+                                        {value.phone && (
+                                            <>
+                                                {value.position && <span className="w-1 h-1 bg-secondary-300 rounded-full"></span>}
+                                                <span className="flex items-center gap-1"><Phone size={10} /> {value.phone}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                     {variant !== 'seamless' && (

@@ -350,7 +350,7 @@ export default function JobInfoCard({
                                                 });
                                             }
                                         }}
-                                        className="mt-1 cursor-pointer hover:bg-white rounded-lg transition-all border border-transparent hover:border-transparent"
+                                        className="mt-1 cursor-pointer rounded-lg transition-all border border-transparent hover:border-transparent"
                                     >
                                         <AddressCard
                                             title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
