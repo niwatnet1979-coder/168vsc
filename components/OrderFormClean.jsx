@@ -106,8 +106,8 @@ export default function OrderForm() {
     }, [jobInfo]) // Only jobInfo as dependency
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
-    const [vatRate, setVatRate] = useState(0) // 0 or 0.07
-    const [vatIncluded, setVatIncluded] = useState(true) // Default INVAT)
+    const [vatRate, setVatRate] = useState(0.07) // Default 0.07
+    const [vatIncluded, setVatIncluded] = useState(true) // Default INVAT
     const [shippingFee, setShippingFee] = useState(0)
 
     const [paymentSchedule, setPaymentSchedule] = useState([])
@@ -1810,7 +1810,8 @@ export default function OrderForm() {
                                 }
                                 return sum + (parseFloat(p.amount) || 0)
                             }, 0)
-                            const remainingForThis = total - otherPaymentsTotal
+                            const totalOther = otherOutstandingOrders.reduce((s, o) => s + (Number(o.outstanding) || 0), 0)
+                            const remainingForThis = (total + totalOther) - otherPaymentsTotal
                             const calculatedAmount = paymentData.amountMode === 'percent'
                                 ? (remainingForThis * (parseFloat(paymentData.percentValue) || 0)) / 100
                                 : parseFloat(paymentData.amount) || 0
@@ -1847,9 +1848,11 @@ export default function OrderForm() {
                                 }
                                 return sum + (parseFloat(p.amount) || 0)
                             }, 0)
-                            return total - otherPaymentsTotal
+                            const totalOther = otherOutstandingOrders.reduce((s, o) => s + (Number(o.outstanding) || 0), 0)
+                            return (total + totalOther) - otherPaymentsTotal
                         })()}
                         isEditing={editingPaymentIndex !== null}
+                        paymentCount={paymentSchedule.length}
                     />
                 </div >
             </div >

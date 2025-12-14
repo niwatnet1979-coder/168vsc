@@ -18,6 +18,19 @@ import {
 
 export default function ReportsPage() {
     const [period, setPeriod] = useState('month') // today, week, month, year, all
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-'
+        const d = new Date(dateString)
+        if (isNaN(d.getTime())) return '-'
+        const day = String(d.getDate()).padStart(2, '0')
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const year = d.getFullYear()
+        const hours = String(d.getHours()).padStart(2, '0')
+        const minutes = String(d.getMinutes()).padStart(2, '0')
+        return `${day}/${month}/${year} ${hours}:${minutes}`
+    }
+
     const [stats, setStats] = useState({
         revenue: 0,
         orders: 0,
@@ -51,7 +64,7 @@ export default function ReportsPage() {
             // Filter orders based on period
             const now = new Date()
             const filteredOrders = allOrders.filter(order => {
-                const orderDate = new Date(order.date || order.createdAt) // Handle both formats
+                const orderDate = new Date(order.orderDate || order.createdAt) // Handle both formats
                 // Reset times to compare dates only
                 const d1 = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate())
                 const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -73,10 +86,10 @@ export default function ReportsPage() {
             })
 
             // Calculate Stats
-            const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+            const totalRevenue = filteredOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0)
             const totalOrders = filteredOrders.length
             const totalItems = filteredOrders.reduce((sum, order) => {
-                return sum + (Array.isArray(order.items) ? order.items.reduce((acc, item) => acc + (item.qty || 1), 0) : 0)
+                return sum + (Array.isArray(order.items) ? order.items.reduce((acc, item) => acc + (Number(item.qty) || 1), 0) : 0)
             }, 0)
             const averageOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
@@ -107,18 +120,18 @@ export default function ReportsPage() {
             // Calculate Top Customers
             const customerMap = {}
             filteredOrders.forEach(order => {
-                const customerName = order.customer || 'Unknown Customer'
+                const customerName = order.customerName || 'Unknown Customer'
                 if (!customerMap[customerName]) {
                     customerMap[customerName] = { name: customerName, orders: 0, revenue: 0 }
                 }
                 customerMap[customerName].orders += 1
-                customerMap[customerName].revenue += (order.total || 0)
+                customerMap[customerName].revenue += (Number(order.totalAmount) || 0)
             })
             const sortedCustomers = Object.values(customerMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
             setTopCustomers(sortedCustomers)
 
             // Recent Orders (from filtered set)
-            const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).slice(0, 5)
+            const sortedOrders = [...filteredOrders].sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt)).slice(0, 5)
             setRecentOrders(sortedOrders)
         }
 
@@ -320,9 +333,9 @@ export default function ReportsPage() {
                                                     {order.id}
                                                 </Link>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-secondary-600">{order.date}</td>
-                                            <td className="px-6 py-4 text-sm text-secondary-900">{order.customer}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.total || 0).toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-sm text-secondary-600">{formatDate(order.createdAt || order.orderDate)}</td>
+                                            <td className="px-6 py-4 text-sm text-secondary-900">{order.customerName}</td>
+                                            <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.totalAmount || 0).toLocaleString()}</td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' ? 'bg-success-100 text-success-700' :
                                                     order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :

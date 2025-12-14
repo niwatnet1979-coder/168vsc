@@ -52,7 +52,7 @@ export default function Home() {
             d.setHours(0, 0, 0, 0)
             return d.getTime() === today.getTime()
           })
-          .reduce((sum, o) => sum + (o.total || 0), 0)
+          .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
 
         // Calculate Pending Orders
         const pendingOrdersCount = orders.filter(o => o.status === 'Processing' || o.status === 'Pending').length
@@ -256,7 +256,7 @@ export default function Home() {
                           </Link>
                         </td>
                         <td className="px-6 py-4 text-sm text-secondary-900">{order.customer}</td>
-                        <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.total || 0).toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-secondary-900 text-right">฿{(order.totalAmount || 0).toLocaleString()}</td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'Completed' ? 'bg-success-100 text-success-700' :
                             order.status === 'Processing' ? 'bg-primary-100 text-primary-700' :

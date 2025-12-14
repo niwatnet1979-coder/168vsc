@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, QrCode } from 'lucide-react'
+import { X, Trash2, QrCode, Edit } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
@@ -14,12 +14,27 @@ export default function PaymentEntryModal({
     payment = null,
     remainingBalance = 0,
     isEditing = false,
-    promptpayQr = '' // Added prop
+    promptpayQr = '', // Added prop
+    paymentCount = 0
 }) {
+    const normalizeDateForInput = (val) => {
+        if (!val) return ''
+        try {
+            const d = new Date(val)
+            if (isNaN(d.getTime())) return ''
+            // Adjust to local time used by input type="datetime-local"
+            const tzOffset = d.getTimezoneOffset() * 60000
+            const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16)
+            return localISOTime
+        } catch (e) {
+            return ''
+        }
+    }
+
     const initialForm = {
-        date: '',
+        date: normalizeDateForInput(new Date()),
         amountMode: 'percent',
-        percentValue: 50,
+        percentValue: paymentCount === 0 ? 50 : 100,
         amount: '',
         paymentMethod: 'โอน',
         slip: null,
@@ -30,21 +45,10 @@ export default function PaymentEntryModal({
     const [formData, setFormData] = useState(initialForm)
     const [qrUrl, setQrUrl] = useState(promptpayQr)
     const [showQrPopup, setShowQrPopup] = useState(false)
+    const [showSlipPreview, setShowSlipPreview] = useState(false)
 
     const receiverSigRef = useRef(null)
     const payerSigRef = useRef(null)
-
-    const normalizeDateForInput = (val) => {
-        if (!val) return ''
-        try {
-            // If already in YYYY-MM-DD format return as-is; if ISO or datetime string, convert
-            const d = new Date(val)
-            if (isNaN(d.getTime())) return ''
-            return d.toISOString().slice(0, 10) // input type=date expects YYYY-MM-DD
-        } catch (e) {
-            return ''
-        }
-    }
 
     useEffect(() => {
         if (!isOpen) return
@@ -82,7 +86,13 @@ export default function PaymentEntryModal({
                 }
             }, 0)
         } else {
-            setFormData(initialForm)
+            // New payment: apply default based on paymentCount
+            setFormData({
+                ...initialForm,
+                percentValue: paymentCount === 0 ? 50 : 100,
+                // Ensure date is reset to now for new payments even if reused
+                date: normalizeDateForInput(new Date())
+            })
 
             // Clear signatures and file input when creating a new payment
             setTimeout(() => {
@@ -153,7 +163,7 @@ export default function PaymentEntryModal({
                             วันที่ชำระ <span className="text-danger-500">*</span>
                         </label>
                         <input
-                            type="date"
+                            type="datetime-local"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                             className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white transition-all font-medium text-secondary-900"
@@ -169,12 +179,30 @@ export default function PaymentEntryModal({
                                 </label>
                                 <div className="relative">
                                     <select
-                                        value={formData.amountMode}
-                                        onChange={(e) => setFormData({ ...formData, amountMode: e.target.value })}
+                                        value={
+                                            formData.amountMode === 'amount'
+                                                ? 'amount'
+                                                : (formData.percentValue == 50 ? 'percent_50' : (formData.percentValue == 100 ? 'percent_100' : 'percent'))
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            if (val === 'amount') {
+                                                setFormData({ ...formData, amountMode: 'amount' })
+                                            } else {
+                                                const newPercent = val === 'percent_50' ? 50 : (val === 'percent_100' ? 100 : formData.percentValue)
+                                                setFormData({
+                                                    ...formData,
+                                                    amountMode: 'percent',
+                                                    percentValue: newPercent
+                                                })
+                                            }
+                                        }}
                                         className="w-full px-3 py-2 text-sm font-medium border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
                                     >
-                                        <option value="percent">เปอร์เซ็นต์ (%)</option>
-                                        <option value="amount">ยอดเงิน (฿)</option>
+                                        <option value="percent_50">50%</option>
+                                        <option value="percent_100">100%</option>
+                                        <option value="percent">%</option>
+                                        <option value="amount">ยอดเงิน</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary-500">
                                         ▼
@@ -259,25 +287,35 @@ export default function PaymentEntryModal({
                         />
 
                         {formData.slip ? (
-                            <div className="relative rounded-xl overflow-hidden border border-secondary-200 group">
+                            <div className="relative rounded-xl overflow-hidden border border-secondary-200 group bg-gray-50 flex justify-center">
                                 <img
                                     src={typeof formData.slip === 'string' ? formData.slip : URL.createObjectURL(formData.slip)}
                                     alt="Payment Slip"
-                                    className="w-full h-48 object-cover cursor-pointer transition-transform group-hover:scale-105"
-                                    onClick={() => document.getElementById('slip-upload').click()}
+                                    className="w-full h-auto max-h-[500px] object-contain cursor-pointer"
+                                    onClick={() => setShowSlipPreview(true)}
                                 />
-                                <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm text-white text-xs py-2 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    คลิกเพื่อเปลี่ยนรูป
+                                <div className="absolute top-2 right-2 flex gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            document.getElementById('slip-upload').click()
+                                        }}
+                                        className="p-1.5 bg-black/50 text-white rounded-full hover:bg-primary-500 transition-colors backdrop-blur-sm"
+                                        title="เปลี่ยนรูป"
+                                    >
+                                        <Edit size={16} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setFormData({ ...formData, slip: null })
+                                        }}
+                                        className="p-1.5 bg-black/50 text-white rounded-full hover:bg-danger-500 transition-colors backdrop-blur-sm"
+                                        title="ลบรูป"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        setFormData({ ...formData, slip: null })
-                                    }}
-                                    className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-danger-500 transition-colors"
-                                >
-                                    <X size={16} />
-                                </button>
                             </div>
                         ) : (
                             <div
@@ -415,6 +453,26 @@ export default function PaymentEntryModal({
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+            {/* Slip Preview Modal */}
+            {showSlipPreview && formData.slip && (
+                <div
+                    className="fixed inset-0 z-[70] bg-black/95 flex items-center justify-center p-0 animate-in fade-in duration-200"
+                    onClick={() => setShowSlipPreview(false)}
+                >
+                    <button
+                        className="absolute top-4 right-4 p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors z-10"
+                        onClick={() => setShowSlipPreview(false)}
+                    >
+                        <X size={24} />
+                    </button>
+                    <img
+                        src={typeof formData.slip === 'string' ? formData.slip : URL.createObjectURL(formData.slip)}
+                        alt="Payment Slip Full"
+                        className="max-w-full max-h-full object-contain"
+                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image (optional, or allow)
+                    />
                 </div>
             )}
         </div>

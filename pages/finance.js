@@ -32,11 +32,15 @@ export default function FinancePage() {
                 const orders = await DataManager.getOrders()
 
                 const calculatedPayments = orders.map(order => {
-                    const total = order.total || 0
-                    const deposit = order.deposit || 0
-                    // Assume paid amount is deposit for now, unless there's a specific paid field
-                    // In a real app, we would sum up payment transactions
-                    const paid = order.paidAmount || deposit
+                    const total = Number(order.totalAmount) || 0
+                    const deposit = Number(order.deposit) || 0
+
+                    // Calculate total paid (Deposit + any additional payments)
+                    const additionalPaid = Array.isArray(order.payments)
+                        ? order.payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                        : 0
+
+                    const paid = deposit + additionalPaid
                     const outstanding = total - paid
 
                     let status = 'Unpaid'
@@ -44,20 +48,26 @@ export default function FinancePage() {
                     else if (paid > 0) status = 'Partial'
 
                     // Mock due date (e.g., 7 days after order date)
-                    const orderDate = new Date(order.date || order.createdAt)
+                    const orderDate = new Date(order.orderDate || order.createdAt)
                     const dueDate = new Date(orderDate)
                     dueDate.setDate(dueDate.getDate() + 7)
 
+                    // Safe date formatting
+                    const formatDate = (d) => {
+                        if (isNaN(d.getTime())) return '-'
+                        return d.toISOString().split('T')[0]
+                    }
+
                     return {
                         id: order.id,
-                        date: orderDate.toISOString().split('T')[0],
-                        customer: order.customer || 'Unknown',
+                        date: formatDate(orderDate),
+                        customer: order.customerName || 'Unknown',
                         total: total,
                         deposit: deposit,
                         paid: paid,
-                        outstanding: outstanding,
+                        outstanding: Math.max(0, outstanding), // No negative outstanding
                         status: status,
-                        dueDate: dueDate.toISOString().split('T')[0]
+                        dueDate: formatDate(dueDate)
                     }
                 })
 
@@ -76,6 +86,7 @@ export default function FinancePage() {
     // Filter logic
     const filteredPayments = payments.filter(payment => {
         const matchesSearch =
+            payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             payment.customer.toLowerCase().includes(searchTerm.toLowerCase())
 

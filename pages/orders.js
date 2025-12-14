@@ -31,6 +31,18 @@ export default function OrdersListPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '-'
+        const d = new Date(dateString)
+        if (isNaN(d.getTime())) return '-'
+        const day = String(d.getDate()).padStart(2, '0')
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const year = d.getFullYear()
+        const hours = String(d.getHours()).padStart(2, '0')
+        const minutes = String(d.getMinutes()).padStart(2, '0')
+        return `${day}/${month}/${year} ${hours}:${minutes}`
+    }
+
     // Load data from Supabase on mount
     const loadOrders = async () => {
         try {
@@ -204,54 +216,54 @@ export default function OrdersListPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div
                         onClick={() => setStatusFilter('all')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${statusFilter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-secondary-500 text-sm font-medium">ทั้งหมด</span>
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
                                 <FileText size={20} />
                             </div>
+                            <span className="text-secondary-600 font-medium">ทั้งหมด</span>
                         </div>
-                        <div className="text-3xl font-bold text-secondary-900">{stats.total}</div>
+                        <span className="text-2xl font-bold text-secondary-900">{stats.total}</span>
                     </div>
 
                     <div
                         onClick={() => setStatusFilter('pending')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'pending' ? 'border-secondary-500 ring-1 ring-secondary-500' : 'border-secondary-200 hover:border-secondary-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${statusFilter === 'pending' ? 'border-secondary-500 ring-1 ring-secondary-500' : 'border-secondary-200 hover:border-secondary-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-secondary-500 text-sm font-medium">รอดำเนินการ</span>
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-secondary-100 rounded-lg text-secondary-600">
                                 <Clock size={20} />
                             </div>
+                            <span className="text-secondary-600 font-medium">รอดำเนินการ</span>
                         </div>
-                        <div className="text-3xl font-bold text-secondary-900">{stats.pending}</div>
+                        <span className="text-2xl font-bold text-secondary-900">{stats.pending}</span>
                     </div>
 
                     <div
                         onClick={() => setStatusFilter('processing')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'processing' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${statusFilter === 'processing' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-primary-600 text-sm font-medium">กำลังดำเนินการ</span>
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
                                 <Wrench size={20} />
                             </div>
+                            <span className="text-primary-700 font-medium">กำลังดำเนินการ</span>
                         </div>
-                        <div className="text-3xl font-bold text-primary-700">{stats.processing}</div>
+                        <span className="text-2xl font-bold text-primary-700">{stats.processing}</span>
                     </div>
 
                     <div
                         onClick={() => setStatusFilter('completed')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${statusFilter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${statusFilter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-success-600 text-sm font-medium">เสร็จสิ้น</span>
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-success-50 rounded-lg text-success-600">
                                 <CheckCircle size={20} />
                             </div>
+                            <span className="text-success-700 font-medium">เสร็จสิ้น</span>
                         </div>
-                        <div className="text-3xl font-bold text-success-700">{stats.completed}</div>
+                        <span className="text-2xl font-bold text-success-700">{stats.completed}</span>
                     </div>
                 </div>
 
@@ -282,7 +294,7 @@ export default function OrdersListPage() {
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">Order ID</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่สร้างออเดอร์</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">รายการ</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
@@ -302,7 +314,7 @@ export default function OrdersListPage() {
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-                                                {order.orderDate || order.createdAt?.split('T')[0] || '-'}
+                                                {formatDate(order.createdAt || order.orderDate)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-secondary-900">{order.customerName || '-'}</div>

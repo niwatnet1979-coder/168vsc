@@ -219,54 +219,54 @@ export default function JobQueuePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div
                         onClick={() => setFilter('pending-install')}
-                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-install' ? 'border-danger-500 ring-1 ring-danger-500' : 'border-secondary-200 hover:border-danger-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-install' ? 'border-danger-500 ring-1 ring-danger-500' : 'border-secondary-200 hover:border-danger-300'}`}
                     >
-                        <div>
-                            <div className="text-danger-600 text-xs font-medium mb-0.5">คิวติดตั้งที่เหลือ</div>
-                            <div className="text-2xl font-bold text-danger-700">{stats.pendingInstall}</div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
+                                <Wrench size={20} />
+                            </div>
+                            <span className="text-danger-700 font-medium">คิวติดตั้งที่เหลือ</span>
                         </div>
-                        <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
-                            <Wrench size={20} />
-                        </div>
+                        <span className="text-2xl font-bold text-danger-700">{stats.pendingInstall}</span>
                     </div>
 
                     <div
                         onClick={() => setFilter('pending-delivery')}
-                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-delivery' ? 'border-warning-500 ring-1 ring-warning-500' : 'border-secondary-200 hover:border-warning-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-delivery' ? 'border-warning-500 ring-1 ring-warning-500' : 'border-secondary-200 hover:border-warning-300'}`}
                     >
-                        <div>
-                            <div className="text-warning-600 text-xs font-medium mb-0.5">คิวจัดส่งที่เหลือ</div>
-                            <div className="text-2xl font-bold text-warning-700">{stats.pendingDelivery}</div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
+                                <Truck size={20} />
+                            </div>
+                            <span className="text-warning-700 font-medium">คิวจัดส่งที่เหลือ</span>
                         </div>
-                        <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
-                            <Truck size={20} />
-                        </div>
+                        <span className="text-2xl font-bold text-warning-700">{stats.pendingDelivery}</span>
                     </div>
 
                     <div
                         onClick={() => setFilter('completed')}
-                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
                     >
-                        <div>
-                            <div className="text-success-600 text-xs font-medium mb-0.5">งานที่เสร็จแล้ว</div>
-                            <div className="text-2xl font-bold text-success-700">{stats.completed}</div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-success-50 rounded-lg text-success-600">
+                                <CheckCircle size={20} />
+                            </div>
+                            <span className="text-success-700 font-medium">งานที่เสร็จแล้ว</span>
                         </div>
-                        <div className="p-2 bg-success-50 rounded-lg text-success-600">
-                            <CheckCircle size={20} />
-                        </div>
+                        <span className="text-2xl font-bold text-success-700">{stats.completed}</span>
                     </div>
 
                     <div
                         onClick={() => setFilter('all')}
-                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                        className={`bg-white p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
                     >
-                        <div>
-                            <div className="text-secondary-500 text-xs font-medium mb-0.5">งานทั้งหมด</div>
-                            <div className="text-2xl font-bold text-secondary-900">{stats.total}</div>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
+                                <Briefcase size={20} />
+                            </div>
+                            <span className="text-secondary-600 font-medium">งานทั้งหมด</span>
                         </div>
-                        <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
-                            <Briefcase size={20} />
-                        </div>
+                        <span className="text-2xl font-bold text-secondary-900">{stats.total}</span>
                     </div>
                 </div>
 
