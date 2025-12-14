@@ -706,7 +706,7 @@ export default function OrderForm() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex-1 space-y-6">
+                                <div className="flex-1 space-y-3">
                                     {!customer.id ? (
                                         <div className="relative">
                                             <label className="block text-sm font-medium text-secondary-700 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
