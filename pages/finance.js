@@ -170,46 +170,45 @@ export default function FinancePage() {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-secondary-500 text-sm font-medium">ยอดรวมทั้งหมด</span>
+                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
                                 <DollarSign size={20} />
                             </div>
+                            <span className="text-secondary-600 text-sm font-medium">ยอดรวมทั้งหมด</span>
                         </div>
-                        <div className="text-2xl font-bold text-secondary-900">฿{stats.totalRevenue.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-secondary-900">฿{stats.totalRevenue.toLocaleString()}</div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-success-600 text-sm font-medium">รับชำระแล้ว</span>
+                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-success-50 rounded-lg text-success-600">
                                 <CheckCircle size={20} />
                             </div>
+                            <span className="text-secondary-600 text-sm font-medium">รับชำระแล้ว</span>
                         </div>
-                        <div className="text-2xl font-bold text-success-700">฿{stats.totalPaid.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-success-700">฿{stats.totalPaid.toLocaleString()}</div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-danger-600 text-sm font-medium">ค้างชำระ</span>
+                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
                                 <AlertCircle size={20} />
                             </div>
+                            <span className="text-secondary-600 text-sm font-medium">ค้างชำระ</span>
                         </div>
-                        <div className="text-2xl font-bold text-danger-700">฿{stats.totalOutstanding.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-danger-700">฿{stats.totalOutstanding.toLocaleString()}</div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-warning-600 text-sm font-medium">มัดจำรวม</span>
+                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                        <div className="flex items-center gap-3">
                             <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
                                 <CreditCard size={20} />
                             </div>
+                            <span className="text-secondary-600 text-sm font-medium">มัดจำรวม</span>
                         </div>
-                        <div className="text-2xl font-bold text-warning-700">฿{stats.totalDeposit.toLocaleString()}</div>
+                        <div className="text-xl font-bold text-warning-700">฿{stats.totalDeposit.toLocaleString()}</div>
                     </div>
                 </div>
 
