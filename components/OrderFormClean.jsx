@@ -1006,6 +1006,8 @@ export default function OrderForm() {
                                                 <div className="text-xs text-secondary-800 leading-relaxed">
                                                     {(() => {
                                                         const addr = taxInvoice.address;
+                                                        console.log('DEBUG ADDR:', JSON.stringify(addr, null, 2));
+                                                        console.log('DEBUG TAXINVOICE:', JSON.stringify(taxInvoice, null, 2));
                                                         // Fallback logic for address display
                                                         if (typeof addr === 'string' && addr) return addr;
                                                         if (addr && typeof addr === 'object') {
