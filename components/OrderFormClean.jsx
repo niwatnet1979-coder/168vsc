@@ -975,210 +975,204 @@ export default function OrderForm() {
 
                                     {/* Selected Details Card */}
                                     {taxInvoice.companyName && (
-                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-4">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-white rounded-lg border border-secondary-100 mt-1">
-                                                    <FileText size={20} className="text-primary-600" />
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                            {/* Header: Company Name & Branch */}
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <h4 className="font-bold text-secondary-900 text-sm leading-tight">
+                                                            {taxInvoice.companyName}
+                                                        </h4>
+                                                        <span className="px-2 py-0.5 bg-secondary-200 text-secondary-700 text-[10px] font-medium rounded-full">
+                                                            {taxInvoice.branch || 'สำนักงานใหญ่'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
+                                                        <span className="font-medium">เลขผู้เสียภาษี:</span>
+                                                        <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 space-y-4">
-                                                    {/* Header: Company Name & Branch */}
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-bold text-secondary-900 text-sm leading-tight">
-                                                                    {taxInvoice.companyName}
-                                                                </h3>
-                                                                <span className="px-2 py-0.5 bg-secondary-200 text-secondary-700 text-[10px] font-medium rounded-full">
-                                                                    {taxInvoice.branch || 'สำนักงานใหญ่'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
-                                                                <span className="font-medium">เลขผู้เสียภาษี:</span>
-                                                                <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
-                                                            className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-                                                        >
-                                                            <X size={16} />
-                                                        </button>
-                                                    </div>
+                                                <button
+                                                    onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
+                                                    className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
 
-                                                    {/* Addresses */}
-                                                    <div className="grid grid-cols-1 gap-4 pt-4 border-t border-primary-200/50">
-                                                        <div>
-                                                            <label className="block text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-1">ที่อยู่บริษัท</label>
-                                                            <div className="text-sm text-secondary-800 leading-relaxed">
-                                                                {(() => {
-                                                                    const addr = taxInvoice.address;
-                                                                    console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
-                                                                    console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
-                                                                    console.log('Address Type:', typeof addr);
+                                            {/* Addresses */}
+                                            <div>
+                                                <label className="block text-xs font-semibold text-secondary-500 mb-1">ที่อยู่บริษัท</label>
+                                                <div className="text-xs text-secondary-800 leading-relaxed">
+                                                    {(() => {
+                                                        const addr = taxInvoice.address;
+                                                        console.log('Tax Invoice Address:', JSON.stringify(addr, null, 2));
+                                                        console.log('Tax Invoice Full:', JSON.stringify(taxInvoice, null, 2));
+                                                        console.log('Address Type:', typeof addr);
 
-                                                                    // Try string address first
-                                                                    if (typeof addr === 'string' && addr) {
-                                                                        return addr;
-                                                                    }
-                                                                    // Try address object
-                                                                    else if (addr && typeof addr === 'object') {
-                                                                        const p = [];
-                                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                                        if (addr.addrVillage) p.push(addr.addrVillage);
-                                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                                        if (addr.zipcode) p.push(addr.zipcode);
-                                                                        const result = p.join(' ');
-                                                                        if (result) return result;
-                                                                    }
-                                                                    // Fallback: read from taxInvoice root level
-                                                                    const p = [];
-                                                                    if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
-                                                                    if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
-                                                                    if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
-                                                                    if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
-                                                                    if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
-                                                                    if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
-                                                                    if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
-                                                                    if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
-                                                                    if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
-                                                                    return p.join(' ') || '-';
-                                                                })()}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                        // Try string address first
+                                                        if (typeof addr === 'string' && addr) {
+                                                            return addr;
+                                                        }
+                                                        // Try address object
+                                                        else if (addr && typeof addr === 'object') {
+                                                            const p = [];
+                                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                            if (addr.addrVillage) p.push(addr.addrVillage);
+                                                            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                            if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                            if (addr.zipcode) p.push(addr.zipcode);
+                                                            const result = p.join(' ');
+                                                            if (result) return result;
+                                                        }
+                                                        // Fallback: read from taxInvoice root level
+                                                        const p = [];
+                                                        if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
+                                                        if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
+                                                        if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
+                                                        if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
+                                                        if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
+                                                        if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
+                                                        if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
+                                                        if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
+                                                        if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
+                                                        return p.join(' ') || '-';
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
-
-                                    {/* Tax Invoice Delivery Address Selection - Always Visible */}
-                                    <div className="space-y-3">
-                                        {/* Address Selector Component */}
-                                        <AddressSelector
-                                            label="ที่อยู่จัดส่งใบกำกับภาษี"
-                                            addresses={[
-                                                // Function to construct options including "Same as Install"
-                                                ...(jobInfo.installAddress ? [{
-                                                    label: 'ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง',
-                                                    address: jobInfo.installAddress,
-                                                    googleMapLink: jobInfo.googleMapLink || '',
-                                                    distance: jobInfo.distance || '',
-                                                    isSpecial: true, // Marker for badging logic if we want to handle inside? Or just rely on label?
-                                                    // Actually AddressSelector displays label/address.
-                                                    // Value handling needs care.
-                                                }] : []),
-                                                ...(customer.addresses || [])
-                                            ]}
-                                            value={(() => {
-                                                const isSame = taxInvoiceDeliveryAddress.type === 'same' || (jobInfo.installAddress && taxInvoiceDeliveryAddress.address === jobInfo.installAddress);
-                                                return {
-                                                    label: isSame ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
-                                                    address: isSame ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
-                                                    googleMapLink: isSame ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
-                                                    distance: isSame ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
-                                                    badge: isSame ? (
-                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                            ที่อยู่เดียวกัน
-                                                        </span>
-                                                    ) : null
-                                                };
-                                            })()}
-                                            onChange={(newValue) => {
-                                                if (newValue) {
-                                                    // Detect if "Same as Install" was selected
-                                                    // Simple check: label matches? Or add ID?
-                                                    // The 'newValue' comes from the option object passed in.
-                                                    // If we add extra props to option, they come back?
-                                                    // My AddressSelector implementation passes `addr` back in handleSelect.
-                                                    // So if I add `type: 'same'` to the option, it comes back!
-
-                                                    // Wait, AddressSelector reconstructs the object in onChange({ label, address... })
-                                                    // It doesn't pass the raw object fully?
-                                                    // Let's check AddressSelector.jsx:
-                                                    // onChange({ label: addr.label..., address: fullAddress..., ... })
-                                                    // It constructs a NEW object. It loses custom props like 'type' or 'isSpecial'.
-
-                                                    // FIX: I should rely on value comparison or update AddressSelector to pass original object?
-                                                    // Or just infer "same" type if address matches jobInfo?
-                                                    // Simplest: Check if address === jobInfo.installAddress?
-
-                                                    const isSame = jobInfo.installAddress && newValue.address === jobInfo.installAddress;
-
-                                                    setTaxInvoiceDeliveryAddress({
-                                                        type: isSame ? 'same' : 'custom',
-                                                        label: newValue.label,
-                                                        address: newValue.address,
-                                                        googleMapLink: newValue.googleMapLink,
-                                                        distance: newValue.distance
-                                                    });
-                                                } else {
-                                                    setTaxInvoiceDeliveryAddress({
-                                                        type: '',
-                                                        label: '',
-                                                        address: '',
-                                                        googleMapLink: '',
-                                                        distance: ''
-                                                    });
-                                                }
-                                            }}
-                                            placeholder="ค้นหาที่อยู่..."
-                                        />
-                                    </div>
-
-                                    {/* Contact Selector - Delivery - Always Visible */}
-                                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                        <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อรับเอกสาร</label>
-                                        <ContactSelector
-                                            label={null}
-                                            contacts={customer.contacts || []}
-                                            value={selectedContact}
-                                            onChange={setSelectedContact}
-                                            variant="seamless"
-                                            placeholder="ค้นหาผู้ติดต่อ..."
-                                        />
-                                    </div>
-
-                                </div>
-
-                            </Card>
-                        </div>
-
-                        {/* Payment Summary - Mobile: 4, Desktop: 4 */}
-                        <div className="order-4 md:order-4 flex flex-col h-full">
-                            <div className="h-full">
-                                <PaymentSummaryCard
-                                    subtotal={subtotal}
-                                    shippingFee={shippingFee}
-                                    onShippingFeeChange={setShippingFee}
-                                    discount={discount}
-                                    onDiscountChange={setDiscount}
-                                    vatRate={vatRate}
-                                    onVatRateChange={setVatRate}
-                                    paymentSchedule={paymentSchedule}
-                                    readOnly={false}
-                                    hideControls={true}
-                                    onAddPayment={() => {
-                                        setEditingPaymentIndex(null)
-                                        setShowPaymentModal(true)
-                                    }}
-                                    onEditPayment={(index) => {
-                                        setEditingPaymentIndex(index)
-                                        setShowPaymentModal(true)
-                                    }}
-                                    otherOutstandingOrders={otherOutstandingOrders}
-                                />
-                            </div>
+                                                </div>
                         </div>
                     </div>
+                                    )}
+
+                    {/* Tax Invoice Delivery Address Selection - Always Visible */}
+                    <div className="space-y-3">
+                        {/* Address Selector Component */}
+                        <AddressSelector
+                            label="ที่อยู่จัดส่งใบกำกับภาษี"
+                            addresses={[
+                                // Function to construct options including "Same as Install"
+                                ...(jobInfo.installAddress ? [{
+                                    label: 'ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง',
+                                    address: jobInfo.installAddress,
+                                    googleMapLink: jobInfo.googleMapLink || '',
+                                    distance: jobInfo.distance || '',
+                                    isSpecial: true, // Marker for badging logic if we want to handle inside? Or just rely on label?
+                                    // Actually AddressSelector displays label/address.
+                                    // Value handling needs care.
+                                }] : []),
+                                ...(customer.addresses || [])
+                            ]}
+                            value={(() => {
+                                const isSame = taxInvoiceDeliveryAddress.type === 'same' || (jobInfo.installAddress && taxInvoiceDeliveryAddress.address === jobInfo.installAddress);
+                                return {
+                                    label: isSame ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
+                                    address: isSame ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
+                                    googleMapLink: isSame ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
+                                    distance: isSame ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
+                                    badge: isSame ? (
+                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                            ที่อยู่เดียวกัน
+                                        </span>
+                                    ) : null
+                                };
+                            })()}
+                            onChange={(newValue) => {
+                                if (newValue) {
+                                    // Detect if "Same as Install" was selected
+                                    // Simple check: label matches? Or add ID?
+                                    // The 'newValue' comes from the option object passed in.
+                                    // If we add extra props to option, they come back?
+                                    // My AddressSelector implementation passes `addr` back in handleSelect.
+                                    // So if I add `type: 'same'` to the option, it comes back!
+
+                                    // Wait, AddressSelector reconstructs the object in onChange({ label, address... })
+                                    // It doesn't pass the raw object fully?
+                                    // Let's check AddressSelector.jsx:
+                                    // onChange({ label: addr.label..., address: fullAddress..., ... })
+                                    // It constructs a NEW object. It loses custom props like 'type' or 'isSpecial'.
+
+                                    // FIX: I should rely on value comparison or update AddressSelector to pass original object?
+                                    // Or just infer "same" type if address matches jobInfo?
+                                    // Simplest: Check if address === jobInfo.installAddress?
+
+                                    const isSame = jobInfo.installAddress && newValue.address === jobInfo.installAddress;
+
+                                    setTaxInvoiceDeliveryAddress({
+                                        type: isSame ? 'same' : 'custom',
+                                        label: newValue.label,
+                                        address: newValue.address,
+                                        googleMapLink: newValue.googleMapLink,
+                                        distance: newValue.distance
+                                    });
+                                } else {
+                                    setTaxInvoiceDeliveryAddress({
+                                        type: '',
+                                        label: '',
+                                        address: '',
+                                        googleMapLink: '',
+                                        distance: ''
+                                    });
+                                }
+                            }}
+                            placeholder="ค้นหาที่อยู่..."
+                        />
+                    </div>
+
+                    {/* Contact Selector - Delivery - Always Visible */}
+                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                        <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อรับเอกสาร</label>
+                        <ContactSelector
+                            label={null}
+                            contacts={customer.contacts || []}
+                            value={selectedContact}
+                            onChange={setSelectedContact}
+                            variant="seamless"
+                            placeholder="ค้นหาผู้ติดต่อ..."
+                        />
+                    </div>
+
+                </div>
+
+            </Card>
+        </div>
+
+                        {/* Payment Summary - Mobile: 4, Desktop: 4 */ }
+    <div className="order-4 md:order-4 flex flex-col h-full">
+        <div className="h-full">
+            <PaymentSummaryCard
+                subtotal={subtotal}
+                shippingFee={shippingFee}
+                onShippingFeeChange={setShippingFee}
+                discount={discount}
+                onDiscountChange={setDiscount}
+                vatRate={vatRate}
+                onVatRateChange={setVatRate}
+                paymentSchedule={paymentSchedule}
+                readOnly={false}
+                hideControls={true}
+                onAddPayment={() => {
+                    setEditingPaymentIndex(null)
+                    setShowPaymentModal(true)
+                }}
+                onEditPayment={(index) => {
+                    setEditingPaymentIndex(index)
+                    setShowPaymentModal(true)
+                }}
+                otherOutstandingOrders={otherOutstandingOrders}
+            />
+        </div>
+    </div>
+                    </div >
 
 
-                    {/* Product List Section */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200">
+        {/* Product List Section */ }
+        < div className = "bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200" >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                 <FileText className="text-primary-600" />
@@ -1453,218 +1447,218 @@ export default function OrderForm() {
                             </button>
                         </div>
 
-                        {/* Order Item Modal */}
-                        <OrderItemModal
-                            isOpen={showOrderItemModal}
-                            onClose={() => setShowOrderItemModal(false)}
-                            onSave={handleSaveItem}
-                            onDelete={handleDeleteItem}
-                            item={editingItemIndex !== null ? items[editingItemIndex] : null}
-                            productsData={productsData}
-                            isEditing={editingItemIndex !== null}
-                            onOpenSubJob={() => {
-                                if (editingItemIndex !== null) {
-                                    setShowOrderItemModal(false)
-                                    setCurrentSubJobItemIndex(editingItemIndex)
-                                    setShowSubJobModal(true)
-                                } else {
-                                    alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
-                                }
-                            }}
-                            onAddNewProduct={() => setShowProductModal(true)}
-                            lastCreatedProduct={lastCreatedProduct}
-                            onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
-                        />
+    {/* Order Item Modal */ }
+    <OrderItemModal
+        isOpen={showOrderItemModal}
+        onClose={() => setShowOrderItemModal(false)}
+        onSave={handleSaveItem}
+        onDelete={handleDeleteItem}
+        item={editingItemIndex !== null ? items[editingItemIndex] : null}
+        productsData={productsData}
+        isEditing={editingItemIndex !== null}
+        onOpenSubJob={() => {
+            if (editingItemIndex !== null) {
+                setShowOrderItemModal(false)
+                setCurrentSubJobItemIndex(editingItemIndex)
+                setShowSubJobModal(true)
+            } else {
+                alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
+            }
+        }}
+        onAddNewProduct={() => setShowProductModal(true)}
+        lastCreatedProduct={lastCreatedProduct}
+        onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
+    />
                     </div >
 
-                    {/* Map Popup Modal */}
-                    {
-                        showMapPopup && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
-                                    {/* Modal Header */}
-                                    <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
-                                        <h3 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
-                                            <MapPin className="text-primary-600" size={28} />
-                                            ตำแหน่งที่อยู่
-                                        </h3>
-                                        <button
-                                            onClick={() => setShowMapPopup(false)}
-                                            className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 rounded-full transition-colors"
-                                        >
-                                            <X size={24} />
-                                        </button>
-                                    </div>
+        {/* Map Popup Modal */ }
+    {
+        showMapPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
+                    {/* Modal Header */}
+                    <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-gradient-to-r from-primary-50 to-secondary-50">
+                        <h3 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
+                            <MapPin className="text-primary-600" size={28} />
+                            ตำแหน่งที่อยู่
+                        </h3>
+                        <button
+                            onClick={() => setShowMapPopup(false)}
+                            className="p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-200 rounded-full transition-colors"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
 
-                                    {/* Map Content */}
-                                    <div className="p-8 flex flex-col items-center justify-center space-y-6">
-                                        <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
-                                            <MapPin size={48} className="text-primary-600" />
+                    {/* Map Content */}
+                    <div className="p-8 flex flex-col items-center justify-center space-y-6">
+                        <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
+                            <MapPin size={48} className="text-primary-600" />
+                        </div>
+
+                        <div className="text-center space-y-2">
+                            <h4 className="text-xl font-bold text-secondary-900">เปิดดูแผนที่</h4>
+                            <p className="text-secondary-600">คลิกปุ่มด้านล่างเพื่อเปิดดูตำแหน่งใน Google Maps</p>
+                        </div>
+
+                        {(() => {
+                            const coords = extractCoordinates(selectedMapLink)
+                            if (coords) {
+                                return (
+                                    <div className="bg-secondary-50 p-4 rounded-lg w-full">
+                                        <div className="text-sm text-secondary-600 space-y-1">
+                                            <div className="flex justify-between">
+                                                <span className="font-medium">Latitude:</span>
+                                                <span className="font-mono">{coords.lat}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="font-medium">Longitude:</span>
+                                                <span className="font-mono">{coords.lon}</span>
+                                            </div>
+                                            {jobInfo.distance && (
+                                                <div className="flex justify-between pt-2 border-t border-secondary-200">
+                                                    <span className="font-medium">ระยะทางจากร้าน:</span>
+                                                    <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
+                                                </div>
+                                            )}
                                         </div>
-
-                                        <div className="text-center space-y-2">
-                                            <h4 className="text-xl font-bold text-secondary-900">เปิดดูแผนที่</h4>
-                                            <p className="text-secondary-600">คลิกปุ่มด้านล่างเพื่อเปิดดูตำแหน่งใน Google Maps</p>
-                                        </div>
-
-                                        {(() => {
-                                            const coords = extractCoordinates(selectedMapLink)
-                                            if (coords) {
-                                                return (
-                                                    <div className="bg-secondary-50 p-4 rounded-lg w-full">
-                                                        <div className="text-sm text-secondary-600 space-y-1">
-                                                            <div className="flex justify-between">
-                                                                <span className="font-medium">Latitude:</span>
-                                                                <span className="font-mono">{coords.lat}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="font-medium">Longitude:</span>
-                                                                <span className="font-mono">{coords.lon}</span>
-                                                            </div>
-                                                            {jobInfo.distance && (
-                                                                <div className="flex justify-between pt-2 border-t border-secondary-200">
-                                                                    <span className="font-medium">ระยะทางจากร้าน:</span>
-                                                                    <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            }
-                                            return null
-                                        })()}
-
-                                        <a
-                                            href={selectedMapLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30"
-                                        >
-                                            <MapPin size={20} />
-                                            เปิดใน Google Maps
-                                        </a>
                                     </div>
-
-                                    {/* Modal Footer */}
-                                    <div className="px-6 py-4 border-t border-secondary-200 bg-secondary-50 flex justify-end">
-                                        <button
-                                            onClick={() => setShowMapPopup(false)}
-                                            className="px-6 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors font-medium"
-                                        >
-                                            ปิด
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    }
-                    {/* Quick Add Product Modal */}
-                    <ProductModal
-                        isOpen={showProductModal}
-                        onClose={() => setShowProductModal(false)}
-                        product={newProduct}
-                        onSave={handleSaveNewProduct}
-                    />
-
-                    {/* Customer Edit Modal */}
-                    <CustomerModal
-                        isOpen={showEditCustomerModal}
-                        onClose={() => setShowEditCustomerModal(false)}
-                        customer={customer}
-                        onSave={handleUpdateCustomer}
-                    />
-
-                    {/* Customer Add Modal */}
-                    <CustomerModal
-                        isOpen={showAddCustomerModal}
-                        onClose={() => setShowAddCustomerModal(false)}
-                        customer={null}
-                        onSave={handleAddNewCustomer}
-                    />
-
-                    {/* Sub Job Modal */}
-                    <SubJobModal
-                        isOpen={showSubJobModal}
-                        onClose={() => setShowSubJobModal(false)}
-                        item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
-                        onSave={handleSaveSubJob}
-                        customer={customer}
-                        availableTeams={availableTeams}
-                        readOnly={jobInfo.jobType !== 'separate'}
-                    />
-
-                    {/* Payment Entry Modal */}
-                    {/* Payment Entry Modal */}
-                    <PaymentEntryModal
-                        isOpen={showPaymentModal}
-                        onClose={() => {
-                            setShowPaymentModal(false)
-                            setEditingPaymentIndex(null)
-                        }}
-                        onSave={async (paymentData) => {
-                            // Upload slip if it's a File object
-                            let slipUrl = paymentData.slip
-                            if (paymentData.slip && paymentData.slip instanceof File) {
-                                console.log('[OrderFormClean] Uploading payment slip...')
-                                const paymentIndex = editingPaymentIndex !== null ? editingPaymentIndex : paymentSchedule.length
-                                // Use existing orderId or generate temporary one for new orders
-                                const uploadOrderId = router.query.id || `TEMP-${Date.now()}`
-                                slipUrl = await DataManager.uploadPaymentSlip(paymentData.slip, uploadOrderId, paymentIndex)
-                                if (!slipUrl) {
-                                    alert('ไม่สามารถอัพโหลดรูปสลิปได้ กรุณาลองใหม่อีกครั้ง')
-                                    return
-                                }
-                                console.log('[OrderFormClean] Slip uploaded:', slipUrl)
+                                )
                             }
-
-                            // Calculate amount based on mode
-                            const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
-                                if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
-                                    return sum
-                                }
-                                return sum + (parseFloat(p.amount) || 0)
-                            }, 0)
-                            const remainingForThis = total - otherPaymentsTotal
-                            const calculatedAmount = paymentData.amountMode === 'percent'
-                                ? (remainingForThis * (parseFloat(paymentData.percentValue) || 0)) / 100
-                                : parseFloat(paymentData.amount) || 0
-
-                            if (editingPaymentIndex !== null) {
-                                // Edit existing payment
-                                const newSchedule = [...paymentSchedule]
-                                newSchedule[editingPaymentIndex] = {
-                                    ...paymentData,
-                                    slip: slipUrl, // Store URL instead of File
-                                    amount: calculatedAmount
-                                }
-                                setPaymentSchedule(newSchedule)
-                            } else {
-                                // Add new payment
-                                setPaymentSchedule([...paymentSchedule, {
-                                    ...paymentData,
-                                    slip: slipUrl, // Store URL instead of File
-                                    amount: calculatedAmount
-                                }])
-                            }
-                        }}
-                        onDelete={() => {
-                            if (editingPaymentIndex !== null) {
-                                setPaymentSchedule(paymentSchedule.filter((_, i) => i !== editingPaymentIndex))
-                            }
-                        }}
-                        payment={editingPaymentIndex !== null ? paymentSchedule[editingPaymentIndex] : null}
-                        remainingBalance={(() => {
-                            // Calculate remaining balance excluding the payment being edited
-                            const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
-                                if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
-                                    return sum
-                                }
-                                return sum + (parseFloat(p.amount) || 0)
-                            }, 0)
-                            return total - otherPaymentsTotal
+                            return null
                         })()}
-                        isEditing={editingPaymentIndex !== null}
-                    />
+
+                        <a
+                            href={selectedMapLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary-500/30"
+                        >
+                            <MapPin size={20} />
+                            เปิดใน Google Maps
+                        </a>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="px-6 py-4 border-t border-secondary-200 bg-secondary-50 flex justify-end">
+                        <button
+                            onClick={() => setShowMapPopup(false)}
+                            className="px-6 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition-colors font-medium"
+                        >
+                            ปิด
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    {/* Quick Add Product Modal */ }
+    <ProductModal
+        isOpen={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        product={newProduct}
+        onSave={handleSaveNewProduct}
+    />
+
+    {/* Customer Edit Modal */ }
+    <CustomerModal
+        isOpen={showEditCustomerModal}
+        onClose={() => setShowEditCustomerModal(false)}
+        customer={customer}
+        onSave={handleUpdateCustomer}
+    />
+
+    {/* Customer Add Modal */ }
+    <CustomerModal
+        isOpen={showAddCustomerModal}
+        onClose={() => setShowAddCustomerModal(false)}
+        customer={null}
+        onSave={handleAddNewCustomer}
+    />
+
+    {/* Sub Job Modal */ }
+    <SubJobModal
+        isOpen={showSubJobModal}
+        onClose={() => setShowSubJobModal(false)}
+        item={currentSubJobItemIndex !== null ? items[currentSubJobItemIndex] : null}
+        onSave={handleSaveSubJob}
+        customer={customer}
+        availableTeams={availableTeams}
+        readOnly={jobInfo.jobType !== 'separate'}
+    />
+
+    {/* Payment Entry Modal */ }
+    {/* Payment Entry Modal */ }
+    <PaymentEntryModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+            setShowPaymentModal(false)
+            setEditingPaymentIndex(null)
+        }}
+        onSave={async (paymentData) => {
+            // Upload slip if it's a File object
+            let slipUrl = paymentData.slip
+            if (paymentData.slip && paymentData.slip instanceof File) {
+                console.log('[OrderFormClean] Uploading payment slip...')
+                const paymentIndex = editingPaymentIndex !== null ? editingPaymentIndex : paymentSchedule.length
+                // Use existing orderId or generate temporary one for new orders
+                const uploadOrderId = router.query.id || `TEMP-${Date.now()}`
+                slipUrl = await DataManager.uploadPaymentSlip(paymentData.slip, uploadOrderId, paymentIndex)
+                if (!slipUrl) {
+                    alert('ไม่สามารถอัพโหลดรูปสลิปได้ กรุณาลองใหม่อีกครั้ง')
+                    return
+                }
+                console.log('[OrderFormClean] Slip uploaded:', slipUrl)
+            }
+
+            // Calculate amount based on mode
+            const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
+                if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
+                    return sum
+                }
+                return sum + (parseFloat(p.amount) || 0)
+            }, 0)
+            const remainingForThis = total - otherPaymentsTotal
+            const calculatedAmount = paymentData.amountMode === 'percent'
+                ? (remainingForThis * (parseFloat(paymentData.percentValue) || 0)) / 100
+                : parseFloat(paymentData.amount) || 0
+
+            if (editingPaymentIndex !== null) {
+                // Edit existing payment
+                const newSchedule = [...paymentSchedule]
+                newSchedule[editingPaymentIndex] = {
+                    ...paymentData,
+                    slip: slipUrl, // Store URL instead of File
+                    amount: calculatedAmount
+                }
+                setPaymentSchedule(newSchedule)
+            } else {
+                // Add new payment
+                setPaymentSchedule([...paymentSchedule, {
+                    ...paymentData,
+                    slip: slipUrl, // Store URL instead of File
+                    amount: calculatedAmount
+                }])
+            }
+        }}
+        onDelete={() => {
+            if (editingPaymentIndex !== null) {
+                setPaymentSchedule(paymentSchedule.filter((_, i) => i !== editingPaymentIndex))
+            }
+        }}
+        payment={editingPaymentIndex !== null ? paymentSchedule[editingPaymentIndex] : null}
+        remainingBalance={(() => {
+            // Calculate remaining balance excluding the payment being edited
+            const otherPaymentsTotal = paymentSchedule.reduce((sum, p, idx) => {
+                if (editingPaymentIndex !== null && idx === editingPaymentIndex) {
+                    return sum
+                }
+                return sum + (parseFloat(p.amount) || 0)
+            }, 0)
+            return total - otherPaymentsTotal
+        })()}
+        isEditing={editingPaymentIndex !== null}
+    />
                 </div >
             </div >
         </AppLayout >
