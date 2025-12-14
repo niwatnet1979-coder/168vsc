@@ -98,7 +98,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
     return (
         <div className="space-y-6 pb-20">
             {/* Inspector Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
+            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4 hover:shadow-md transition-shadow duration-200">
                 <h3 className="font-bold text-lg text-secondary-900 mb-4">ผู้ตรวจงาน (Inspector)</h3>
 
                 {/* Signature */}

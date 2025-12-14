@@ -1,10 +1,10 @@
 import React from 'react'
-import { Wrench } from 'lucide-react'
+import { Wrench, Package } from 'lucide-react'
 import ProductCard from './ProductCard'
 import { currency } from '../lib/utils'
 import DataSourceTooltip from './DataSourceTooltip'
 
-export default function ProductDetailView({ product, onEdit, hideEditButton = false, className = '' }) {
+export default function ProductDetailView({ product, onEdit, hideEditButton = false, className = '', showHeader = true }) {
     if (!product) return null
 
     // Helper to safety check strings
@@ -30,7 +30,14 @@ export default function ProductDetailView({ product, onEdit, hideEditButton = fa
     }
 
     return (
-        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 flex flex-col ${className}`}>
+        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col hover:shadow-md transition-shadow duration-200 ${className}`}>
+            {showHeader && (
+                <div className="flex items-center gap-2 text-lg font-bold text-secondary-900 mb-4">
+                    <Package className="text-primary-600" size={24} />
+                    <h2>ข้อมูลสินค้า</h2>
+                </div>
+            )}
+
             {/* Product Card Summary */}
             <div className="mb-4">
                 <DataSourceTooltip isRealtime={false} source="Job Snapshot">

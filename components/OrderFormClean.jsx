@@ -106,7 +106,8 @@ export default function OrderForm() {
     }, [jobInfo]) // Only jobInfo as dependency
 
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
-    const [vatRate, setVatRate] = useState(0.07)
+    const [vatRate, setVatRate] = useState(0) // 0 or 0.07
+    const [vatIncluded, setVatIncluded] = useState(true) // Default INVAT)
     const [shippingFee, setShippingFee] = useState(0)
 
     const [paymentSchedule, setPaymentSchedule] = useState([])
@@ -272,6 +273,42 @@ export default function OrderForm() {
                             ...order.jobInfo,
                             description: order.note || order.jobInfo.description || ''
                         })
+                    }
+
+                    // Infer vatIncluded mode
+                    if (order.total && order.items && order.vatRate > 0) {
+                        try {
+                            const rawSub = order.items.reduce((s, i) => s + (Number(i.qty || 0) * Number(item_price_fix(i) || 0)), 0)
+                            // Helper for price (handle old/new structure if needed, but assuming unitPrice)
+                            // actually simpler:
+                            const rSub = order.items.reduce((s, i) => s + ((Number(i.qty) || 0) * (Number(i.unitPrice) || Number(i.price) || 0)), 0)
+
+                            const ship = Number(order.shippingFee || 0)
+
+                            let discAmt = 0
+                            if (order.discount) {
+                                discAmt = order.discount.mode === 'percent'
+                                    ? (rSub + ship) * (Number(order.discount.value) / 100)
+                                    : Number(order.discount.value)
+                            }
+                            const afterDisc = Math.max(0, rSub + ship - discAmt)
+
+                            // Compare total
+                            // If Total approx AfterDiscount => INVAT
+                            // If Total approx AfterDiscount * (1+vat) => EXVAT
+
+                            const diffInvat = Math.abs(Number(order.total) - afterDisc)
+                            const diffExvat = Math.abs(Number(order.total) - (afterDisc * (1 + Number(order.vatRate))))
+
+                            if (diffExvat < diffInvat && diffExvat < 5) { // 5 baht tolerance
+                                setVatIncluded(false)
+                            } else {
+                                setVatIncluded(true)
+                            }
+                        } catch (e) { console.warn('Error inferring vat mode', e) }
+                    } else if (order.vatRate > 0) {
+                        // If no items or calc fail, default true?
+                        setVatIncluded(true)
                     }
 
                     // Load items and fetch product images
@@ -786,8 +823,24 @@ export default function OrderForm() {
         ? (subtotal + Number(shippingFee)) * (Number(discount.value) / 100)
         : Number(discount.value)
     const afterDiscount = Math.max(0, subtotal + Number(shippingFee) - discountAmt)
-    const vatAmt = afterDiscount * vatRate
-    const total = afterDiscount + vatAmt
+
+    // VAT Calculation
+    let vatAmt = 0
+    if (vatRate > 0) {
+        if (vatIncluded) {
+            // Inclusive: Base = After / (1+rate) -> VAT = After - Base
+            const base = afterDiscount / (1 + Number(vatRate))
+            vatAmt = afterDiscount - base
+        } else {
+            // Exclusive: VAT = After * rate
+            vatAmt = afterDiscount * Number(vatRate)
+        }
+    }
+
+    // Total Calculation
+    // If INVAT: Total = AfterDiscount (VAT is inside)
+    // If EXVAT: Total = AfterDiscount + VAT
+    const total = vatIncluded ? afterDiscount : (afterDiscount + vatAmt)
     // Calculate total paid from payment schedule
     const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
     const outstanding = Math.max(0, total - totalPaid)
@@ -1297,6 +1350,8 @@ export default function OrderForm() {
                                         setShowPaymentModal(true)
                                     }}
                                     otherOutstandingOrders={otherOutstandingOrders}
+                                    vatIncluded={vatIncluded}
+                                    onVatIncludedChange={setVatIncluded}
                                 />
                             </div>
                         </div>

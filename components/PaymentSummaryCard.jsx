@@ -22,18 +22,22 @@ export default function PaymentSummaryCard({
     otherOutstandingOrders = [],
     className = '',
     promptpayQr = '',
-    showAddButton = false
+    showAddButton = false,
+    vatIncluded = true,
+    onVatIncludedChange
 }) {
     const [localShipping, setLocalShipping] = React.useState(shippingFee)
     const [localDiscount, setLocalDiscount] = React.useState(discount)
     const [localVatRate, setLocalVatRate] = React.useState(vatRate)
+    const [localVatIncluded, setLocalVatIncluded] = React.useState(vatIncluded)
     const [showQrPopup, setShowQrPopup] = React.useState(false)
 
     React.useEffect(() => {
         setLocalShipping(shippingFee)
         setLocalDiscount(discount)
         setLocalVatRate(vatRate)
-    }, [shippingFee, discount, vatRate])
+        setLocalVatIncluded(vatIncluded)
+    }, [shippingFee, discount, vatRate, vatIncluded])
 
     // Internal handlers to update parent immediately or local state
     const handleShippingChange = (val) => {
@@ -51,11 +55,45 @@ export default function PaymentSummaryCard({
         : numDiscountValue
 
     const afterDiscount = Math.max(0, numSubtotal + numShippingFee - discountAmt)
-    const vatAmt = afterDiscount * localVatRate
-    const total = afterDiscount + vatAmt
+
+    // VAT & Total Logic
+    let displayVatAmt = 0
+    let displayPreVat = 0
+    let total = 0
+
+    if (localVatRate > 0) {
+        if (localVatIncluded) {
+            // INVAT: Total = AfterDiscount
+            // PreVAT = Total / 1.07
+            // VAT = Total - PreVAT
+            total = afterDiscount
+            displayPreVat = total / (1 + localVatRate)
+            displayVatAmt = total - displayPreVat
+        } else {
+            // EXVAT: PreVAT = AfterDiscount
+            // VAT = PreVAT * 0.07
+            // Total = PreVAT + VAT
+            displayPreVat = afterDiscount
+            displayVatAmt = displayPreVat * localVatRate
+            total = displayPreVat + displayVatAmt
+        }
+    } else {
+        total = afterDiscount
+    }
 
     const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
     const outstanding = Math.max(0, total - totalPaid)
+
+    const handleVatModeChange = (isInvat) => {
+        setLocalVatIncluded(isInvat)
+        if (onVatIncludedChange) onVatIncludedChange(isInvat)
+        // Ensure VAT rate is set to 0.07 if it was 0, or keep it?
+        // If enabling mode, we assume user wants VAT.
+        if (localVatRate === 0) {
+            setLocalVatRate(0.07)
+            if (onVatRateChange) onVatRateChange(0.07)
+        }
+    }
 
     return (
         <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col hover:shadow-md transition-shadow duration-200 ${className}`}>
@@ -145,24 +183,49 @@ export default function PaymentSummaryCard({
                 </div>
 
                 {/* VAT */}
+                {/* Pre-VAT (Only for INVAT mode) */}
+                {localVatIncluded && localVatRate > 0 && (
+                    <div className="flex justify-between items-center text-secondary-500 text-xs">
+                        <span>ราคาก่อน VAT</span>
+                        <span>{currency(displayPreVat)}</span>
+                    </div>
+                )}
+
+                {/* VAT */}
                 <div className="flex justify-between items-center text-secondary-600">
-                    <span className="flex items-center gap-2">
-                        ภาษีมูลค่าเพิ่ม (7%)
+                    <div className="flex items-center gap-2">
+                        <span>ภาษีมูลค่าเพิ่ม</span>
                         {!readOnly && (
-                            <input
-                                type="checkbox"
-                                checked={localVatRate > 0}
-                                onChange={e => {
-                                    const newRate = e.target.checked ? 0.07 : 0
-                                    setLocalVatRate(newRate)
-                                    if (onVatRateChange) onVatRateChange(newRate)
+                            <select
+                                value={localVatRate === 0 ? 'novat' : (localVatIncluded ? 'invat' : 'exvat')}
+                                onChange={(e) => {
+                                    const mode = e.target.value
+                                    if (mode === 'novat') {
+                                        setLocalVatRate(0)
+                                        if (onVatRateChange) onVatRateChange(0)
+                                    } else if (mode === 'invat') {
+                                        setLocalVatRate(0.07)
+                                        setLocalVatIncluded(true)
+                                        if (onVatRateChange) onVatRateChange(0.07)
+                                        if (onVatIncludedChange) onVatIncludedChange(true)
+                                    } else if (mode === 'exvat') {
+                                        setLocalVatRate(0.07)
+                                        setLocalVatIncluded(false)
+                                        if (onVatRateChange) onVatRateChange(0.07)
+                                        if (onVatIncludedChange) onVatIncludedChange(false)
+                                    }
                                 }}
-                                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                            />
+                                className="ml-2 py-0.5 pl-2 pr-6 border border-secondary-300 rounded text-xs font-medium text-secondary-700 bg-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                                dir="ltr"
+                            >
+                                <option value="invat">INVAT (7%)</option>
+                                <option value="exvat">EXVAT (7%)</option>
+                                <option value="novat">NO VAT</option>
+                            </select>
                         )}
-                    </span>
+                    </div>
                     <span className={localVatRate > 0 ? "" : "text-gray-400"}>
-                        {localVatRate > 0 ? currency(vatAmt) : '-'}
+                        {localVatRate > 0 ? currency(displayVatAmt) : '-'}
                     </span>
                 </div>
 

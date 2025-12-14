@@ -21,6 +21,7 @@ import ProductDetailView from '../components/ProductDetailView'
 import PaymentSummaryCard from '../components/PaymentSummaryCard'
 import JobCompletionView from '../components/JobCompletionView'
 import CustomerInfoCard from '../components/CustomerInfoCard'
+import Card from '../components/Card'
 
 const formatDateForInput = (isoString) => {
     if (!isoString) return ''
@@ -131,8 +132,15 @@ export default function JobDetailPage() {
                             </div>
                         </div>
                     </div>
+
                     <div className="flex items-center gap-2">
-                        {/* Placeholder for page-level actions if needed */}
+                        <Link
+                            href={`/order?id=${job.orderId}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
+                        >
+                            <Edit size={16} />
+                            แก้ไข
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -149,92 +157,59 @@ export default function JobDetailPage() {
                 <div className="space-y-6">
 
                     {/* 2. Product Info (Now 2nd) */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
-                                <Package className="text-primary-600" size={24} />
-                                <h2>ข้อมูลสินค้า</h2>
-                            </div>
-                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
-                                <Edit size={16} />
-                                แก้ไข
-                            </button>
-                        </div>
-                        <ProductDetailView
-                            product={{
-                                ...job.product,
-                                productName: job.product?.name || job.productName,
-                                productId: job.product?.id || job.productId,
-                                price: job.product?.price || 0,
-                                variants: job.product?.variants || [],
-                            }}
-                            hideEditButton={true}
-                        />
-                    </div>
+                    <ProductDetailView
+                        product={{
+                            ...job.product,
+                            productName: job.product?.name || job.productName,
+                            productId: job.product?.id || job.productId,
+                            price: job.product?.price || 0,
+                            variants: job.product?.variants || [],
+                        }}
+                        hideEditButton={true}
+                    />
 
                     {/* 1. Job Info (Now 3rd) */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
-                                <Briefcase className="text-primary-600" size={24} />
-                                <h2>ข้อมูลงานย่อย</h2>
-                            </div>
-                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
-                                <Edit size={16} />
-                                แก้ไข
-                            </button>
-                        </div>
-                        <JobInfoCard
-                            data={{
-                                jobType: job.rawJobType || job.jobType,
-                                appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
-                                completionDate: formatDateForInput(job.completionDate),
-                                installLocationName: job.order?.job_info?.installLocationName || '',
-                                installAddress: job.address,
-                                googleMapLink: job.googleMapLink || '',
-                                distance: job.distance || '',
-                                inspector1: { name: job.inspector || '', phone: '' }, // Fallback since inspector1 might not be in joined job directly
-                                team: job.assignedTeam
-                            }}
-                            customer={job.customer}
-                            readOnly={true}
-                            showHeader={false}
-                        />
-                    </div>
+                    <JobInfoCard
+                        data={{
+                            jobType: job.rawJobType || job.jobType,
+                            appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
+                            completionDate: formatDateForInput(job.completionDate),
+                            installLocationName: job.order?.job_info?.installLocationName || '',
+                            installAddress: job.address,
+                            googleMapLink: job.googleMapLink || '',
+                            distance: job.distance || '',
+                            inspector1: { name: job.inspector || '', phone: '' }, // Fallback since inspector1 might not be in joined job directly
+                            team: job.assignedTeam
+                        }}
+                        customer={job.customer}
+                        readOnly={true}
+                        showHeader={true}
+                    />
 
                     {/* 3. Payment Info */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
-                                <CreditCard className="text-primary-600" size={24} />
-                                <h2>การชำระเงิน</h2>
-                            </div>
-                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
-                                <Edit size={16} />
-                                แก้ไข
-                            </button>
-                        </div>
-                        <PaymentSummaryCard
-                            subtotal={
-                                job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
-                                job.order?.total || 0
-                            }
-                            shippingFee={job.order?.shippingFee || 0}
-                            discount={job.order?.discount || { mode: 'percent', value: 0 }}
-                            paymentSchedule={job.order?.paymentSchedule || []}
-                            readOnly={true}
-                            otherOutstandingOrders={otherOutstandingOrders}
-                            hideControls={true}
-                        />
-                    </div>
+                    <PaymentSummaryCard
+                        subtotal={
+                            job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
+                            job.order?.total || 0
+                        }
+                        shippingFee={job.order?.shippingFee || 0}
+                        discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                        paymentSchedule={job.order?.paymentSchedule || []}
+                        readOnly={true}
+                        otherOutstandingOrders={otherOutstandingOrders}
+                        hideControls={true}
+                        promptpayQr={promptpayQr}
+                    />
 
                     {/* 4. Completion Info */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
+                    <Card
+                        title={(
+                            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                 <ClipboardCheck className="text-primary-600" size={24} />
-                                <h2>บันทึกงาน</h2>
-                            </div>
+                                บันทึกงาน
+                            </h2>
+                        )}
+                        actions={(
                             <button
                                 onClick={() => completionRef.current?.triggerSave()}
                                 className="px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm flex items-center gap-1"
@@ -242,15 +217,15 @@ export default function JobDetailPage() {
                                 <Save size={16} />
                                 บันทึก
                             </button>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
-                            <JobCompletionView
-                                ref={completionRef}
-                                job={job}
-                                onSave={() => router.reload()}
-                            />
-                        </div>
-                    </div>
+                        )}
+                        className="md:p-6" // Match styling of others
+                    >
+                        <JobCompletionView
+                            ref={completionRef}
+                            job={job}
+                            onSave={() => router.reload()}
+                        />
+                    </Card>
 
                 </div>
             </div>
