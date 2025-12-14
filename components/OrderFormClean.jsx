@@ -712,7 +712,7 @@ export default function OrderForm() {
                                             <div className="relative">
                                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
                                                 <div className="relative">
-                                                    <Search className="absolute left-3 top-3.5 text-secondary-400" size={18} />
+                                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
                                                     <input
                                                         type="text"
                                                         value={customer.name || ''}
@@ -722,11 +722,11 @@ export default function OrderForm() {
                                                         }}
                                                         onFocus={() => setShowCustomerDropdown(true)}
                                                         onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
-                                                        className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
                                                         placeholder="ค้นหาชื่อ, เบอร์โทร..."
                                                     />
                                                     {showCustomerDropdown && (
-                                                        <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                        <div className="absolute z-20 w-full mt-2 left-0 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                                             {customersData
                                                                 .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()) || (c.phone && c.phone.includes(customer.name)))
                                                                 .map(c => (
@@ -747,14 +747,13 @@ export default function OrderForm() {
                                                                     setShowAddCustomerModal(true)
                                                                     setShowCustomerDropdown(false)
                                                                 }}
-                                                                className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
+                                                                className="px-3 py-2 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
                                                             >
                                                                 <UserPlus size={16} /> เพิ่มลูกค้าใหม่
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-secondary-400 mt-2 text-center">* คลิกที่ช่องค้นหาเพื่อเลือกข้อมูลหรือพิมพ์เพื่อค้นหา</p>
                                             </div>
                                         </div>
                                     ) : null}
@@ -897,7 +896,7 @@ export default function OrderForm() {
                                                     <label className="block text-xs font-medium text-secondary-500 mb-1">ค้นหาใบกำกับภาษี</label>
                                                 </div>
                                                 <div className="relative">
-                                                    <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
                                                     <input
                                                         type="text"
                                                         value={taxInvoiceSearchTerm}
@@ -907,7 +906,7 @@ export default function OrderForm() {
                                                         }}
                                                         onFocus={() => setShowTaxInvoiceDropdown(true)}
                                                         onBlur={() => setTimeout(() => setShowTaxInvoiceDropdown(false), 200)}
-                                                        className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
                                                         placeholder="ค้นหาใบกำกับภาษี (ชื่อบริษัท / เลขผู้เสียภาษี)..."
                                                     />
                                                 </div>
