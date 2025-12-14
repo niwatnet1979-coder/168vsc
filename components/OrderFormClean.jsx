@@ -760,7 +760,7 @@ export default function OrderForm() {
 
                                     {/* Customer Details Card */}
                                     {customer.id && (
-                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-3">
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-2">
                                             {/* Header: Avatar, Name, Code */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
