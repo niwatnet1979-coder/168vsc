@@ -1058,12 +1058,9 @@ export default function OrderForm() {
 
                                     {/* Tax Invoice Delivery Address Selection - Always Visible */}
                                     <div className="space-y-3">
-                                        <label className="block text-sm font-medium text-secondary-700">
-                                            ที่อยู่จัดส่งใบกำกับภาษี
-                                        </label>
-
                                         {/* Address Selector Component */}
                                         <AddressSelector
+                                            label="ที่อยู่จัดส่งใบกำกับภาษี"
                                             addresses={[
                                                 // Function to construct options including "Same as Install"
                                                 ...(jobInfo.installAddress ? [{
