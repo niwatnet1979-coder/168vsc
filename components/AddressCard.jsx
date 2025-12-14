@@ -11,9 +11,7 @@ export default function AddressCard({
     variant = 'primary', // 'primary' | 'success'
     badge = null
 }) {
-    const isPrimary = variant === 'primary' || variant === 'transparent'
-    // Handle Transparent Variant
-    const isTransparent = variant === 'transparent'
+    const isTransparent = variant === 'transparent' || variant === 'seamless'
 
     // Determine styles based on variant
     let bgColor, borderColor, iconBgColor, iconColor
