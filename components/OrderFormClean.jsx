@@ -1017,8 +1017,10 @@ export default function OrderForm() {
                                                             if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
                                                             if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
                                                             if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                            if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                            if (addr.zipcode) p.push(addr.zipcode);
+                                                            const prov = addr.province || taxInvoice.province;
+                                                            if (prov) p.push(`จังหวัด ${prov}`);
+                                                            const zip = addr.zipcode || taxInvoice.zipcode;
+                                                            if (zip) p.push(zip);
                                                             const result = p.join(' ');
                                                             if (result) return result;
                                                         }
