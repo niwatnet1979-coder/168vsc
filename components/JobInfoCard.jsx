@@ -242,6 +242,7 @@ export default function JobInfoCard({
                             }}
                             placeholder="ค้นหาสถานที่ติดตั้ง..."
                             readOnly={readOnly}
+                            addressClassName="text-xs"
                         />
 
                         {/* Inspector Selection */}
