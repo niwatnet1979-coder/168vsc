@@ -29,6 +29,94 @@ export default function JobInfoCard({
         }
     }
 
+
+
+    // Read-Only View (Display Mode - Matches ProductDetailView style)
+    if (readOnly) {
+        const val = (v) => v || '-'
+        const getJobTypeLabel = (t) => {
+            if (t === 'installation') return 'งานติดตั้ง (Installation)'
+            if (t === 'delivery') return 'ขนส่ง (Delivery)'
+            if (t === 'separate') return 'งานแยก (Separate)'
+            return t || '-'
+        }
+
+        return (
+            <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 h-full flex flex-col ${className}`}>
+                {showHeader && (
+                    <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-4">
+                        <Wrench className="text-primary-600" />
+                        ข้อมูลงานหลัก
+                    </h2>
+                )}
+                <div className="space-y-3">
+                    {/* Job Type */}
+                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                        <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทงาน</label>
+                        <div className="text-sm font-medium text-secondary-900">{getJobTypeLabel(data.jobType)}</div>
+                    </div>
+
+                    {data.jobType !== 'separate' && (
+                        <>
+                            {/* Team */}
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">ทีม</label>
+                                <div className="text-sm font-medium text-secondary-900">{val(data.team)}</div>
+                            </div>
+
+                            {/* Dates Grid */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่นัดหมาย</label>
+                                    <div className="text-sm font-medium text-secondary-900">{val(data.appointmentDate?.replace('T', ' '))}</div>
+                                </div>
+                                {showCompletionDate && (
+                                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                        <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่สำเร็จ</label>
+                                        <div className="text-sm font-medium text-secondary-900">{val(data.completionDate?.replace('T', ' '))}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Location */}
+                            {(data.installAddress || data.installLocationName) && (
+                                <div className="mt-1">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
+                                    <DataSourceTooltip isRealtime={false} source="input/google_maps">
+                                        <AddressCard
+                                            title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
+                                            address={data.installAddress}
+                                            distance={data.distance}
+                                            mapLink={data.googleMapLink}
+                                            variant="primary"
+                                        />
+                                    </DataSourceTooltip>
+                                </div>
+                            )}
+
+                            {/* Inspector */}
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ตรวจงาน / รับสินค้า</label>
+                                <div className="flex items-center gap-2 text-sm font-medium text-secondary-900">
+                                    <span>{data.inspector1?.name || '-'}</span>
+                                    {data.inspector1?.phone && <span className="text-secondary-500 text-xs">({data.inspector1.phone})</span>}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Note */}
+                    {note && (
+                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                            <label className="block text-xs font-medium text-secondary-500 mb-1">รายละเอียด</label>
+                            <div className="text-sm font-medium text-secondary-900 opacity-80">{note}</div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <Card
             className={`flex flex-col h-full ${!showHeader ? 'border-0 shadow-none p-0' : 'md:p-6'} ${className}`}
