@@ -41,9 +41,11 @@ export default function AddressCard({
             contentClassName=""
         >
             <div className="flex items-start gap-3">
-                <div className={`p-2 bg-white rounded-lg border ${iconBgColor} ${isTransparent ? 'shadow-sm' : ''} mt-1`}>
-                    <MapPin size={20} className={iconColor} />
-                </div>
+                {!isTransparent && (
+                    <div className={`p-2 bg-white rounded-lg border ${iconBgColor} mt-1`}>
+                        <MapPin size={20} className={iconColor} />
+                    </div>
+                )}
                 <div className="flex-1 pr-6">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                         <h4 className="font-bold text-secondary-900 text-sm">

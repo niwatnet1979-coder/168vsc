@@ -84,17 +84,16 @@ export default function ContactSelector({
                         }
                     }}
                     className={`${variant === 'seamless'
-                            ? 'bg-transparent border-none p-0 cursor-pointer'
-                            : `${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200`
+                        ? 'bg-transparent border-none p-0 cursor-pointer'
+                        : `${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200`
                         } flex items-center justify-between`}
                 >
                     <div className="flex items-center gap-3 w-full">
-                        <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'seamless'
-                                ? 'border-secondary-100 shadow-sm'
-                                : variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'
-                            } flex items-center justify-center shrink-0`}>
-                            <User size={16} className={variant === 'seamless' ? 'text-secondary-600' : ''} />
-                        </div>
+                        {variant !== 'seamless' && (
+                            <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'} flex items-center justify-center shrink-0`}>
+                                <User size={16} />
+                            </div>
+                        )}
                         <div className="text-sm min-w-0">
                             <div className="font-medium text-secondary-900 truncate">{value.name}</div>
                             <div className="text-xs text-secondary-500 flex items-center gap-2 truncate">

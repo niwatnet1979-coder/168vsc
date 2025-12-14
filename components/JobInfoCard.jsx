@@ -187,7 +187,7 @@ export default function JobInfoCard({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-gray-400">
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่นัดหมาย</label>
-                                <DataSourceTooltip isRealtime={false} source="input" showHighlight={false}>
+                                <DataSourceTooltip isRealtime={false} source="input" showHighlight={false} className="w-full block">
                                     <input
                                         type="datetime-local"
                                         value={data.appointmentDate || ''}
@@ -350,7 +350,7 @@ export default function JobInfoCard({
                                                 });
                                             }
                                         }}
-                                        className="mt-1 cursor-pointer hover:bg-white rounded-lg transition-all border border-transparent hover:border-gray-400"
+                                        className="mt-1 cursor-pointer hover:bg-white rounded-lg transition-all border border-transparent hover:border-transparent"
                                     >
                                         <AddressCard
                                             title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
@@ -366,8 +366,9 @@ export default function JobInfoCard({
                         </div>
 
                         {/* Inspector Selection */}
-                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-secondary-300">
+                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-gray-400">
                             {/* Note: ContactSelector has its own label usage, but we wrap it for consistency */}
+                            <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ตรวจงาน / รับสินค้า</label>
                             <ContactSelector
                                 variant="seamless"
                                 label={null} // Hide internal label
@@ -389,7 +390,7 @@ export default function JobInfoCard({
 
                 {/* Notes Section */}
                 {data.jobType !== 'separate' && (
-                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-secondary-300">
+                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-gray-400">
                         <label className="block text-xs font-medium text-secondary-500 mb-1">รายละเอียด</label>
                         <textarea
                             rows={1}
