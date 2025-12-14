@@ -122,7 +122,14 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                                             : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
                                         }
                   `}
-                                    onClick={() => setIsSidebarOpen(false)}
+                                    onClick={(e) => {
+                                        setIsSidebarOpen(false)
+                                        // WORKAROUND: Force hard refresh when leaving mobile detail view to prevent stuck UI
+                                        if (router.pathname.includes('/mobile/') && router.pathname !== '/mobile' && item.path !== '/mobile') {
+                                            e.preventDefault()
+                                            window.location.href = item.path
+                                        }
+                                    }}
                                 >
                                     <item.icon
                                         size={20}

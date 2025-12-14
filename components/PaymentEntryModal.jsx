@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2 } from 'lucide-react'
+import { X, Trash2, QrCode } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { currency } from '../lib/utils'
+import { DataManager } from '../lib/dataManager'
 import Card from './Card'
 import DataSourceTooltip from './DataSourceTooltip'
 
@@ -12,7 +13,8 @@ export default function PaymentEntryModal({
     onDelete,
     payment = null,
     remainingBalance = 0,
-    isEditing = false
+    isEditing = false,
+    promptpayQr = '' // Added prop
 }) {
     const initialForm = {
         date: '',
@@ -26,6 +28,8 @@ export default function PaymentEntryModal({
     }
 
     const [formData, setFormData] = useState(initialForm)
+    const [qrUrl, setQrUrl] = useState(promptpayQr)
+    const [showQrPopup, setShowQrPopup] = useState(false)
 
     const receiverSigRef = useRef(null)
     const payerSigRef = useRef(null)
@@ -44,6 +48,15 @@ export default function PaymentEntryModal({
 
     useEffect(() => {
         if (!isOpen) return
+
+        // Fetch QR if not provided
+        if (!qrUrl && !promptpayQr) {
+            DataManager.getSettings().then(settings => {
+                if (settings?.promptpayQr) setQrUrl(settings.promptpayQr)
+            })
+        } else if (promptpayQr) {
+            setQrUrl(promptpayQr)
+        }
 
         if (payment) {
             // Normalize date to YYYY-MM-DD for date input
@@ -326,6 +339,23 @@ export default function PaymentEntryModal({
                             </button>
                         )}
                     </div>
+
+                    {/* QR Code Button */}
+                    <div className="flex-1 flex justify-center sm:justify-start">
+                        {qrUrl && (
+                            <button
+                                onClick={() => setShowQrPopup(true)}
+                                className="p-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors relative group"
+                                title="สแกน QR Code"
+                            >
+                                <QrCode size={24} />
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                                    สแกนจ่าย
+                                </span>
+                            </button>
+                        )}
+                    </div>
+
                     <div className="flex gap-3 w-full sm:w-auto">
                         <button
                             onClick={onClose}
@@ -342,6 +372,51 @@ export default function PaymentEntryModal({
                     </div>
                 </div>
             </div>
+
+            {/* QR Code Popup */}
+            {showQrPopup && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setShowQrPopup(false)}
+                >
+                    <div
+                        className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-auto relative animate-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setShowQrPopup(false)}
+                            className="absolute -top-3 -right-3 p-2 bg-white text-secondary-500 hover:text-danger-500 rounded-full shadow-lg border border-secondary-100 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="text-center">
+                            <h3 className="text-lg font-bold text-secondary-900 mb-1">สแกนเพื่อชำระเงิน</h3>
+                            <p className="text-secondary-500 text-sm mb-4">รองรับแอพธนาคารทุกธนาคาร</p>
+
+                            <div className="bg-white p-2 rounded-xl border border-secondary-200 shadow-inner inline-block">
+                                <img
+                                    src={qrUrl}
+                                    alt="PromptPay QR"
+                                    className="w-64 h-64 object-contain"
+                                />
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-secondary-100">
+                                <p className="text-secondary-500 text-sm mb-1">ยอดที่ต้องชำระ</p>
+                                <div className="text-3xl font-bold text-primary-600">
+                                    {currency(calculatedAmount)}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-center gap-2 text-success-600 font-medium text-sm bg-success-50 py-2 rounded-lg">
+                                <span className="w-2 h-2 rounded-full bg-success-600 animate-pulse"></span>
+                                พร้อมรับชำระ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

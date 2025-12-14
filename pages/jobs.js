@@ -32,26 +32,68 @@ export default function JobQueuePage() {
     // Sync allJobs to local formatted state and apply filters
     useEffect(() => {
         // 1. Map Data
-        const formattedJobs = allJobs.map(job => ({
-            uniqueId: job.id,
-            orderId: job.orderId,
-            customer: job.customerName,
-            product: {
-                id: job.productId,
-                name: job.productName || 'สินค้าไม่ระบุ',
-                image: job.productImage || null
-            },
-            jobType: job.jobType,
-            rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
-            assignedTeam: job.assignedTeam, // Needed for filtering
-            appointmentDate: job.jobDate ? `${job.jobDate}T${job.jobTime || '09:00'}` : '-',
-            team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'),
-            inspector: job.inspectorName || '-',
-            address: job.address,
-            status: job.status === 'Completed' ? 'เสร็จสิ้น' :
-                job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
-            priority: job.priority || 'Medium'
-        }))
+        const formattedJobs = allJobs.map(job => {
+            // Address Formatting Logic
+            let shortAddress = job.address || '-'
+            try {
+                // Try to get structured data from order delivery info
+                let deliveryInfo = job.order?.delivery_address_info
+                if (typeof deliveryInfo === 'string') {
+                    deliveryInfo = JSON.parse(deliveryInfo)
+                }
+
+                if (deliveryInfo && typeof deliveryInfo === 'object') {
+                    const parts = []
+                    if (deliveryInfo.label) parts.push(deliveryInfo.label)
+
+                    // Simple District/Province
+                    const district = deliveryInfo.addrAmphoe || deliveryInfo.amphoe
+                    const province = deliveryInfo.province || deliveryInfo.addrProvince
+
+                    if (district) parts.push(`อ.${district}`)
+                    if (province) parts.push(`จ.${province}`)
+
+                    if (parts.length > 0) {
+                        shortAddress = parts.join(' ')
+                    }
+                }
+            } catch (e) {
+                console.error('Address parsing error', e)
+            }
+
+            // Date Formatting Logic
+            let aptDate = '-'
+            if (job.jobDate) {
+                // Check if it's already a full ISO string (e.g. from Supabase timestamptz)
+                if (job.jobDate.includes('T')) {
+                    aptDate = job.jobDate
+                } else {
+                    aptDate = `${job.jobDate}T${job.jobTime || '09:00'}`
+                }
+            }
+
+            return {
+                uniqueId: job.id,
+                orderId: job.orderId,
+                customer: job.customerName,
+                product: {
+                    id: job.productId,
+                    name: job.productName || 'สินค้าไม่ระบุ',
+                    image: job.productImage || null
+                },
+                jobType: job.jobType,
+                rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
+                assignedTeam: job.assignedTeam, // Needed for filtering
+                appointmentDate: aptDate,
+                team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'),
+                inspector: job.inspectorName || '-',
+                address: shortAddress, // Updated to use short address
+                fullAddress: job.address, // Keep full address for tooltip if needed
+                status: job.status === 'Completed' ? 'เสร็จสิ้น' :
+                    job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
+                priority: job.priority || 'Medium'
+            }
+        })
 
         // 2. Sort by appointment date
         formattedJobs.sort((a, b) => {
@@ -63,12 +105,15 @@ export default function JobQueuePage() {
         // 3. Filter Logic
         const filteredDocs = formattedJobs.filter(job => {
             // Search filter
+            const searchLower = searchTerm.toLowerCase()
             const matchesSearch =
-                job.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                job.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                job.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (job.product.name && job.product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (job.team && job.team.toLowerCase().includes(searchTerm.toLowerCase()))
+                (job.uniqueId && job.uniqueId.toLowerCase().includes(searchLower)) ||
+                (job.orderId && job.orderId.toLowerCase().includes(searchLower)) ||
+                (job.customer && job.customer.toLowerCase().includes(searchLower)) ||
+                (job.product.name && job.product.name.toLowerCase().includes(searchLower)) ||
+                (job.assignedTeam && job.assignedTeam.toLowerCase().includes(searchLower)) ||
+                (job.address && job.address.toLowerCase().includes(searchLower)) ||
+                (job.inspector && job.inspector.toLowerCase().includes(searchLower))
 
             if (!matchesSearch) return false
 
@@ -125,6 +170,21 @@ export default function JobQueuePage() {
         }
     }
 
+    const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === '-') return '-'
+        const date = new Date(dateStr)
+        if (isNaN(date.getTime())) return '-'
+        // DD/MM/YYYY HH:MM (Gregorian Year)
+        return date.toLocaleString('en-GB', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        })
+    }
+
     return (
         <AppLayout
             renderHeader={({ setIsSidebarOpen }) => (
@@ -155,58 +215,58 @@ export default function JobQueuePage() {
 
             <div className="space-y-6 pt-6">
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Stats Cards - Compact Horizontal Layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div
                         onClick={() => setFilter('pending-install')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${filter === 'pending-install' ? 'border-danger-500 ring-1 ring-danger-500' : 'border-secondary-200 hover:border-danger-300'}`}
+                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-install' ? 'border-danger-500 ring-1 ring-danger-500' : 'border-secondary-200 hover:border-danger-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-danger-600 text-sm font-medium">คิวติดตั้งที่เหลือ</span>
-                            <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
-                                <Wrench size={20} />
-                            </div>
+                        <div>
+                            <div className="text-danger-600 text-xs font-medium mb-0.5">คิวติดตั้งที่เหลือ</div>
+                            <div className="text-2xl font-bold text-danger-700">{stats.pendingInstall}</div>
                         </div>
-                        <div className="text-3xl font-bold text-danger-700">{stats.pendingInstall}</div>
+                        <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
+                            <Wrench size={20} />
+                        </div>
                     </div>
 
                     <div
                         onClick={() => setFilter('pending-delivery')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${filter === 'pending-delivery' ? 'border-warning-500 ring-1 ring-warning-500' : 'border-secondary-200 hover:border-warning-300'}`}
+                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'pending-delivery' ? 'border-warning-500 ring-1 ring-warning-500' : 'border-secondary-200 hover:border-warning-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-warning-600 text-sm font-medium">คิวจัดส่งที่เหลือ</span>
-                            <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
-                                <Truck size={20} />
-                            </div>
+                        <div>
+                            <div className="text-warning-600 text-xs font-medium mb-0.5">คิวจัดส่งที่เหลือ</div>
+                            <div className="text-2xl font-bold text-warning-700">{stats.pendingDelivery}</div>
                         </div>
-                        <div className="text-3xl font-bold text-warning-700">{stats.pendingDelivery}</div>
+                        <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
+                            <Truck size={20} />
+                        </div>
                     </div>
 
                     <div
                         onClick={() => setFilter('completed')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${filter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
+                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'completed' ? 'border-success-500 ring-1 ring-success-500' : 'border-secondary-200 hover:border-success-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-success-600 text-sm font-medium">งานที่เสร็จแล้ว</span>
-                            <div className="p-2 bg-success-50 rounded-lg text-success-600">
-                                <CheckCircle size={20} />
-                            </div>
+                        <div>
+                            <div className="text-success-600 text-xs font-medium mb-0.5">งานที่เสร็จแล้ว</div>
+                            <div className="text-2xl font-bold text-success-700">{stats.completed}</div>
                         </div>
-                        <div className="text-3xl font-bold text-success-700">{stats.completed}</div>
+                        <div className="p-2 bg-success-50 rounded-lg text-success-600">
+                            <CheckCircle size={20} />
+                        </div>
                     </div>
 
                     <div
                         onClick={() => setFilter('all')}
-                        className={`bg-white p-5 rounded-xl border transition-all cursor-pointer hover:shadow-md ${filter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
+                        className={`bg-white px-4 py-3 rounded-xl border transition-all cursor-pointer hover:shadow-md flex items-center justify-between ${filter === 'all' ? 'border-primary-500 ring-1 ring-primary-500' : 'border-secondary-200 hover:border-primary-300'}`}
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-secondary-500 text-sm font-medium">งานทั้งหมด</span>
-                            <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
-                                <Briefcase size={20} />
-                            </div>
+                        <div>
+                            <div className="text-secondary-500 text-xs font-medium mb-0.5">งานทั้งหมด</div>
+                            <div className="text-2xl font-bold text-secondary-900">{stats.total}</div>
                         </div>
-                        <div className="text-3xl font-bold text-secondary-900">{stats.total}</div>
+                        <div className="p-2 bg-secondary-50 rounded-lg text-secondary-600">
+                            <Briefcase size={20} />
+                        </div>
                     </div>
                 </div>
 
@@ -240,24 +300,27 @@ export default function JobQueuePage() {
                         <table className="w-full">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">รหัสงาน</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่นัดหมาย</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สินค้า</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่นัดหมาย</th>
-
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ทีม/ประเภทงาน</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานที่ติดตั้ง / ขนส่ง</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">รหัสงาน</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-100">
                                 {paginatedJobs.length > 0 ? (
                                     paginatedJobs.map((job, i) => (
                                         <tr key={i} className="hover:bg-secondary-50 transition-colors">
+                                            {/* Date - Moved to First */}
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Link href={`/job?id=${job.uniqueId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                    {job.uniqueId}
+                                                <Link href={`/job?id=${job.uniqueId}`} className="group flex items-center gap-2 text-sm text-secondary-600 font-mono hover:text-primary-600">
+                                                    <Calendar size={14} className="text-secondary-400 group-hover:text-primary-500 transition-colors" />
+                                                    {formatDate(job.appointmentDate).replace(',', '')}
                                                 </Link>
                                             </td>
+
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-secondary-900">{job.customer}</div>
                                             </td>
@@ -276,20 +339,30 @@ export default function JobQueuePage() {
                                                     </div>
                                                 </div>
                                             </td>
+
+                                            {/* Job Type (Team) - Updated */}
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(job.rawJobType)}`}>
-                                                    {job.rawJobType === 'installation' ? <Wrench size={12} className="mr-1" /> :
-                                                        job.rawJobType === 'delivery' ? <Truck size={12} className="mr-1" /> : null}
-                                                    {job.jobType}
-                                                </span>
+                                                <div className="flex items-center justify-center gap-2 text-sm">
+                                                    {job.rawJobType === 'installation' ? (
+                                                        <div className="flex items-center gap-2 px-2 py-1 bg-danger-50 text-danger-700 rounded-md border border-danger-100">
+                                                            <Wrench size={14} />
+                                                            <span className="font-medium text-xs">{job.assignedTeam || 'ไม่ระบุทีม'}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 px-2 py-1 bg-warning-50 text-warning-700 rounded-md border border-warning-100">
+                                                            <Truck size={14} />
+                                                            <span className="font-medium text-xs">{job.assignedTeam || 'ไม่ระบุทีม'}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2 text-sm text-secondary-600">
-                                                    <Calendar size={14} className="text-secondary-400" />
-                                                    {job.appointmentDate !== '-' ? new Date(job.appointmentDate).toLocaleString('th-TH', {
-                                                        year: 'numeric', month: 'short', day: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit'
-                                                    }) : '-'}
+
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-start gap-2">
+                                                    <MapPin size={14} className="text-secondary-400 mt-1 flex-shrink-0" />
+                                                    <div className="text-sm text-secondary-600 leading-relaxed max-w-xs line-clamp-2">
+                                                        {job.address || '-'}
+                                                    </div>
                                                 </div>
                                             </td>
 
@@ -298,11 +371,18 @@ export default function JobQueuePage() {
                                                     {job.status}
                                                 </span>
                                             </td>
+
+                                            {/* Job ID - Moved to Last */}
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <Link href={`/job?id=${job.uniqueId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                    {job.uniqueId}
+                                                </Link>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <Briefcase size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคิวงาน</p>

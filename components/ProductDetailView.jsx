@@ -4,7 +4,7 @@ import ProductCard from './ProductCard'
 import { currency } from '../lib/utils'
 import DataSourceTooltip from './DataSourceTooltip'
 
-export default function ProductDetailView({ product, onEdit, hideEditButton = false }) {
+export default function ProductDetailView({ product, onEdit, hideEditButton = false, className = '' }) {
     if (!product) return null
 
     // Helper to safety check strings
@@ -30,7 +30,7 @@ export default function ProductDetailView({ product, onEdit, hideEditButton = fa
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4 h-full flex flex-col">
+        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 flex flex-col ${className}`}>
             {/* Product Card Summary */}
             <div className="mb-4">
                 <DataSourceTooltip isRealtime={false} source="Job Snapshot">

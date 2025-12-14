@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -6,74 +6,87 @@ import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
 import {
     ArrowLeft,
-    Calendar,
-    MapPin,
-    User,
-    Phone,
+    Save,
+    Printer,
+    Briefcase,
     Package,
-    Wrench,
-    Truck,
-    CheckCircle,
-    Clock,
-    AlertCircle,
-    Save
+    CreditCard,
+    ClipboardCheck,
+    Edit
 } from 'lucide-react'
+
+// Import Components
+import JobInfoCard from '../components/JobInfoCard'
+import ProductDetailView from '../components/ProductDetailView'
+import PaymentSummaryCard from '../components/PaymentSummaryCard'
+import JobCompletionView from '../components/JobCompletionView'
+import CustomerInfoCard from '../components/CustomerInfoCard'
+
+const formatDateForInput = (isoString) => {
+    if (!isoString) return ''
+    const date = new Date(isoString)
+    if (isNaN(date.getTime())) return '' // Invalid date
+    const pad = (n) => n < 10 ? '0' + n : n
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 export default function JobDetailPage() {
     const router = useRouter()
     const { id } = router.query
     const [job, setJob] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
+    const [promptpayQr, setPromptpayQr] = useState('')
+
+    // Ref for JobCompletionView
+    const completionRef = useRef(null)
 
     useEffect(() => {
-        if (!id) return
-
         const loadJobDetails = async () => {
+            if (!id) return
             try {
-                // Use DataManager to get job details from DB
-                const jobData = await DataManager.getJobById(id)
+                // Fetch all jobs to ensure we get joined data (customer, order, product) consistent with mobile view
+                const jobs = await DataManager.getJobs()
+                const foundJob = jobs.find(j => j.id === id)
 
-                if (jobData) {
-                    // Start: Fix "Invalid Date" by handling timestamp string correctly
-                    let dateStr = jobData.jobDate
-                    if (dateStr && dateStr.includes('T')) {
-                        dateStr = dateStr.split('T')[0]
-                    }
-                    const appointment = dateStr ? `${dateStr}T${jobData.jobTime || '09:00'}` : '-'
-                    // End: Fix "Invalid Date"
-
+                if (foundJob) {
                     setJob({
-                        uniqueId: jobData.uniqueId,
-                        orderId: jobData.orderId,
-                        customer: {
-                            name: jobData.customer?.name || jobData.customerName || 'Unknown',
-                            phone: jobData.customer?.phone || '-',
-                            address: jobData.address || jobData.customer?.address || '-'
-                        },
-                        product: {
-                            id: jobData.product?.id || jobData.productId,
-                            name: jobData.product?.name || jobData.productName,
-                            image: jobData.product?.image || jobData.product?.image_url || jobData.productImage,
-                            price: jobData.product?.price || 0
-                        },
-                        jobType: jobData.rawJobType || jobData.jobType,
-                        appointmentDate: appointment,
-                        team: jobData.team || jobData.assignedTeam || '-',
-                        inspector: jobData.inspector || '-',
-                        description: jobData.notes || jobData.description || '-',
-                        status: jobData.status || 'Pending'
+                        ...foundJob,
+                        uniqueId: foundJob.id
                     })
-                } else {
-                    setJob(null)
+
+                    // Fetch other orders for outstanding balance
+                    if (foundJob.customerId) {
+                        const customerOrders = await DataManager.getOrdersByCustomerId(foundJob.customerId)
+                        const other = customerOrders
+                            .filter(o => o.id !== foundJob.orderId)
+                            .map(o => {
+                                const paid = o.paymentSchedule?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
+                                const total = Number(o.totalAmount) || 0
+                                return {
+                                    id: o.id,
+                                    total,
+                                    paid,
+                                    outstanding: Math.max(0, total - paid)
+                                }
+                            })
+                            .filter(o => o.outstanding > 0)
+                        setOtherOutstandingOrders(other)
+                        setOtherOutstandingOrders(other)
+                    }
+
+                    // Fetch Settings for QR Code
+                    const settings = await DataManager.getSettings()
+                    if (settings && settings.promptpayQr) {
+                        setPromptpayQr(settings.promptpayQr)
+                    }
                 }
             } catch (error) {
-                console.error('Error loading job details:', error)
-                setJob(null)
+                console.error("Error loading job:", error)
             } finally {
                 setLoading(false)
             }
         }
-
         loadJobDetails()
     }, [id])
 
@@ -91,196 +104,154 @@ export default function JobDetailPage() {
         return (
             <AppLayout>
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                    <AlertCircle size={64} className="text-secondary-300 mb-4" />
                     <h1 className="text-2xl font-bold text-secondary-900">ไม่พบข้อมูลงาน</h1>
-                    <p className="text-secondary-500 mt-2">ไม่พบรหัสงาน {id} ในระบบ</p>
-                    <Link href="/jobs" className="mt-6 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-                        กลับไปหน้าคิวงาน
-                    </Link>
+                    <Link href="/jobs" className="mt-4 text-primary-600 hover:underline">กลับไปหน้าคิวงาน</Link>
                 </div>
             </AppLayout>
         )
     }
 
-    const getJobTypeIcon = (type) => {
-        if (type === 'installation') return <Wrench size={24} />
-        if (type === 'delivery') return <Truck size={24} />
-        return <Package size={24} />
-    }
-
-    const getJobTypeLabel = (type) => {
-        if (type === 'installation') return 'งานติดตั้ง'
-        if (type === 'delivery') return 'งานส่งของ'
-        return type
-    }
-
     return (
-        <AppLayout>
+        <AppLayout renderHeader={({ setIsSidebarOpen }) => (
+            <div className="bg-white border-b border-secondary-200 sticky top-0 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link href="/jobs" className="p-2 -ml-2 text-secondary-500 hover:text-secondary-900 rounded-full hover:bg-secondary-100 transition-colors">
+                            <ArrowLeft size={20} />
+                        </Link>
+                        <div>
+                            <h1 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
+                                {job.uniqueId}
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium border ${job.status === 'เสร็จสิ้น' ? 'bg-success-50 text-success-700 border-success-100' : 'bg-primary-50 text-primary-700 border-primary-100'}`}>
+                                    {job.status}
+                                </span>
+                            </h1>
+                            <div className="text-xs text-secondary-500 flex items-center gap-2">
+                                <span>Order ID: <Link href={`/order?id=${job.orderId}`} className="hover:underline hover:text-primary-600">{job.orderId}</Link></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {/* Placeholder for page-level actions if needed */}
+                    </div>
+                </div>
+            </div>
+        )}>
             <Head>
                 <title>รายละเอียดงาน {job.uniqueId} - 168VSC System</title>
             </Head>
 
-            <div className="space-y-6 max-w-5xl mx-auto">
-                {/* Back Button */}
-                <Link href="/jobs" className="inline-flex items-center text-secondary-500 hover:text-primary-600 transition-colors">
-                    <ArrowLeft size={20} className="mr-2" />
-                    กลับไปหน้าคิวงาน
-                </Link>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-                {/* Header Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-3xl font-bold text-secondary-900">{job.uniqueId}</h1>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${job.jobType === 'installation' ? 'bg-danger-50 text-danger-700 border-danger-100' :
-                                    job.jobType === 'delivery' ? 'bg-warning-50 text-warning-700 border-warning-100' :
-                                        'bg-secondary-50 text-secondary-700 border-secondary-100'
-                                    }`}>
-                                    <span className="flex items-center gap-1">
-                                        {getJobTypeIcon(job.jobType)}
-                                        {getJobTypeLabel(job.jobType)}
-                                    </span>
-                                </span>
+                {/* Customer Info Card - Added based on request */}
+                <CustomerInfoCard customer={job.customer} />
+
+                <div className="space-y-6">
+
+                    {/* 2. Product Info (Now 2nd) */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
+                                <Package className="text-primary-600" size={24} />
+                                <h2>ข้อมูลสินค้า</h2>
                             </div>
-                            <p className="text-secondary-500">
-                                Order ID: <Link href={`/order?id=${job.orderId}`} className="text-primary-600 hover:underline font-mono">{job.orderId}</Link>
-                            </p>
+                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
+                                <Edit size={16} />
+                                แก้ไข
+                            </button>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <div className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium ${job.status === 'Completed' ? 'bg-success-100 text-success-700' : 'bg-primary-100 text-primary-700'
-                                }`}>
-                                {job.status === 'Completed' ? <CheckCircle size={20} /> : <Clock size={20} />}
-                                {job.status}
-                            </div>
-                        </div>
+                        <ProductDetailView
+                            product={{
+                                ...job.product,
+                                productName: job.product?.name || job.productName,
+                                productId: job.product?.id || job.productId,
+                                price: job.product?.price || 0,
+                                variants: job.product?.variants || [],
+                            }}
+                            hideEditButton={true}
+                        />
                     </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Left Column: Job & Customer Info */}
-                    <div className="md:col-span-2 space-y-6">
-                        {/* Job Details */}
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-secondary-200 bg-secondary-50">
-                                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                                    <Calendar size={20} className="text-primary-600" />
-                                    ข้อมูลการนัดหมาย
-                                </h2>
+                    {/* 1. Job Info (Now 3rd) */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
+                                <Briefcase className="text-primary-600" size={24} />
+                                <h2>ข้อมูลงานย่อย</h2>
                             </div>
-                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-500 mb-1">วันที่และเวลา</label>
-                                    <div className="text-lg font-medium text-secondary-900">
-                                        {job.appointmentDate !== '-' ? new Date(job.appointmentDate).toLocaleString('th-TH', {
-                                            weekday: 'long',
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        }) : '-'}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-500 mb-1">ทีมช่างปฏิบัติงาน</label>
-                                    <div className="text-lg font-medium text-secondary-900 flex items-center gap-2">
-                                        <User size={18} className="text-secondary-400" />
-                                        {job.team}
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-secondary-500 mb-1">ผู้ตรวจงาน (Inspector)</label>
-                                    <div className="text-base text-secondary-900">
-                                        {job.inspector}
-                                    </div>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-secondary-500 mb-1">รายละเอียดเพิ่มเติม / หมายเหตุ</label>
-                                    <div className="p-3 bg-secondary-50 rounded-lg text-secondary-700 border border-secondary-100 min-h-[80px]">
-                                        {job.description}
-                                    </div>
-                                </div>
-                            </div>
+                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
+                                <Edit size={16} />
+                                แก้ไข
+                            </button>
                         </div>
+                        <JobInfoCard
+                            data={{
+                                jobType: job.rawJobType || job.jobType,
+                                appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
+                                completionDate: formatDateForInput(job.completionDate),
+                                installLocationName: job.order?.job_info?.installLocationName || '',
+                                installAddress: job.address,
+                                googleMapLink: job.googleMapLink || '',
+                                distance: job.distance || '',
+                                inspector1: { name: job.inspector || '', phone: '' }, // Fallback since inspector1 might not be in joined job directly
+                                team: job.assignedTeam
+                            }}
+                            customer={job.customer}
+                            readOnly={true}
+                            showHeader={false}
+                        />
+                    </div>
 
-                        {/* Product Details */}
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-secondary-200 bg-secondary-50">
-                                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                                    <Package size={20} className="text-primary-600" />
-                                    สินค้าที่ต้องดำเนินการ
-                                </h2>
+                    {/* 3. Payment Info */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
+                                <CreditCard className="text-primary-600" size={24} />
+                                <h2>การชำระเงิน</h2>
                             </div>
-                            <div className="p-6">
-                                <div className="flex gap-4">
-                                    <div className="w-24 h-24 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0 flex items-center justify-center">
-                                        {job.product.image ? (
-                                            <img src={job.product.image} alt={job.product.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Package size={32} className="text-secondary-300" />
-                                        )}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-secondary-900 mb-1">{job.product.name}</h3>
-                                        <p className="text-secondary-500 font-mono text-sm mb-2">{job.product.id}</p>
-                                        <div className="flex items-center gap-4 text-sm text-secondary-600">
-                                            <span className="bg-secondary-100 px-2 py-1 rounded">จำนวน: 1 ชิ้น</span>
-                                            <span className="bg-secondary-100 px-2 py-1 rounded">ราคา: ฿{parseInt(job.product.price).toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 text-sm font-medium hover:bg-primary-50 transition-colors">
+                                <Edit size={16} />
+                                แก้ไข
+                            </button>
+                        </div>
+                        <PaymentSummaryCard
+                            subtotal={
+                                job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
+                                job.order?.total || 0
+                            }
+                            shippingFee={job.order?.shippingFee || 0}
+                            discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                            paymentSchedule={job.order?.paymentSchedule || []}
+                            readOnly={true}
+                            otherOutstandingOrders={otherOutstandingOrders}
+                            hideControls={true}
+                        />
+                    </div>
+
+                    {/* 4. Completion Info */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-lg font-bold text-secondary-900">
+                                <ClipboardCheck className="text-primary-600" size={24} />
+                                <h2>บันทึกงาน</h2>
                             </div>
+                            <button
+                                onClick={() => completionRef.current?.triggerSave()}
+                                className="px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors shadow-sm flex items-center gap-1"
+                            >
+                                <Save size={16} />
+                                บันทึก
+                            </button>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                            <JobCompletionView
+                                ref={completionRef}
+                                job={job}
+                                onSave={() => router.reload()}
+                            />
                         </div>
                     </div>
 
-                    {/* Right Column: Customer & Location */}
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-secondary-200 bg-secondary-50">
-                                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                                    <User size={20} className="text-primary-600" />
-                                    ข้อมูลลูกค้า
-                                </h2>
-                            </div>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">ชื่อลูกค้า</label>
-                                    <div className="font-medium text-secondary-900">{job.customer.name}</div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">เบอร์โทรศัพท์</label>
-                                    <div className="flex items-center gap-2 text-secondary-900">
-                                        <Phone size={16} className="text-secondary-400" />
-                                        {job.customer.phone}
-                                    </div>
-                                </div>
-                                <hr className="border-secondary-100" />
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-500 uppercase mb-1">สถานที่ติดตั้ง / จัดส่ง</label>
-                                    <div className="flex items-start gap-2 text-secondary-900">
-                                        <MapPin size={18} className="text-secondary-400 mt-0.5 flex-shrink-0" />
-                                        <span className="leading-relaxed">{job.customer.address}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Actions (Placeholder for future features) */}
-                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                            <div className="px-6 py-4 border-b border-secondary-200 bg-secondary-50">
-                                <h2 className="text-lg font-bold text-secondary-900">การจัดการ</h2>
-                            </div>
-                            <div className="p-6 space-y-3">
-                                <button className="w-full py-2 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm">
-                                    อัปเดตสถานะงาน
-                                </button>
-                                <button className="w-full py-2 px-4 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors font-medium">
-                                    พิมพ์ใบงาน
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </AppLayout>

@@ -127,6 +127,8 @@ export default function OrderForm() {
     const [showOrderItemModal, setShowOrderItemModal] = useState(false)
     const [editingItemIndex, setEditingItemIndex] = useState(null)
 
+    const [promptpayQr, setPromptpayQr] = useState('')
+
     // --- Effects ---
     useEffect(() => {
         const loadData = async () => {
@@ -141,6 +143,16 @@ export default function OrderForm() {
             // Load Teams (filtered by team_type = ช่าง or QC)
             const teams = await DataManager.getAvailableTeams()
             setAvailableTeams(teams)
+
+            // Load Settings for PromptPay QR
+            try {
+                const settings = await DataManager.getSettings()
+                if (settings?.promptpayQr) {
+                    setPromptpayQr(settings.promptpayQr)
+                }
+            } catch (err) {
+                console.error('Error loading settings:', err)
+            }
         }
         loadData()
     }, [])
@@ -1275,6 +1287,7 @@ export default function OrderForm() {
                                     paymentSchedule={paymentSchedule}
                                     readOnly={false}
                                     hideControls={true}
+                                    promptpayQr={promptpayQr}
                                     onAddPayment={() => {
                                         setEditingPaymentIndex(null)
                                         setShowPaymentModal(true)

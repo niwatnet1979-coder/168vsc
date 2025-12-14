@@ -295,59 +295,6 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Inspector Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
-                <h3 className="font-bold text-lg text-secondary-900 mb-4">ผู้ตรวจงาน (Inspector)</h3>
-
-                {/* Signature */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">ลายเซ็นลูกค้า / ผู้ตรวจงาน</label>
-                    <div className="border border-secondary-300 rounded-lg overflow-hidden bg-gray-50 h-40 relative">
-                        <SignatureCanvas
-                            ref={sigCanvas}
-                            canvasProps={{
-                                className: 'sigCanvas w-full h-full',
-                                style: { width: '100%', height: '100%' }
-                            }}
-                            backgroundColor="rgba(249, 250, 251, 1)"
-                        />
-                        <button
-                            onClick={() => sigCanvas.current.clear()}
-                            className="absolute top-2 right-2 p-1 bg-white rounded-full shadow border border-gray-200 text-xs text-gray-500"
-                        >
-                            ล้าง
-                        </button>
-                    </div>
-                </div>
-
-                {/* Rating */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">ให้คะแนนความพึงพอใจ</label>
-                    <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map(star => (
-                            <button
-                                key={star}
-                                onClick={() => setRating(star)}
-                                className={`p - 1 transition - transform active: scale - 95 ${rating >= star ? 'text-yellow-400' : 'text-gray-300'} `}
-                            >
-                                <Star fill={rating >= star ? "currentColor" : "none"} size={32} />
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Comment */}
-                <div className="mb-2">
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">ความคิดเห็นเพิ่มเติม</label>
-                    <textarea
-                        value={comment}
-                        onChange={e => setComment(e.target.value)}
-                        placeholder="ข้อความถึงช่างหรือพนักงานขนส่ง..."
-                        className="w-full p-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-sm h-24"
-                    />
-                </div>
-            </div>
-
             {/* Media Section */}
             <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-4">
                 <div className="flex items-center gap-2 text-secondary-900 font-bold text-lg mb-4">

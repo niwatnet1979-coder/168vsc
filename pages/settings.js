@@ -42,7 +42,8 @@ export default function SettingsPage() {
         email: 'contact@168lighting.com',
         taxId: '0135566027619',
         vatRegistered: true,
-        vatRate: 7
+        vatRate: 7,
+        promptpayQr: ''
     })
     const [isSaved, setIsSaved] = useState(false)
 
@@ -123,7 +124,8 @@ export default function SettingsPage() {
                     email: settings.shopEmail,
                     taxId: settings.shopTaxId,
                     vatRegistered: settings.vatRegistered,
-                    vatRate: settings.vatRate
+                    vatRate: settings.vatRate,
+                    promptpayQr: settings.promptpayQr || ''
                 })
 
                 // Merge product options with defaults
@@ -162,6 +164,7 @@ export default function SettingsPage() {
                             shopTaxId: shopSettings.taxId,
                             vatRegistered: shopSettings.vatRegistered,
                             vatRate: shopSettings.vatRate,
+                            promptpayQr: shopSettings.promptpayQr,
                             systemOptions: parsedOptions
                         })
                         console.log('Migrated localStorage data to Supabase')
@@ -187,6 +190,7 @@ export default function SettingsPage() {
             shopTaxId: shopSettings.taxId,
             vatRegistered: shopSettings.vatRegistered,
             vatRate: shopSettings.vatRate,
+            promptpayQr: shopSettings.promptpayQr,
             systemOptions: productOptions
         })
 
@@ -216,6 +220,23 @@ export default function SettingsPage() {
             const updatedOptions = { ...productOptions, [type]: updatedList }
             setProductOptions(updatedOptions)
             await DataManager.saveProductOptions(updatedOptions)
+        }
+    }
+
+    const handleUploadQR = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+
+        try {
+            const result = await DataManager.uploadShopAsset(file)
+            if (result.success) {
+                setShopSettings(prev => ({ ...prev, promptpayQr: result.url }))
+            } else {
+                alert(`อัพโหลดไม่สำเร็จ: ${result.error}`)
+            }
+        } catch (err) {
+            console.error(err)
+            alert('เกิดข้อผิดพลาดในการอัพโหลด')
         }
     }
 
@@ -329,6 +350,52 @@ export default function SettingsPage() {
                                                 onChange={e => setShopSettings({ ...shopSettings, taxId: e.target.value })}
                                                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-secondary-700 mb-1">QR Code รับเงิน (PromptPay)</label>
+                                            <div className="flex items-center gap-6 p-4 border border-secondary-200 rounded-lg bg-secondary-50">
+                                                {shopSettings.promptpayQr ? (
+                                                    <div className="relative group">
+                                                        <img
+                                                            src={shopSettings.promptpayQr}
+                                                            alt="PromptPay QR"
+                                                            className="w-32 h-32 object-contain border border-white shadow-sm rounded-lg bg-white"
+                                                        />
+                                                        <button
+                                                            onClick={() => setShopSettings({ ...shopSettings, promptpayQr: '' })}
+                                                            className="absolute -top-2 -right-2 bg-danger-500 text-white rounded-full p-1 shadow-md hover:bg-danger-600 transition-transform hover:scale-110"
+                                                            title="ลบรูปภาพ"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-32 h-32 border-2 border-dashed border-secondary-300 rounded-lg flex items-center justify-center bg-white text-secondary-400">
+                                                        <div className="text-center">
+                                                            <CreditCard className="mx-auto mb-1 opacity-50" size={24} />
+                                                            <span className="text-xs">ไม่มีรูปภาพ</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleUploadQR}
+                                                        className="block w-full text-sm text-secondary-500
+                                                            file:mr-4 file:py-2.5 file:px-4
+                                                            file:rounded-lg file:border-0
+                                                            file:text-sm file:font-semibold
+                                                            file:bg-primary-600 file:text-white
+                                                            hover:file:bg-primary-700
+                                                            cursor-pointer file:cursor-pointer"
+                                                    />
+                                                    <p className="text-xs text-secondary-500 mt-2">
+                                                        อัพโหลดรูปภาพ QR Code สำหรับรับชำระเงิน (.jpg, .png)
+                                                        <br />รูปภาพนี้จะถูกแสดงในหน้าแจ้งชำระเงินของลูกค้า
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

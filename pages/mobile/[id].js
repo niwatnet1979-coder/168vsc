@@ -23,6 +23,7 @@ import PaymentSummaryCard from '../../components/PaymentSummaryCard'
 import PaymentEntryModal from '../../components/PaymentEntryModal'
 
 import ProductDetailView from '../../components/ProductDetailView'
+import JobInspectorView from '../../components/JobInspectorView'
 import JobCompletionView from '../../components/JobCompletionView'
 
 const formatDateForInput = (isoString) => {
@@ -42,6 +43,7 @@ export default function MobileJobDetail() {
     const [customer, setCustomer] = useState(null)
     const [product, setProduct] = useState(null)
     const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
+    const [promptpayQr, setPromptpayQr] = useState('')
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
 
@@ -53,8 +55,9 @@ export default function MobileJobDetail() {
     // Product Tab State
     const [isEditingProduct, setIsEditingProduct] = useState(false)
 
-    // Ref for JobCompletionView (must be declared before conditional returns)
+    // Ref for views
     const jobCompletionRef = useRef(null)
+    const jobInspectorRef = useRef(null)
     const orderItemModalRef = useRef(null)
 
     const loadJobDetails = async () => {
@@ -98,6 +101,12 @@ export default function MobileJobDetail() {
             // Use joined data from DataManager
             setCustomer(foundJob.customer)
             setProduct(foundJob.product)
+
+            // Fetch Settings
+            const settings = await DataManager.getSettings()
+            if (settings && settings.promptpayQr) {
+                setPromptpayQr(settings.promptpayQr)
+            }
 
             setLoading(false)
         } catch (error) {
@@ -240,7 +249,8 @@ export default function MobileJobDetail() {
         { id: 'customer', label: 'ข้อมูลงานย่อย', icon: Wrench },
         { id: 'product', label: 'ข้อมูลสินค้า', icon: Package },
         { id: 'payment', label: 'การชำระเงิน', icon: CreditCard },
-        { id: 'completion', label: 'บันทึกงาน', icon: ClipboardCheck }
+        { id: 'completion', label: 'บันทึกงาน', icon: Camera },
+        { id: 'inspection', label: 'ตรวจรับงาน', icon: ClipboardCheck }
     ]
 
 
@@ -273,6 +283,14 @@ export default function MobileJobDetail() {
                                 <button
                                     onClick={() => jobCompletionRef.current?.triggerSave()}
                                     className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${activeTab === 'completion' ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}
+                                >
+                                    บันทึก
+                                </button>
+
+                                {/* Inspection: Save */}
+                                <button
+                                    onClick={() => jobInspectorRef.current?.triggerSave()}
+                                    className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${activeTab === 'inspection' ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}
                                 >
                                     บันทึก
                                 </button>
@@ -337,207 +355,159 @@ export default function MobileJobDetail() {
                             </div>
                         </header>
 
-                        {/* Tabs (Grid for Balance) */}
-                        <div className="grid grid-cols-4 border-b border-secondary-200">
+                        {/* Tabs */}
+                        <div className="flex overflow-x-auto no-scrollbar border-b border-secondary-200">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon
+                                const isActive = activeTab === tab.id
                                 return (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex flex-col items-center justify-center py-2 px-1 text-[10px] sm:text-xs font-medium transition-colors border-b-2 ${activeTab === tab.id
-                                            ? 'border-primary-600 text-primary-600 bg-primary-50'
-                                            : 'border-transparent text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                                        className={`flex-1 min-w-[80px] py-3 flex flex-col items-center gap-1 text-[10px] sm:text-xs font-medium border-b-2 transition-colors whitespace-nowrap px-2 ${isActive
+                                            ? 'border-primary-600 text-primary-700 bg-primary-50/50'
+                                            : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50'
                                             }`}
                                     >
-                                        <Icon size={18} className="mb-1" />
-                                        <span className="truncate w-full text-center">{tab.label}</span>
+                                        <Icon size={isActive ? 20 : 18} />
+                                        <span>{tab.label}</span>
                                     </button>
                                 )
                             })}
                         </div>
                     </div>
-                )}
-            >
-                <div className="bg-secondary-50 min-h-screen pb-20">
-                    <Head>
-                        <title>Job {job.id} | Mobile</title>
-                    </Head>
+                )}>
+                <Head>
+                    <title>
+                        {job.id} - {activeTab === 'customer' ? 'ข้อมูลงาน' :
+                            activeTab === 'product' ? 'ข้อมูลสินค้า' :
+                                activeTab === 'payment' ? 'การชำระเงิน' :
+                                    activeTab === 'inspection' ? 'ตรวจรับงาน' : 'บันทึกงาน'}
+                    </title>
+                </Head>
 
-                    <div className="max-w-md mx-auto p-4 space-y-4">
+                <OrderItemModal
+                    ref={orderItemModalRef}
+                    isOpen={false} // Hidden, controlled by views via logic if needed
+                    onClose={() => setIsEditingProduct(false)}
+                    onSave={async (updatedItem) => {
+                        // ... logic kept same but ensured balanced
+                        try {
+                            const itemIndex = job.order?.items?.findIndex(i =>
+                                i.subJob?.jobId === job.id ||
+                                i.code === product.code
+                            )
 
-                        {/* Tab 1: Customer Details */}
-                        {activeTab === 'customer' && (
-                            <div className="space-y-4">
-                                <JobInfoCard
-                                    data={{
-                                        jobType: job.jobType,
-                                        appointmentDate: formatDateForInput(job.jobDate),
-                                        completionDate: formatDateForInput(job.completionDate || job.order?.job_info?.completionDate),
-                                        installLocationName: job.order?.job_info?.installLocationName || '',
-                                        installAddress: job.address,
-                                        googleMapLink: job.googleMapLink || '',
-                                        distance: job.distance || '',
-                                        inspector1: job.order?.job_info?.inspector1 || { name: '', phone: '' },
-                                        team: job.assignedTeam
-                                    }}
-                                    onChange={() => { }} // ReadOnly
-                                    customer={customer || {}} // Pass customer for inspector selection if needed (though read only)
-                                    availableTeams={[job.assignedTeam]} // Just show the assigned team
-                                    note={job.notes}
-                                    onNoteChange={() => { }}
-                                    showCompletionDate={true}
-                                    showHeader={false}
-                                    readOnly={true}
-                                />
+                            if (itemIndex === -1) throw new Error('Could not find item to update')
 
-                            </div>
-                        )}
+                            const cleanOrderItems = job.order.items.map(i => ({ ...i }))
+                            cleanOrderItems[itemIndex] = {
+                                ...cleanOrderItems[itemIndex],
+                                ...updatedItem,
+                                subJob: cleanOrderItems[itemIndex].subJob
+                            }
 
-                        {/* Tab 2: Product Details */}
-                        {activeTab === 'product' && (
-                            <div className="h-[600px]">
-                                {!isEditingProduct ? (
-                                    <ProductDetailView
-                                        product={{
-                                            ...job.product,
-                                            productName: job.productName,
-                                            productId: job.productId,
-                                            price: job.product?.price || 0,
-                                            // Map scalar options if present in job or job.product
-                                            // Note: job.product might be rich object from DB
-                                            variants: job.product?.variants || [],
-                                        }}
-                                        onEdit={() => setIsEditingProduct(true)}
-                                        hideEditButton={true}
-                                    />
-                                ) : (
-                                    <OrderItemModal
-                                        ref={orderItemModalRef}
-                                        isOpen={true}
-                                        onClose={() => setIsEditingProduct(false)}
-                                        isInline={true}
-                                        isEditing={true}
-                                        hideControls={true} // Hide internal buttons
-                                        item={{
-                                            ...job.product,
-                                            code: job.productId,
-                                            product_code: job.productId,
-                                            name: job.productName,
-                                            // Ensure numeric values
-                                            qty: 1,
-                                            unitPrice: job.product?.price || 0,
-                                            image: job.productImage,
-                                            // Pass variants if available in product object, else let modal fetch them
-                                        }}
-                                        onSave={(updatedItem) => {
-                                            console.log('Product Update Simulated:', updatedItem)
-                                            // In a real scenario, this would call DataManager.updateJobProduct
-                                            // For now, simulate save and exit edit mode
-                                            alert('บันทึกข้อมูลแล้ว (Simulation)')
-                                            setIsEditingProduct(false)
-                                        }}
-                                        productsData={[]}
-                                    />
-                                )}
-                            </div>
-                        )}
+                            const updatedOrder = {
+                                ...job.order,
+                                items: cleanOrderItems,
+                            }
 
-                        {/* Tab 3: Payment (Replaced with PaymentSummaryCard) */}
-                        {activeTab === 'payment' && (
-                            <div className="h-full">
-                                <PaymentSummaryCard
-                                    subtotal={
-                                        job.order?.items?.reduce((sum, item) => sum + (Number(item.qty || 0) * Number(item.unitPrice || 0)), 0) ||
-                                        job.order?.total || 0
-                                    }
-                                    shippingFee={job.order?.shippingFee || 0}
-                                    onShippingFeeChange={(val) => {
-                                        const newOrder = { ...job.order, shippingFee: val }
-                                        setJob({ ...job, order: newOrder })
-                                    }}
-                                    discount={job.order?.discount || { mode: 'percent', value: 0 }}
-                                    onDiscountChange={(val) => {
-                                        const newOrder = { ...job.order, discount: val }
-                                        setJob({ ...job, order: newOrder })
-                                    }}
-                                    vatRate={0.07}
-                                    onVatRateChange={(val) => {
-                                        // Assume VAT rate isn't properly stored in order object for now, or just fixed logic
-                                        // The component handles local visual update, but we don't have a 'vatRate' field in DB usually?
-                                        // Let's assume we don't save VAT rate change for now or strict 7%
-                                        // But for UI feedback:
-                                        // const newOrder = { ...job.order, vatRate: val } 
-                                    }}
-                                    paymentSchedule={job.order?.paymentSchedule || []}
-                                    readOnly={!isEditingPayment}
-                                    onEdit={() => setIsEditingPayment(true)}
-                                    // Controls now handled by Header
-                                    hideControls={true}
-                                    otherOutstandingOrders={otherOutstandingOrders}
+                            await DataManager.saveOrder(updatedOrder)
+                            setIsEditingProduct(false)
+                            loadJobDetails()
+                        } catch (e) {
+                            console.error(e)
+                            alert('เกิดข้อผิดพลาดในการบันทึกสินค้า')
+                        }
+                    }}
+                    product={product}
+                    mode="edit"
+                />
 
-                                    onSave={handleSavePaymentSummary}
-                                    onCancel={() => {
-                                        setIsEditingPayment(false)
-                                        // Revert changes? Ideally yes. For now, simple toggle.
-                                        // To implement revert, we need a separate 'originalOrder' state or re-fetch.
-                                        // For this scope, let's keep it simple: cancel just exits, but changes to state persisted in memory.
-                                        // Better: modify local state only in component? 
-                                        // Actually PaymentSummaryCard uses LOCAL state for inputs, 
-                                        // so onCancel just exits readMode, effectively ignoring local inputs if we didn't push them up.
-                                        // BUT onShippingFeeChange pushes up immediately. 
-                                        // To fix properly: PaymentSummary should only fire changes on Save? 
-                                        // Or parent should hold temp state. 
-                                        // Given current structure: we are updating `job` state directly. 
-                                        // So "Cancel" is actually "Stop Editing" but changes remain in memory until page refresh.
-                                    }}
-                                    onAddPayment={() => {
-                                        setEditingPaymentIndex(null)
-                                        setShowPaymentModal(true)
-                                    }}
-                                    onEditPayment={(index) => {
-                                        setEditingPaymentIndex(index)
-                                        setShowPaymentModal(true)
-                                    }}
-                                />
+                <PaymentEntryModal
+                    isOpen={showPaymentModal}
+                    onClose={() => {
+                        setShowPaymentModal(false)
+                        setEditingPaymentIndex(null)
+                    }}
+                    payment={editingPaymentIndex !== null ? job.order?.paymentSchedule?.[editingPaymentIndex] : null}
+                    onSave={handleSavePayment}
+                    onDelete={handleDeletePayment}
+                />
 
-                                {/* Payment Entry Modal */}
-                                {showPaymentModal && (
-                                    <PaymentEntryModal
-                                        isOpen={showPaymentModal}
-                                        onClose={() => {
-                                            setShowPaymentModal(false)
-                                            setEditingPaymentIndex(null)
-                                        }}
-                                        onSave={handleSavePayment}
-                                        onDelete={handleDeletePayment}
-                                        payment={editingPaymentIndex !== null ? (job.order?.paymentSchedule?.[editingPaymentIndex] || null) : null}
-                                        remainingBalance={(() => {
-                                            const total = job.order?.total || 0
-                                            const currentSchedule = job.order?.paymentSchedule || []
-                                            const otherPaymentsTotal = currentSchedule.reduce((sum, p, idx) => {
-                                                if (editingPaymentIndex !== null && idx === editingPaymentIndex) return sum
-                                                return sum + (Number(p.amount) || 0)
-                                            }, 0)
-                                            return total - otherPaymentsTotal
-                                        })()}
-                                        isEditing={editingPaymentIndex !== null}
-                                    />
-                                )}
-                            </div>
-                        )}
+                {/* Content Area */}
+                <main className="max-w-md mx-auto pb-24 pt-4 px-4">
+                    {activeTab === 'customer' && (
+                        <JobInfoCard
+                            data={{
+                                jobType: job.rawJobType || job.jobType,
+                                appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
+                                completionDate: formatDateForInput(job.completionDate),
+                                installLocationName: job.order?.job_info?.installLocationName || '',
+                                installAddress: job.address,
+                                googleMapLink: job.googleMapLink || '',
+                                distance: job.distance || '',
+                                inspector1: { name: job.inspector || '', phone: '' },
+                                team: job.assignedTeam
+                            }}
+                            customer={customer}
+                            readOnly={true}
+                        />
+                    )}
 
-                        {/* Tab 4: Job Completion */}
-                        {activeTab === 'completion' && (
-                            <JobCompletionView
-                                ref={jobCompletionRef}
-                                job={job}
-                                onSave={() => router.push('/mobile')}
+                    {activeTab === 'product' && (
+                        <ProductDetailView
+                            product={{
+                                ...product,
+                                productName: product?.name || job.productName,
+                                productId: product?.id || job.productId,
+                                price: product?.price || 0,
+                                variants: product?.variants || [],
+                            }}
+                            onEdit={() => setIsEditingProduct(true)}
+                            hideEditButton={true}
+                        />
+                    )}
+
+                    {activeTab === 'payment' && (
+                        <div className="space-y-4">
+                            <PaymentSummaryCard
+                                subtotal={customer?.orders?.find(o => o.id === job.orderId)?.total || job.order?.total || 0}
+                                shippingFee={job.order?.shippingFee || 0}
+                                discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                                paymentSchedule={job.order?.paymentSchedule || []}
+                                onEdit={() => setIsEditingPayment(true)}
+                                readOnly={true}
+                                otherOutstandingOrders={otherOutstandingOrders}
+                                promptpayQr={promptpayQr}
+                                hideControls={true}
+                                showAddButton={true}
+                                onAddPayment={() => {
+                                    setEditingPaymentIndex(null)
+                                    setShowPaymentModal(true)
+                                }}
                             />
-                        )}
-                    </div>
-                </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'completion' && (
+                        <JobCompletionView
+                            ref={jobCompletionRef}
+                            job={job}
+                            onSave={() => loadJobDetails()}
+                        />
+                    )}
+
+                    {activeTab === 'inspection' && (
+                        <JobInspectorView
+                            ref={jobInspectorRef}
+                            job={job}
+                            onSave={() => loadJobDetails()}
+                        />
+                    )}
+                </main>
+
             </AppLayout>
-        </ProtectedRoute >
+        </ProtectedRoute>
     )
 }

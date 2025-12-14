@@ -1,5 +1,5 @@
 import React from 'react'
-import { CreditCard, Plus } from 'lucide-react'
+import { CreditCard, Plus, QrCode, X } from 'lucide-react'
 import { currency } from '../lib/utils'
 import DataSourceTooltip from './DataSourceTooltip'
 
@@ -19,11 +19,15 @@ export default function PaymentSummaryCard({
     onSave,
     onCancel,
     hideControls = false,
-    otherOutstandingOrders = []
+    otherOutstandingOrders = [],
+    className = '',
+    promptpayQr = '',
+    showAddButton = false
 }) {
     const [localShipping, setLocalShipping] = React.useState(shippingFee)
     const [localDiscount, setLocalDiscount] = React.useState(discount)
     const [localVatRate, setLocalVatRate] = React.useState(vatRate)
+    const [showQrPopup, setShowQrPopup] = React.useState(false)
 
     React.useEffect(() => {
         setLocalShipping(shippingFee)
@@ -54,11 +58,22 @@ export default function PaymentSummaryCard({
     const outstanding = Math.max(0, total - totalPaid)
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 h-full flex flex-col">
-            <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                <CreditCard className="text-primary-600" />
-                สรุปยอดชำระ
-            </h2>
+        <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-6 flex flex-col hover:shadow-md transition-shadow duration-200 ${className}`}>
+            <div className="flex justify-between items-start mb-4">
+                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                    <CreditCard className="text-primary-600" />
+                    สรุปยอดชำระ
+                </h2>
+                {promptpayQr && (
+                    <button
+                        onClick={() => setShowQrPopup(true)}
+                        className="p-1.5 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                        title="สแกน QR Code"
+                    >
+                        <QrCode size={20} />
+                    </button>
+                )}
+            </div>
 
             <div className="flex-1 space-y-5 text-sm">
                 <div className="flex justify-between text-secondary-600">
@@ -205,7 +220,7 @@ export default function PaymentSummaryCard({
                     )}
 
                     {/* Add Payment Button */}
-                    {!readOnly && paymentSchedule.length < 5 && (
+                    {((!readOnly) || showAddButton) && paymentSchedule.length < 5 && (
                         <button
                             onClick={onAddPayment}
                             className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
@@ -214,6 +229,9 @@ export default function PaymentSummaryCard({
                             เพิ่มการชำระ
                         </button>
                     )}
+
+                    {/* QR Code Section */}
+
 
                     {/* Outstanding Balance */}
                     <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
@@ -254,6 +272,53 @@ export default function PaymentSummaryCard({
                     )}
                 </div>
             </div>
-        </div>
+
+            {/* QR Code Popup */}
+            {
+                showQrPopup && (
+                    <div
+                        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setShowQrPopup(false)}
+                    >
+                        <div
+                            className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-auto relative animate-in zoom-in-95 duration-200"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setShowQrPopup(false)}
+                                className="absolute -top-3 -right-3 p-2 bg-white text-secondary-500 hover:text-danger-500 rounded-full shadow-lg border border-secondary-100 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+
+                            <div className="text-center">
+                                <h3 className="text-lg font-bold text-secondary-900 mb-1">สแกนเพื่อชำระเงิน</h3>
+                                <p className="text-secondary-500 text-sm mb-4">รองรับแอพธนาคารทุกธนาคาร</p>
+
+                                <div className="bg-white p-2 rounded-xl border border-secondary-200 shadow-inner inline-block">
+                                    <img
+                                        src={promptpayQr}
+                                        alt="PromptPay QR"
+                                        className="w-64 h-64 object-contain"
+                                    />
+                                </div>
+
+                                <div className="mt-4 pt-4 border-t border-secondary-100">
+                                    <p className="text-secondary-500 text-sm mb-1">ยอดรวมที่ต้องชำระ</p>
+                                    <div className="text-3xl font-bold text-primary-600">
+                                        {currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 flex items-center justify-center gap-2 text-primary-600 font-medium text-sm">
+                                    <span className="w-2 h-2 rounded-full bg-primary-600 animate-pulse"></span>
+                                    พร้อมรับชำระ
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     )
 }

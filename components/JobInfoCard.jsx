@@ -45,7 +45,7 @@ export default function JobInfoCard({
         }
 
         return (
-            <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 h-full flex flex-col ${className}`}>
+            <div className={`bg-white rounded-xl shadow-sm border border-secondary-200 p-4 flex flex-col ${className}`}>
                 {showHeader && (
                     <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-4">
                         <Wrench className="text-primary-600" />
