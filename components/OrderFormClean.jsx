@@ -1110,6 +1110,7 @@ export default function OrderForm() {
                                                     });
                                                 }
                                             }}
+                                            addressClassName="text-xs"
                                             placeholder="ค้นหาที่อยู่..."
                                         />
                                     </div>

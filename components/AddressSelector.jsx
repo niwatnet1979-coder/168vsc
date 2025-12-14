@@ -12,7 +12,8 @@ export default function AddressSelector({
     onChange, // (newValue) => void
     placeholder = "ค้นหาสถานที่...",
     readOnly = false,
-    className = ""
+    className = "",
+    addressClassName = ""
 }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [showDropdown, setShowDropdown] = useState(false)
@@ -195,6 +196,7 @@ export default function AddressSelector({
                             // AddressSelector could accept badge prop or children? 
                             // For simplicity, let's add `badge` prop to AddressSelector
                             badge={value.badge}
+                            addressClassName={addressClassName}
                         />
                     </div>
                 </DataSourceTooltip>

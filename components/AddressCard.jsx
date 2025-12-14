@@ -9,7 +9,8 @@ export default function AddressCard({
     mapLink,
     onClear,
     variant = 'transparent', // 'primary' | 'success' | 'transparent'
-    badge = null
+    badge = null,
+    addressClassName = ''
 }) {
     const isTransparent = variant === 'transparent' || variant === 'seamless'
 
@@ -73,7 +74,7 @@ export default function AddressCard({
                         )}
                     </div>
 
-                    <p className="text-sm text-secondary-800 leading-relaxed mb-2">
+                    <p className={`text-secondary-800 leading-relaxed mb-2 ${addressClassName || 'text-sm'}`}>
                         {address}
                     </p>
                 </div>
