@@ -170,6 +170,7 @@ export default function JobDetailPage() {
 
                     {/* 1. Job Info (Now 3rd) */}
                     <JobInfoCard
+                        title="ข้อมูลงานย่อย"
                         data={{
                             jobType: job.rawJobType || job.jobType,
                             appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),

@@ -210,7 +210,8 @@ export default function OrderForm() {
     // Sync Sub Jobs with Main Job Info
     useEffect(() => {
         console.log('[DEBUG] Sync SubJob useEffect triggered', { jobType: jobInfo.jobType, itemsCount: items.length })
-        if (jobInfo.jobType !== 'separate') {
+        // Logic: specific types inherit from Main Job
+        if (['installation', 'delivery'].includes(jobInfo.jobType) || !jobInfo.jobType) {
             setItems(prevItems => {
                 const updated = prevItems.map(item => ({
                     ...item,
@@ -1776,7 +1777,8 @@ export default function OrderForm() {
                         onSave={handleSaveSubJob}
                         customer={customer}
                         availableTeams={availableTeams}
-                        readOnly={jobInfo.jobType !== 'separate'}
+                        // Logic: Read-only if Installation or Delivery (Inherited)
+                        readOnly={['installation', 'delivery'].includes(jobInfo.jobType)}
                     />
 
                     {/* Payment Entry Modal */}

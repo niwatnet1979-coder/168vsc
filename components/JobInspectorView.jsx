@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Star, Image } from 'lucide-react'
+import { Star, Image, X } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
 
@@ -8,6 +8,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
     const [rating, setRating] = useState(5)
     const [comment, setComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [existingSignature, setExistingSignature] = useState(null)
     const sigCanvas = useRef({})
 
     React.useImperativeHandle(ref, () => ({
@@ -22,6 +23,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
             if (data) {
                 setRating(data.rating || 5)
                 setComment(data.comment || '')
+                setExistingSignature(data.signature_url || null)
                 // Load media to preserve it
                 const loadedMedia = (data.media || []).map(item => ({
                     ...item,
@@ -53,7 +55,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
         try {
             // 1. Upload Signature if drawn
             let signatureUrl = null
-            if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+            if (sigCanvas.current && sigCanvas.current.isEmpty && !sigCanvas.current.isEmpty()) {
                 const sigDataUrl = sigCanvas.current.toDataURL('image/png')
                 const res = await fetch(sigDataUrl)
                 const blob = await res.blob()
@@ -64,7 +66,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
             // 2. Save to job_completions table (Preserving existing media)
             const completionData = {
                 job_id: job.id,
-                signature_url: signatureUrl || job.signatureImage, // Fallback to existing
+                signature_url: signatureUrl || existingSignature || job.signatureImage, // Fallback to existing
                 rating,
                 comment,
                 media: mediaItems // Preserve existing media
@@ -105,20 +107,38 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-secondary-700 mb-2">ลายเซ็นลูกค้า / ผู้ตรวจงาน</label>
                     <div className="border border-secondary-300 rounded-lg overflow-hidden bg-gray-50 h-40 relative">
-                        <SignatureCanvas
-                            ref={sigCanvas}
-                            canvasProps={{
-                                className: 'sigCanvas w-full h-full',
-                                style: { width: '100%', height: '100%' }
-                            }}
-                            backgroundColor="rgba(249, 250, 251, 1)"
-                        />
-                        <button
-                            onClick={() => sigCanvas.current.clear()}
-                            className="absolute top-2 right-2 p-1 bg-white rounded-full shadow border border-gray-200 text-xs text-gray-500"
-                        >
-                            ล้าง
-                        </button>
+                        {existingSignature ? (
+                            <div className="w-full h-full relative group bg-white">
+                                <img
+                                    src={existingSignature}
+                                    className="w-full h-full object-contain p-2"
+                                    alt="Signature"
+                                />
+                                <button
+                                    onClick={() => setExistingSignature(null)}
+                                    className="absolute top-2 right-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg shadow-sm border border-red-100 text-xs font-medium flex items-center gap-1 hover:bg-red-100 transition-colors"
+                                >
+                                    <X size={14} /> เซ็นใหม่
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <SignatureCanvas
+                                    ref={sigCanvas}
+                                    canvasProps={{
+                                        className: 'sigCanvas w-full h-full',
+                                        style: { width: '100%', height: '100%' }
+                                    }}
+                                    backgroundColor="rgba(249, 250, 251, 1)"
+                                />
+                                <button
+                                    onClick={() => sigCanvas.current.clear()}
+                                    className="absolute top-2 right-2 p-1 bg-white rounded-full shadow border border-gray-200 text-xs text-gray-500"
+                                >
+                                    ล้าง
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -20,8 +20,9 @@ export default function JobInfoCard({
     excludeJobTypes = [],
     readOnly = false,
     className = '',
-    onAddNewAddress, // New prop
-    onAddNewInspector // New prop
+    onAddNewAddress,
+    onAddNewInspector,
+    title = 'ข้อมูลงานหลัก' // Default title
 }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
@@ -49,7 +50,7 @@ export default function JobInfoCard({
                 {showHeader && (
                     <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2 mb-4">
                         <Wrench className="text-primary-600" />
-                        ข้อมูลงานหลัก
+                        {title}
                     </h2>
                 )}
                 <div className="space-y-3">
@@ -141,7 +142,7 @@ export default function JobInfoCard({
             title={showHeader ? (
                 <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                     <Wrench className="text-primary-600" />
-                    ข้อมูลงานหลัก
+                    {title}
                 </h2>
             ) : null}
             contentClassName="flex-1"

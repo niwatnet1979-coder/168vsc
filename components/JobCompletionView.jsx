@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Camera, MapPin, X, Star, Save, Upload, Video, Calendar, Smartphone, FileText, Image } from 'lucide-react'
-import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
 import VideoRecorderModal from './VideoRecorderModal'
 
@@ -10,23 +9,13 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
     const [comment, setComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showVideoRecorder, setShowVideoRecorder] = useState(false)
-    const sigCanvas = useRef({})
+
+    const [existingSignature, setExistingSignature] = useState(null)
 
     React.useImperativeHandle(ref, () => ({
         triggerSave: () => handleSave()
     }))
 
-    // ... existing logic ...
-
-    // ... (rest of the existing useEffect code) ...
-    // Note: I need to be careful with replace_file_content not to overwrite the middle. 
-    // The previous tool call output shows the full file content was ~302 lines.
-    // I should probably use `view_file` again to make sure I have the latest line numbers or structure.
-    // BUT I can see previous `replace_file_content` outputs.
-    // I will rewrite the top imports and state, and the method to add the file.
-
-    // Actually, simply adding the import at top and the Modal at bottom + Button in render is enough.
-    // I will use `replace_file_content` on specific blocks.
     // Load existing completion data from job_completions table
     useEffect(() => {
         const loadCompletionData = async () => {
@@ -35,6 +24,7 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
             if (data) {
                 setRating(data.rating || 5)
                 setComment(data.comment || '')
+                setExistingSignature(data.signature_url || null)
                 // Assign unique IDs to loaded media items since invalid/missing IDs cause React key duplication and bulk delete issues
                 const loadedMedia = (data.media || []).map(item => ({
                     ...item,
@@ -202,23 +192,7 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
 
         setIsSubmitting(true)
         try {
-            // 1. Upload Signature if drawn
-            let signatureUrl = null
-            if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-                // Use toDataURL directly to avoid trim_canvas dependency issues
-                const sigDataUrl = sigCanvas.current.toDataURL('image/png')
-                const res = await fetch(sigDataUrl)
-                const blob = await res.blob()
-                const file = new File([blob], 'signature.png', { type: 'image/png' })
-                signatureUrl = await DataManager.uploadJobMedia(file, job.id)
-            } else {
-                // If not signed now, maybe use existing from DB? 
-                // We'll rely on what's passed or fetch fresh? 
-                // For simplicity: if new signature drawn, update it. If not, keep old (if we fetched it).
-                // But we didn't fetch url to state.
-            }
-
-            // 2. Upload Media Items with Progress
+            // 1. Upload Media Items with Progress
             // We clone items to result array to keep track
             const finalMediaItems = []
 
@@ -250,18 +224,14 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
                 } catch (error) {
                     console.error('Upload error', error)
                     setMediaItems(prev => prev.map(p => p.id === item.id ? { ...p, status: 'error' } : p))
-                    // If one fails, should we stop? or continue?
-                    // For now, allow partial save or throw?
-                    // Request implies knowing "when finished".
-                    // If error, we throw to abort save?
                     throw new Error(`ไม่สามารถอัพโหลดไฟล์(${item.type}) ได้`)
                 }
             }
 
-            // 3. Save to job_completions table
+            // 2. Save to job_completions table
             const completionData = {
                 job_id: job.id,
-                signature_url: signatureUrl || job.signatureImage, // Fallback to job's existing sig if not redrawn
+                signature_url: existingSignature || job.signatureImage, // Use existing signature if available
                 rating,
                 comment,
                 media: finalMediaItems
@@ -270,7 +240,7 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
             const successCompletion = await DataManager.saveJobCompletion(completionData)
             if (!successCompletion) throw new Error('Failed to save completion data')
 
-            // 4. Update Job Status & Legacy Signature Column
+            // 3. Update Job Status
             const result = await DataManager.saveJob({
                 ...job,
                 status: 'Done',

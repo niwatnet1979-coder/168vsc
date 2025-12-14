@@ -439,6 +439,7 @@ export default function MobileJobDetail() {
                 <main className="max-w-md mx-auto pb-24 pt-4 px-4">
                     {activeTab === 'customer' && (
                         <JobInfoCard
+                            title="ข้อมูลงานย่อย"
                             data={{
                                 jobType: job.rawJobType || job.jobType,
                                 appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
