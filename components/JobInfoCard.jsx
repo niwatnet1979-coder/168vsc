@@ -166,7 +166,7 @@ export default function JobInfoCard({
                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-gray-400">
                             <label className="block text-xs font-medium text-secondary-500 mb-1">ทีม</label>
                             <div className="relative">
-                                <DataSourceTooltip isRealtime={false} source="input">
+                                <DataSourceTooltip isRealtime={false} source="input" showHighlight={false}>
                                     <select
                                         value={data.team}
                                         onChange={(e) => handleUpdate({ team: e.target.value })}
@@ -187,7 +187,7 @@ export default function JobInfoCard({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-gray-400">
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่นัดหมาย</label>
-                                <DataSourceTooltip isRealtime={false} source="input">
+                                <DataSourceTooltip isRealtime={false} source="input" showHighlight={false}>
                                     <input
                                         type="datetime-local"
                                         value={data.appointmentDate || ''}
@@ -323,7 +323,7 @@ export default function JobInfoCard({
 
                             {/* Selected Address Details Card */}
                             {(data.installAddress || data.installLocationName) && (
-                                <DataSourceTooltip isRealtime={false} source="input/google_maps">
+                                <DataSourceTooltip isRealtime={false} source="input/google_maps" showHighlight={false}>
                                     <div
                                         onClick={() => {
                                             if (!readOnly) {

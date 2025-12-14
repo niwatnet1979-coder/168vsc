@@ -10,7 +10,7 @@ import { useDebug } from '../contexts/DebugContext'
  * @param {string} props.source - Optional source name (e.g. "Order Item", "Product DB")
  * @param {children} props.children - The content to wrap
  */
-export default function DataSourceTooltip({ isRealtime = false, source = '', children, className = '' }) {
+export default function DataSourceTooltip({ isRealtime = false, source = '', children, className = '', showHighlight = true }) {
     const { isMouseDebugEnabled } = useDebug()
     const [showTooltip, setShowTooltip] = useState(false)
 
@@ -26,7 +26,7 @@ export default function DataSourceTooltip({ isRealtime = false, source = '', chi
         >
             {/* Visual Indicator Border */}
             <div className={`
-                ${showTooltip ? (isRealtime ? 'ring-2 ring-success-400' : 'ring-2 ring-warning-400') : ''}
+                ${showTooltip && showHighlight ? (isRealtime ? 'ring-2 ring-success-400' : 'ring-2 ring-warning-400') : ''}
                 rounded transition-all duration-200
             `}>
                 {children}
