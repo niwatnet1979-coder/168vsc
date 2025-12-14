@@ -34,7 +34,7 @@ export default function ContactSelector({
 
             {!value || !value.name ? (
                 <div className="relative">
-                    <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                    <Search className={`absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400 ${variant === 'seamless' ? '' : 'left-3'}`} size={16} />
                     <input
                         type="text"
                         value={searchTerm}
@@ -44,15 +44,19 @@ export default function ContactSelector({
                         }}
                         onFocus={() => setShowDropdown(true)}
                         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                        className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                        className={variant === 'seamless'
+                            ? "w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
+                            : "w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                        }
                         placeholder={placeholder}
+                        autoFocus={variant === 'seamless' && showDropdown} // Autofocus if switched from click
                     />
                     {showDropdown && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        <div className={`absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto ${variant === 'seamless' ? 'left-0 mt-2' : ''}`}>
                             {filteredContacts.length > 0 ? (
                                 filteredContacts.map(contact => (
                                     <div
-                                        key={contact.id || Math.random()} // Fallback key if id missing
+                                        key={contact.id || Math.random()}
                                         onClick={() => handleSelect(contact)}
                                         className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                     >
@@ -71,30 +75,47 @@ export default function ContactSelector({
                     )}
                 </div>
             ) : (
-                <div className={`${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow duration-200`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'} flex items-center justify-center`}>
-                            <User size={16} />
+                <div
+                    onClick={() => {
+                        if (variant === 'seamless') {
+                            onChange(null); // Clear value to switch to input mode
+                            setSearchTerm(''); // Reset search
+                            setShowDropdown(true); // Open dropdown immediately
+                        }
+                    }}
+                    className={`${variant === 'seamless'
+                            ? 'bg-transparent border-none p-0 cursor-pointer'
+                            : `${variant === 'blue' ? 'bg-primary-50 border-primary-200' : 'bg-secondary-50 border-secondary-200'} border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200`
+                        } flex items-center justify-between`}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className={`w-8 h-8 bg-white rounded-full border ${variant === 'seamless'
+                                ? 'border-secondary-100 shadow-sm'
+                                : variant === 'blue' ? 'border-primary-200 text-primary-600' : 'border-secondary-200 text-secondary-500'
+                            } flex items-center justify-center shrink-0`}>
+                            <User size={16} className={variant === 'seamless' ? 'text-secondary-600' : ''} />
                         </div>
-                        <div className="text-sm">
-                            <div className="font-medium text-secondary-900">{value.name}</div>
-                            <div className="text-xs text-secondary-500 flex items-center gap-2">
+                        <div className="text-sm min-w-0">
+                            <div className="font-medium text-secondary-900 truncate">{value.name}</div>
+                            <div className="text-xs text-secondary-500 flex items-center gap-2 truncate">
                                 {value.position && <span>{value.position}</span>}
                                 {value.phone && (
                                     <>
-                                        <span className="w-1 h-1 bg-secondary-300 rounded-full"></span>
+                                        {value.position && <span className="w-1 h-1 bg-secondary-300 rounded-full"></span>}
                                         <span className="flex items-center gap-1"><Phone size={10} /> {value.phone}</span>
                                     </>
                                 )}
                             </div>
                         </div>
                     </div>
-                    <button
-                        onClick={handleClear}
-                        className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-                    >
-                        <X size={16} />
-                    </button>
+                    {variant !== 'seamless' && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleClear(); }}
+                            className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors ml-2"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
                 </div>
             )}
         </div>

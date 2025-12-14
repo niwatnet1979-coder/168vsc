@@ -11,16 +11,39 @@ export default function AddressCard({
     variant = 'primary', // 'primary' | 'success'
     badge = null
 }) {
-    const isPrimary = variant === 'primary'
-    const bgColor = isPrimary ? 'bg-primary-50' : 'bg-success-50'
-    const borderColor = isPrimary ? 'border-primary-200' : 'border-success-200'
-    const iconBgColor = isPrimary ? 'border-primary-100' : 'border-success-100'
-    const iconColor = isPrimary ? 'text-primary-600' : 'text-success-600'
+    const isPrimary = variant === 'primary' || variant === 'transparent'
+    // Handle Transparent Variant
+    const isTransparent = variant === 'transparent'
+
+    // Determine styles based on variant
+    let bgColor, borderColor, iconBgColor, iconColor
+
+    if (isTransparent) {
+        bgColor = 'bg-transparent'
+        borderColor = 'border-none'
+        iconBgColor = 'border-secondary-100 bg-white' // Keep icon box clean
+        iconColor = 'text-primary-600'
+    } else if (variant === 'success') {
+        bgColor = 'bg-success-50'
+        borderColor = 'border-success-200'
+        iconBgColor = 'border-success-100'
+        iconColor = 'text-success-600'
+    } else {
+        // Default Primary
+        bgColor = 'bg-primary-50'
+        borderColor = 'border-primary-200'
+        iconBgColor = 'border-primary-100'
+        iconColor = 'text-primary-600'
+    }
 
     return (
-        <Card useBase={false} className={`${bgColor} border ${borderColor} rounded-lg p-5 relative shadow-sm hover:shadow-md transition-shadow duration-200`} contentClassName="">
+        <Card
+            useBase={false}
+            className={`${bgColor} ${borderColor !== 'border-none' ? 'border' : ''} ${borderColor} rounded-lg ${isTransparent ? 'p-0' : 'p-5'} relative ${!isTransparent ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`}
+            contentClassName=""
+        >
             <div className="flex items-start gap-3">
-                <div className={`p-2 bg-white rounded-lg border ${iconBgColor} mt-1`}>
+                <div className={`p-2 bg-white rounded-lg border ${iconBgColor} ${isTransparent ? 'shadow-sm' : ''} mt-1`}>
                     <MapPin size={20} className={iconColor} />
                 </div>
                 <div className="flex-1 pr-6">
@@ -37,6 +60,7 @@ export default function AddressCard({
                                     rel="noopener noreferrer"
                                     className="px-2 py-0.5 bg-danger-50 text-danger-600 text-xs font-medium rounded-full border border-danger-200 hover:bg-danger-100 transition-colors cursor-pointer flex items-center gap-1"
                                     title="เปิดแผนที่ Google Map"
+                                    onClick={(e) => e.stopPropagation()} // Prevent triggering parent onClick
                                 >
                                     <Map size={10} />
                                     {distance ? `ระยะทาง ${distance}` : 'เปิดแผนที่'}
@@ -54,12 +78,17 @@ export default function AddressCard({
                     </p>
                 </div>
             </div>
-            <button
-                onClick={onClear}
-                className="absolute top-2 right-2 text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-            >
-                <X size={16} />
-            </button>
+            {onClear && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClear();
+                    }}
+                    className="absolute top-2 right-2 text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
+                >
+                    <X size={16} />
+                </button>
+            )}
         </Card>
     )
 }

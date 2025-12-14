@@ -335,23 +335,41 @@ export default function JobInfoCard({
                                 {/* Selected Address Details Card */}
                                 {(data.installAddress || data.installLocationName) && (
                                     <DataSourceTooltip isRealtime={false} source="input/google_maps">
-                                        <div className="mt-1">
-                                            {/* We use AddressCard but ideally we'd want a seamless version. 
-                                            For now, we just remove the wrapper border/bg if possible? 
-                                            But AddressCard has its own styles. 
-                                            Let's keep it clean but maybe less padding? */}
+                                        <div
+                                            onClick={() => {
+                                                if (!readOnly) {
+                                                    setInstallLocationSearchTerm('');
+                                                    setShowInstallLocationDropdown(true);
+                                                    // We don't clear the data immediately to avoid "flashing"
+                                                    // The dropdown will cover the input, but the user clicks here to "change"
+                                                    // Actually if we want to "Change", we should probably reset?
+                                                    // Or just show the search box again?
+                                                    // If we just set ShowDropdown, it might look like nothing happened if input is hidden?
+                                                    // The input IS hidden because data.installLocationName is true.
+                                                    // Strategy: Clear the 'installLocationName' momentarily OR better:
+                                                    // Clear only the 'installLocationName' so the input reappears?
+                                                    // But then we lose the value if they cancel.
+                                                    // Ah, JobInfoCard logic (Line 219) hides input if installLocationName exists.
+                                                    // So we MUST clear installLocationName to see input.
+                                                    // Let's clear it, but maybe keep a backup if needed? 
+                                                    // For now, simpler is "Reset" behavior as requested.
+                                                    handleUpdate({
+                                                        installLocationName: '',
+                                                        installAddress: '',
+                                                        googleMapLink: '',
+                                                        distance: ''
+                                                    });
+                                                }
+                                            }}
+                                            className="mt-1 cursor-pointer hover:bg-white/50 rounded-lg transition-colors"
+                                        >
                                             <AddressCard
                                                 title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
                                                 address={data.installAddress}
                                                 distance={data.distance}
                                                 mapLink={data.googleMapLink}
-                                                onClear={!readOnly ? () => handleUpdate({
-                                                    installLocationName: '',
-                                                    installAddress: '',
-                                                    googleMapLink: '',
-                                                    distance: ''
-                                                }) : undefined}
-                                                variant="primary"
+                                                // No onClear prop passed -> No X button
+                                                variant="transparent"
                                             />
                                         </div>
                                     </DataSourceTooltip>
@@ -360,9 +378,10 @@ export default function JobInfoCard({
 
                             {/* Inspector Selection */}
                             <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-colors hover:border-secondary-300">
+                                {/* Note: ContactSelector has its own label usage, but we wrap it for consistency */}
                                 <ContactSelector
-                                    variant="blue"
-                                    label="ผู้ตรวจงาน / รับสินค้า"
+                                    variant="seamless"
+                                    label={null} // Hide internal label
                                     contacts={customer.contacts || []}
                                     value={data.inspector1}
                                     onChange={(contact) => {
