@@ -760,23 +760,23 @@ export default function OrderForm() {
 
                                     {/* Customer Details Card */}
                                     {customer.id && (
-                                        <div className="bg-gradient-to-br from-primary-50 to-secondary-50 border border-primary-200 rounded-xl p-5 space-y-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-4">
                                             {/* Header with Name */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                                    <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-base shadow-sm">
                                                         {String(customer.name).charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-bold text-secondary-900 text-xl leading-tight">{String(customer.name)}</h3>
-                                                        <p className="text-xs text-secondary-500 mt-0.5">รหัสลูกค้า: {customer.id || '-'}</p>
+                                                        <h3 className="font-bold text-secondary-900 text-sm leading-tight">{String(customer.name)}</h3>
+                                                        <p className="text-xs text-secondary-500 mt-0.5">รหัส: {customer.id || '-'}</p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => setCustomer({})}
                                                     className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
                                                 >
-                                                    <X size={20} />
+                                                    <X size={16} />
                                                 </button>
                                             </div>
 
@@ -874,13 +874,14 @@ export default function OrderForm() {
                                     )}
 
                                     {/* Contact Person Selection - Always Visible */}
-                                    <div className="pt-2">
+                                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                        <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อจัดซื้อ</label>
                                         <ContactSelector
-                                            label="ผู้ติดต่อจัดซื้อ"
+                                            label={null}
                                             contacts={customer.contacts || []}
                                             value={activeCustomerContact}
                                             onChange={setActiveCustomerContact}
-                                            variant="blue"
+                                            variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
                                         />
                                     </div>
@@ -974,25 +975,25 @@ export default function OrderForm() {
 
                                     {/* Selected Details Card */}
                                     {taxInvoice.companyName && (
-                                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-4">
                                             <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-white rounded-lg border border-primary-100 mt-1">
-                                                    <FileText size={24} className="text-primary-600" />
+                                                <div className="p-2 bg-white rounded-lg border border-secondary-100 mt-1">
+                                                    <FileText size={20} className="text-primary-600" />
                                                 </div>
                                                 <div className="flex-1 space-y-4">
                                                     {/* Header: Company Name & Branch */}
                                                     <div className="flex justify-between items-start">
                                                         <div>
                                                             <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-bold text-secondary-900 text-lg leading-tight">
+                                                                <h3 className="font-bold text-secondary-900 text-sm leading-tight">
                                                                     {taxInvoice.companyName}
                                                                 </h3>
-                                                                <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full border border-primary-200">
+                                                                <span className="px-2 py-0.5 bg-secondary-200 text-secondary-700 text-[10px] font-medium rounded-full">
                                                                     {taxInvoice.branch || 'สำนักงานใหญ่'}
                                                                 </span>
                                                             </div>
-                                                            <div className="text-sm text-secondary-600 mt-1 flex items-center gap-2">
-                                                                <span className="font-medium text-secondary-700">เลขผู้เสียภาษี:</span>
+                                                            <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
+                                                                <span className="font-medium">เลขผู้เสียภาษี:</span>
                                                                 <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
                                                             </div>
                                                         </div>
@@ -1000,7 +1001,7 @@ export default function OrderForm() {
                                                             onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
                                                             className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
                                                         >
-                                                            <X size={18} />
+                                                            <X size={16} />
                                                         </button>
                                                     </div>
 
@@ -1063,122 +1064,127 @@ export default function OrderForm() {
 
                                         {/* Dropdown */}
                                         {!taxInvoiceDeliveryAddress.address ? (
-                                            <div className="relative">
-                                                <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
-                                                <input
-                                                    type="text"
-                                                    value={taxAddressSearchTerm}
-                                                    onChange={(e) => {
-                                                        setTaxAddressSearchTerm(e.target.value)
-                                                        setShowTaxAddressDropdown(true)
-                                                    }}
-                                                    onFocus={() => setShowTaxAddressDropdown(true)}
-                                                    onBlur={() => setTimeout(() => setShowTaxAddressDropdown(false), 200)}
-                                                    className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                                    placeholder="ค้นหาที่อยู่..."
-                                                />
-                                                {showTaxAddressDropdown && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                        {/* Option: Same as installation address */}
-                                                        {jobInfo.installAddress && (
-                                                            <div
-                                                                onClick={() => {
-                                                                    setTaxInvoiceDeliveryAddress({
-                                                                        type: 'same',
-                                                                        label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง',
-                                                                        address: jobInfo.installAddress || '',
-                                                                        googleMapLink: jobInfo.googleMapLink || '',
-                                                                        distance: jobInfo.distance || ''
-                                                                    });
-                                                                    setTaxAddressSearchTerm('');
-                                                                    setShowTaxAddressDropdown(false);
-                                                                }}
-                                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                            >
-                                                                <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง</div>
-                                                                <div className="text-xs text-secondary-500 truncate">{jobInfo.installAddress}</div>
-                                                            </div>
-                                                        )}
+                                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                                <div className="relative">
+                                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={taxAddressSearchTerm}
+                                                        onChange={(e) => {
+                                                            setTaxAddressSearchTerm(e.target.value)
+                                                            setShowTaxAddressDropdown(true)
+                                                        }}
+                                                        onFocus={() => setShowTaxAddressDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowTaxAddressDropdown(false), 200)}
+                                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
+                                                        placeholder="ค้นหาที่อยู่..."
+                                                    />
+                                                    {showTaxAddressDropdown && (
+                                                        <div className="absolute z-10 w-full mt-2 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto left-0">
+                                                            {/* Option: Same as installation address */}
+                                                            {jobInfo.installAddress && (
+                                                                <div
+                                                                    onClick={() => {
+                                                                        setTaxInvoiceDeliveryAddress({
+                                                                            type: 'same',
+                                                                            label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง',
+                                                                            address: jobInfo.installAddress || '',
+                                                                            googleMapLink: jobInfo.googleMapLink || '',
+                                                                            distance: jobInfo.distance || ''
+                                                                        });
+                                                                        setTaxAddressSearchTerm('');
+                                                                        setShowTaxAddressDropdown(false);
+                                                                    }}
+                                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                >
+                                                                    <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง</div>
+                                                                    <div className="text-xs text-secondary-500 truncate">{jobInfo.installAddress}</div>
+                                                                </div>
+                                                            )}
 
-                                                        {/* Options: Customer addresses */}
-                                                        {customer.addresses
-                                                            ?.filter(addr => {
-                                                                const addressText = typeof addr.address === 'string' ? addr.address : '';
-                                                                return addr.label.toLowerCase().includes(taxAddressSearchTerm.toLowerCase()) || addressText.includes(taxAddressSearchTerm);
-                                                            })
-                                                            .map((addr, index) => {
-                                                                const addressText = typeof addr.address === 'string'
-                                                                    ? addr.address
-                                                                    : (addr.address || '');
+                                                            {/* Options: Customer addresses */}
+                                                            {customer.addresses
+                                                                ?.filter(addr => {
+                                                                    const addressText = typeof addr.address === 'string' ? addr.address : '';
+                                                                    return addr.label.toLowerCase().includes(taxAddressSearchTerm.toLowerCase()) || addressText.includes(taxAddressSearchTerm);
+                                                                })
+                                                                .map((addr, index) => {
+                                                                    const addressText = typeof addr.address === 'string'
+                                                                        ? addr.address
+                                                                        : (addr.address || '');
 
-                                                                // Helper to build address string if object
-                                                                let fullAddress = addressText;
-                                                                if (!fullAddress && typeof addr === 'object') {
-                                                                    const p = [];
-                                                                    if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                                    if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                                    if (addr.addrVillage) p.push(addr.addrVillage);
-                                                                    if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                                    if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                                    if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                                    if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                                    if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                                    if (addr.zipcode) p.push(addr.zipcode);
-                                                                    fullAddress = p.join(' ');
-                                                                }
+                                                                    // Helper to build address string if object
+                                                                    let fullAddress = addressText;
+                                                                    if (!fullAddress && typeof addr === 'object') {
+                                                                        const p = [];
+                                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
+                                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
+                                                                        if (addr.addrVillage) p.push(addr.addrVillage);
+                                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
+                                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
+                                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
+                                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
+                                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
+                                                                        if (addr.zipcode) p.push(addr.zipcode);
+                                                                        fullAddress = p.join(' ');
+                                                                    }
 
-                                                                return (
-                                                                    <div
-                                                                        key={index}
-                                                                        onClick={() => {
-                                                                            setTaxInvoiceDeliveryAddress({
-                                                                                type: 'custom',
-                                                                                label: addr.label || '',
-                                                                                address: fullAddress,
-                                                                                googleMapLink: addr.googleMapsLink || '',
-                                                                                distance: addr.distance ? `${addr.distance.toFixed(2)} km` : ''
-                                                                            });
-                                                                            setTaxAddressSearchTerm('');
-                                                                            setShowTaxAddressDropdown(false);
-                                                                        }}
-                                                                        className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                    >
-                                                                        <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
-                                                                        <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                    </div>
-                                                )}
+                                                                    return (
+                                                                        <div
+                                                                            key={index}
+                                                                            onClick={() => {
+                                                                                setTaxInvoiceDeliveryAddress({
+                                                                                    type: 'custom',
+                                                                                    label: addr.label || '',
+                                                                                    address: fullAddress,
+                                                                                    googleMapLink: addr.googleMapsLink || '',
+                                                                                    distance: addr.distance ? `${addr.distance.toFixed(2)} km` : ''
+                                                                                });
+                                                                                setTaxAddressSearchTerm('');
+                                                                                setShowTaxAddressDropdown(false);
+                                                                            }}
+                                                                            className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                        >
+                                                                            <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
+                                                                            <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ) : null}
 
                                         {/* Selected Address Display Card */}
                                         {taxInvoiceDeliveryAddress.address && (
-                                            <AddressCard
-                                                title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label}
-                                                address={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.installAddress : taxInvoiceDeliveryAddress.address}
-                                                mapLink={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.googleMapLink : taxInvoiceDeliveryAddress.googleMapLink}
-                                                distance={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.distance : taxInvoiceDeliveryAddress.distance}
-                                                onClear={() => setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '', googleMapLink: '', distance: '' })}
-                                                variant="primary"
-                                                badge={taxInvoiceDeliveryAddress.type === 'same' ? (
-                                                    <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                        ที่อยู่เดียวกัน
-                                                    </span>
-                                                ) : null}
-                                            />
+                                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                                <AddressCard
+                                                    title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label}
+                                                    address={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.installAddress : taxInvoiceDeliveryAddress.address}
+                                                    mapLink={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.googleMapLink : taxInvoiceDeliveryAddress.googleMapLink}
+                                                    distance={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.distance : taxInvoiceDeliveryAddress.distance}
+                                                    onClear={() => setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '', googleMapLink: '', distance: '' })}
+                                                    variant="transparent"
+                                                    badge={taxInvoiceDeliveryAddress.type === 'same' ? (
+                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                            ที่อยู่เดียวกัน
+                                                        </span>
+                                                    ) : null}
+                                                />
+                                            </div>
                                         )}
                                     </div>
 
                                     {/* Contact Selector - Delivery - Always Visible */}
-                                    <div className="pt-2">
+                                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                        <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อรับเอกสาร</label>
                                         <ContactSelector
-                                            label="ผู้ติดต่อรับเอกสาร"
+                                            label={null}
                                             contacts={customer.contacts || []}
                                             value={selectedContact}
                                             onChange={setSelectedContact}
-                                            variant="blue"
+                                            variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
                                         />
                                     </div>
