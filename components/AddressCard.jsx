@@ -8,7 +8,7 @@ export default function AddressCard({
     distance,
     mapLink,
     onClear,
-    variant = 'primary', // 'primary' | 'success'
+    variant = 'transparent', // 'primary' | 'success' | 'transparent'
     badge = null
 }) {
     const isTransparent = variant === 'transparent' || variant === 'seamless'
@@ -50,6 +50,7 @@ export default function AddressCard({
                             {title}
                         </h4>
                         {badge}
+                        {/* DEBUG: {variant} */}
                         {(distance || mapLink) && (
                             mapLink ? (
                                 <a
