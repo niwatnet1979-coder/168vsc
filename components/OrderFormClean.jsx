@@ -948,14 +948,18 @@ export default function OrderForm() {
                                         </div>
                                     ) : null}
 
-                                    {/* Selected Details Card */}
+                                    {/* Selected Details Card - Click to re-select */}
                                     {taxInvoice.companyName && (
-                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                        <div
+                                            onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
+                                            className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
+                                            title="คลิกเพื่อเปลี่ยนใบกำกับภาษี"
+                                        >
                                             {/* Header: Company Name & Branch */}
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <div className="flex flex-wrap items-center gap-2">
-                                                        <h4 className="font-bold text-secondary-900 text-sm leading-tight">
+                                                        <h4 className="font-bold text-secondary-900 text-sm leading-tight group-hover:text-primary-600 transition-colors">
                                                             {taxInvoice.companyName}
                                                         </h4>
                                                         <span className="px-1.5 py-0.5 bg-secondary-100 text-secondary-700 text-[10px] font-medium rounded border border-secondary-200">
@@ -967,12 +971,7 @@ export default function OrderForm() {
                                                         <span className="px-1.5 py-0.5 bg-white text-secondary-700 text-[10px] font-mono font-medium rounded border border-secondary-200">{taxInvoice.taxId}</span>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
-                                                    className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-                                                >
-                                                    <X size={16} />
-                                                </button>
+                                                {/* Button removed as per request */}
                                             </div>
 
                                             {/* Addresses */}
