@@ -37,7 +37,7 @@ export default function AddressCard({
     return (
         <Card
             useBase={false}
-            className={`${bgColor} ${borderColor !== 'border-none' ? 'border' : ''} ${borderColor} rounded-lg ${isTransparent ? 'p-0' : 'p-5'} relative ${!isTransparent ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`}
+            className={`${bgColor} ${isTransparent ? 'border-none p-0 shadow-none' : `border ${borderColor} p-5 shadow-sm hover:shadow-md`} relative rounded-lg transition-shadow duration-200`}
             contentClassName=""
         >
             <div className="flex items-start gap-3">
