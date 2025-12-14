@@ -964,13 +964,13 @@ export default function OrderForm() {
                                                         <h4 className="font-bold text-secondary-900 text-sm leading-tight">
                                                             {taxInvoice.companyName}
                                                         </h4>
-                                                        <span className="px-2 py-0.5 bg-secondary-200 text-secondary-700 text-[10px] font-medium rounded-full">
+                                                        <span className="px-1.5 py-0.5 bg-secondary-100 text-secondary-700 text-[10px] font-medium rounded border border-secondary-200">
                                                             {taxInvoice.branch || 'สำนักงานใหญ่'}
                                                         </span>
                                                     </div>
                                                     <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
                                                         <span className="font-medium">เลขผู้เสียภาษี:</span>
-                                                        <span className="font-mono bg-white px-1.5 rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                                        <span className="px-1.5 py-0.5 bg-white text-secondary-700 text-[10px] font-mono font-medium rounded border border-secondary-200">{taxInvoice.taxId}</span>
                                                     </div>
                                                 </div>
                                                 <button
@@ -1054,7 +1054,7 @@ export default function OrderForm() {
                                                     googleMapLink: isSame ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
                                                     distance: isSame ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
                                                     badge: isSame ? (
-                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                        <span className="px-1.5 py-0.5 bg-success-50 text-success-700 text-[10px] font-medium rounded border border-success-200">
                                                             ที่อยู่เดียวกัน
                                                         </span>
                                                     ) : null

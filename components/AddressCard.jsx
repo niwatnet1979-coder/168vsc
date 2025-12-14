@@ -59,7 +59,7 @@ export default function AddressCard({
                                     href={mapLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-2 py-0.5 bg-danger-50 text-danger-600 text-xs font-medium rounded-full border border-danger-200 hover:bg-danger-100 transition-colors cursor-pointer flex items-center gap-1"
+                                    className="px-1.5 py-0.5 bg-danger-50 text-danger-600 text-[10px] font-medium rounded border border-danger-200 hover:bg-danger-100 transition-colors cursor-pointer flex items-center gap-1"
                                     title="เปิดแผนที่ Google Map"
                                     onClick={(e) => e.stopPropagation()} // Prevent triggering parent onClick
                                 >
@@ -67,7 +67,7 @@ export default function AddressCard({
                                     {distance ? `ระยะทาง ${distance}` : 'เปิดแผนที่'}
                                 </a>
                             ) : (
-                                <span className="px-2 py-0.5 bg-secondary-100 text-secondary-600 text-xs font-medium rounded-full border border-secondary-200">
+                                <span className="px-1.5 py-0.5 bg-secondary-100 text-secondary-600 text-[10px] font-medium rounded border border-secondary-200">
                                     ระยะทาง {distance}
                                 </span>
                             )
