@@ -708,52 +708,54 @@ export default function OrderForm() {
                                 </div>
                                 <div className="flex-1 space-y-3">
                                     {!customer.id ? (
-                                        <div className="relative">
-                                            <label className="block text-sm font-medium text-secondary-700 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                                             <div className="relative">
-                                                <Search className="absolute left-3 top-3.5 text-secondary-400" size={18} />
-                                                <input
-                                                    type="text"
-                                                    value={customer.name || ''}
-                                                    onChange={e => {
-                                                        setCustomer({ ...customer, name: e.target.value })
-                                                        setShowCustomerDropdown(true)
-                                                    }}
-                                                    onFocus={() => setShowCustomerDropdown(true)}
-                                                    onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
-                                                    className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50"
-                                                    placeholder="ค้นหาชื่อ, เบอร์โทร..."
-                                                />
-                                                {showCustomerDropdown && (
-                                                    <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                        {customersData
-                                                            .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()) || (c.phone && c.phone.includes(customer.name)))
-                                                            .map(c => (
-                                                                <div
-                                                                    key={c.id}
-                                                                    onClick={() => {
-                                                                        handleSelectCustomer(c)
-                                                                        setShowCustomerDropdown(false)
-                                                                    }}
-                                                                    className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                >
-                                                                    <div className="font-bold text-secondary-900">{c.name}</div>
-                                                                    <div className="text-xs text-secondary-500">{c.phone} {c.email ? `| ${c.email}` : ''}</div>
-                                                                </div>
-                                                            ))}
-                                                        <div
-                                                            onClick={() => {
-                                                                setShowAddCustomerModal(true)
-                                                                setShowCustomerDropdown(false)
-                                                            }}
-                                                            className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
-                                                        >
-                                                            <UserPlus size={16} /> เพิ่มลูกค้าใหม่
+                                                <label className="block text-xs font-medium text-secondary-500 mb-1">ค้นหาลูกค้า / บริษัท <span className="text-danger-500">*</span></label>
+                                                <div className="relative">
+                                                    <Search className="absolute left-3 top-3.5 text-secondary-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        value={customer.name || ''}
+                                                        onChange={e => {
+                                                            setCustomer({ ...customer, name: e.target.value })
+                                                            setShowCustomerDropdown(true)
+                                                        }}
+                                                        onFocus={() => setShowCustomerDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                                                        className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                                                        placeholder="ค้นหาชื่อ, เบอร์โทร..."
+                                                    />
+                                                    {showCustomerDropdown && (
+                                                        <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                            {customersData
+                                                                .filter(c => !customer.name || c.name.toLowerCase().includes(customer.name.toLowerCase()) || (c.phone && c.phone.includes(customer.name)))
+                                                                .map(c => (
+                                                                    <div
+                                                                        key={c.id}
+                                                                        onClick={() => {
+                                                                            handleSelectCustomer(c)
+                                                                            setShowCustomerDropdown(false)
+                                                                        }}
+                                                                        className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                    >
+                                                                        <div className="font-bold text-secondary-900">{c.name}</div>
+                                                                        <div className="text-xs text-secondary-500">{c.phone} {c.email ? `| ${c.email}` : ''}</div>
+                                                                    </div>
+                                                                ))}
+                                                            <div
+                                                                onClick={() => {
+                                                                    setShowAddCustomerModal(true)
+                                                                    setShowCustomerDropdown(false)
+                                                                }}
+                                                                className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
+                                                            >
+                                                                <UserPlus size={16} /> เพิ่มลูกค้าใหม่
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-secondary-400 mt-2 text-center">* คลิกที่ช่องค้นหาเพื่อเลือกข้อมูลหรือพิมพ์เพื่อค้นหา</p>
                                             </div>
-                                            <p className="text-xs text-secondary-400 mt-2 text-center">* คลิกที่ช่องค้นหาเพื่อเลือกข้อมูลหรือพิมพ์เพื่อค้นหา</p>
                                         </div>
                                     ) : null}
 
@@ -795,18 +797,7 @@ export default function OrderForm() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1">
-                                                    <button
-                                                        onClick={() => {
-                                                            // Open edit modal logic if needed? Only create/select is here. 
-                                                            // For now just keep the close button as per request.
-                                                            // But user UI showed an Edit button in other screenshots.
-                                                            // The previous code had a simple X.
-                                                            setCustomer({});
-                                                        }}
-                                                        className="text-secondary-400 hover:text-danger-500 p-1 hover:bg-white rounded transition-colors"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
+                                                    {/* Edited: Close button removed as per user request */}
                                                 </div>
                                             </div>
 
@@ -898,59 +889,61 @@ export default function OrderForm() {
                                 <div className="flex-1 space-y-3">
                                     {/* Tax Invoice Section - Always Visible Search if not selected */}
                                     {!taxInvoice.companyName ? (
-                                        <div className="relative">
-                                            <div className="mb-2">
-                                                <label className="block text-sm font-medium text-secondary-700">ค้นหาใบกำกับภาษี</label>
-                                            </div>
+                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                                             <div className="relative">
-                                                <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
-                                                <input
-                                                    type="text"
-                                                    value={taxInvoiceSearchTerm}
-                                                    onChange={(e) => {
-                                                        setTaxInvoiceSearchTerm(e.target.value)
-                                                        setShowTaxInvoiceDropdown(true)
-                                                    }}
-                                                    onFocus={() => setShowTaxInvoiceDropdown(true)}
-                                                    onBlur={() => setTimeout(() => setShowTaxInvoiceDropdown(false), 200)}
-                                                    className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                                    placeholder="ค้นหาใบกำกับภาษี (ชื่อบริษัท / เลขผู้เสียภาษี)..."
-                                                />
-                                            </div>
-                                            {showTaxInvoiceDropdown && (
-                                                <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                    {customer.taxInvoices && customer.taxInvoices.length > 0 ? (
-                                                        customer.taxInvoices
-                                                            .filter(inv =>
-                                                                inv.companyName.toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
-                                                                inv.taxId.includes(taxInvoiceSearchTerm)
-                                                            )
-                                                            .map((inv, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    onClick={() => {
-                                                                        setTaxInvoice({
-                                                                            ...inv,
-                                                                            branch: inv.branch || 'สำนักงานใหญ่',
-                                                                            phone: customer.phone || '',
-                                                                            email: customer.email || ''
-                                                                        });
-                                                                        setTaxInvoiceSearchTerm('');
-                                                                        setShowTaxInvoiceDropdown(false);
-                                                                    }}
-                                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                >
-                                                                    <div className="font-medium text-secondary-900 text-sm">{inv.companyName}</div>
-                                                                    <div className="text-xs text-secondary-500">
-                                                                        {inv.taxId} {inv.branch ? `| ${inv.branch}` : ''}
-                                                                    </div>
-                                                                </div>
-                                                            ))
-                                                    ) : (
-                                                        <div className="px-3 py-2 text-sm text-secondary-500 text-center">ไม่มีข้อมูลใบกำกับภาษี</div>
-                                                    )}
+                                                <div className="mb-2">
+                                                    <label className="block text-xs font-medium text-secondary-500 mb-1">ค้นหาใบกำกับภาษี</label>
                                                 </div>
-                                            )}
+                                                <div className="relative">
+                                                    <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        value={taxInvoiceSearchTerm}
+                                                        onChange={(e) => {
+                                                            setTaxInvoiceSearchTerm(e.target.value)
+                                                            setShowTaxInvoiceDropdown(true)
+                                                        }}
+                                                        onFocus={() => setShowTaxInvoiceDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowTaxInvoiceDropdown(false), 200)}
+                                                        className="w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                                        placeholder="ค้นหาใบกำกับภาษี (ชื่อบริษัท / เลขผู้เสียภาษี)..."
+                                                    />
+                                                </div>
+                                                {showTaxInvoiceDropdown && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                        {customer.taxInvoices && customer.taxInvoices.length > 0 ? (
+                                                            customer.taxInvoices
+                                                                .filter(inv =>
+                                                                    inv.companyName.toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
+                                                                    inv.taxId.includes(taxInvoiceSearchTerm)
+                                                                )
+                                                                .map((inv, index) => (
+                                                                    <div
+                                                                        key={index}
+                                                                        onClick={() => {
+                                                                            setTaxInvoice({
+                                                                                ...inv,
+                                                                                branch: inv.branch || 'สำนักงานใหญ่',
+                                                                                phone: customer.phone || '',
+                                                                                email: customer.email || ''
+                                                                            });
+                                                                            setTaxInvoiceSearchTerm('');
+                                                                            setShowTaxInvoiceDropdown(false);
+                                                                        }}
+                                                                        className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                    >
+                                                                        <div className="font-medium text-secondary-900 text-sm">{inv.companyName}</div>
+                                                                        <div className="text-xs text-secondary-500">
+                                                                            {inv.taxId} {inv.branch ? `| ${inv.branch}` : ''}
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                        ) : (
+                                                            <div className="px-3 py-2 text-sm text-secondary-500 text-center">ไม่มีข้อมูลใบกำกับภาษี</div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : null}
 
