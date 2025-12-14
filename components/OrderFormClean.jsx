@@ -736,9 +736,9 @@ export default function OrderForm() {
                                                                             handleSelectCustomer(c)
                                                                             setShowCustomerDropdown(false)
                                                                         }}
-                                                                        className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                                        className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                                     >
-                                                                        <div className="font-bold text-secondary-900">{c.name}</div>
+                                                                        <div className="font-medium text-secondary-900 text-sm">{c.name}</div>
                                                                         <div className="text-xs text-secondary-500">{c.phone} {c.email ? `| ${c.email}` : ''}</div>
                                                                     </div>
                                                                 ))}
@@ -760,15 +760,19 @@ export default function OrderForm() {
                                     ) : null}
 
 
-                                    {/* Customer Details Card */}
+                                    {/* Customer Details Card - Click to re-select */}
                                     {customer.id && (
-                                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-2">
+                                        <div
+                                            onClick={() => setCustomer({})}
+                                            className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-2 cursor-pointer group"
+                                            title="คลิกเพื่อเปลี่ยนลูกค้า"
+                                        >
                                             {/* Header: Name, Code */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <div>
                                                         <div className="flex flex-wrap items-center gap-2">
-                                                            <h3 className="font-bold text-secondary-900 text-sm leading-tight">{String(customer.name)}</h3>
+                                                            <h3 className="font-bold text-secondary-900 text-sm leading-tight group-hover:text-primary-600 transition-colors">{String(customer.name)}</h3>
                                                             {customer.mediaSource && (
                                                                 <span className="px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-medium rounded border border-primary-200">
                                                                     {(() => {
@@ -796,9 +800,7 @@ export default function OrderForm() {
                                                         <p className="text-xs text-secondary-500 mt-0.5 font-mono">CODE: {customer.id || '-'}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    {/* Edited: Close button removed as per user request */}
-                                                </div>
+                                                {/* Hidden indicator that appears on hover could be nice, or just rely on cursor pointer */}
                                             </div>
 
                                             {/* Contact Grid - Compact */}
