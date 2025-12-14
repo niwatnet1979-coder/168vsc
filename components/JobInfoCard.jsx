@@ -80,16 +80,31 @@ export default function JobInfoCard({
 
                             {/* Location */}
                             {(data.installAddress || data.installLocationName) && (
-                                <div className="mt-1">
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
                                     <label className="block text-xs font-medium text-secondary-500 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
                                     <DataSourceTooltip isRealtime={false} source="input/google_maps">
-                                        <AddressCard
-                                            title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
-                                            address={data.installAddress}
-                                            distance={data.distance}
-                                            mapLink={data.googleMapLink}
-                                            variant="primary"
-                                        />
+                                        <div className="space-y-1">
+                                            {data.installLocationName && (
+                                                <div className="text-sm font-medium text-secondary-900">{data.installLocationName}</div>
+                                            )}
+                                            {data.installAddress && (
+                                                <div className="text-sm text-secondary-600 leading-relaxed">{data.installAddress}</div>
+                                            )}
+                                            {(data.distance || data.googleMapLink) && (
+                                                <div className="pt-1 flex flex-wrap gap-2 items-center">
+                                                    {data.distance && (
+                                                        <span className="text-xs bg-white border border-secondary-200 text-secondary-600 px-2 py-0.5 rounded-full">
+                                                            {data.distance}
+                                                        </span>
+                                                    )}
+                                                    {data.googleMapLink && (
+                                                        <a href={data.googleMapLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+                                                            เปิดแผนที่
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </DataSourceTooltip>
                                 </div>
                             )}
