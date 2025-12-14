@@ -1006,8 +1006,6 @@ export default function OrderForm() {
                                                 <div className="text-xs text-secondary-800 leading-relaxed">
                                                     {(() => {
                                                         const addr = taxInvoice.address;
-                                                        console.log('DEBUG ADDR:', JSON.stringify(addr, null, 2));
-                                                        console.log('DEBUG TAXINVOICE:', JSON.stringify(taxInvoice, null, 2));
                                                         // Fallback logic for address display
                                                         if (typeof addr === 'string' && addr) return addr;
                                                         if (addr && typeof addr === 'object') {
@@ -1019,9 +1017,9 @@ export default function OrderForm() {
                                                             if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
                                                             if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
                                                             if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                            const prov = addr.province || taxInvoice.province;
+                                                            const prov = addr.province || addr.addrProvince || taxInvoice.province || taxInvoice.addrProvince;
                                                             if (prov) p.push(`จังหวัด ${prov}`);
-                                                            const zip = addr.zipcode || taxInvoice.zipcode;
+                                                            const zip = addr.zipcode || addr.addrZipcode || taxInvoice.zipcode || taxInvoice.addrZipcode;
                                                             if (zip) p.push(zip);
                                                             const result = p.join(' ');
                                                             if (result) return result;
@@ -1035,8 +1033,13 @@ export default function OrderForm() {
                                                         if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
                                                         if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
                                                         if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
-                                                        if (taxInvoice.province) p.push(`จังหวัด ${taxInvoice.province}`);
-                                                        if (taxInvoice.zipcode) p.push(taxInvoice.zipcode);
+
+                                                        const prov = taxInvoice.province || taxInvoice.addrProvince;
+                                                        if (prov) p.push(`จังหวัด ${prov}`);
+
+                                                        const zip = taxInvoice.zipcode || taxInvoice.addrZipcode;
+                                                        if (zip) p.push(zip);
+
                                                         return p.join(' ') || '-';
                                                     })()}
                                                 </div>
