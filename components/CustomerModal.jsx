@@ -4,8 +4,8 @@ import {
     MessageCircle, Facebook, Instagram, Globe
 } from 'lucide-react'
 
-export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
-    const [activeTab, setActiveTab] = useState('customer')
+export default function CustomerModal({ isOpen, onClose, customer, onSave, initialTab = 'customer' }) {
+    const [activeTab, setActiveTab] = useState(initialTab)
     const [isSaving, setIsSaving] = useState(false)
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
@@ -52,6 +52,13 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave }) {
             })
         }
     }, [customer, isOpen])
+
+    // Reset tab when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab(initialTab)
+        }
+    }, [isOpen, initialTab])
 
     if (!isOpen) return null
 

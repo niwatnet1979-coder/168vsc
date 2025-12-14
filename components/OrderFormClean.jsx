@@ -118,6 +118,8 @@ export default function OrderForm() {
     const [showMapPopup, setShowMapPopup] = useState(false)
     const [selectedMapLink, setSelectedMapLink] = useState('')
     const [showEditCustomerModal, setShowEditCustomerModal] = useState(false)
+    const [customerModalTab, setCustomerModalTab] = useState('customer')
+    const [addingContactFor, setAddingContactFor] = useState(null) // 'activeCustomerContact' or 'selectedContact'
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false)
     const [showPaymentModal, setShowPaymentModal] = useState(false)
 
@@ -335,6 +337,16 @@ export default function OrderForm() {
     }
 
     const handleUpdateCustomer = async (updatedCustomer) => {
+        // Check if we were adding a contact and find the new one
+        let addedContact = null
+        if (addingContactFor) {
+            const prevIds = (customer.contacts || []).map(c => c.id)
+            const newContacts = updatedCustomer.contacts || []
+            // Find contact that wasn't in previous list. If multiple, take the last one.
+            // Or if simple addition, it's likely the last one.
+            addedContact = newContacts.find(c => !prevIds.includes(c.id)) || newContacts[newContacts.length - 1]
+        }
+
         // Update local state
         setCustomer(prev => ({ ...prev, ...updatedCustomer }))
 
@@ -345,6 +357,18 @@ export default function OrderForm() {
         const customers = await DataManager.getCustomers()
         setCustomersData(customers)
 
+        // Auto-select if we were adding a contact
+        if (addingContactFor && addedContact) {
+            if (addingContactFor === 'activeCustomerContact') {
+                setActiveCustomerContact(addedContact)
+            } else if (addingContactFor === 'selectedContact') {
+                setSelectedContact(addedContact)
+            }
+        }
+
+        // Reset states
+        setAddingContactFor(null)
+        setCustomerModalTab('customer')
         setShowEditCustomerModal(false)
     }
 
@@ -373,6 +397,16 @@ export default function OrderForm() {
         } else {
             alert('ไม่สามารถเพิ่มลูกค้าได้')
         }
+    }
+
+    const handleAddNewContact = (type) => {
+        if (!customer.id) {
+            alert('กรุณาเลือกลูกค้าก่อนเพิ่มผู้ติดต่อ')
+            return
+        }
+        setCustomerModalTab('contacts')
+        setAddingContactFor(type)
+        setShowEditCustomerModal(true)
     }
 
     const handleSearchProduct = (index, term) => {
@@ -856,6 +890,7 @@ export default function OrderForm() {
                                             onChange={setActiveCustomerContact}
                                             variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
+                                            onAddNew={() => handleAddNewContact('activeCustomerContact')}
                                         />
                                     </div>
                                 </div>
@@ -1106,6 +1141,7 @@ export default function OrderForm() {
                                             onChange={setSelectedContact}
                                             variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
+                                            onAddNew={() => handleAddNewContact('selectedContact')}
                                         />
                                     </div>
 
@@ -1535,8 +1571,13 @@ export default function OrderForm() {
                     {/* Customer Edit Modal */}
                     <CustomerModal
                         isOpen={showEditCustomerModal}
-                        onClose={() => setShowEditCustomerModal(false)}
+                        onClose={() => {
+                            setShowEditCustomerModal(false)
+                            setCustomerModalTab('customer')
+                            setAddingContactFor(null)
+                        }}
                         customer={customer}
+                        initialTab={customerModalTab}
                         onSave={handleUpdateCustomer}
                     />
 

@@ -271,18 +271,18 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
             if (!successCompletion) throw new Error('Failed to save completion data')
 
             // 4. Update Job Status & Legacy Signature Column
-            const successJob = await DataManager.saveJob({
+            const result = await DataManager.saveJob({
                 ...job,
                 status: 'Done',
                 signatureImage: completionData.signature_url,
                 // We don't append to notes anymore! Cleaner.
             })
 
-            if (successJob) {
+            if (result.success) {
                 alert('บันทึกข้อมูลเรียบร้อยแล้ว')
                 if (onSave) onSave()
             } else {
-                throw new Error('Failed to update job status')
+                throw new Error('Failed to update job status: ' + result.error)
             }
 
         } catch (error) {
