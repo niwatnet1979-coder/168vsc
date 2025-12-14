@@ -21,6 +21,7 @@ import Card from './Card'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import OrderItemModal from './OrderItemModal'
+import PaymentSummaryCard from './PaymentSummaryCard'
 
 function convertToEmbedUrl(url) {
     if (!url) return null
@@ -38,6 +39,7 @@ export default function OrderForm() {
     const [customersData, setCustomersData] = useState([])
     const [productsData, setProductsData] = useState([])
     const [availableTeams, setAvailableTeams] = useState([])
+    const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
 
     // --- Form States ---
     const [customer, setCustomer] = useState({
@@ -140,6 +142,37 @@ export default function OrderForm() {
         }
         loadData()
     }, [])
+
+    // Fetch other outstanding orders
+    useEffect(() => {
+        const loadOtherOrders = async () => {
+            if (customer?.id) {
+                try {
+                    const orders = await DataManager.getOrdersByCustomerId(customer.id)
+                    const currentOrderId = router.query.id || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') : '')
+
+                    const otherOutstanding = orders
+                        .filter(o => o.id !== currentOrderId)
+                        .map(o => {
+                            const paid = (o.paymentSchedule || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                            const total = Number(o.totalAmount) || 0
+                            return {
+                                id: o.id,
+                                total: total,
+                                paid: paid,
+                                outstanding: Math.max(0, total - paid)
+                            }
+                        })
+                        .filter(o => o.outstanding > 0)
+
+                    setOtherOutstandingOrders(otherOutstanding)
+                } catch (err) {
+                    console.error('Error loading other orders:', err)
+                }
+            }
+        }
+        loadOtherOrders()
+    }, [customer?.id, router.query.id])
 
 
 
@@ -1157,116 +1190,29 @@ export default function OrderForm() {
 
                         {/* Payment Summary - Mobile: 4, Desktop: 4 */}
                         <div className="order-4 md:order-4 flex flex-col h-full">
-                            <Card className="p-6 flex flex-col h-full">
-                                <h2 className="text-lg font-bold text-secondary-900 mb-4 flex items-center gap-2">
-                                    <CreditCard className="text-primary-600" />
-                                    สรุปยอดชำระ
-                                </h2>
-
-                                <div className="flex-1 space-y-5 text-sm">
-                                    <div className="flex justify-between text-secondary-600">
-                                        <span>รวมเป็นเงิน</span>
-                                        <span>{currency(subtotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-secondary-600">
-                                        <span>ค่าขนส่ง</span>
-                                        <input
-                                            type="number"
-                                            value={shippingFee}
-                                            onChange={e => setShippingFee(Number(e.target.value))}
-                                            className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                                        />
-                                    </div>
-                                    <div className="flex justify-between items-center text-secondary-600">
-                                        <span>ส่วนลด</span>
-                                        <div className="flex gap-1">
-                                            <select
-                                                value={discount.mode}
-                                                onChange={e => setDiscount({ ...discount, mode: e.target.value })}
-                                                className="border border-secondary-300 rounded text-xs px-1"
-                                            >
-                                                <option value="percent">%</option>
-                                                <option value="amount">฿</option>
-                                            </select>
-                                            <input
-                                                type="number"
-                                                value={discount.value}
-                                                onChange={e => setDiscount({ ...discount, value: Number(e.target.value) })}
-                                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between text-secondary-900 font-medium pt-3 border-t border-secondary-100">
-                                        <span>หลังหักส่วนลด</span>
-                                        <span>{currency(afterDiscount)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-secondary-600">
-                                        <span className="flex items-center gap-2">
-                                            ภาษีมูลค่าเพิ่ม (7%)
-                                            <input
-                                                type="checkbox"
-                                                checked={vatRate > 0}
-                                                onChange={e => setVatRate(e.target.checked ? 0.07 : 0)}
-                                                className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
-                                            />
-                                        </span>
-                                        <span>{currency(vatAmt)}</span>
-                                    </div>
-
-                                    <div className="flex justify-between text-xl font-bold text-primary-700 pt-5 border-t border-secondary-200">
-                                        <span>ยอดรวมทั้งสิ้น</span>
-                                        <span>{currency(total)}</span>
-                                    </div>
-
-                                    {/* Payment Schedule List */}
-                                    <div className="pt-5 border-t border-secondary-200">
-                                        <h3 className="text-sm font-bold text-secondary-900 mb-4">รายการการชำระเงิน</h3>
-
-                                        {/* Payment List */}
-                                        {paymentSchedule.length > 0 && (
-                                            <div className="space-y-3 mb-4">
-                                                {paymentSchedule.map((payment, index) => (
-                                                    <div
-                                                        key={index}
-                                                        onClick={() => {
-                                                            setEditingPaymentIndex(index)
-                                                            setShowPaymentModal(true)
-                                                        }}
-                                                        className="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 cursor-pointer hover:bg-secondary-100 transition-colors shadow-sm hover:shadow-md duration-200"
-                                                    >
-                                                        <div className="flex items-center gap-2 text-sm">
-                                                            <span className="font-medium">{payment.date || '-'}</span>
-                                                            <span className="text-secondary-500">•</span>
-                                                            <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
-                                                        </div>
-                                                        <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {/* Add Payment Button */}
-                                        {paymentSchedule.length < 5 && (
-                                            <button
-                                                onClick={() => {
-                                                    setEditingPaymentIndex(null)
-                                                    setShowPaymentModal(true)
-                                                }}
-                                                className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
-                                            >
-                                                <Plus size={16} />
-                                                เพิ่มการชำระ
-                                            </button>
-                                        )}
-
-                                        {/* Outstanding Balance - Moved below payment schedule */}
-                                        <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
-                                            <span>รวมยอดค้างชำระ</span>
-                                            <span>{currency(outstanding)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
+                            <div className="h-full">
+                                <PaymentSummaryCard
+                                    subtotal={subtotal}
+                                    shippingFee={shippingFee}
+                                    onShippingFeeChange={setShippingFee}
+                                    discount={discount}
+                                    onDiscountChange={setDiscount}
+                                    vatRate={vatRate}
+                                    onVatRateChange={setVatRate}
+                                    paymentSchedule={paymentSchedule}
+                                    readOnly={false}
+                                    hideControls={true}
+                                    onAddPayment={() => {
+                                        setEditingPaymentIndex(null)
+                                        setShowPaymentModal(true)
+                                    }}
+                                    onEditPayment={(index) => {
+                                        setEditingPaymentIndex(index)
+                                        setShowPaymentModal(true)
+                                    }}
+                                    otherOutstandingOrders={otherOutstandingOrders}
+                                />
+                            </div>
                         </div>
                     </div>
 
