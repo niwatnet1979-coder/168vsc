@@ -1075,10 +1075,10 @@ export default function OrderForm() {
                                                 ...(customer.addresses || [])
                                             ]}
                                             value={{
-                                                label: taxInvoiceDeliveryAddress.label,
-                                                address: taxInvoiceDeliveryAddress.address,
-                                                googleMapLink: taxInvoiceDeliveryAddress.googleMapLink,
-                                                distance: taxInvoiceDeliveryAddress.distance,
+                                                label: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
+                                                address: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
+                                                googleMapLink: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
+                                                distance: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
                                                 badge: taxInvoiceDeliveryAddress.type === 'same' ? (
                                                     <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
                                                         ที่อยู่เดียวกัน
