@@ -32,8 +32,18 @@ export default function AddressSelector({
             let coords = extractCoordinates(finalMapLink)
 
             if (!coords) {
-                // Try resolving if needed
-                // ...
+                try {
+                    const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(finalMapLink)}`)
+                    if (res.ok) {
+                        const data = await res.json()
+                        if (data.url) {
+                            finalMapLink = data.url
+                            coords = extractCoordinates(data.url)
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error resolving map link:', error)
+                }
             }
 
             if (coords) {
