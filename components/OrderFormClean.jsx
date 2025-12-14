@@ -811,7 +811,7 @@ export default function OrderForm() {
                                             </div>
 
                                             {/* Contact Grid - Compact */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 pt-1">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-1">
                                                 <div className="flex items-center gap-2 text-secondary-700 text-xs">
                                                     <Phone size={12} className="text-secondary-400 shrink-0" />
                                                     <span className="truncate">{customer.phone || '-'}</span>
