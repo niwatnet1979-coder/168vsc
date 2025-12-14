@@ -5,6 +5,7 @@ import Card from './Card'
 import ContactSelector from './ContactSelector'
 import { calculateDistance, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import AddressSelector from './AddressSelector'
 import DataSourceTooltip from './DataSourceTooltip'
 
 export default function JobInfoCard({
@@ -212,158 +213,36 @@ export default function JobInfoCard({
                         </div>
 
                         {/* Location */}
-                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                            <label className="block text-xs font-medium text-secondary-500 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
-
-                            {/* Address Dropdown */}
-                            {!data.installLocationName ? (
-                                <div className="relative">
-                                    <Search className="absolute left-0 top-0.5 text-secondary-400" size={16} />
-                                    <input
-                                        type="text"
-                                        value={installLocationSearchTerm}
-                                        onChange={(e) => {
-                                            setInstallLocationSearchTerm(e.target.value)
-                                            setShowInstallLocationDropdown(true)
-                                        }}
-                                        onFocus={() => !readOnly && setShowInstallLocationDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
-                                        disabled={readOnly}
-                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
-                                        placeholder="ค้นหาสถานที่ติดตั้ง..."
-                                    />
-                                    {showInstallLocationDropdown && (
-                                        <div className="absolute z-10 w-full mt-2 left-0 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                            {customer && customer.addresses && Array.isArray(customer.addresses)
-                                                ? customer.addresses
-                                                    .filter(addr => {
-                                                        if (!addr) return false;
-                                                        const addressText = typeof addr.address === 'string' ? addr.address : '';
-                                                        return (addr.label && addr.label.toLowerCase().includes(installLocationSearchTerm.toLowerCase())) ||
-                                                            (addressText && addressText.includes(installLocationSearchTerm));
-                                                    })
-                                                    .map((addr, index) => {
-                                                        if (!addr) return null;
-
-                                                        const addressText = typeof addr.address === 'string'
-                                                            ? addr.address
-                                                            : (addr.address || '');
-
-                                                        // Helper to build address string if object
-                                                        let fullAddress = addressText;
-                                                        if (!fullAddress && typeof addr === 'object') {
-                                                            const p = [];
-                                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                            if (addr.addrVillage) p.push(addr.addrVillage);
-                                                            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                            if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                            if (addr.zipcode) p.push(addr.zipcode);
-                                                            fullAddress = p.join(' ');
-                                                        }
-
-                                                        return (
-                                                            <div
-                                                                key={index}
-                                                                onClick={async () => {
-                                                                    if (readOnly) return;
-                                                                    let distanceStr = '';
-                                                                    let finalMapLink = addr.googleMapsLink || '';
-
-                                                                    if (addr.distance) {
-                                                                        distanceStr = `${addr.distance.toFixed(2)} km`;
-                                                                    } else if (typeof addr.googleMapsLink === 'string' && addr.googleMapsLink) {
-                                                                        let coords = extractCoordinates(addr.googleMapsLink);
-
-                                                                        if (!coords) {
-                                                                            try {
-                                                                                const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(addr.googleMapsLink)}`);
-                                                                                if (res.ok) {
-                                                                                    const data = await res.json();
-                                                                                    if (data.url) {
-                                                                                        finalMapLink = data.url;
-                                                                                        coords = extractCoordinates(data.url);
-                                                                                    }
-                                                                                }
-                                                                            } catch (error) {
-                                                                                console.error('Error resolving map link:', error);
-                                                                            }
-                                                                        }
-
-                                                                        if (coords) {
-                                                                            const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon);
-                                                                            distanceStr = `${dist} km`;
-                                                                        }
-                                                                    }
-
-                                                                    handleUpdate({
-                                                                        installLocationName: addr.label || '',
-                                                                        installAddress: fullAddress,
-                                                                        googleMapLink: finalMapLink,
-                                                                        distance: distanceStr
-                                                                    });
-                                                                    setInstallLocationSearchTerm('');
-                                                                    setShowInstallLocationDropdown(false);
-                                                                }}
-                                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                            >
-                                                                <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
-                                                                <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
-                                                            </div>
-                                                        );
-                                                    })
-                                                : null}
-                                        </div>
-                                    )}
-                                </div>
-                            ) : null}
-
-                            {/* Selected Address Details Card */}
-                            {(data.installAddress || data.installLocationName) && (
-                                <DataSourceTooltip isRealtime={false} source="input/google_maps" showHighlight={false}>
-                                    <div
-                                        onClick={() => {
-                                            if (!readOnly) {
-                                                setInstallLocationSearchTerm('');
-                                                setShowInstallLocationDropdown(true);
-                                                // We don't clear the data immediately to avoid "flashing"
-                                                // The dropdown will cover the input, but the user clicks here to "change"
-                                                // Actually if we want to "Change", we should probably reset?
-                                                // Or just show the search box again?
-                                                // If we just set ShowDropdown, it might look like nothing happened if input is hidden?
-                                                // The input IS hidden because data.installLocationName is true.
-                                                // Strategy: Clear the 'installLocationName' momentarily OR better:
-                                                // Clear only the 'installLocationName' so the input reappears?
-                                                // But then we lose the value if they cancel.
-                                                // Ah, JobInfoCard logic (Line 219) hides input if installLocationName exists.
-                                                // So we MUST clear installLocationName to see input.
-                                                // Let's clear it, but maybe keep a backup if needed? 
-                                                // For now, simpler is "Reset" behavior as requested.
-                                                handleUpdate({
-                                                    installLocationName: '',
-                                                    installAddress: '',
-                                                    googleMapLink: '',
-                                                    distance: ''
-                                                });
-                                            }
-                                        }}
-                                        className="mt-1 cursor-pointer rounded-lg transition-all border border-transparent hover:border-transparent"
-                                    >
-                                        <AddressCard
-                                            title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
-                                            address={data.installAddress}
-                                            distance={data.distance}
-                                            mapLink={data.googleMapLink}
-                                            // No onClear prop passed -> No X button
-                                            variant="transparent"
-                                        />
-                                    </div>
-                                </DataSourceTooltip>
-                            )}
-                        </div>
+                        <AddressSelector
+                            label="สถานที่ติดตั้ง / ขนส่ง"
+                            addresses={customer?.addresses || []}
+                            value={{
+                                label: data.installLocationName,
+                                address: data.installAddress,
+                                googleMapLink: data.googleMapLink,
+                                distance: data.distance
+                            }}
+                            onChange={(newValue) => {
+                                if (newValue) {
+                                    handleUpdate({
+                                        installLocationName: newValue.label,
+                                        installAddress: newValue.address,
+                                        googleMapLink: newValue.googleMapLink,
+                                        distance: newValue.distance
+                                    })
+                                } else {
+                                    // Reset
+                                    handleUpdate({
+                                        installLocationName: '',
+                                        installAddress: '',
+                                        googleMapLink: '',
+                                        distance: ''
+                                    })
+                                }
+                            }}
+                            placeholder="ค้นหาสถานที่ติดตั้ง..."
+                            readOnly={readOnly}
+                        />
 
                         {/* Inspector Selection */}
                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">

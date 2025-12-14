@@ -13,7 +13,7 @@ import { DataManager } from '../lib/dataManager'
 
 import ProductModal from './ProductModal'
 import SubJobModal from './SubJobModal'
-import AddressCard from './AddressCard'
+import AddressSelector from './AddressSelector' // Import AddressSelector
 import ContactSelector from './ContactSelector'
 import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
@@ -1062,118 +1062,72 @@ export default function OrderForm() {
                                             ที่อยู่จัดส่งใบกำกับภาษี
                                         </label>
 
-                                        {/* Dropdown */}
-                                        {!taxInvoiceDeliveryAddress.address ? (
-                                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                                <div className="relative">
-                                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
-                                                    <input
-                                                        type="text"
-                                                        value={taxAddressSearchTerm}
-                                                        onChange={(e) => {
-                                                            setTaxAddressSearchTerm(e.target.value)
-                                                            setShowTaxAddressDropdown(true)
-                                                        }}
-                                                        onFocus={() => setShowTaxAddressDropdown(true)}
-                                                        onBlur={() => setTimeout(() => setShowTaxAddressDropdown(false), 200)}
-                                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
-                                                        placeholder="ค้นหาที่อยู่..."
-                                                    />
-                                                    {showTaxAddressDropdown && (
-                                                        <div className="absolute z-10 w-full mt-2 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto left-0">
-                                                            {/* Option: Same as installation address */}
-                                                            {jobInfo.installAddress && (
-                                                                <div
-                                                                    onClick={() => {
-                                                                        setTaxInvoiceDeliveryAddress({
-                                                                            type: 'same',
-                                                                            label: jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง',
-                                                                            address: jobInfo.installAddress || '',
-                                                                            googleMapLink: jobInfo.googleMapLink || '',
-                                                                            distance: jobInfo.distance || ''
-                                                                        });
-                                                                        setTaxAddressSearchTerm('');
-                                                                        setShowTaxAddressDropdown(false);
-                                                                    }}
-                                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                >
-                                                                    <div className="font-medium text-secondary-900 text-sm">ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง</div>
-                                                                    <div className="text-xs text-secondary-500 truncate">{jobInfo.installAddress}</div>
-                                                                </div>
-                                                            )}
+                                        {/* Address Selector Component */}
+                                        <AddressSelector
+                                            addresses={[
+                                                // Function to construct options including "Same as Install"
+                                                ...(jobInfo.installAddress ? [{
+                                                    label: 'ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง',
+                                                    address: jobInfo.installAddress,
+                                                    googleMapLink: jobInfo.googleMapLink || '',
+                                                    distance: jobInfo.distance || '',
+                                                    isSpecial: true, // Marker for badging logic if we want to handle inside? Or just rely on label?
+                                                    // Actually AddressSelector displays label/address.
+                                                    // Value handling needs care.
+                                                }] : []),
+                                                ...(customer.addresses || [])
+                                            ]}
+                                            value={{
+                                                label: taxInvoiceDeliveryAddress.label,
+                                                address: taxInvoiceDeliveryAddress.address,
+                                                googleMapLink: taxInvoiceDeliveryAddress.googleMapLink,
+                                                distance: taxInvoiceDeliveryAddress.distance,
+                                                badge: taxInvoiceDeliveryAddress.type === 'same' ? (
+                                                    <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                        ที่อยู่เดียวกัน
+                                                    </span>
+                                                ) : null
+                                            }}
+                                            onChange={(newValue) => {
+                                                if (newValue) {
+                                                    // Detect if "Same as Install" was selected
+                                                    // Simple check: label matches? Or add ID?
+                                                    // The 'newValue' comes from the option object passed in.
+                                                    // If we add extra props to option, they come back?
+                                                    // My AddressSelector implementation passes `addr` back in handleSelect.
+                                                    // So if I add `type: 'same'` to the option, it comes back!
 
-                                                            {/* Options: Customer addresses */}
-                                                            {customer.addresses
-                                                                ?.filter(addr => {
-                                                                    const addressText = typeof addr.address === 'string' ? addr.address : '';
-                                                                    return addr.label.toLowerCase().includes(taxAddressSearchTerm.toLowerCase()) || addressText.includes(taxAddressSearchTerm);
-                                                                })
-                                                                .map((addr, index) => {
-                                                                    const addressText = typeof addr.address === 'string'
-                                                                        ? addr.address
-                                                                        : (addr.address || '');
+                                                    // Wait, AddressSelector reconstructs the object in onChange({ label, address... })
+                                                    // It doesn't pass the raw object fully?
+                                                    // Let's check AddressSelector.jsx:
+                                                    // onChange({ label: addr.label..., address: fullAddress..., ... })
+                                                    // It constructs a NEW object. It loses custom props like 'type' or 'isSpecial'.
 
-                                                                    // Helper to build address string if object
-                                                                    let fullAddress = addressText;
-                                                                    if (!fullAddress && typeof addr === 'object') {
-                                                                        const p = [];
-                                                                        if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                                        if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                                        if (addr.addrVillage) p.push(addr.addrVillage);
-                                                                        if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                                        if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                                        if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                                        if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                                        if (addr.province) p.push(`จังหวัด ${addr.province}`);
-                                                                        if (addr.zipcode) p.push(addr.zipcode);
-                                                                        fullAddress = p.join(' ');
-                                                                    }
+                                                    // FIX: I should rely on value comparison or update AddressSelector to pass original object?
+                                                    // Or just infer "same" type if address matches jobInfo?
+                                                    // Simplest: Check if address === jobInfo.installAddress?
 
-                                                                    return (
-                                                                        <div
-                                                                            key={index}
-                                                                            onClick={() => {
-                                                                                setTaxInvoiceDeliveryAddress({
-                                                                                    type: 'custom',
-                                                                                    label: addr.label || '',
-                                                                                    address: fullAddress,
-                                                                                    googleMapLink: addr.googleMapsLink || '',
-                                                                                    distance: addr.distance ? `${addr.distance.toFixed(2)} km` : ''
-                                                                                });
-                                                                                setTaxAddressSearchTerm('');
-                                                                                setShowTaxAddressDropdown(false);
-                                                                            }}
-                                                                            className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                                                        >
-                                                                            <div className="font-medium text-secondary-900 text-sm">{addr.label}</div>
-                                                                            <div className="text-xs text-secondary-500 truncate">{fullAddress}</div>
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : null}
+                                                    const isSame = jobInfo.installAddress && newValue.address === jobInfo.installAddress;
 
-                                        {/* Selected Address Display Card */}
-                                        {taxInvoiceDeliveryAddress.address && (
-                                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                                <AddressCard
-                                                    title={taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label}
-                                                    address={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.installAddress : taxInvoiceDeliveryAddress.address}
-                                                    mapLink={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.googleMapLink : taxInvoiceDeliveryAddress.googleMapLink}
-                                                    distance={taxInvoiceDeliveryAddress.type === 'same' ? jobInfo.distance : taxInvoiceDeliveryAddress.distance}
-                                                    onClear={() => setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '', googleMapLink: '', distance: '' })}
-                                                    variant="transparent"
-                                                    badge={taxInvoiceDeliveryAddress.type === 'same' ? (
-                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                            ที่อยู่เดียวกัน
-                                                        </span>
-                                                    ) : null}
-                                                />
-                                            </div>
-                                        )}
+                                                    setTaxInvoiceDeliveryAddress({
+                                                        type: isSame ? 'same' : 'custom',
+                                                        label: newValue.label,
+                                                        address: newValue.address,
+                                                        googleMapLink: newValue.googleMapLink,
+                                                        distance: newValue.distance
+                                                    });
+                                                } else {
+                                                    setTaxInvoiceDeliveryAddress({
+                                                        type: '',
+                                                        label: '',
+                                                        address: '',
+                                                        googleMapLink: '',
+                                                        distance: ''
+                                                    });
+                                                }
+                                            }}
+                                            placeholder="ค้นหาที่อยู่..."
+                                        />
                                     </div>
 
                                     {/* Contact Selector - Delivery - Always Visible */}
