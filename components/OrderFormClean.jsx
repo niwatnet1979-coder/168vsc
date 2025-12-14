@@ -366,6 +366,51 @@ export default function OrderForm() {
             }
         }
 
+        // Check for new TAX INVOICE
+        const prevTaxInvoices = customer.taxInvoices || []
+        const newTaxInvoices = updatedCustomer.taxInvoices || []
+        if (newTaxInvoices.length > prevTaxInvoices.length && addingContactFor === 'taxInvoice') {
+            // Find the new tax invoice (simple diff by ID check or taking the last one)
+            // Assuming the new one is added to the end or has a new ID
+            const newInv = newTaxInvoices.find(n => !prevTaxInvoices.some(p => p.id === n.id))
+            if (newInv) {
+                setTaxInvoice({
+                    ...newInv,
+                    branch: newInv.branch || 'สำนักงานใหญ่',
+                    phone: updatedCustomer.phone || '',
+                    email: updatedCustomer.email || ''
+                })
+            }
+        }
+
+        // Check for new ADDRESS
+        const prevAddresses = customer.addresses || []
+        const newAddresses = updatedCustomer.addresses || []
+        if (newAddresses.length > prevAddresses.length && addingContactFor === 'taxInvoiceDeliveryAddress') {
+            const newAddr = newAddresses.find(n => !prevAddresses.some(p => p.id === n.id))
+            if (newAddr) {
+                // Helper to format address string (copied from AddressSelector logic essentially or simplified)
+                let fullAddress = newAddr.address
+                if (!fullAddress && typeof newAddr === 'object') {
+                    const p = []
+                    if (newAddr.addrNumber) p.push(`เลขที่ ${newAddr.addrNumber}`)
+                    if (newAddr.addrRoad) p.push(`ถ. ${newAddr.addrRoad}`)
+                    if (newAddr.addrTambon) p.push(`ต. ${newAddr.addrTambon}`)
+                    if (newAddr.province) p.push(`จ. ${newAddr.province}`)
+                    if (newAddr.zipcode) p.push(newAddr.zipcode)
+                    fullAddress = p.join(' ')
+                }
+
+                setTaxInvoiceDeliveryAddress({
+                    type: 'custom',
+                    label: newAddr.label,
+                    address: fullAddress,
+                    googleMapLink: newAddr.googleMapsLink,
+                    distance: ''
+                })
+            }
+        }
+
         // Reset states
         setAddingContactFor(null)
         setCustomerModalTab('customer')
@@ -400,12 +445,24 @@ export default function OrderForm() {
     }
 
     const handleAddNewContact = (type) => {
-        if (!customer.id) {
-            alert('กรุณาเลือกลูกค้าก่อนเพิ่มผู้ติดต่อ')
-            return
-        }
+        if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มผู้ติดต่อ')
         setCustomerModalTab('contacts')
+        // type: 'activeCustomerContact' | 'selectedContact'
         setAddingContactFor(type)
+        setShowEditCustomerModal(true)
+    }
+
+    const handleAddNewTaxInvoice = () => {
+        if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มใบกำกับภาษี')
+        setCustomerModalTab('tax')
+        setAddingContactFor('taxInvoice')
+        setShowEditCustomerModal(true)
+    }
+
+    const handleAddNewAddress = () => {
+        if (!customer.id) return alert('กรุณาเลือกลูกค้าก่อนเพิ่มที่อยู่')
+        setCustomerModalTab('address')
+        setAddingContactFor('taxInvoiceDeliveryAddress')
         setShowEditCustomerModal(true)
     }
 
@@ -977,6 +1034,17 @@ export default function OrderForm() {
                                                         ) : (
                                                             <div className="px-3 py-2 text-sm text-secondary-500 text-center">ไม่มีข้อมูลใบกำกับภาษี</div>
                                                         )}
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                handleAddNewTaxInvoice()
+                                                                setShowTaxInvoiceDropdown(false)
+                                                            }}
+                                                            onMouseDown={(e) => e.preventDefault()}
+                                                            className="px-3 py-2 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 border-t border-primary-100 sticky bottom-0"
+                                                        >
+                                                            <Plus size={16} /> เพิ่มใบกำกับภาษีใหม่
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -1128,6 +1196,7 @@ export default function OrderForm() {
                                             }}
                                             addressClassName="text-xs"
                                             placeholder="ค้นหาที่อยู่..."
+                                            onAddNew={handleAddNewAddress}
                                         />
                                     </div>
 

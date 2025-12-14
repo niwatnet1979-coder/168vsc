@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import AddressCard from './AddressCard'
 import DataSourceTooltip from './DataSourceTooltip'
 import { calculateDistance, extractCoordinates } from '../lib/utils'
@@ -13,7 +13,8 @@ export default function AddressSelector({
     placeholder = "ค้นหาสถานที่...",
     readOnly = false,
     className = "",
-    addressClassName = ""
+    addressClassName = "",
+    onAddNew // New prop for adding address
 }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [showDropdown, setShowDropdown] = useState(false)
@@ -114,56 +115,71 @@ export default function AddressSelector({
                         placeholder={placeholder}
                     />
                     {showDropdown && (
-                        <div className="absolute z-10 w-full mt-2 left-0 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {addresses && addresses.length > 0 ? (
-                                addresses
-                                    .filter(addr => {
-                                        if (!addr) return false
-                                        const addressText = typeof addr.address === 'string' ? addr.address : ''
-                                        // Include 'label' in search if present
-                                        return (addr.label && addr.label.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                                            (addressText && addressText.includes(searchTerm))
-                                    })
-                                    .map((addr, index) => {
-                                        if (!addr) return null
+                        <div className="absolute z-10 w-full mt-2 left-0 bg-white border border-secondary-200 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                            <div className="overflow-y-auto max-h-48">
+                                {addresses && addresses.length > 0 ? (
+                                    addresses
+                                        .filter(addr => {
+                                            if (!addr) return false
+                                            const addressText = typeof addr.address === 'string' ? addr.address : ''
+                                            // Include 'label' in search if present
+                                            return (addr.label && addr.label.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                                (addressText && addressText.includes(searchTerm))
+                                        })
+                                        .map((addr, index) => {
+                                            if (!addr) return null
 
-                                        // Display formatted address logic for Dropdown Item
-                                        const addressText = typeof addr.address === 'string'
-                                            ? addr.address
-                                            : (addr.address || '')
-                                        let fullAddress = addressText
-                                        if (!fullAddress && typeof addr === 'object') {
-                                            // Simplified check for object address to string
-                                            const p = []
-                                            if (addr.label) {/* Skip label in address text if strictly address */ }
-                                            // (Same join logic as above)
-                                            if (addr.addrNumber) p.push(addr.addrNumber) // Brief
-                                            if (addr.province) p.push(addr.province)
-                                            // Keep it simple for dropdown display
-                                        }
-                                        if (!fullAddress && typeof addr === 'object') {
-                                            // Fallback reuse the join logic
-                                            const p = []
-                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
-                                            if (addr.addrRoad) p.push(`ถ. ${addr.addrRoad}`)
-                                            if (addr.addrTambon) p.push(`ต. ${addr.addrTambon}`)
-                                            if (addr.province) p.push(`จ. ${addr.province}`)
-                                            fullAddress = p.join(' ')
-                                        }
+                                            // Display formatted address logic for Dropdown Item
+                                            const addressText = typeof addr.address === 'string'
+                                                ? addr.address
+                                                : (addr.address || '')
+                                            let fullAddress = addressText
+                                            if (!fullAddress && typeof addr === 'object') {
+                                                // Simplified check for object address to string
+                                                const p = []
+                                                if (addr.label) {/* Skip label in address text if strictly address */ }
+                                                // (Same join logic as above)
+                                                if (addr.addrNumber) p.push(addr.addrNumber) // Brief
+                                                if (addr.province) p.push(addr.province)
+                                                // Keep it simple for dropdown display
+                                            }
+                                            if (!fullAddress && typeof addr === 'object') {
+                                                // Fallback reuse the join logic
+                                                const p = []
+                                                if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
+                                                if (addr.addrRoad) p.push(`ถ. ${addr.addrRoad}`)
+                                                if (addr.addrTambon) p.push(`ต. ${addr.addrTambon}`)
+                                                if (addr.province) p.push(`จ. ${addr.province}`)
+                                                fullAddress = p.join(' ')
+                                            }
 
-                                        return (
-                                            <div
-                                                key={index}
-                                                onClick={() => handleSelect(addr)}
-                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
-                                            >
-                                                <div className="font-medium text-secondary-900 text-sm">{addr.label || 'ที่อยู่'}</div>
-                                                <div className="text-xs text-secondary-500 truncate">{fullAddress || '-'}</div>
-                                            </div>
-                                        )
-                                    })
-                            ) : (
-                                <div className="px-3 py-2 text-xs text-secondary-500 text-center">ไม่พบข้อมูลที่อยู่</div>
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => handleSelect(addr)}
+                                                    className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
+                                                >
+                                                    <div className="font-medium text-secondary-900 text-sm">{addr.label || 'ที่อยู่'}</div>
+                                                    <div className="text-xs text-secondary-500 truncate">{fullAddress || '-'}</div>
+                                                </div>
+                                            )
+                                        })
+                                ) : (
+                                    <div className="px-3 py-2 text-xs text-secondary-500 text-center">ไม่พบข้อมูลที่อยู่</div>
+                                )}
+                            </div>
+                            {onAddNew && (
+                                <div
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        onAddNew()
+                                        setShowDropdown(false)
+                                    }}
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    className="px-3 py-2 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 border-t border-primary-100"
+                                >
+                                    <Plus size={16} /> เพิ่มที่อยู่ใหม่
+                                </div>
                             )}
                         </div>
                     )}
