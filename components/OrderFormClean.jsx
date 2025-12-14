@@ -914,7 +914,7 @@ export default function OrderForm() {
                                     ข้อมูลใบกำกับภาษี
                                 </h2>
 
-                                <div className="flex-1 space-y-6">
+                                <div className="flex-1 space-y-3">
                                     {/* Tax Invoice Section - Always Visible Search if not selected */}
                                     {!taxInvoice.companyName ? (
                                         <div className="relative">
