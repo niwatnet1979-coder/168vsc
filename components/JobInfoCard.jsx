@@ -143,14 +143,15 @@ export default function JobInfoCard({
             ) : null}
             contentClassName="flex-1"
         >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">ประเภทงาน</label>
+            <div className="space-y-3">
+                {/* Job Type */}
+                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                    <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทงาน</label>
                     <select
                         value={data.jobType}
                         onChange={e => handleUpdate({ jobType: e.target.value })}
                         disabled={readOnly}
-                        className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                        className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
                     >
                         <option value="">-- เลือกประเภทงาน --</option>
                         {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
@@ -161,15 +162,16 @@ export default function JobInfoCard({
 
                 {data.jobType !== 'separate' && (
                     <>
-                        <div>
-                            <label className="block text-sm font-medium text-secondary-700 mb-2">ทีม</label>
+                        {/* Team */}
+                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                            <label className="block text-xs font-medium text-secondary-500 mb-1">ทีม</label>
                             <div className="relative">
                                 <DataSourceTooltip isRealtime={false} source="input">
                                     <select
                                         value={data.team}
                                         onChange={(e) => handleUpdate({ team: e.target.value })}
                                         disabled={readOnly}
-                                        className={`w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                        className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm appearance-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
                                     >
                                         <option value="">-- เลือกทีม --</option>
                                         {availableTeams.map((team, idx) => (
@@ -177,40 +179,46 @@ export default function JobInfoCard({
                                         ))}
                                     </select>
                                 </DataSourceTooltip>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={18} />
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                             </div>
                         </div>
-                        <div className="min-w-0">
-                            <label className="block text-sm font-medium text-secondary-700 mb-2">วันที่นัดหมาย</label>
-                            <DataSourceTooltip isRealtime={false} source="input">
-                                <input
-                                    type="datetime-local"
-                                    value={data.appointmentDate || ''}
-                                    onChange={e => handleUpdate({ appointmentDate: e.target.value })}
-                                    disabled={readOnly}
-                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
-                                />
-                            </DataSourceTooltip>
-                        </div>
-                        {showCompletionDate && (
-                            <div className="min-w-0">
-                                <label className="block text-sm font-medium text-secondary-700 mb-2">วันที่สำเร็จ</label>
-                                <input
-                                    type="datetime-local"
-                                    value={data.completionDate || ''}
-                                    onChange={e => handleUpdate({ completionDate: e.target.value })}
-                                    disabled={readOnly}
-                                    className={`w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white font-medium text-secondary-900 appearance-none text-sm min-w-0 max-w-full h-[42px] shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
-                                />
+
+                        {/* Dates Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่นัดหมาย</label>
+                                <DataSourceTooltip isRealtime={false} source="input">
+                                    <input
+                                        type="datetime-local"
+                                        value={data.appointmentDate || ''}
+                                        onChange={e => handleUpdate({ appointmentDate: e.target.value })}
+                                        disabled={readOnly}
+                                        className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-secondary-900 appearance-none text-sm min-w-0 max-w-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                                    />
+                                </DataSourceTooltip>
                             </div>
-                        )}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-secondary-700 mb-2">สถานที่ติดตั้ง / ขนส่ง</label>
+                            {showCompletionDate && (
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">วันที่สำเร็จ</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={data.completionDate || ''}
+                                        onChange={e => handleUpdate({ completionDate: e.target.value })}
+                                        disabled={readOnly}
+                                        className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white text-secondary-900 appearance-none text-sm min-w-0 max-w-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Location */}
+                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                            <label className="block text-xs font-medium text-secondary-500 mb-1">สถานที่ติดตั้ง / ขนส่ง</label>
 
                             {/* Address Dropdown */}
                             {!data.installLocationName ? (
-                                <div className="relative mb-3">
-                                    <Search className="absolute left-3 top-3 text-secondary-400" size={16} />
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-2.5 text-secondary-400" size={16} />
                                     <input
                                         type="text"
                                         value={installLocationSearchTerm}
@@ -221,7 +229,7 @@ export default function JobInfoCard({
                                         onFocus={() => !readOnly && setShowInstallLocationDropdown(true)}
                                         onBlur={() => setTimeout(() => setShowInstallLocationDropdown(false), 200)}
                                         disabled={readOnly}
-                                        className={`w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
+                                        className="w-full pl-9 pr-4 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
                                         placeholder="ค้นหาสถานที่ติดตั้ง..."
                                     />
                                     {showInstallLocationDropdown && (
@@ -318,22 +326,31 @@ export default function JobInfoCard({
                             {/* Selected Address Details Card */}
                             {(data.installAddress || data.installLocationName) && (
                                 <DataSourceTooltip isRealtime={false} source="input/google_maps">
-                                    <AddressCard
-                                        title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
-                                        address={data.installAddress}
-                                        distance={data.distance}
-                                        mapLink={data.googleMapLink}
-                                        onClear={!readOnly ? () => handleUpdate({
-                                            installLocationName: '',
-                                            installAddress: '',
-                                            googleMapLink: '',
-                                            distance: ''
-                                        }) : undefined}
-                                        variant="primary"
-                                    />
+                                    <div className="bg-white rounded-lg border border-secondary-200 overflow-hidden">
+                                        <AddressCard
+                                            title={data.installLocationName || 'สถานที่ติดตั้ง / ขนส่ง'}
+                                            address={data.installAddress}
+                                            distance={data.distance}
+                                            mapLink={data.googleMapLink}
+                                            onClear={!readOnly ? () => handleUpdate({
+                                                installLocationName: '',
+                                                installAddress: '',
+                                                googleMapLink: '',
+                                                distance: ''
+                                            }) : undefined}
+                                            variant="primary" // Keeping primary variant but wrapped in white bg
+                                        />
+                                    </div>
                                 </DataSourceTooltip>
                             )}
-                            {/* Inspector Selection (From Customer Contacts) */}
+                        </div>
+
+                        {/* Inspector Selection */}
+                        <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                            {/* Note: ContactSelector has its own label usage, but we wrap it for consistency */}
+                            {/* We might want to pass className specifically or rely on its internal style to adapt? */}
+                            {/* ContactSelector uses 'mb-1 block text-sm font-medium' by default. We want 'text-xs'. */}
+                            {/* For now, we trust ContactSelector or accept minor difference */}
                             <ContactSelector
                                 variant="blue"
                                 label="ผู้ตรวจงาน / รับสินค้า"
@@ -352,22 +369,22 @@ export default function JobInfoCard({
                         </div>
                     </>
                 )}
-            </div>
 
-            {/* Notes Section */}
-            {data.jobType !== 'separate' && (
-                <div className="mt-6">
-                    <label className="block text-sm font-medium text-secondary-700 mb-2">รายละเอียด</label>
-                    <textarea
-                        rows={1}
-                        value={note}
-                        onChange={e => onNoteChange && onNoteChange(e.target.value)}
-                        disabled={readOnly}
-                        className={`w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none shadow-sm hover:shadow-md transition-shadow duration-200 ${readOnly ? 'bg-secondary-100 text-secondary-500 cursor-not-allowed' : ''}`}
-                        placeholder="รายละเอียดเพิ่มเติม..."
-                    />
-                </div>
-            )}
+                {/* Notes Section */}
+                {data.jobType !== 'separate' && (
+                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                        <label className="block text-xs font-medium text-secondary-500 mb-1">รายละเอียด</label>
+                        <textarea
+                            rows={1}
+                            value={note}
+                            onChange={e => onNoteChange && onNoteChange(e.target.value)}
+                            disabled={readOnly}
+                            className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm resize-none bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
+                            placeholder="รายละเอียดเพิ่มเติม..."
+                        />
+                    </div>
+                )}
+            </div>
         </Card >
     )
 }
