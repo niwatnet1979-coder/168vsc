@@ -761,16 +761,9 @@ export default function OrderForm() {
                                     {/* Customer Details Card */}
                                     {customer.id && (
                                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md space-y-2">
-                                            {/* Header: Avatar, Name, Code */}
+                                            {/* Header: Name, Code */}
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm relative overflow-hidden shrink-0">
-                                                        {customer.image ? (
-                                                            <img src={customer.image} alt={customer.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            String(customer.name).charAt(0).toUpperCase()
-                                                        )}
-                                                    </div>
                                                     <div>
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <h3 className="font-bold text-secondary-900 text-sm leading-tight">{String(customer.name)}</h3>
@@ -818,7 +811,7 @@ export default function OrderForm() {
                                             </div>
 
                                             {/* Contact Grid - Compact */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 pt-1 border-t border-secondary-200/50">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 pt-1">
                                                 <div className="flex items-center gap-2 text-secondary-700 text-xs">
                                                     <Phone size={12} className="text-secondary-400 shrink-0" />
                                                     <span className="truncate">{customer.phone || '-'}</span>
