@@ -358,7 +358,7 @@ export default function JobInfoCard({
                                             distance={data.distance}
                                             mapLink={data.googleMapLink}
                                             // No onClear prop passed -> No X button
-                                            variant="seamless"
+                                            variant="transparent"
                                         />
                                     </div>
                                 </DataSourceTooltip>

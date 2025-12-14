@@ -17,8 +17,8 @@ export default function AddressCard({
     let bgColor, borderColor, iconBgColor, iconColor
 
     if (isTransparent) {
-        bgColor = 'bg-transparent'
-        borderColor = 'border-none'
+        bgColor = '!bg-transparent'
+        borderColor = '!border-none'
         iconBgColor = 'border-secondary-100 bg-white' // Keep icon box clean
         iconColor = 'text-primary-600'
     } else if (variant === 'success') {
