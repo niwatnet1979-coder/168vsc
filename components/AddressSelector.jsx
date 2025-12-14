@@ -27,14 +27,13 @@ export default function AddressSelector({
         let finalDistance = addr.distance
 
         // Calculate distance if missing
-        if (!finalDistance && typeof finalMapLink === 'string' && finalMapLink) {
+        const hasDistance = finalDistance !== null && finalDistance !== undefined && finalDistance !== ''
+        if (!hasDistance && typeof finalMapLink === 'string' && finalMapLink) {
             let coords = extractCoordinates(finalMapLink)
 
             if (!coords) {
-                // Try resolving if needed (mocking logic or simplified)
-                // In JobInfoCard we had fetch logic. We can replicate it or assume passed addresses are pre-processed or just do client-side calc if simple.
-                // For robustness, let's keep the coordinate extraction part. 
-                // We won't fetch from API here to avoid complexity unless necessary, relying on util.
+                // Try resolving if needed
+                // ...
             }
 
             if (coords) {
@@ -45,7 +44,7 @@ export default function AddressSelector({
         }
 
         // If address object already has distance (numeric or string), use it
-        if (finalDistance) {
+        if (finalDistance !== null && finalDistance !== undefined && finalDistance !== '') {
             distanceStr = typeof finalDistance === 'number' ? `${finalDistance.toFixed(2)} km` : finalDistance
         }
 
