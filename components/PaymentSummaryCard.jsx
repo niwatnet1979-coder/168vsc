@@ -161,6 +161,7 @@ export default function PaymentSummaryCard({
                 {/* Payment Schedule List */}
                 {otherOutstandingOrders.length > 0 && (
                     <div className="pt-5 border-t border-secondary-200">
+                        <h3 className="text-sm font-bold text-secondary-900 mb-3">ยอดค้างจากออเดอร์อื่น</h3>
                         <div className="space-y-2 mb-3">
                             {otherOutstandingOrders.map((order) => (
                                 <div key={order.id} className="flex justify-between text-sm text-secondary-600">
