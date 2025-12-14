@@ -1074,17 +1074,20 @@ export default function OrderForm() {
                                                 }] : []),
                                                 ...(customer.addresses || [])
                                             ]}
-                                            value={{
-                                                label: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
-                                                address: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
-                                                googleMapLink: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
-                                                distance: taxInvoiceDeliveryAddress.type === 'same' ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
-                                                badge: taxInvoiceDeliveryAddress.type === 'same' ? (
-                                                    <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
-                                                        ที่อยู่เดียวกัน
-                                                    </span>
-                                                ) : null
-                                            }}
+                                            value={(() => {
+                                                const isSame = taxInvoiceDeliveryAddress.type === 'same' || (jobInfo.installAddress && taxInvoiceDeliveryAddress.address === jobInfo.installAddress);
+                                                return {
+                                                    label: isSame ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
+                                                    address: isSame ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
+                                                    googleMapLink: isSame ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
+                                                    distance: isSame ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
+                                                    badge: isSame ? (
+                                                        <span className="px-2 py-0.5 bg-success-100 text-success-700 text-xs font-medium rounded-full border border-success-200">
+                                                            ที่อยู่เดียวกัน
+                                                        </span>
+                                                    ) : null
+                                                };
+                                            })()}
                                             onChange={(newValue) => {
                                                 if (newValue) {
                                                     // Detect if "Same as Install" was selected
