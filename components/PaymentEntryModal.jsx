@@ -113,10 +113,10 @@ export default function PaymentEntryModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col transform transition-all scale-100">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] flex flex-col transform transition-all scale-100">
                 {/* Header */}
                 <div className="flex-none bg-white border-b border-secondary-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-                    <h2 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                         {isEditing ? (
                             <span className="w-1.5 h-6 bg-primary-600 rounded-full inline-block"></span>
                         ) : (
@@ -136,14 +136,14 @@ export default function PaymentEntryModal({
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-secondary-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     {/* Date */}
                     <div>
-                        <label className="block text-sm font-bold text-secondary-700 mb-2">
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
                             วันที่ชำระ <span className="text-danger-500">*</span>
                         </label>
                         <input
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-4 py-3 border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-secondary-50 focus:bg-white transition-all font-medium text-secondary-900"
+                            className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white transition-all font-medium text-secondary-900"
                         />
                     </div>
 
@@ -158,7 +158,7 @@ export default function PaymentEntryModal({
                                     <select
                                         value={formData.amountMode}
                                         onChange={(e) => setFormData({ ...formData, amountMode: e.target.value })}
-                                        className="w-full px-4 py-2.5 text-sm font-medium border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
+                                        className="w-full px-3 py-2 text-sm font-medium border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white appearance-none"
                                     >
                                         <option value="percent">เปอร์เซ็นต์ (%)</option>
                                         <option value="amount">ยอดเงิน (฿)</option>
@@ -182,7 +182,7 @@ export default function PaymentEntryModal({
                                             setFormData({ ...formData, amount: e.target.value })
                                         }
                                     }}
-                                    className="w-full px-4 py-2.5 text-sm font-bold border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right bg-white"
+                                    className="w-full px-3 py-2 text-sm font-bold border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right bg-white"
                                     placeholder={formData.amountMode === 'percent' ? '50' : '0.00'}
                                 />
                             </div>
@@ -211,7 +211,7 @@ export default function PaymentEntryModal({
 
                     {/* Payment Method */}
                     <div>
-                        <label className="block text-sm font-bold text-secondary-700 mb-2">ช่องทางชำระ</label>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">ช่องทางชำระ</label>
                         <div className="grid grid-cols-3 gap-3">
                             {['โอน', 'บัตรเครดิต', 'เงินสด'].map((method) => (
                                 <button
@@ -231,7 +231,7 @@ export default function PaymentEntryModal({
 
                     {/* Slip Upload */}
                     <div>
-                        <label className="block text-sm font-bold text-secondary-700 mb-2">หลักฐานการโอน</label>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">หลักฐานการโอน</label>
                         <input
                             type="file"
                             accept="image/*"
@@ -329,13 +329,13 @@ export default function PaymentEntryModal({
                     <div className="flex gap-3 w-full sm:w-auto">
                         <button
                             onClick={onClose}
-                            className="flex-1 sm:flex-none px-5 py-2.5 text-sm border border-secondary-300 rounded-xl hover:bg-secondary-50 font-bold text-secondary-700 transition-colors"
+                            className="flex-1 sm:flex-none px-5 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-bold text-secondary-700 transition-colors"
                         >
                             ยกเลิก
                         </button>
                         <button
                             onClick={handleSave}
-                            className="flex-1 sm:flex-none px-8 py-2.5 text-sm bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-lg shadow-primary-500/30 transition-all hover:-translate-y-0.5"
+                            className="flex-1 sm:flex-none px-8 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-bold shadow-lg shadow-primary-500/30 transition-all hover:-translate-y-0.5"
                         >
                             บันทึก
                         </button>
