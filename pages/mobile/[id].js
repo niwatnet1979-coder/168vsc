@@ -255,6 +255,36 @@ export default function MobileJobDetail() {
 
 
 
+    const handleSaveProductItem = async (updatedItem) => {
+        try {
+            const itemIndex = job.order?.items?.findIndex(i =>
+                i.subJob?.jobId === job.id ||
+                i.code === product.code
+            )
+
+            if (itemIndex === -1) throw new Error('Could not find item to update')
+
+            const cleanOrderItems = job.order.items.map(i => ({ ...i }))
+            cleanOrderItems[itemIndex] = {
+                ...cleanOrderItems[itemIndex],
+                ...updatedItem,
+                subJob: cleanOrderItems[itemIndex].subJob
+            }
+
+            const updatedOrder = {
+                ...job.order,
+                items: cleanOrderItems,
+            }
+
+            await DataManager.saveOrder(updatedOrder)
+            setIsEditingProduct(false)
+            loadJobDetails()
+        } catch (e) {
+            console.error(e)
+            alert('เกิดข้อผิดพลาดในการบันทึกสินค้า')
+        }
+    }
+
     return (
         <ProtectedRoute>
             <AppLayout
@@ -386,44 +416,6 @@ export default function MobileJobDetail() {
                     </title>
                 </Head>
 
-                <OrderItemModal
-                    ref={orderItemModalRef}
-                    isOpen={false} // Hidden, controlled by views via logic if needed
-                    onClose={() => setIsEditingProduct(false)}
-                    onSave={async (updatedItem) => {
-                        // ... logic kept same but ensured balanced
-                        try {
-                            const itemIndex = job.order?.items?.findIndex(i =>
-                                i.subJob?.jobId === job.id ||
-                                i.code === product.code
-                            )
-
-                            if (itemIndex === -1) throw new Error('Could not find item to update')
-
-                            const cleanOrderItems = job.order.items.map(i => ({ ...i }))
-                            cleanOrderItems[itemIndex] = {
-                                ...cleanOrderItems[itemIndex],
-                                ...updatedItem,
-                                subJob: cleanOrderItems[itemIndex].subJob
-                            }
-
-                            const updatedOrder = {
-                                ...job.order,
-                                items: cleanOrderItems,
-                            }
-
-                            await DataManager.saveOrder(updatedOrder)
-                            setIsEditingProduct(false)
-                            loadJobDetails()
-                        } catch (e) {
-                            console.error(e)
-                            alert('เกิดข้อผิดพลาดในการบันทึกสินค้า')
-                        }
-                    }}
-                    product={product}
-                    mode="edit"
-                />
-
                 <PaymentEntryModal
                     isOpen={showPaymentModal}
                     onClose={() => {
@@ -456,19 +448,20 @@ export default function MobileJobDetail() {
                         />
                     )}
 
-                    {activeTab === 'product' && (
-                        <ProductDetailView
-                            product={{
-                                ...product,
-                                productName: product?.name || job.productName,
-                                productId: product?.id || job.productId,
-                                price: product?.price || 0,
-                                variants: product?.variants || [],
-                            }}
-                            onEdit={() => setIsEditingProduct(true)}
-                            hideEditButton={true}
-                        />
-                    )}
+                    <ProductDetailView
+                        ref={orderItemModalRef} // Use the same ref approach for imperative save
+                        product={{
+                            ...product,
+                            productName: product?.name || job.productName,
+                            productId: product?.id || job.productId,
+                            price: product?.price || 0,
+                            variants: product?.variants || [],
+                        }}
+                        isEditing={isEditingProduct}
+                        onSave={handleSaveProductItem}
+                        onEdit={() => setIsEditingProduct(true)}
+                        hideEditButton={true}
+                    />
 
                     {activeTab === 'payment' && (
                         <div className="space-y-4">
