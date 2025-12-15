@@ -3,21 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import * as XLSX from 'xlsx'
-import {
-    Search,
-    Plus,
-    Edit2,
-    Trash2,
-    Download,
-    LayoutGrid,
-    List,
-    ChevronUp,
-    ChevronDown,
-    X,
-    Image as ImageIcon,
-    Package,
-    Menu
-} from 'lucide-react'
+import { Search, Plus, Filter, MoreVertical, Edit2, Trash2, ChevronDown, ChevronUp, Package, Tag, Layers, Scaling, Palette, Gem, ImageIcon, List, LayoutGrid, Download, X, Menu } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import ProductModal from '../components/ProductModal'
 
@@ -276,19 +262,16 @@ export default function ProductManagement() {
                                 <tbody className="divide-y divide-secondary-100">
                                     {paginatedProducts.length > 0 ? (
                                         paginatedProducts.map((product, index) => {
-                                            // Extract category name without prefix (e.g., "โคมไฟระย้า" from "AA โคมไฟระย้า")
-                                            const categoryName = product.category ? product.category.split(' ').slice(1).join(' ') : null
+                                            // Helper for cleaning prefixes
+                                            const cleanPrefix = (str) => {
+                                                if (!str) return null
+                                                if (str.match(/^[A-Z]{2}\s/)) return str.substring(3)
+                                                if (str.match(/^\d{2}\s/)) return str.substring(3)
+                                                return str
+                                            }
 
-                                            // Extract material name without prefix (e.g., "ไม้" from "WD ไม้")
-                                            const materialName = product.material ? product.material.split(' ').slice(1).join(' ') || product.material : null
-
-                                            const productInfo = [
-                                                categoryName,
-                                                product.name,
-                                                product.subcategory,
-                                                materialName,
-                                                (product.length || product.width || product.height) ? `${product.length || '-'}×${product.width || '-'}×${product.height || '-'} cm` : null
-                                            ].filter(Boolean).join(' • ')
+                                            const categoryName = cleanPrefix(product.category)
+                                            const materialName = cleanPrefix(product.material)
 
                                             const hasVariants = product.variants && product.variants.length > 0
                                             const isExpanded = expandedProducts.has(product.id)
@@ -332,11 +315,29 @@ export default function ProductManagement() {
                                                             </Link>
                                                         </td>
                                                         <td className="px-4 py-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="text-sm text-secondary-700 leading-relaxed">{productInfo || '-'}</div>
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-700">
+                                                                {categoryName && <span className="font-medium text-secondary-900">{categoryName}</span>}
+                                                                {product.name && <span>• {product.name}</span>}
+                                                                {product.subcategory && <span>• {product.subcategory}</span>}
+
+                                                                {materialName && (
+                                                                    <div className="flex items-center gap-1 text-secondary-600" title="วัสดุ">
+                                                                        <Layers size={14} />
+                                                                        <span>{materialName}</span>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Dimensions */}
+                                                                {(product.length || product.width || product.height) && (
+                                                                    <div className="flex items-center gap-1 text-secondary-600" title="ขนาด">
+                                                                        <Scaling size={14} />
+                                                                        <span>{product.length || '-'}×{product.width || '-'}×{product.height || '-'} cm</span>
+                                                                    </div>
+                                                                )}
+
                                                                 {hasVariants && (
-                                                                    <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap flex items-center gap-1">
-                                                                        🎨 {product.variants.length} สี
+                                                                    <span className="ml-1 px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap flex items-center gap-1">
+                                                                        🎨 {product.variants.length} แบบ
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -445,6 +446,26 @@ export default function ProductManagement() {
                                                                                 }
                                                                                 code += `-${colorCode}`
 
+                                                                                code += `-${colorCode}`
+
+                                                                                // Helper for Crystal Color Code
+                                                                                const getCrystalCode = (name) => {
+                                                                                    if (!name) return ''
+                                                                                    const map = {
+                                                                                        'ใส': 'CL',
+                                                                                        'Clear': 'CL',
+                                                                                        'Gold': 'GD',
+                                                                                        'Smoke': 'SM',
+                                                                                        'Amber': 'AM',
+                                                                                        'Tea': 'TE'
+                                                                                    }
+                                                                                    return map[name] || name.substring(0, 2).toUpperCase()
+                                                                                }
+
+                                                                                if (variant.crystalColor) {
+                                                                                    code += `-${getCrystalCode(variant.crystalColor)}`
+                                                                                }
+
                                                                                 return code || '-'
                                                                             })()}
                                                                         </span>
@@ -452,49 +473,68 @@ export default function ProductManagement() {
 
                                                                     {/* Info - Full Details */}
                                                                     <td className="px-4 py-3">
-                                                                        <div className="text-sm text-secondary-700">
-                                                                            {/* Category • Name • Material • Dimensions • Color */}
+                                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-700">
+                                                                            {/* Category */}
                                                                             {product.category && (
-                                                                                <span>
+                                                                                <span className="font-medium text-secondary-900">
                                                                                     {(() => {
                                                                                         const cat = product.category
-                                                                                        // Remove prefix like "AA ", "01 ", "02 "
                                                                                         if (cat.match(/^[A-Z]{2}\s/)) return cat.substring(3)
                                                                                         if (cat.match(/^\d{2}\s/)) return cat.substring(3)
                                                                                         return cat
                                                                                     })()}
                                                                                 </span>
                                                                             )}
-                                                                            {product.name && <span> • {product.name}</span>}
+                                                                            {/* Material */}
                                                                             {product.material && (
-                                                                                <span>
-                                                                                    {' • '}
-                                                                                    {(() => {
-                                                                                        const mat = product.material
-                                                                                        // Remove prefix like "WD ", "ST ", "MT "
-                                                                                        if (mat.match(/^[A-Z]{2}\s/)) return mat.substring(3)
-                                                                                        return mat
-                                                                                    })()}
-                                                                                </span>
+                                                                                <div className="flex items-center gap-1 text-secondary-600" title="วัสดุ">
+                                                                                    <Layers size={14} />
+                                                                                    <span>
+                                                                                        {(() => {
+                                                                                            const mat = product.material
+                                                                                            if (mat.match(/^[A-Z]{2}\s/)) return mat.substring(3)
+                                                                                            return mat
+                                                                                        })()}
+                                                                                    </span>
+                                                                                </div>
                                                                             )}
+                                                                            {/* Dimensions */}
                                                                             {variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height) && (
-                                                                                <span> • {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
+                                                                                <div className="flex items-center gap-1 text-secondary-600" title="ขนาด">
+                                                                                    <Scaling size={14} />
+                                                                                    <span>{variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
+                                                                                </div>
                                                                             )}
+                                                                            {/* Color */}
                                                                             {variant.color && (
-                                                                                <span>
-                                                                                    {' • '}
-                                                                                    {(() => {
-                                                                                        const col = variant.color
-                                                                                        // Remove prefix like "GD ", "SL "
-                                                                                        if (col.match(/^[A-Z]{2}\s/)) return col.substring(3)
-                                                                                        return col
-                                                                                    })()}
-                                                                                </span>
+                                                                                <div className="flex items-center gap-1 text-secondary-600" title="สี">
+                                                                                    <Palette size={14} />
+                                                                                    <span>
+                                                                                        {(() => {
+                                                                                            const col = variant.color
+                                                                                            if (col.match(/^[A-Z]{2}\s/)) return col.substring(3)
+                                                                                            return col
+                                                                                        })()}
+                                                                                    </span>
+                                                                                </div>
                                                                             )}
-                                                                            {product.description && (
-                                                                                <div className="text-xs text-secondary-500 mt-1">{product.description}</div>
+                                                                            {/* Crystal Color */}
+                                                                            {variant.crystalColor && (
+                                                                                <div className="flex items-center gap-1 text-secondary-600" title="สีคริสตัล">
+                                                                                    <Gem size={14} />
+                                                                                    <span>
+                                                                                        {(() => {
+                                                                                            const cc = variant.crystalColor
+                                                                                            if (cc && cc.match(/^[A-Z]{2}\s/)) return cc.substring(3)
+                                                                                            return cc
+                                                                                        })()}
+                                                                                    </span>
+                                                                                </div>
                                                                             )}
                                                                         </div>
+                                                                        {product.description && (
+                                                                            <div className="text-xs text-secondary-500 mt-1 ml-1">{product.description}</div>
+                                                                        )}
                                                                     </td>
 
                                                                     {/* Price */}

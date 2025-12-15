@@ -11,7 +11,11 @@ import {
     FileText,
     Truck,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    Box,
+    Palette,
+    Gem,
+    Trash2
 } from 'lucide-react'
 
 export default function PurchasingPage() {
@@ -22,6 +26,7 @@ export default function PurchasingPage() {
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [viewMode, setViewMode] = useState('orders') // 'orders' | 'suggestions'
     const [suggestions, setSuggestions] = useState([])
+    const [selectedSuggestion, setSelectedSuggestion] = useState(null)
 
     useEffect(() => {
         if (viewMode === 'orders') {
@@ -160,8 +165,26 @@ export default function PurchasingPage() {
                                                     }
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-secondary-900">{item.name}</div>
-                                                    <div className="text-xs text-secondary-500">{item.code}</div>
+                                                    <div className="font-medium text-secondary-900 flex items-center gap-1.5 flex-wrap">
+                                                        <span>{item.category && `${item.category.split(' ')[1] || item.category} `}{item.name}</span>
+
+                                                        {item.variant_dims && (
+                                                            <span className="flex items-center gap-0.5 ml-1 text-secondary-500 font-normal text-xs bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                                <Box size={12} /> {item.variant_dims}
+                                                            </span>
+                                                        )}
+                                                        {item.variant_color && (
+                                                            <span className="flex items-center gap-0.5 ml-1 text-secondary-500 font-normal text-xs bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                                <Palette size={12} /> {item.variant_color.split(' ').pop()}
+                                                            </span>
+                                                        )}
+                                                        {item.variant_crystal && (
+                                                            <span className="flex items-center gap-0.5 ml-1 text-secondary-500 font-normal text-xs bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                                <Gem size={12} /> {item.variant_crystal.split(' ').pop()}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-secondary-500 mt-1 font-mono">{item.code}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -178,7 +201,10 @@ export default function PurchasingPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
-                                                onClick={() => setShowCreateModal(true)}
+                                                onClick={() => {
+                                                    setSelectedSuggestion(item)
+                                                    setShowCreateModal(true)
+                                                }}
                                                 className="text-primary-600 hover:text-primary-700 text-sm font-medium hover:underline"
                                             >
                                                 Create PO
@@ -269,12 +295,27 @@ export default function PurchasingPage() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-secondary-600">
-                                                <button
-                                                    onClick={() => window.location.href = `/purchasing/${po.id}`}
-                                                    className="text-primary-600 hover:text-primary-800 font-medium"
-                                                >
-                                                    View
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => window.location.href = `/purchasing/${po.id}`}
+                                                        className="text-primary-600 hover:text-primary-800 font-medium"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation()
+                                                            if (confirm('Are you sure you want to delete this PO?')) {
+                                                                await DataManager.deletePurchaseOrder(po.id)
+                                                                loadOrders()
+                                                            }
+                                                        }}
+                                                        className="text-danger-500 hover:text-danger-700 p-1 rounded hover:bg-danger-50"
+                                                        title="Delete PO"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -287,9 +328,14 @@ export default function PurchasingPage() {
 
             <PurchaseOrderModal
                 isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
+                initialItem={selectedSuggestion}
+                onClose={() => {
+                    setShowCreateModal(false)
+                    setSelectedSuggestion(null)
+                }}
                 onSave={() => {
                     setShowCreateModal(false)
+                    setSelectedSuggestion(null)
                     loadOrders()
                 }}
             />

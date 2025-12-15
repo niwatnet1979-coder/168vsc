@@ -11,8 +11,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         description: '',
         material: '',
         product_code: '',
-        pack_size: 1,
-        min_stock_level: 0,
+        product_code: '',
         variants: [],
         images: []
     })
@@ -20,6 +19,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
     const [productTypes, setProductTypes] = useState([])
     const [materials, setMaterials] = useState([])
     const [materialColors, setMaterialColors] = useState([])
+    const [crystalColors, setCrystalColors] = useState([])
 
     const defaultProductTypes = [
         'XX ไม่ระบุ',
@@ -39,6 +39,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
     const defaultMaterials = ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้']
     const defaultMaterialColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
+    const defaultCrystalColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
 
     useEffect(() => {
         const loadOptions = async () => {
@@ -47,6 +48,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 setProductTypes(options.productTypes && options.productTypes.length > 0 ? options.productTypes : defaultProductTypes)
                 setMaterials(options.materials && options.materials.length > 0 ? options.materials : defaultMaterials)
                 setMaterialColors(options.materialColors && options.materialColors.length > 0 ? options.materialColors : defaultMaterialColors)
+                setCrystalColors(options.crystalColors && options.crystalColors.length > 0 ? options.crystalColors : defaultCrystalColors)
             } else {
                 // Fallback to defaults
                 setProductTypes(defaultProductTypes)
@@ -63,7 +65,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
             setFormData({
                 ...product,
                 variants: product.variants || [],
-                min_stock_level: product.min_stock_level || 0,
+                variants: product.variants || [],
                 images: product.images || []
             })
         } else {
@@ -74,8 +76,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 description: '',
                 material: '',
                 product_code: '',
-                pack_size: 1,
-                min_stock_level: 0,
+                product_code: '',
                 variants: [],
                 images: []
             })
@@ -273,6 +274,9 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             </div>
                         </div>
 
+
+                        {/* Material Only - Color managed in Variants */}
+                        {/* Material & Min Stock */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-secondary-700 mb-2">ชื่อสินค้า</label>
@@ -280,34 +284,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                     type="text"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">
-                                    จำนวนกล่อง/ชุด (Pack Size)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={formData.pack_size || 1}
-                                    onChange={e => setFormData({ ...formData, pack_size: parseInt(e.target.value) || 1 })}
-                                    className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                />
-                            </div>
-                        </div>
-
-
-                        {/* Material Only - Color managed in Variants */}
-                        {/* Material & Min Stock */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-secondary-700 mb-2">จุดสั่งซื้อ (Min Stock)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={formData.min_stock_level}
-                                    onChange={e => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
                                     className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 />
                             </div>
@@ -350,6 +326,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                 variants={formData.variants}
                                 onChange={(newVariants) => setFormData({ ...formData, variants: newVariants })}
                                 materialColors={materialColors}
+                                crystalColors={crystalColors}
                                 mainProductColor={formData.color}
                             />
                         </div>

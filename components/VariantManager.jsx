@@ -7,18 +7,22 @@ export default function VariantManager({
     variants = [],
     onChange,
     materialColors = [],
+    crystalColors = [],
     mainProductColor = ''
 }) {
     const [editingIndex, setEditingIndex] = useState(null)
     const [variantForm, setVariantForm] = useState({
         color: '',
+        crystalColor: '',
         dimensions: {
             length: '',
             width: '',
             height: ''
         },
         price: '',
+        price: '',
         stock: '',
+        minStock: '',
         images: []
     })
 
@@ -29,13 +33,16 @@ export default function VariantManager({
         setEditingIndex(variants.length)
         setVariantForm({
             color: '',
+            crystalColor: '',
             dimensions: {
                 length: '',
                 width: '',
                 height: ''
             },
             price: '',
+            price: '',
             stock: '',
+            minStock: '',
             images: []
         })
     }
@@ -63,13 +70,16 @@ export default function VariantManager({
 
         const newVariant = {
             color: variantForm.color,
+            crystalColor: variantForm.crystalColor || '',
             dimensions: {
                 length: variantForm.dimensions?.length || '',
                 width: variantForm.dimensions?.width || '',
                 height: variantForm.dimensions?.height || ''
             },
             price: parseFloat(variantForm.price) || 0,
+            price: parseFloat(variantForm.price) || 0,
             stock: parseInt(variantForm.stock) || 0,
+            minStock: parseInt(variantForm.minStock) || 0,
             images: variantForm.images || []
             // NOTE: No 'id' field - it will be computed dynamically when needed
         }
@@ -85,13 +95,16 @@ export default function VariantManager({
         setEditingIndex(null)
         setVariantForm({
             color: '',
+            crystalColor: '',
             dimensions: {
                 length: '',
                 width: '',
                 height: ''
             },
             price: '',
+            price: '',
             stock: '',
+            minStock: '',
             images: []
         })
     }
@@ -153,7 +166,7 @@ export default function VariantManager({
                         <div key={index} className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg border border-secondary-200">
                             <div className="flex-1">
                                 <div className="font-medium text-secondary-900">
-                                    สี: {variant.color}
+                                    สี: {variant.color} {variant.crystalColor ? `| สีคริสตัล: ${variant.crystalColor}` : ''}
                                 </div>
                                 <div className="text-sm text-secondary-600 mt-1">
                                     {variant.dimensions && (
@@ -161,7 +174,7 @@ export default function VariantManager({
                                             📏 {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height} cm
                                         </span>
                                     )}
-                                    ฿{variant.price?.toLocaleString()} | Stock: {variant.stock} | {variant.images?.length || 0} รูป
+                                    ฿{variant.price?.toLocaleString()} | Stock: {variant.stock} (Min: {variant.minStock || 0}) | {variant.images?.length || 0} รูป
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -192,57 +205,9 @@ export default function VariantManager({
                         {editingIndex < variants.length ? 'แก้ไข' : 'เพิ่ม'} Variant
                     </h4>
 
-                    {/* Color */}
-                    <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-1">
-                            สี <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                            value={variantForm.color}
-                            onChange={(e) => setVariantForm({ ...variantForm, color: e.target.value })}
-                            className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            required
-                        >
-                            <option value="">เลือกสี</option>
-                            {materialColors.map((color, i) => {
-                                // Check if this is the current variant's color (when editing)
-                                const isCurrentColor = editingIndex < variants.length && variants[editingIndex]?.color === color
 
-                                // Check if color is used by main product
-                                // Handle cases where:
-                                // - dropdown color: "GD ทอง" but mainProductColor: "ทอง"
-                                // - OR exact match: "ทอง" === "ทอง"
-                                const isMainProductColor = mainProductColor && (
-                                    color === mainProductColor || // Exact match
-                                    color.includes(mainProductColor) || // Dropdown has prefix (e.g., "GD ทอง" includes "ทอง")
-                                    mainProductColor.includes(color) // Main product has prefix (unlikely but safe)
-                                )
 
-                                // Check if color is used by other variants
-                                const usedByOtherVariants = variants
-                                    .filter((_, idx) => idx !== editingIndex)
-                                    .some(v =>
-                                        v.color === color ||
-                                        color.includes(v.color) ||
-                                        v.color.includes(color)
-                                    )
 
-                                // Disable if used by main product or other variants (but not if it's current color)
-                                const isDisabled = !isCurrentColor && (isMainProductColor || usedByOtherVariants)
-
-                                return (
-                                    <option
-                                        key={i}
-                                        value={color}
-                                        disabled={isDisabled}
-                                        style={isDisabled ? { color: '#9ca3af' } : {}}
-                                    >
-                                        {color}{isDisabled ? ' (ใช้แล้ว)' : ''}
-                                    </option>
-                                )
-                            })}
-                        </select>
-                    </div>
 
 
                     {/* Dimensions */}
@@ -299,17 +264,102 @@ export default function VariantManager({
                                     placeholder="0"
                                 />
                             </div>
+
                         </div>
                     </div>
 
-                    {/* Price & Stock */}
+                    {/* Color & Crystal Color */}
                     <div className="grid grid-cols-2 gap-4">
+                        {/* Color */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                สี <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                value={variantForm.color}
+                                onChange={(e) => setVariantForm({ ...variantForm, color: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                required
+                            >
+                                <option value="">เลือกสี</option>
+                                {materialColors.map((color, i) => {
+                                    // Check if this is the current variant's color (when editing)
+                                    const isCurrentColor = editingIndex < variants.length && variants[editingIndex]?.color === color
+
+                                    // Check if color is used by main product
+                                    // Handle cases where:
+                                    // - dropdown color: "GD ทอง" but mainProductColor: "ทอง"
+                                    // - OR exact match: "ทอง" === "ทอง"
+                                    const isMainProductColor = mainProductColor && (
+                                        color === mainProductColor || // Exact match
+                                        color.includes(mainProductColor) || // Dropdown has prefix (e.g., "GD ทอง" includes "ทอง")
+                                        mainProductColor.includes(color) // Main product has prefix (unlikely but safe)
+                                    )
+
+                                    // Check if color is used by other variants
+                                    const usedByOtherVariants = variants
+                                        .filter((_, idx) => idx !== editingIndex)
+                                        .some(v =>
+                                            v.color === color ||
+                                            color.includes(v.color) ||
+                                            v.color.includes(color)
+                                        )
+
+                                    // Disable if used by main product or other variants (but not if it's current color)
+                                    const isDisabled = !isCurrentColor && (isMainProductColor || usedByOtherVariants)
+
+                                    return (
+                                        <option
+                                            key={i}
+                                            value={color}
+                                            disabled={isDisabled}
+                                            style={isDisabled ? { color: '#9ca3af' } : {}}
+                                        >
+                                            {color}{isDisabled ? ' (ใช้แล้ว)' : ''}
+                                        </option>
+                                    )
+                                })}
+                            </select>
+                        </div>
+
+                        {/* Crystal Color */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                สีคริสตัล
+                            </label>
+                            <select
+                                value={variantForm.crystalColor}
+                                onChange={(e) => setVariantForm({ ...variantForm, crystalColor: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            >
+                                <option value="">เลือกสีคริสตัล (ถ้ามี)</option>
+                                {crystalColors.map((color, i) => (
+                                    <option key={i} value={color}>{color}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+
+
+                    {/* Price, Min Stock & Stock */}
+                    <div className="grid grid-cols-3 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-1">ราคา (บาท)</label>
                             <input
                                 type="number"
                                 value={variantForm.price}
                                 onChange={(e) => setVariantForm({ ...variantForm, price: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="0"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">จุดสั่งซื้อ (Min)</label>
+                            <input
+                                type="number"
+                                value={variantForm.minStock}
+                                onChange={(e) => setVariantForm({ ...variantForm, minStock: e.target.value })}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 placeholder="0"
                             />

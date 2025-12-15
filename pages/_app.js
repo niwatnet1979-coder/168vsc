@@ -2,6 +2,7 @@ import '../styles/globals.css'
 import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { DebugProvider } from '../contexts/DebugContext'
+import { LanguageProvider } from '../contexts/LanguageContext'
 
 export default function App({ Component, pageProps: { session, ...pageProps } }) {
   return (
@@ -15,7 +16,9 @@ export default function App({ Component, pageProps: { session, ...pageProps } })
       </Head>
       <SessionProvider session={session}>
         <DebugProvider>
-          <Component {...pageProps} />
+          <LanguageProvider>
+            <Component {...pageProps} />
+          </LanguageProvider>
         </DebugProvider>
       </SessionProvider>
     </>

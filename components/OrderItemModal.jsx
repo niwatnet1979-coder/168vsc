@@ -472,7 +472,7 @@ const OrderItemModal = React.forwardRef(({
                                         <option value="">-- เลือก Variant --</option>
                                         {productVariants.map((variant, i) => (
                                             <option key={i} value={i}>
-                                                {variant.color} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
+                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
                                             </option>
                                         ))}
                                     </select>
@@ -495,17 +495,7 @@ const OrderItemModal = React.forwardRef(({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีคริสตัล</label>
-                                    <select
-                                        value={formData.crystalColor}
-                                        onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">-- เลือกสีคริสตัล --</option>
-                                        {productOptions.crystalColors.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
+                                    {/* Crystal Color Dropdown Removed - Managed by Variant */}
                                 </div>
                             </div>
 

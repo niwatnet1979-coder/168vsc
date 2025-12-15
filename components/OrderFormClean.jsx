@@ -1445,6 +1445,13 @@ export default function OrderForm() {
                                             {/* LEFT: Specs */}
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                                 {/* Dimensions - Moved from Row 1 */}
+                                                {item.material && (
+                                                    <div className="flex items-center gap-1" title="วัสดุ">
+                                                        <Layers size={12} />
+                                                        <span>{item.material}</span>
+                                                    </div>
+                                                )}
+                                                {/* Dimensions */}
                                                 {(() => {
                                                     const w = item.width || item.dimensions?.width
                                                     const l = item.length || item.dimensions?.length
@@ -1464,12 +1471,6 @@ export default function OrderForm() {
                                                     }
                                                     return null
                                                 })()}
-                                                {item.material && (
-                                                    <div className="flex items-center gap-1" title="วัสดุ">
-                                                        <Layers size={12} />
-                                                        <span>{item.material}</span>
-                                                    </div>
-                                                )}
                                                 {/* Color - Show variant color if selected, otherwise product color */}
                                                 {(item.selectedVariant?.color || item.color) && (
                                                     <div className="flex items-center gap-1" title="สี">
@@ -1477,11 +1478,11 @@ export default function OrderForm() {
                                                         <span>{item.selectedVariant?.color || item.color}</span>
                                                     </div>
                                                 )}
-                                                {/* Crystal Data (Mock/Field check) */}
-                                                {item.crystalColor && (
+                                                {/* Crystal Data */}
+                                                {(item.selectedVariant?.crystalColor || item.crystalColor) && (
                                                     <div className="flex items-center gap-1" title="สีคริสตัล">
                                                         <Gem size={12} />
-                                                        <span>{item.crystalColor}</span>
+                                                        <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
                                                     </div>
                                                 )}
                                                 {(item.light || item.lightColor) && (

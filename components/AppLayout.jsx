@@ -20,14 +20,17 @@ import {
     ShoppingBag,
 
     Box,
-    CheckCircle
+    CheckCircle,
+    Globe
 } from 'lucide-react';
 import packageJson from '../package.json';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const router = useRouter();
     const { data: session } = useSession();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { t, toggleLanguage, language } = useLanguage();
 
     // Check if user is disabled
     useEffect(() => {
@@ -106,6 +109,16 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                             />
                             <span className="font-bold text-xl text-secondary-900 tracking-tight">VSC System</span>
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">v{packageJson.version}</span>
+                            <button
+                                onClick={toggleLanguage}
+                                className="ml-1 p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-primary-600 transition-colors"
+                                title="Switch Language"
+                            >
+                                <div className="flex items-center gap-1">
+                                    <Globe size={16} />
+                                    <span className="text-xs font-bold uppercase">{language}</span>
+                                </div>
+                            </button>
                         </div>
                         <button
                             className="ml-auto lg:hidden text-secondary-500 hover:text-secondary-900"
@@ -146,7 +159,7 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                       ${active ? 'text-primary-600' : 'text-secondary-400 group-hover:text-secondary-600'}
                     `}
                                     />
-                                    <span className="flex-1">{item.name}</span>
+                                    <span className="flex-1">{t(item.name)}</span>
                                     {active && <ChevronRight size={16} className="text-primary-500" />}
                                 </Link>
                             );
@@ -189,7 +202,7 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                     </svg>
-                                    <span>สลับบัญชี</span>
+                                    <span>{t('Switch Account')}</span>
                                 </button>
                                 <button
                                     onClick={handleLogout}

@@ -10,7 +10,8 @@ import {
     Truck,
     DollarSign,
     Package,
-    CheckCircle
+    CheckCircle,
+    Trash2
 } from 'lucide-react'
 
 export default function PurchaseOrderDetailPage() {
@@ -105,6 +106,24 @@ export default function PurchaseOrderDetailPage() {
         }
     }
 
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this Purchase Order? This action cannot be undone.')) return
+
+        setIsSaving(true)
+        try {
+            const success = await DataManager.deletePurchaseOrder(id)
+            if (success) {
+                router.push('/purchasing')
+            } else {
+                throw new Error('Delete failed')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Failed to delete PO')
+            setIsSaving(false)
+        }
+    }
+
     if (isLoading) return <div className="p-10 text-center">Loading PO...</div>
     if (!po) return <div className="p-10 text-center">PO not found</div>
 
@@ -124,8 +143,8 @@ export default function PurchaseOrderDetailPage() {
                         <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
                             PO #{id.substring(0, 8)}
                             <span className={`text-sm font-normal px-2 py-0.5 rounded-full ${po.status === 'received' ? 'bg-green-100 text-green-700' :
-                                    po.status === 'ordered' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-secondary-100 text-secondary-500'
+                                po.status === 'ordered' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-secondary-100 text-secondary-500'
                                 }`}>
                                 {po.status.toUpperCase()}
                             </span>
@@ -245,6 +264,17 @@ export default function PurchaseOrderDetailPage() {
                                 </p>
                             </div>
                         )}
+                        {/* Delete Action */}
+                        <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6">
+                            <button
+                                onClick={handleDelete}
+                                disabled={isSaving}
+                                className="w-full py-2 border border-danger-200 text-danger-600 rounded-lg hover:bg-danger-50 font-medium flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <Trash2 size={18} />
+                                Delete Purchase Order
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

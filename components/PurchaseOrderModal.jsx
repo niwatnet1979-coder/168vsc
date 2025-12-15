@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Save, Plus, Trash2, Search, Calculator } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 
-export default function PurchaseOrderModal({ isOpen, onClose, onSave }) {
+export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialItem }) {
     const [supplierName, setSupplierName] = useState('')
     const [expectedDate, setExpectedDate] = useState('')
     const [products, setProducts] = useState([])
@@ -20,8 +20,19 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave }) {
         if (isOpen) {
             loadProducts()
             resetForm()
+
+            if (initialItem) {
+                setPoItems([{
+                    product_id: initialItem.uuid || initialItem.product_id,
+                    product_name: initialItem.name,
+                    product_code: initialItem.code,
+                    quantity: initialItem.reorder_qty || 1,
+                    unit_price: 0,
+                    total_price: 0
+                }])
+            }
         }
-    }, [isOpen])
+    }, [isOpen, initialItem])
 
     const resetForm = () => {
         setSupplierName('')
@@ -68,6 +79,21 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave }) {
     const removeItem = (index) => {
         const newItems = [...poItems]
         newItems.splice(index, 1)
+        setPoItems(newItems)
+    }
+
+    const updateItem = (index, field, value) => {
+        const newItems = [...poItems]
+        const item = newItems[index]
+
+        if (field === 'quantity') {
+            item.quantity = parseInt(value) || 0
+            item.total_price = item.quantity * item.unit_price
+        } else if (field === 'unit_price') {
+            item.unit_price = parseFloat(value) || 0
+            item.total_price = item.quantity * item.unit_price
+        }
+
         setPoItems(newItems)
     }
 
@@ -233,8 +259,8 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave }) {
                             <thead className="bg-secondary-50 text-secondary-600 font-medium border-b border-secondary-200">
                                 <tr>
                                     <th className="px-4 py-3">Product</th>
-                                    <th className="px-4 py-3 text-right">Qty</th>
-                                    <th className="px-4 py-3 text-right">Unit Price</th>
+                                    <th className="px-4 py-3 text-right text-xs uppercase tracking-wider w-24">Qty</th>
+                                    <th className="px-4 py-3 text-right text-xs uppercase tracking-wider w-32">Unit Price</th>
                                     <th className="px-4 py-3 text-right">Total</th>
                                     <th className="px-4 py-3 w-10"></th>
                                 </tr>
@@ -253,8 +279,25 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave }) {
                                                 <div className="font-medium text-secondary-900">{item.product_name}</div>
                                                 <div className="text-xs text-secondary-500 font-mono">{item.product_code}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-right">{item.quantity}</td>
-                                            <td className="px-4 py-3 text-right">฿{item.unit_price.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-right">
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    className="w-full px-2 py-1 text-right border border-secondary-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                                    value={item.quantity}
+                                                    onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                                                />
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="w-full px-2 py-1 text-right border border-secondary-300 rounded text-sm focus:ring-1 focus:ring-primary-500"
+                                                    value={item.unit_price}
+                                                    onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
+                                                />
+                                            </td>
                                             <td className="px-4 py-3 text-right font-medium">฿{item.total_price.toLocaleString()}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <button onClick={() => removeItem(index)} className="text-danger-500 hover:text-danger-700">
