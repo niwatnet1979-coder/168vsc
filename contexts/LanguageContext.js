@@ -7,6 +7,7 @@ export const translations = {
     en: {
         'Dashboard': 'Dashboard',
         'Order Entry': 'Order Entry',
+        'Order Entry By SA': 'Order Entry By SA',
         'Orders List': 'Orders List',
         'Products': 'Products',
         'Inventory': 'Inventory',
@@ -26,6 +27,7 @@ export const translations = {
     th: {
         'Dashboard': 'แดชบอร์ด',
         'Order Entry': 'บันทึกออเดอร์',
+        'Order Entry By SA': 'บันทึกออเดอร์ (SA)',
         'Orders List': 'รายการออเดอร์',
         'Products': 'สินค้า',
         'Inventory': 'คลังสินค้า',

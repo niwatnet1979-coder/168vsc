@@ -94,60 +94,42 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 // Determine base code
                 let baseCode = ''
 
-                if (product && product.product_code) {
-                    // Editing existing product
-                    const parts = product.product_code.split('-')
-                    const existingBaseCode = parts[0] // e.g., "AA001"
-                    const existingPrefix = existingBaseCode.substring(0, 2) // e.g., "AA"
-
-                    // If category prefix changed, generate new base code
-                    if (existingPrefix === prefix) {
-                        // Same category - keep existing base code
-                        baseCode = existingBaseCode
-                    } else {
-                        // Category changed - find smallest unused number
-                        const usedNumbers = new Set()
-                        existingProducts.forEach(p => {
-                            const checkId = p.product_code || p.id
-                            if (checkId && checkId.startsWith(prefix)) {
-                                const parts = checkId.split('-')
-                                const basePart = parts[0]
-                                const numPart = basePart.substring(2)
-                                if (/^\d+$/.test(numPart)) {
-                                    usedNumbers.add(parseInt(numPart, 10))
-                                }
-                            }
-                        })
-                        // Find smallest unused number starting from 1
-                        let nextNum = 1
-                        while (usedNumbers.has(nextNum)) {
-                            nextNum++
-                        }
-                        baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
-                    }
-                } else {
-                    // New product - find smallest unused number
+                // Function to find next number
+                const foundNextCode = () => {
                     const usedNumbers = new Set()
-
                     existingProducts.forEach(p => {
                         const checkId = p.product_code || p.id
                         if (checkId && checkId.startsWith(prefix)) {
                             const parts = checkId.split('-')
                             const basePart = parts[0]
                             const numPart = basePart.substring(2)
-
                             if (/^\d+$/.test(numPart)) {
                                 usedNumbers.add(parseInt(numPart, 10))
                             }
                         }
                     })
+                    let maxNum = 0
+                    usedNumbers.forEach(num => {
+                        if (num > maxNum) maxNum = num
+                    })
+                    const nextNum = maxNum + 1
+                    return `${prefix}${nextNum.toString().padStart(3, '0')}`
+                }
 
-                    // Find smallest unused number starting from 1
-                    let nextNum = 1
-                    while (usedNumbers.has(nextNum)) {
-                        nextNum++
+                if (product && product.product_code) {
+                    // Editing existing product
+                    const parts = product.product_code.split('-')
+                    const existingBaseCode = parts[0]
+                    const existingPrefix = existingBaseCode.substring(0, 2)
+
+                    if (existingPrefix === prefix) {
+                        baseCode = existingBaseCode
+                    } else {
+                        baseCode = foundNextCode()
                     }
-                    baseCode = `${prefix}${nextNum.toString().padStart(3, '0')}`
+                } else {
+                    // New product
+                    baseCode = foundNextCode()
                 }
 
 

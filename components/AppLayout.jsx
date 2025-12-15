@@ -60,6 +60,7 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { name: 'Order Entry', icon: ShoppingCart, path: '/order' },
+        { name: 'Order Entry By SA', icon: ShoppingCart, path: '/order-sa' },
         { name: 'Orders List', icon: FileText, path: '/orders' },
         { name: 'Products', icon: Package, path: '/products' },
         { name: 'Inventory', icon: Box, path: '/inventory' },
