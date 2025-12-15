@@ -7,6 +7,8 @@ import InventoryCheckOutModal from '../components/InventoryCheckOutModal'
 import QRDisplayModal from '../components/QRDisplayModal'
 import TrackingTimeline from '../components/TrackingTimeline'
 import StockCheckModal from '../components/StockCheckModal'
+import QRScanner from '../components/QRScanner'
+import { useLanguage } from '../contexts/LanguageContext'
 import {
     Package,
     Search,
@@ -25,6 +27,7 @@ import {
 
 
 export default function InventoryPage() {
+    const { t } = useLanguage()
     const [items, setItems] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -34,8 +37,14 @@ export default function InventoryPage() {
     const [showQRModal, setShowQRModal] = useState(false)
     const [showTrackingModal, setShowTrackingModal] = useState(false)
     const [showStockCheckModal, setShowStockCheckModal] = useState(false)
+    const [showScanner, setShowScanner] = useState(false) // Added state
     const [selectedItem, setSelectedItem] = useState(null)
     const [trackingEvents, setTrackingEvents] = useState([])
+
+    const handleScan = (code) => {
+        setSearchTerm(code)
+        setShowScanner(false)
+    }
 
     useEffect(() => {
         loadInventory()
@@ -64,16 +73,16 @@ export default function InventoryPage() {
     }
 
     const handleMarkLost = async (item) => {
-        if (!confirm(`Are you sure you want to mark item ${item.qr_code} as LOST?\nThis will remove it from stock count.`)) {
+        if (!confirm(t('Confirm Mark Lost').replace('{qr}', item.qr_code))) {
             return
         }
 
         const success = await DataManager.markItemLost(item.id)
         if (success) {
-            alert('Item marked as lost')
+            alert(t('Item marked as lost'))
             loadInventory()
         } else {
-            alert('Failed to mark item as lost')
+            alert(t('Failed to mark item as lost'))
         }
     }
 
@@ -94,7 +103,7 @@ export default function InventoryPage() {
     return (
         <AppLayout>
             <Head>
-                <title>Inventory (Stock) - 168VSC System</title>
+                <title>{t('Inventory')} (Stock) - 168VSC System</title>
             </Head>
 
             <div className="space-y-6">
@@ -103,35 +112,31 @@ export default function InventoryPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
                             <Box className="text-primary-600" />
-                            Inventory Management
+                            {t('Inventory Management')}
                         </h1>
-                        <p className="text-secondary-500 text-sm">Manage stock, check-in/out, and track items</p>
+                        <p className="text-secondary-500 text-sm">{t('Manage stock, check-in/out, and track items')}</p>
                     </div>
                     <div className="flex gap-2">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors shadow-sm">
+                        <button
+                            onClick={() => setShowScanner(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors shadow-sm"
+                        >
                             <QrCode size={20} />
-                            Scan QR
+                            {t('Scan QR')}
                         </button>
                         <button
                             onClick={() => setShowCheckOutModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 rounded-lg text-danger-600 hover:bg-danger-50 font-medium transition-colors shadow-sm"
                         >
                             <LogOut size={20} />
-                            Check-out
+                            {t('Check-out')}
                         </button>
                         <button
                             onClick={() => setShowCheckInModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm"
                         >
                             <Plus size={20} />
-                            Check-in Item
-                        </button>
-                        <button
-                            onClick={() => setShowCheckInModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm"
-                        >
-                            <Plus size={20} />
-                            Check-in Item
+                            {t('Check-in Item')}
                         </button>
                     </div>
                 </div>
@@ -146,8 +151,8 @@ export default function InventoryPage() {
                             <ClipboardCheck className="text-primary-600" size={24} />
                         </div>
                         <div className="text-left">
-                            <h3 className="font-bold text-secondary-900">Stock Check Mode</h3>
-                            <p className="text-xs text-secondary-500">Scan to audit inventory</p>
+                            <h3 className="font-bold text-secondary-900">{t('Stock Check Mode')}</h3>
+                            <p className="text-xs text-secondary-500">{t('Scan to audit inventory')}</p>
                         </div>
                     </button>
                     {/* Placeholder for other stats or quick actions */}
@@ -159,7 +164,7 @@ export default function InventoryPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
                         <input
                             type="text"
-                            placeholder="Search by QR, Product Name, Code..."
+                            placeholder={t('Search by QR, Product Name, Code...')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -172,17 +177,17 @@ export default function InventoryPage() {
                     <table className="w-full">
                         <thead className="bg-secondary-50 border-b border-secondary-200">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">Item / QR</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">Product</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">Location</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">Status</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Item / QR')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Product')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Location')}</th>
+                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Status')}</th>
+                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-secondary-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-secondary-500">Loading inventory...</td>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-secondary-500">{t('Loading inventory...')}</td>
                                 </tr>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((item) => (
@@ -209,21 +214,21 @@ export default function InventoryPage() {
                                                 ${item.status === 'in_stock' ? 'bg-success-100 text-success-700' :
                                                     item.status === 'sold' ? 'bg-secondary-100 text-secondary-700' :
                                                         'bg-warning-100 text-warning-700'}`}>
-                                                {item.status === 'in_stock' ? 'In Stock' : item.status}
+                                                {t(item.status)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <button
                                                 onClick={() => handleViewQR(item)}
                                                 className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
-                                                title="View QR"
+                                                title={t('View QR')}
                                             >
                                                 <QrCode size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleTrackItem(item)}
                                                 className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
-                                                title="View History"
+                                                title={t('View History')}
                                             >
                                                 <History size={18} />
                                             </button>
@@ -231,7 +236,7 @@ export default function InventoryPage() {
                                                 <button
                                                     onClick={() => handleMarkLost(item)}
                                                     className="text-secondary-400 hover:text-danger-600 transition-colors"
-                                                    title="Mark as Lost"
+                                                    title={t('Mark as Lost')}
                                                 >
                                                     <AlertTriangle size={18} />
                                                 </button>
@@ -244,8 +249,8 @@ export default function InventoryPage() {
                                     <td colSpan="5" className="px-6 py-12 text-center text-secondary-500">
                                         <div className="flex flex-col items-center justify-center">
                                             <Box size={48} className="text-secondary-300 mb-4" />
-                                            <p className="text-lg font-medium text-secondary-900">No Inventory Items Found</p>
-                                            <p className="text-sm text-secondary-500 mt-1">Check-in items to get started</p>
+                                            <p className="text-lg font-medium text-secondary-900">{t('No Inventory Items Found')}</p>
+                                            <p className="text-sm text-secondary-500 mt-1">{t('Check-in items to get started')}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -255,23 +260,22 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            <InventoryCheckInModal
-                isOpen={showCheckInModal}
-                onClose={() => setShowCheckInModal(false)}
-                onSave={() => {
-                    setShowCheckInModal(false)
-                    loadInventory()
-                }}
-            />
+            {/* Modals */}
+            {showCheckInModal && (
+                <InventoryCheckInModal
+                    isOpen={showCheckInModal}
+                    onClose={() => setShowCheckInModal(false)}
+                    onSuccess={loadInventory}
+                />
+            )}
 
-            <InventoryCheckOutModal
-                isOpen={showCheckOutModal}
-                onClose={() => setShowCheckOutModal(false)}
-                onSave={() => {
-                    setShowCheckOutModal(false)
-                    loadInventory()
-                }}
-            />
+            {showCheckOutModal && (
+                <InventoryCheckOutModal
+                    isOpen={showCheckOutModal}
+                    onClose={() => setShowCheckOutModal(false)}
+                    onSuccess={loadInventory}
+                />
+            )}
 
             <QRDisplayModal
                 isOpen={showQRModal}
@@ -287,7 +291,7 @@ export default function InventoryPage() {
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
                         <div className="p-6 border-b border-secondary-100 flex items-center justify-between bg-secondary-50 rounded-t-xl">
                             <div>
-                                <h3 className="text-lg font-bold text-secondary-900">Item Journey Tracking</h3>
+                                <h3 className="text-lg font-bold text-secondary-900">{t('Item Journey Tracking')}</h3>
                                 <p className="text-secondary-500 text-sm font-mono mt-1">
                                     QR: {selectedItem?.qr_code}
                                 </p>
@@ -309,7 +313,7 @@ export default function InventoryPage() {
                                 onClick={() => setShowTrackingModal(false)}
                                 className="px-4 py-2 bg-secondary-100 text-secondary-700 rounded-lg hover:bg-secondary-200 font-medium transition-colors"
                             >
-                                Close
+                                {t('Close')}
                             </button>
                         </div>
                     </div>
@@ -320,6 +324,13 @@ export default function InventoryPage() {
                 isOpen={showStockCheckModal}
                 onClose={() => setShowStockCheckModal(false)}
             />
+
+            {showScanner && (
+                <QRScanner
+                    onScan={handleScan}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
         </AppLayout>
     )
 }

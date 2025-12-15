@@ -126,9 +126,54 @@ export default function ProductCard({
         )
     }
 
+    // Ghost variant (for seamless embedding)
+    if (variant === 'ghost') {
+        return (
+            <div className={`bg-transparent ${className}`}>
+                <div className="flex items-start gap-3">
+                    {showImage && (
+                        <div className="w-12 h-12 flex-shrink-0 bg-white rounded overflow-hidden border border-secondary-200">
+                            {product.variants?.[0]?.images?.[0] ? (
+                                <img
+                                    src={product.variants[0].images[0]}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <Package size={20} className="text-secondary-400" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-secondary-900">{product.name}</div>
+                        <div className="text-sm text-secondary-600 mt-0.5">
+                            {productCode}
+                            {product.category && ` • ${product.category}`}
+                        </div>
+                        {product.description && (
+                            <div className="text-xs text-secondary-500 mt-1 truncate">
+                                {product.description}
+                            </div>
+                        )}
+                    </div>
+                    {showPrice && (
+                        <div className="text-right flex-shrink-0">
+                            <div className="font-bold text-primary-600">{priceDisplay}</div>
+                            {showStock && (
+                                <div className="text-xs text-secondary-500 mt-0.5">คงเหลือ {totalStock}</div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     // Default variant (for selected product display)
     return (
-        <div className={`bg-white border-2 border-primary-200 rounded-xl overflow-hidden shadow-sm ${className}`}>
+        <div className={`bg-white border border-secondary-200 rounded-xl shadow-sm ${className}`}>
             <div className="p-3 flex items-start gap-3">
                 {showImage && (
                     <div className="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">

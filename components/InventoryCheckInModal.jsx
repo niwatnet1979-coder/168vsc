@@ -8,7 +8,7 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [quantity, setQuantity] = useState(1)
-    const [packSize, setPackSize] = useState(1)
+    const [boxCount, setBoxCount] = useState(1)
     const [location, setLocation] = useState('Warehouse_Main')
     const [lotNumber, setLotNumber] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -18,7 +18,7 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
         if (isOpen) {
             loadProducts()
             setQuantity(1)
-            setPackSize(1)
+            setBoxCount(1)
             setLocation('Warehouse_Main')
             setLotNumber('')
             setSelectedProduct(null)
@@ -42,10 +42,10 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
 
         if (found) {
             setSelectedProduct(found)
-            setPackSize(found.pack_size || 1) // Set default from product
+            setBoxCount(found.pack_size || 1) // Map legacy pack_size to box_count
             setShowScanner(false)
         } else {
-            alert(`Product not found for QR: ${decodedText}`)
+            alert(t('Product not found for QR') + `: ${decodedText}`)
         }
     }
 
@@ -74,7 +74,7 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
                     lot_number: lotNumber,
                     status: 'in_stock',
                     current_location: location,
-                    pack_size: packSize
+                    box_count: boxCount
                 }
 
                 // Add one by one (or batch if API supported, but start simple)
@@ -135,7 +135,7 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
                                             type="button"
                                             onClick={() => {
                                                 setSelectedProduct(product)
-                                                setPackSize(product.pack_size || 1)
+                                                setBoxCount(product.pack_size || 1)
                                             }}
                                             className="w-full text-left px-4 py-3 hover:bg-secondary-50 text-sm border-b border-secondary-100 last:border-0 flex justify-between items-center"
                                         >
@@ -178,18 +178,20 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
                         </div>
                     </div>
 
-                    {/* Pack Size & Location Row */}
+                    {/* Box Count & Location Row */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-secondary-700">Boxes per Unit</label>
+                            <label className="text-sm font-medium text-secondary-700">
+                                จำนวนกล่องต่อชุด (Total Boxes)
+                            </label>
                             <input
                                 type="number"
                                 min="1"
-                                value={packSize}
-                                onChange={e => setPackSize(parseInt(e.target.value) || 1)}
+                                value={boxCount}
+                                onChange={e => setBoxCount(parseInt(e.target.value) || 1)}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                             />
-                            <p className="text-xs text-secondary-500">Default: 1 box per unit</p>
+                            <p className="text-xs text-secondary-500">1 unit = {boxCount} boxes</p>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-secondary-700">Receive Location</label>
@@ -204,7 +206,6 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
                             </select>
                         </div>
                     </div>
-                    {/* Removed standalone Location div to merge with row */}
 
                     {/* Summary */}
                     {selectedProduct && (
@@ -213,14 +214,14 @@ export default function InventoryCheckInModal({ isOpen, onClose, onSave }) {
                             <div>
                                 <p>System will generate <span className="font-bold text-secondary-900">{quantity} unique QR Codes</span>.</p>
                                 <p className="text-xs mt-1 font-mono">Example: {selectedProduct.code}-XXXX...</p>
-                                {packSize > 1 && (
+                                {boxCount > 1 && (
                                     <div className="mt-2 pt-2 border-t border-secondary-200">
                                         <p className="text-primary-700 font-medium flex items-center gap-1">
                                             <Box size={14} />
-                                            Multi-box Item: {packSize} boxes per set
+                                            Multi-box Item: {boxCount} boxes per set
                                         </p>
                                         <p className="text-xs mt-1">
-                                            *Label Printer will print {packSize} labels per ID (Box 1/{packSize} ... {packSize}/{packSize})
+                                            *Label Printer will print {boxCount} labels per ID (Box 1/{boxCount} ... {boxCount}/{boxCount})
                                         </p>
                                     </div>
                                 )}

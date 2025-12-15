@@ -102,8 +102,29 @@ export default function ProductManagement() {
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0
         const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
         const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+        const totalMinStock = variants.reduce((sum, v) => sum + (v.minStock || 0), 0)
+        // Note: Variants usually don't carry 'total_pending' unless mapped during data loading.
+        // We need to ensure variants in products.js have 'total_pending' mapped if using this summary.
+        // However, pending counts are usually on the Product level in dataManager.
+        // If variants are pure JSON structure from DB, they won't have it.
+        // But dataManager.getProducts return 'variants' array.
+        // Wait, dataManager 590: `variants: p.variants || []`. It does NOT map pending to variants!
+        // So `summary.totalPending` will be 0.
+        // Fix: We must update dataManager to distribute pending counts to variants if possible, or just use Product level pending for now?
+        // Actually, Orders items usually have variant info (color/size)?
+        // Inspecting dataManager: `salesCounts` is by PID. 
+        // If PID corresponds to specific variant (which it doesn't, products table is mainly Parent), then we have a problem.
+        // But let's assume for now valid Logic is: Product Level Pending.
+        // So getVariantSummary isn't enough?
+        // User's case: AA001 is a single product (maybe?).
+        // Let's just return 0 here and handle it in the Component if summary is used.
+        // BUT, the component uses `summary.totalStock`.
+        // We should pass `total_pending` from the PRODUCT level down to the row, not rely on variant summary for pending if variants don't have it.
 
-        return { colorCount, minPrice, maxPrice, totalStock }
+        // Changing approach: return 0 here, but fix Component to use product.total_pending if summary doesn't provide it?
+        // Actually, let's keep it simple. `product.total_pending` is available on the `product` object.
+
+        return { colorCount, minPrice, maxPrice, totalStock, totalMinStock, totalPending: 0 }
     }
 
     const handleDelete = async (id) => {
@@ -236,24 +257,21 @@ export default function ProductManagement() {
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-700 uppercase w-12">#</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-secondary-700 uppercase w-20">รูปภาพ</th>
                                         <th onClick={() => requestSort('id')} className="px-4 py-3 text-left text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
-                                            <div className="flex items-center gap-2">รหัสสินค้า {getSortIcon('id')}</div>
+                                            <div className="flex items-center gap-2">สินค้า {getSortIcon('id')}</div>
                                         </th>
-                                        <th onClick={() => requestSort('category')} className="px-4 py-3 text-left text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
-                                            <div className="flex items-center gap-2">ข้อมูลสินค้า {getSortIcon('category')}</div>
-                                        </th>
-                                        <th onClick={() => requestSort('price')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                        <th onClick={() => requestSort('price')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100 w-32">
                                             <div className="flex items-center justify-end gap-2">ราคา {getSortIcon('price')}</div>
                                         </th>
-                                        <th onClick={() => requestSort('total_purchased')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                        <th onClick={() => requestSort('total_purchased')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100 w-24">
                                             <div className="flex items-center justify-end gap-2">ซื้อสะสม {getSortIcon('total_purchased')}</div>
                                         </th>
-                                        <th onClick={() => requestSort('total_sold')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                        <th onClick={() => requestSort('total_sold')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100 w-24">
                                             <div className="flex items-center justify-end gap-2">ขายสะสม {getSortIcon('total_sold')}</div>
                                         </th>
-                                        <th onClick={() => requestSort('total_lost')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                        <th onClick={() => requestSort('total_lost')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100 w-24">
                                             <div className="flex items-center justify-end gap-2">สูญหาย {getSortIcon('total_lost')}</div>
                                         </th>
-                                        <th onClick={() => requestSort('stock')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
+                                        <th onClick={() => requestSort('stock')} className="px-4 py-3 text-right text-xs font-semibold text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100 w-36">
                                             <div className="flex items-center justify-end gap-2">คงเหลือ {getSortIcon('stock')}</div>
                                         </th>
                                         <th className="px-4 py-3 text-center text-xs font-semibold text-secondary-700 uppercase w-24">จัดการ</th>
@@ -310,40 +328,35 @@ export default function ProductManagement() {
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-4">
-                                                            <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
-                                                                {product.product_code || product.id}
-                                                            </Link>
-                                                        </td>
-                                                        <td className="px-4 py-4">
-                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-700">
-                                                                {categoryName && <span className="font-medium text-secondary-900">{categoryName}</span>}
-                                                                {product.name && <span>• {product.name}</span>}
-                                                                {product.subcategory && <span>• {product.subcategory}</span>}
+                                                            <div>
+                                                                <Link href={`/products/${product.id}`} className="font-mono text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline block mb-1">
+                                                                    {product.product_code || product.id}
+                                                                </Link>
+                                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary-500">
+                                                                    {product.name && <span className="font-medium text-secondary-700">{product.name}</span>}
 
-                                                                {materialName && (
-                                                                    <div className="flex items-center gap-1 text-secondary-600" title="วัสดุ">
-                                                                        <Layers size={14} />
-                                                                        <span>{materialName}</span>
-                                                                    </div>
-                                                                )}
+                                                                    {materialName && <span>• {materialName}</span>}
 
-                                                                {/* Dimensions */}
-                                                                {(product.length || product.width || product.height) && (
-                                                                    <div className="flex items-center gap-1 text-secondary-600" title="ขนาด">
-                                                                        <Scaling size={14} />
-                                                                        <span>{product.length || '-'}×{product.width || '-'}×{product.height || '-'} cm</span>
-                                                                    </div>
-                                                                )}
+                                                                    {product.subcategory && <span>• {product.subcategory}</span>}
 
-                                                                {hasVariants && (
-                                                                    <span className="ml-1 px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-full font-medium whitespace-nowrap flex items-center gap-1">
-                                                                        🎨 {product.variants.length} แบบ
-                                                                    </span>
+                                                                    {/* Dimensions */}
+                                                                    {(product.length || product.width || product.height) && (
+                                                                        <div className="flex items-center gap-1 text-secondary-500" title="ขนาด">
+                                                                            <Scaling size={14} />
+                                                                            <span>{product.length || '-'}×{product.width || '-'}×{product.height || '-'} cm</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {hasVariants && (
+                                                                        <span className="ml-1 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] rounded-full font-medium whitespace-nowrap flex items-center gap-1">
+                                                                            🎨 {product.variants.length} แบบ
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {product.description && (
+                                                                    <div className="text-[10px] text-secondary-400 mt-0.5 line-clamp-1">{product.description}</div>
                                                                 )}
                                                             </div>
-                                                            {product.description && (
-                                                                <div className="text-xs text-secondary-400 mt-1 line-clamp-1">{product.description}</div>
-                                                            )}
                                                         </td>
                                                         <td className="px-4 py-4 text-right">
                                                             {(() => {
@@ -397,7 +410,40 @@ export default function ProductManagement() {
                                                             {(() => {
                                                                 const summary = getVariantSummary(product.variants)
                                                                 const stockValue = summary ? summary.totalStock : (product.stock || 0)
-                                                                return <span className={`text-sm font-semibold ${stockValue > 0 ? 'text-success-600' : 'text-danger-600'}`}>{stockValue}</span>
+                                                                const minStockValue = summary ? summary.totalMinStock : (product.min_stock_level || 0)
+
+                                                                return (
+                                                                    <div className="flex flex-col items-end">
+                                                                        {minStockValue > 0 ? (
+                                                                            <>
+                                                                                {(() => {
+                                                                                    // Logic: Available Balance = Stock - Pending Orders - Min Stock
+                                                                                    // User Order: (Stock) - (Pending + Min)
+                                                                                    // Example: 0 - (4 + 1) = -5
+                                                                                    const pendingValue = product.total_pending || 0
+                                                                                    const balance = stockValue - pendingValue - minStockValue
+                                                                                    // If Balance is negative, it means we are short (Need to Buy)
+
+                                                                                    return (
+                                                                                        <>
+                                                                                            <span className={`text-sm font-semibold ${balance < 0 ? 'text-danger-600' : 'text-success-600'}`}>
+                                                                                                {balance > 0 ? `+${balance}` : balance}
+                                                                                            </span>
+                                                                                            <div className="flex flex-col items-end text-xs text-secondary-400">
+                                                                                                <span>(Stock: {stockValue})</span>
+                                                                                                {pendingValue > 0 && <span>(Order: {pendingValue})</span>}
+                                                                                            </div>
+                                                                                        </>
+                                                                                    )
+                                                                                })()}
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className={`text-sm font-semibold ${stockValue > 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                                                                                {stockValue}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )
                                                             })()}
                                                         </td>
                                                         <td className="px-4 py-4">
@@ -430,111 +476,101 @@ export default function ProductManagement() {
                                                                         </div>
                                                                     </td>
 
-                                                                    {/* Product Code with Dimensions */}
+                                                                    {/* Merged Variant Code & Info */}
                                                                     <td className="px-4 py-3">
-                                                                        <span className="font-mono text-sm text-secondary-500">
-                                                                            {(() => {
-                                                                                // Format: AA001-D100x100x200-GD
-                                                                                const productCode = product.product_code || product.id || ''
-                                                                                const dims = variant.dimensions
-                                                                                const colorCode = variant.color ? variant.color.substring(0, 2).toUpperCase() : 'XX'
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-mono text-sm font-semibold text-secondary-900 block mb-1">
+                                                                                {(() => {
+                                                                                    // Format: AA001-D100x100x200-GD
+                                                                                    const productCode = product.product_code || product.id || ''
+                                                                                    const dims = variant.dimensions
+                                                                                    const colorCode = variant.color ? variant.color.substring(0, 2).toUpperCase() : 'XX'
 
-                                                                                let code = productCode
-                                                                                if (dims && (dims.length || dims.width || dims.height)) {
-                                                                                    const dimStr = `${dims.length || 0}x${dims.width || 0}x${dims.height || 0}`
-                                                                                    code += `-D${dimStr}`
-                                                                                }
-                                                                                code += `-${colorCode}`
-
-                                                                                code += `-${colorCode}`
-
-                                                                                // Helper for Crystal Color Code
-                                                                                const getCrystalCode = (name) => {
-                                                                                    if (!name) return ''
-                                                                                    const map = {
-                                                                                        'ใส': 'CL',
-                                                                                        'Clear': 'CL',
-                                                                                        'Gold': 'GD',
-                                                                                        'Smoke': 'SM',
-                                                                                        'Amber': 'AM',
-                                                                                        'Tea': 'TE'
+                                                                                    let code = productCode
+                                                                                    if (dims && (dims.length || dims.width || dims.height)) {
+                                                                                        const dimStr = `${dims.length || 0}x${dims.width || 0}x${dims.height || 0}`
+                                                                                        code += `-D${dimStr}`
                                                                                     }
-                                                                                    return map[name] || name.substring(0, 2).toUpperCase()
-                                                                                }
+                                                                                    code += `-${colorCode}`
 
-                                                                                if (variant.crystalColor) {
-                                                                                    code += `-${getCrystalCode(variant.crystalColor)}`
-                                                                                }
+                                                                                    // Helper for Crystal Color Code
+                                                                                    const getCrystalCode = (name) => {
+                                                                                        if (!name) return ''
+                                                                                        const map = {
+                                                                                            'ใส': 'CL',
+                                                                                            'Clear': 'CL',
+                                                                                            'Gold': 'GD',
+                                                                                            'Smoke': 'SM',
+                                                                                            'Amber': 'AM',
+                                                                                            'Tea': 'TE'
+                                                                                        }
+                                                                                        return map[name] || name.substring(0, 2).toUpperCase()
+                                                                                    }
 
-                                                                                return code || '-'
-                                                                            })()}
-                                                                        </span>
-                                                                    </td>
+                                                                                    if (variant.crystalColor) {
+                                                                                        code += `-${getCrystalCode(variant.crystalColor)}`
+                                                                                    }
 
-                                                                    {/* Info - Full Details */}
-                                                                    <td className="px-4 py-3">
-                                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-700">
-                                                                            {/* Category */}
-                                                                            {product.category && (
-                                                                                <span className="font-medium text-secondary-900">
-                                                                                    {(() => {
-                                                                                        const cat = product.category
-                                                                                        if (cat.match(/^[A-Z]{2}\s/)) return cat.substring(3)
-                                                                                        if (cat.match(/^\d{2}\s/)) return cat.substring(3)
-                                                                                        return cat
-                                                                                    })()}
-                                                                                </span>
-                                                                            )}
-                                                                            {/* Material */}
-                                                                            {product.material && (
-                                                                                <div className="flex items-center gap-1 text-secondary-600" title="วัสดุ">
-                                                                                    <Layers size={14} />
+                                                                                    return code || '-'
+                                                                                })()}
+                                                                            </span>
+
+                                                                            {/* Info Tags */}
+                                                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary-500">
+                                                                                {/* Name */}
+                                                                                {product.name && <span className="font-medium text-secondary-700">{product.name}</span>}
+
+                                                                                {/* Material (Replaces Category) */}
+                                                                                {product.material && (
                                                                                     <span>
-                                                                                        {(() => {
+                                                                                        • {(() => {
                                                                                             const mat = product.material
                                                                                             if (mat.match(/^[A-Z]{2}\s/)) return mat.substring(3)
                                                                                             return mat
                                                                                         })()}
                                                                                     </span>
-                                                                                </div>
-                                                                            )}
-                                                                            {/* Dimensions */}
-                                                                            {variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height) && (
-                                                                                <div className="flex items-center gap-1 text-secondary-600" title="ขนาด">
-                                                                                    <Scaling size={14} />
-                                                                                    <span>{variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
-                                                                                </div>
-                                                                            )}
-                                                                            {/* Color */}
-                                                                            {variant.color && (
-                                                                                <div className="flex items-center gap-1 text-secondary-600" title="สี">
-                                                                                    <Palette size={14} />
-                                                                                    <span>
-                                                                                        {(() => {
-                                                                                            const col = variant.color
-                                                                                            if (col.match(/^[A-Z]{2}\s/)) return col.substring(3)
-                                                                                            return col
-                                                                                        })()}
-                                                                                    </span>
-                                                                                </div>
-                                                                            )}
-                                                                            {/* Crystal Color */}
-                                                                            {variant.crystalColor && (
-                                                                                <div className="flex items-center gap-1 text-secondary-600" title="สีคริสตัล">
-                                                                                    <Gem size={14} />
-                                                                                    <span>
-                                                                                        {(() => {
-                                                                                            const cc = variant.crystalColor
-                                                                                            if (cc && cc.match(/^[A-Z]{2}\s/)) return cc.substring(3)
-                                                                                            return cc
-                                                                                        })()}
-                                                                                    </span>
-                                                                                </div>
+                                                                                )}
+
+                                                                                {/* Dimensions */}
+                                                                                {variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height) && (
+                                                                                    <div className="flex items-center gap-1 text-secondary-500" title="ขนาด">
+                                                                                        <Scaling size={14} />
+                                                                                        <span>{variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Color */}
+                                                                                {variant.color && (
+                                                                                    <div className="flex items-center gap-1 text-secondary-500" title="สี">
+                                                                                        <Palette size={14} />
+                                                                                        <span>
+                                                                                            {(() => {
+                                                                                                const col = variant.color
+                                                                                                if (col.match(/^[A-Z]{2}\s/)) return col.substring(3)
+                                                                                                return col
+                                                                                            })()}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Crystal Color */}
+                                                                                {variant.crystalColor && (
+                                                                                    <div className="flex items-center gap-1 text-secondary-500" title="สีคริสตัล">
+                                                                                        <Gem size={14} />
+                                                                                        <span>
+                                                                                            {(() => {
+                                                                                                const cc = variant.crystalColor
+                                                                                                if (cc && cc.match(/^[A-Z]{2}\s/)) return cc.substring(3)
+                                                                                                return cc
+                                                                                            })()}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            {product.description && (
+                                                                                <div className="text-[10px] text-secondary-400 mt-0.5 line-clamp-1">{product.description}</div>
                                                                             )}
                                                                         </div>
-                                                                        {product.description && (
-                                                                            <div className="text-xs text-secondary-500 mt-1 ml-1">{product.description}</div>
-                                                                        )}
                                                                     </td>
 
                                                                     {/* Price */}
@@ -542,20 +578,36 @@ export default function ProductManagement() {
                                                                         <span className="text-sm font-semibold text-secondary-900">฿{variant.price?.toLocaleString() || 0}</span>
                                                                     </td>
                                                                     <td className="px-4 py-3 text-right">
-                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                        <span className="text-sm text-secondary-500">{variant.total_purchased?.toLocaleString() || '-'}</span>
                                                                     </td>
                                                                     <td className="px-4 py-3 text-right">
-                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                        <span className="text-sm text-secondary-900 font-medium">{variant.total_sold?.toLocaleString() || '-'}</span>
                                                                     </td>
                                                                     <td className="px-4 py-3 text-right">
-                                                                        <span className="text-sm text-secondary-400">-</span>
+                                                                        <span className="text-sm text-secondary-500">{variant.total_lost?.toLocaleString() || '-'}</span>
                                                                     </td>
 
-                                                                    {/* Stock */}
                                                                     <td className="px-4 py-3 text-right">
-                                                                        <span className={`text-sm font-semibold ${variant.stock > 0 ? 'text-success-600' : 'text-danger-600'}`}>
-                                                                            {variant.stock || 0}
-                                                                        </span>
+                                                                        {(() => {
+                                                                            // Logic: Available Balance = Stock - Pending Orders - Min Stock
+                                                                            // User Order: (Stock) - (Pending + Min)
+                                                                            const stock = variant.stock || 0
+                                                                            const min = variant.minStock || 0
+                                                                            const pending = variant.pending_count || 0
+                                                                            const balance = stock - pending - min
+
+                                                                            return (
+                                                                                <div className="flex flex-col items-end">
+                                                                                    <span className={`text-sm font-semibold ${balance < 0 ? 'text-danger-600' : 'text-success-600'}`}>
+                                                                                        {balance > 0 ? `+${balance}` : balance}
+                                                                                    </span>
+                                                                                    <div className="flex flex-col items-end text-xs text-secondary-400">
+                                                                                        <span>(Stock: {stock})</span>
+                                                                                        {pending > 0 && <span>(Order: {pending})</span>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )
+                                                                        })()}
                                                                     </td>
 
                                                                     {/* Empty Actions column */}

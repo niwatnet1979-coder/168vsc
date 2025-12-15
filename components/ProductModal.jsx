@@ -11,7 +11,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         description: '',
         material: '',
         product_code: '',
-        product_code: '',
         variants: [],
         images: []
     })
@@ -310,6 +309,8 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                 materialColors={materialColors}
                                 crystalColors={crystalColors}
                                 mainProductColor={formData.color}
+                                productName={formData.name}
+                                description={formData.description}
                             />
                         </div>
                     </div>

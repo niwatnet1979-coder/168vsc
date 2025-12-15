@@ -1060,8 +1060,8 @@ export default function OrderForm() {
                             </Card>
                         </div>
 
-                        {/* Master Job Info - Mobile: 2, Desktop: 3 */}
-                        <div className="order-2 md:order-3 flex flex-col h-full">
+                        {/* Master Job Info - Mobile: 3, Desktop: 4 */}
+                        <div className="order-3 md:order-4 flex flex-col h-full">
                             <JobInfoCard
                                 className="h-full"
                                 data={jobInfo}
@@ -1075,8 +1075,8 @@ export default function OrderForm() {
                             />
                         </div>
 
-                        {/* Tax Invoice - Mobile: 3, Desktop: 2 */}
-                        <div className="order-3 md:order-2 flex flex-col h-full">
+                        {/* Tax Invoice - Mobile: 4, Desktop: 2 */}
+                        <div className="order-4 md:order-2 flex flex-col h-full">
 
 
                             {/* Tax Invoice */}
@@ -1327,8 +1327,8 @@ export default function OrderForm() {
                             </Card>
                         </div>
 
-                        {/* Payment Summary - Mobile: 4, Desktop: 4 */}
-                        <div className="order-4 md:order-4 flex flex-col h-full">
+                        {/* Payment Summary - Mobile: 5, Desktop: 5 */}
+                        <div className="order-5 md:order-5 flex flex-col h-full">
                             <div className="h-full">
                                 <PaymentSummaryCard
                                     subtotal={subtotal}
@@ -1356,309 +1356,311 @@ export default function OrderForm() {
                                 />
                             </div>
                         </div>
+
+                        {/* Product List Section - Mobile: 2, Desktop: 3 (Full Width) */}
+                        <div className="order-2 md:order-3 col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                                    <FileText className="text-primary-600" />
+                                    รายการสินค้า
+                                </h2>
+                            </div>
+
+                            <div className="space-y-3">
+                                {items.map((item, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="group relative flex bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer text-xs"
+                                        onClick={() => {
+                                            setEditingItemIndex(idx)
+                                            setShowOrderItemModal(true)
+                                        }}
+                                    >
+                                        {/* LEFT: Image (Fixed Aspect) */}
+                                        <div className="w-24 bg-gray-50 flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
+                                            {item.image ? (
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <Package size={24} className="text-secondary-300" />
+                                            )}
+                                            {/* Index Badge */}
+                                            <div className="absolute top-1 left-1 bg-primary-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-sm z-10">
+                                                {idx + 1}
+                                            </div>
+                                        </div>
+
+                                        {/* RIGHT: Content 5 Rows Redesign */}
+                                        {/* RIGHT: Content 5 Rows Redesign */}
+                                        <div className="flex-1 min-w-0 p-3 space-y-3">
+                                            {/* Row 1: Header Info & Price */}
+                                            <div className="flex justify-between items-start gap-2 w-full">
+                                                {/* LEFT: Product Info */}
+                                                <div className="flex flex-wrap items-center gap-2 min-w-0">
+
+                                                    {/* Category */}
+                                                    {(item.category || item.subcategory) && (
+                                                        <span className="text-secondary-500 font-medium text-xs">
+                                                            {item.category?.startsWith('01') || item.category?.startsWith('02') ? item.category.substring(2) : item.category}
+                                                            {item.subcategory ? ` / ${item.subcategory}` : ''}
+                                                        </span>
+                                                    )}
+                                                    {/* Code Badge */}
+                                                    <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500">
+                                                        {item.code || '-'}
+                                                    </span>
+                                                    {/* Name */}
+                                                    <span className="font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
+
+                                                    {/* Price & Stock - Moved from Right */}
+                                                    <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="text-secondary-500 font-medium text-[11px]">
+                                                                {currency(item.unitPrice || 0)}
+                                                            </div>
+                                                            <div className="text-secondary-400 text-[10px]">
+                                                                x {item.qty || 1}
+                                                            </div>
+                                                            <div className="font-bold text-primary-700 text-[11px] ml-1">
+                                                                {currency((item.unitPrice || 0) * (item.qty || 0))}
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            Stock: {item.stock || 0}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* RIGHT: Stock & Price */}
+
+                                            </div>
+
+                                            {/* Row 2: Specs & Description */}
+                                            <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
+                                                {/* LEFT: Specs */}
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                    {/* Dimensions - Moved from Row 1 */}
+                                                    {item.material && (
+                                                        <div className="flex items-center gap-1" title="วัสดุ">
+                                                            <Layers size={12} />
+                                                            <span>{item.material}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Dimensions */}
+                                                    {(() => {
+                                                        const w = item.width || item.dimensions?.width
+                                                        const l = item.length || item.dimensions?.length
+                                                        const h = item.height || item.dimensions?.height
+
+                                                        if (w || l || h) {
+                                                            return (
+                                                                <div className="flex items-center gap-1" title="ขนาด">
+                                                                    <Scaling size={12} />
+                                                                    <span>
+                                                                        {w ? `W:${w} ` : ''}
+                                                                        {l ? `L:${l} ` : ''}
+                                                                        {h ? `H:${h}` : ''}
+                                                                    </span>
+                                                                </div>
+                                                            )
+                                                        }
+                                                        return null
+                                                    })()}
+                                                    {/* Color - Show variant color if selected, otherwise product color */}
+                                                    {(item.selectedVariant?.color || item.color) && (
+                                                        <div className="flex items-center gap-1" title="สี">
+                                                            <Palette size={12} />
+                                                            <span>{item.selectedVariant?.color || item.color}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Crystal Data */}
+                                                    {(item.selectedVariant?.crystalColor || item.crystalColor) && (
+                                                        <div className="flex items-center gap-1" title="สีคริสตัล">
+                                                            <Gem size={12} />
+                                                            <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
+                                                        </div>
+                                                    )}
+                                                    {(item.light || item.lightColor) && (
+                                                        <div className="flex items-center gap-1" title="แสงไฟ">
+                                                            <Zap size={12} />
+                                                            <span>
+                                                                {item.light}
+                                                                {item.light && item.lightColor && ' '}
+                                                                {item.lightColor}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {item.remote && (
+                                                        <div className="flex items-center gap-1" title="รีโมท">
+                                                            <Power size={12} />
+                                                            <span>{item.remote}</span>
+                                                        </div>
+                                                    )}
+                                                    {item.bulbType && (
+                                                        <div className="flex items-center gap-1" title="ขั้วหลอด">
+                                                            <Lightbulb size={12} />
+                                                            <span>{item.bulbType}</span>
+                                                        </div>
+                                                    )}
+                                                    {/* Description / Remark - Moved to follow Bulb Type */}
+                                                    {(item.remark || item.description) && (
+                                                        <div className="flex items-center gap-1 text-secondary-500" title="หมายเหตุ">
+                                                            <FileText size={12} />
+                                                            <span className="truncate max-w-[200px]">
+                                                                {item.remark || item.description}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* RIGHT: Description */}
+
+                                            </div>
+
+                                            {/* Row 3: Job Info & Dates */}
+                                            {/* Row 3: Job Info & Dates */}
+                                            <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
+                                                {/* LEFT: Job Info: Inspector, Location */}
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                    {/* Inspector (Swapped from Row 4) */}
+                                                    <div className="flex items-center gap-1">
+                                                        <UserCheck size={12} />
+                                                        <span>
+                                                            {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) || '-'}
+                                                            {(item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone})`}
+                                                        </span>
+                                                    </div>
+
+                                                    {((item.subJob?.distance || jobInfo.distance) || (item.subJob?.installLocationName || jobInfo.installLocationName)) && (
+                                                        <div className="flex items-center gap-1 text-secondary-500">
+                                                            {(item.subJob?.distance || jobInfo.distance) && <span>{item.subJob?.distance || jobInfo.distance} Km</span>}
+                                                            {(item.subJob?.installLocationName || jobInfo.installLocationName) && <span>{item.subJob?.installLocationName || jobInfo.installLocationName}</span>}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-1">
+                                                        <MapPin size={12} className="flex-shrink-0" />
+                                                        <span>
+                                                            {item.subJob?.installAddress || jobInfo.installAddress || item.subJob?.installLocationName || jobInfo.installLocationName || '-'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* RIGHT: Dates - Moved to Row 4 */}
+                                            </div>
+
+                                            {/* Row 4: Job Type, Team, Details & Dates */}
+                                            <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
+                                                {/* LEFT Group: Job Type, Team, Details */}
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                    {/* Job Type */}
+                                                    <div
+                                                        className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 -ml-1 rounded transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setCurrentSubJobItemIndex(idx)
+                                                            setShowSubJobModal(true)
+                                                        }}
+                                                        title="แก้ไขข้อมูลงานย่อย"
+                                                    >
+                                                        {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                                    </div>
+
+                                                    {/* Dates - Moved to 2nd position */}
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar size={12} />
+                                                            <span>
+                                                                {(item.subJob?.appointmentDate || jobInfo.appointmentDate)
+                                                                    ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                    : '-'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-green-700">
+                                                            <CheckCircle size={12} />
+                                                            <span>
+                                                                {(item.subJob?.completionDate || jobInfo.completionDate)
+                                                                    ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                    : '-'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Team */}
+                                                    <div className="flex items-center gap-1">
+                                                        <Users size={12} />
+                                                        <span>{item.subJob?.team || jobInfo.team || '-'}</span>
+                                                    </div>
+
+                                                    {/* Details/Note */}
+                                                    <div className="flex items-center gap-1 text-secondary-400">
+                                                        <FileText size={12} />
+                                                        <span className="truncate max-w-[300px]">
+                                                            {item.subJob?.description || jobInfo.description || '-'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* RIGHT: Dates (Moved from Row 3) */}
+
+                                            </div>
+
+                                            {/* Row 5: SNs */}
+                                            <div className="flex items-start gap-2 pt-1">
+                                                <QrCode size={16} className="text-secondary-400 mt-0.5 flex-shrink-0" />
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['SN000000000001', 'SN000000000002', 'SN000000000003', 'SN000000000004'].map((sn, i) => (
+                                                        <span key={i} className="text-[10px] font-mono bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
+                                                            {sn}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Add Button */}
+                                <button
+                                    onClick={() => {
+                                        setEditingItemIndex(null)
+                                        setShowOrderItemModal(true)
+                                    }}
+                                    className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
+                                >
+                                    <Plus size={18} />
+                                    เพิ่มรายการสินค้า
+                                </button>
+                            </div>
+
+                            {/* Order Item Modal */}
+                            <OrderItemModal
+                                isOpen={showOrderItemModal}
+                                onClose={() => setShowOrderItemModal(false)}
+                                onSave={handleSaveItem}
+                                onDelete={handleDeleteItem}
+                                item={editingItemIndex !== null ? items[editingItemIndex] : null}
+                                productsData={productsData}
+                                isEditing={editingItemIndex !== null}
+                                onOpenSubJob={() => {
+                                    if (editingItemIndex !== null) {
+                                        setShowOrderItemModal(false)
+                                        setCurrentSubJobItemIndex(editingItemIndex)
+                                        setShowSubJobModal(true)
+                                    } else {
+                                        alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
+                                    }
+                                }}
+                                onAddNewProduct={() => setShowProductModal(true)}
+                                lastCreatedProduct={lastCreatedProduct}
+                                onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
+                            />
+                        </div>
                     </div>
 
 
-                    {/* Product List Section */}
-                    <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
-                                <FileText className="text-primary-600" />
-                                รายการสินค้า
-                            </h2>
-                        </div>
 
-                        <div className="space-y-3">
-                            {items.map((item, idx) => (
-                                <div
-                                    key={idx}
-                                    className="group relative flex bg-white rounded-xl border border-secondary-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer text-xs"
-                                    onClick={() => {
-                                        setEditingItemIndex(idx)
-                                        setShowOrderItemModal(true)
-                                    }}
-                                >
-                                    {/* LEFT: Image (Fixed Aspect) */}
-                                    <div className="w-24 bg-gray-50 flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
-                                        {item.image ? (
-                                            <img
-                                                src={item.image}
-                                                alt={item.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <Package size={24} className="text-secondary-300" />
-                                        )}
-                                        {/* Index Badge */}
-                                        <div className="absolute top-1 left-1 bg-primary-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-sm z-10">
-                                            {idx + 1}
-                                        </div>
-                                    </div>
-
-                                    {/* RIGHT: Content 5 Rows Redesign */}
-                                    {/* RIGHT: Content 5 Rows Redesign */}
-                                    <div className="flex-1 min-w-0 p-3 space-y-3">
-                                        {/* Row 1: Header Info & Price */}
-                                        <div className="flex justify-between items-start gap-2 w-full">
-                                            {/* LEFT: Product Info */}
-                                            <div className="flex flex-wrap items-center gap-2 min-w-0">
-
-                                                {/* Category */}
-                                                {(item.category || item.subcategory) && (
-                                                    <span className="text-secondary-500 font-medium text-xs">
-                                                        {item.category?.startsWith('01') || item.category?.startsWith('02') ? item.category.substring(2) : item.category}
-                                                        {item.subcategory ? ` / ${item.subcategory}` : ''}
-                                                    </span>
-                                                )}
-                                                {/* Code Badge */}
-                                                <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500">
-                                                    {item.code || '-'}
-                                                </span>
-                                                {/* Name */}
-                                                <span className="font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
-
-                                                {/* Price & Stock - Moved from Right */}
-                                                <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                                                    <div className="flex items-center gap-1">
-                                                        <div className="text-secondary-500 font-medium text-[11px]">
-                                                            {currency(item.unitPrice || 0)}
-                                                        </div>
-                                                        <div className="text-secondary-400 text-[10px]">
-                                                            x {item.qty || 1}
-                                                        </div>
-                                                        <div className="font-bold text-primary-700 text-[11px] ml-1">
-                                                            {currency((item.unitPrice || 0) * (item.qty || 0))}
-                                                        </div>
-                                                    </div>
-                                                    <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        Stock: {item.stock || 0}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* RIGHT: Stock & Price */}
-
-                                        </div>
-
-                                        {/* Row 2: Specs & Description */}
-                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
-                                            {/* LEFT: Specs */}
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                {/* Dimensions - Moved from Row 1 */}
-                                                {item.material && (
-                                                    <div className="flex items-center gap-1" title="วัสดุ">
-                                                        <Layers size={12} />
-                                                        <span>{item.material}</span>
-                                                    </div>
-                                                )}
-                                                {/* Dimensions */}
-                                                {(() => {
-                                                    const w = item.width || item.dimensions?.width
-                                                    const l = item.length || item.dimensions?.length
-                                                    const h = item.height || item.dimensions?.height
-
-                                                    if (w || l || h) {
-                                                        return (
-                                                            <div className="flex items-center gap-1" title="ขนาด">
-                                                                <Scaling size={12} />
-                                                                <span>
-                                                                    {w ? `W:${w} ` : ''}
-                                                                    {l ? `L:${l} ` : ''}
-                                                                    {h ? `H:${h}` : ''}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null
-                                                })()}
-                                                {/* Color - Show variant color if selected, otherwise product color */}
-                                                {(item.selectedVariant?.color || item.color) && (
-                                                    <div className="flex items-center gap-1" title="สี">
-                                                        <Palette size={12} />
-                                                        <span>{item.selectedVariant?.color || item.color}</span>
-                                                    </div>
-                                                )}
-                                                {/* Crystal Data */}
-                                                {(item.selectedVariant?.crystalColor || item.crystalColor) && (
-                                                    <div className="flex items-center gap-1" title="สีคริสตัล">
-                                                        <Gem size={12} />
-                                                        <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
-                                                    </div>
-                                                )}
-                                                {(item.light || item.lightColor) && (
-                                                    <div className="flex items-center gap-1" title="แสงไฟ">
-                                                        <Zap size={12} />
-                                                        <span>
-                                                            {item.light}
-                                                            {item.light && item.lightColor && ' '}
-                                                            {item.lightColor}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {item.remote && (
-                                                    <div className="flex items-center gap-1" title="รีโมท">
-                                                        <Power size={12} />
-                                                        <span>{item.remote}</span>
-                                                    </div>
-                                                )}
-                                                {item.bulbType && (
-                                                    <div className="flex items-center gap-1" title="ขั้วหลอด">
-                                                        <Lightbulb size={12} />
-                                                        <span>{item.bulbType}</span>
-                                                    </div>
-                                                )}
-                                                {/* Description / Remark - Moved to follow Bulb Type */}
-                                                {(item.remark || item.description) && (
-                                                    <div className="flex items-center gap-1 text-secondary-500" title="หมายเหตุ">
-                                                        <FileText size={12} />
-                                                        <span className="truncate max-w-[200px]">
-                                                            {item.remark || item.description}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {/* RIGHT: Description */}
-
-                                        </div>
-
-                                        {/* Row 3: Job Info & Dates */}
-                                        {/* Row 3: Job Info & Dates */}
-                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
-                                            {/* LEFT: Job Info: Inspector, Location */}
-                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                {/* Inspector (Swapped from Row 4) */}
-                                                <div className="flex items-center gap-1">
-                                                    <UserCheck size={12} />
-                                                    <span>
-                                                        {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) || '-'}
-                                                        {(item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone})`}
-                                                    </span>
-                                                </div>
-
-                                                {((item.subJob?.distance || jobInfo.distance) || (item.subJob?.installLocationName || jobInfo.installLocationName)) && (
-                                                    <div className="flex items-center gap-1 text-secondary-500">
-                                                        {(item.subJob?.distance || jobInfo.distance) && <span>{item.subJob?.distance || jobInfo.distance} Km</span>}
-                                                        {(item.subJob?.installLocationName || jobInfo.installLocationName) && <span>{item.subJob?.installLocationName || jobInfo.installLocationName}</span>}
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-1">
-                                                    <MapPin size={12} className="flex-shrink-0" />
-                                                    <span>
-                                                        {item.subJob?.installAddress || jobInfo.installAddress || item.subJob?.installLocationName || jobInfo.installLocationName || '-'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* RIGHT: Dates - Moved to Row 4 */}
-                                        </div>
-
-                                        {/* Row 4: Job Type, Team, Details & Dates */}
-                                        <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
-                                            {/* LEFT Group: Job Type, Team, Details */}
-                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                {/* Job Type */}
-                                                <div
-                                                    className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 -ml-1 rounded transition-colors"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        setCurrentSubJobItemIndex(idx)
-                                                        setShowSubJobModal(true)
-                                                    }}
-                                                    title="แก้ไขข้อมูลงานย่อย"
-                                                >
-                                                    {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
-                                                </div>
-
-                                                {/* Dates - Moved to 2nd position */}
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center gap-1">
-                                                        <Calendar size={12} />
-                                                        <span>
-                                                            {(item.subJob?.appointmentDate || jobInfo.appointmentDate)
-                                                                ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                : '-'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-green-700">
-                                                        <CheckCircle size={12} />
-                                                        <span>
-                                                            {(item.subJob?.completionDate || jobInfo.completionDate)
-                                                                ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                : '-'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Team */}
-                                                <div className="flex items-center gap-1">
-                                                    <Users size={12} />
-                                                    <span>{item.subJob?.team || jobInfo.team || '-'}</span>
-                                                </div>
-
-                                                {/* Details/Note */}
-                                                <div className="flex items-center gap-1 text-secondary-400">
-                                                    <FileText size={12} />
-                                                    <span className="truncate max-w-[300px]">
-                                                        {item.subJob?.description || jobInfo.description || '-'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* RIGHT: Dates (Moved from Row 3) */}
-
-                                        </div>
-
-                                        {/* Row 5: SNs */}
-                                        <div className="flex items-start gap-2 pt-1">
-                                            <QrCode size={16} className="text-secondary-400 mt-0.5 flex-shrink-0" />
-                                            <div className="flex flex-wrap gap-2">
-                                                {['SN000000000001', 'SN000000000002', 'SN000000000003', 'SN000000000004'].map((sn, i) => (
-                                                    <span key={i} className="text-[10px] font-mono bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
-                                                        {sn}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Add Button */}
-                            <button
-                                onClick={() => {
-                                    setEditingItemIndex(null)
-                                    setShowOrderItemModal(true)
-                                }}
-                                className="w-full py-3 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-2 border-2 border-dashed border-primary-300 rounded-lg hover:bg-primary-50 transition-colors"
-                            >
-                                <Plus size={18} />
-                                เพิ่มรายการสินค้า
-                            </button>
-                        </div>
-
-                        {/* Order Item Modal */}
-                        <OrderItemModal
-                            isOpen={showOrderItemModal}
-                            onClose={() => setShowOrderItemModal(false)}
-                            onSave={handleSaveItem}
-                            onDelete={handleDeleteItem}
-                            item={editingItemIndex !== null ? items[editingItemIndex] : null}
-                            productsData={productsData}
-                            isEditing={editingItemIndex !== null}
-                            onOpenSubJob={() => {
-                                if (editingItemIndex !== null) {
-                                    setShowOrderItemModal(false)
-                                    setCurrentSubJobItemIndex(editingItemIndex)
-                                    setShowSubJobModal(true)
-                                } else {
-                                    alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
-                                }
-                            }}
-                            onAddNewProduct={() => setShowProductModal(true)}
-                            lastCreatedProduct={lastCreatedProduct}
-                            onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
-                        />
-                    </div >
 
                     {/* Map Popup Modal */}
                     {
@@ -1747,6 +1749,7 @@ export default function OrderForm() {
                         onClose={() => setShowProductModal(false)}
                         product={newProduct}
                         onSave={handleSaveNewProduct}
+                        existingProducts={productsData}
                     />
 
                     {/* Customer Edit Modal */}

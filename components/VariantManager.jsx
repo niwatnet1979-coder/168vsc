@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus, Edit2, Trash2, Camera, X, Save } from 'lucide-react'
+import { Plus, Edit2, Trash2, Camera, X, Save, Scaling, Palette, Gem } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 
 export default function VariantManager({
@@ -8,7 +8,10 @@ export default function VariantManager({
     onChange,
     materialColors = [],
     crystalColors = [],
-    mainProductColor = ''
+    mainProductColor = '',
+    productName = '',
+    description = '',
+    material = ''
 }) {
     const [editingIndex, setEditingIndex] = useState(null)
     const [variantForm, setVariantForm] = useState({
@@ -161,40 +164,164 @@ export default function VariantManager({
 
             {/* Variant List */}
             {editingIndex === null && variants.length > 0 && (
-                <div className="space-y-2">
-                    {variants.map((variant, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg border border-secondary-200">
-                            <div className="flex-1">
-                                <div className="font-medium text-secondary-900">
-                                    สี: {variant.color} {variant.crystalColor ? `| สีคริสตัล: ${variant.crystalColor}` : ''}
-                                </div>
-                                <div className="text-sm text-secondary-600 mt-1">
-                                    {variant.dimensions && (
-                                        <span className="mr-3">
-                                            📏 {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height} cm
-                                        </span>
+                <div className="space-y-3">
+                    {variants.map((variant, index) => {
+                        // Helper to generate SKU
+                        const getColorCode = (colorName) => {
+                            if (!colorName) return 'XX'
+
+                            // Check for direct English matches or known codes in string
+                            if (colorName.includes('Gold') || colorName.includes('GD')) return 'GD'
+
+                            // Map Thai names to codes
+                            if (colorName.includes('ทองเหลือง')) return 'BS' // Brass
+                            if (colorName.includes('ทอง')) return 'GD'
+                            if (colorName.includes('โรสโกลด์') || colorName.includes('พิงค์โกลด์') || colorName.includes('PG')) return 'PG' // Pink Gold/Rose Gold
+                            if (colorName.includes('เงิน')) return 'SL'
+                            if (colorName.includes('ดำ')) return 'BK'
+                            if (colorName.includes('ขาว')) return 'WH'
+                            if (colorName.includes('ใส')) return 'CL'
+                            if (colorName.includes('โครเมียม')) return 'CH'
+                            if (colorName.includes('สนิม')) return 'RZ'
+                            if (colorName.includes('ไม้')) return 'WD'
+
+                            // Default fallback - take first 2 chars upper 
+                            // (But for unknown colors better to have a generic code or stick to XX?)
+                            return 'XX'
+                        }
+
+                        const getCrystalCode = (colorName) => {
+                            if (!colorName) return null
+                            if (colorName.includes('ใส')) return 'CL'
+                            if (colorName.includes('ทอง')) return 'GD'
+                            if (colorName.includes('ชา')) return 'TEA'
+                            if (colorName.includes('ควันบุหรี่')) return 'SM' // Smoke
+                            return 'XX'
+                        }
+
+                        const generateSKU = () => {
+                            // AA009-D20x20x50-GD-CL
+                            let sku = baseProductId || 'XXXXX'
+
+                            // Dimensions
+                            if (variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height)) {
+                                const l = variant.dimensions.length || '0'
+                                const w = variant.dimensions.width || '0'
+                                const h = variant.dimensions.height || '0'
+                                sku += `-D${l}x${w}x${h}`
+                            }
+
+                            // Color
+                            sku += `-${getColorCode(variant.color)}`
+
+                            // Crystal
+                            if (variant.crystalColor) {
+                                const cCode = getCrystalCode(variant.crystalColor)
+                                if (cCode) sku += `-${cCode}`
+                            }
+
+                            return sku
+                        }
+
+                        const generatedSKU = generateSKU()
+
+                        return (
+                            <div key={index} className="flex bg-white rounded-xl border border-secondary-200 overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                {/* Left: Image */}
+                                <div className="w-24 h-24 sm:w-32 sm:h-auto bg-gray-50 flex-shrink-0 border-r border-secondary-100 flex items-center justify-center p-2">
+                                    {variant.images && variant.images.length > 0 ? (
+                                        <img
+                                            src={variant.images[0]}
+                                            alt={`Variant ${index + 1}`}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="text-secondary-300 flex flex-col items-center gap-1">
+                                            <Camera size={24} />
+                                            <span className="text-[10px]">No Image</span>
+                                        </div>
                                     )}
-                                    ฿{variant.price?.toLocaleString()} | Stock: {variant.stock} (Min: {variant.minStock || 0}) | {variant.images?.length || 0} รูป
+                                </div>
+
+                                {/* Right: Details */}
+                                <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
+                                    <div>
+                                        {/* Header: SKU */}
+                                        <div className="flex justify-between items-start gap-2">
+                                            <h3 className="font-bold text-secondary-900 text-lg sm:text-lg font-mono tracking-tight truncate" title={generatedSKU}>
+                                                {generatedSKU}
+                                            </h3>
+
+                                            {/* Actions */}
+                                            <div className="flex gap-1 flex-shrink-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleEditVariant(index)}
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteVariant(index)}
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Details Line 1: Name, Material, Dimensions, Colors */}
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-secondary-600">
+                                            <span className="font-medium text-secondary-900">{productName || 'สินค้าใหม่'}</span>
+
+                                            {material && (
+                                                <>
+                                                    <span className="text-secondary-300">•</span>
+                                                    <span>{material}</span>
+                                                </>
+                                            )}
+
+                                            {variant.dimensions && (
+                                                <>
+                                                    <span className="text-secondary-300">•</span>
+                                                    <div className="flex items-center gap-1" title="Dimensions">
+                                                        <Scaling size={12} className="text-secondary-400" />
+                                                        <span className="font-mono text-xs">
+                                                            {variant.dimensions.length}x{variant.dimensions.width}x{variant.dimensions.height}cm
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            <span className="text-secondary-300">•</span>
+                                            <div className="flex items-center gap-1" title="Color">
+                                                <Palette size={12} className="text-secondary-400" />
+                                                <span>{variant.color}</span>
+                                            </div>
+
+                                            {variant.crystalColor && (
+                                                <>
+                                                    <span className="text-secondary-300">•</span>
+                                                    <div className="flex items-center gap-1" title="Crystal Color">
+                                                        <Gem size={12} className="text-secondary-400" />
+                                                        <span>{variant.crystalColor}</span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Description */}
+                                        {description && (
+                                            <p className="text-xs text-secondary-500 mt-1 truncate">
+                                                {description}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleEditVariant(index)}
-                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleDeleteVariant(index)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
@@ -342,8 +469,8 @@ export default function VariantManager({
 
 
 
-                    {/* Price, Min Stock & Stock */}
-                    <div className="grid grid-cols-3 gap-3">
+                    {/* Price & Min Stock */}
+                    <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-1">ราคา (บาท)</label>
                             <input
@@ -360,16 +487,6 @@ export default function VariantManager({
                                 type="number"
                                 value={variantForm.minStock}
                                 onChange={(e) => setVariantForm({ ...variantForm, minStock: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">สต็อก</label>
-                            <input
-                                type="number"
-                                value={variantForm.stock}
-                                onChange={(e) => setVariantForm({ ...variantForm, stock: e.target.value })}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 placeholder="0"
                             />

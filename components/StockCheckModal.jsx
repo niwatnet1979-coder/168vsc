@@ -10,8 +10,10 @@ import {
     Search
 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function StockCheckModal({ isOpen, onClose }) {
+    const { t } = useLanguage()
     // Audit State
     const [auditItems, setAuditItems] = useState([]) // All expected items from DB
     const [scannedCodes, setScannedCodes] = useState(new Set()) // Set of strings
@@ -67,15 +69,15 @@ export default function StockCheckModal({ isOpen, onClose }) {
         // 2. Determine Result
         if (scannedCodes.has(code)) {
             status = 'duplicate'
-            message = 'Item already scanned in this session.'
+            message = t('Item already scanned in this session.')
         } else if (foundItem) {
             status = 'success'
-            message = `Verified: ${foundItem.product?.name || 'Item'}`
+            message = `${t('Verified')}: ${foundItem.product?.name || 'Item'}`
             setScannedCodes(prev => new Set(prev).add(code))
         } else {
             // Check if it exists in DB but not in 'in_stock' (e.g. Sold/Lost)
             status = 'unknown' // Or 'unexpected'
-            message = 'QR Code not found or not in Stock.'
+            message = t('QR Code not found or not in Stock.')
         }
 
         // 3. Update Log (Latest first)
@@ -109,10 +111,10 @@ export default function StockCheckModal({ isOpen, onClose }) {
                     <div>
                         <h2 className="text-xl font-bold flex items-center gap-2">
                             <ClipboardCheck className="text-primary-300" />
-                            Stock Audit Mode
+                            {t('Stock Audit Mode')}
                         </h2>
                         <p className="text-primary-300 text-sm mt-1">
-                            Scan items to verify current stock levels.
+                            {t('Scan items to verify current stock levels.')}
                         </p>
                     </div>
                     <button onClick={onClose} className="text-primary-300 hover:text-white transition-colors">
@@ -128,7 +130,7 @@ export default function StockCheckModal({ isOpen, onClose }) {
                         {/* 1. Progress Card */}
                         <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm mb-6">
                             <div className="flex justify-between items-end mb-2">
-                                <span className="text-secondary-500 font-medium">Progress</span>
+                                <span className="text-secondary-500 font-medium">{t('Progress')}</span>
                                 <span className="text-2xl font-bold text-primary-900">
                                     {totalScanned} <span className="text-secondary-400 text-lg">/ {totalExpected}</span>
                                 </span>
@@ -153,15 +155,15 @@ export default function StockCheckModal({ isOpen, onClose }) {
                                     // Keep focus handling simple for now
                                     onBlur={() => setTimeout(() => inputRef.current?.focus(), 2000)}
                                     className="w-full pl-12 pr-4 py-4 text-xl font-mono border-2 border-primary-500 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-100 shadow-sm"
-                                    placeholder="Scan QR Code here..."
+                                    placeholder={t('Scan QR Code here...')}
                                     autoFocus
                                 />
                                 <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-bold">
-                                    ENTER
+                                    {t('ENTER')}
                                 </button>
                             </form>
                             <p className="text-xs text-secondary-500 mt-2 text-center">
-                                * Click inside the box and use your scanner. Auto-focus enabled.
+                                {t('* Click inside the box and use your scanner. Auto-focus enabled.')}
                             </p>
                         </div>
 
@@ -179,9 +181,9 @@ export default function StockCheckModal({ isOpen, onClose }) {
 
                                     <div>
                                         <h3 className="text-lg font-bold uppercase tracking-wide">
-                                            {lastScanResult.status === 'success' ? 'OK - COUNTED' :
-                                                lastScanResult.status === 'duplicate' ? 'WARNING - DUPLICATE' :
-                                                    'ERROR - UNKNOWN/WRONG'}
+                                            {lastScanResult.status === 'success' ? t('OK - COUNTED') :
+                                                lastScanResult.status === 'duplicate' ? t('WARNING - DUPLICATE') :
+                                                    t('ERROR - UNKNOWN/WRONG')}
                                         </h3>
                                         <p className="font-mono text-xl mt-1">{lastScanResult.code}</p>
                                         <p className="mt-1 opacity-90">{lastScanResult.message}</p>
@@ -192,7 +194,7 @@ export default function StockCheckModal({ isOpen, onClose }) {
 
                         {/* 4. Recent Logs */}
                         <div className="flex-1">
-                            <h4 className="text-sm font-bold text-secondary-500 mb-3 uppercase tracking-wider">Recent Scans</h4>
+                            <h4 className="text-sm font-bold text-secondary-500 mb-3 uppercase tracking-wider">{t('Recent Scans')}</h4>
                             <div className="space-y-2">
                                 {scanLog.slice(0, 5).map(log => (
                                     <div key={log.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-secondary-200 shadow-sm">
@@ -218,14 +220,14 @@ export default function StockCheckModal({ isOpen, onClose }) {
                                 className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors
                                     ${activeTab === 'scanned' ? 'border-primary-600 text-primary-700 bg-primary-50' : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
                             >
-                                Scanned ({totalScanned})
+                                {t('Scanned')} ({totalScanned})
                             </button>
                             <button
                                 onClick={() => setActiveTab('missing')}
                                 className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors
                                     ${activeTab === 'missing' ? 'border-danger-500 text-danger-700 bg-danger-50' : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
                             >
-                                Missing ({missingItems.length})
+                                {t('Missing')} ({missingItems.length})
                             </button>
                         </div>
 
@@ -239,14 +241,14 @@ export default function StockCheckModal({ isOpen, onClose }) {
                                             <li key={code} className="p-3 hover:bg-secondary-50 flex items-center gap-3">
                                                 <CheckCircle size={16} className="text-success-500 shrink-0" />
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-secondary-900 truncate">{item?.product?.name || 'Unknown'}</p>
+                                                    <p className="text-sm font-medium text-secondary-900 truncate">{item?.product?.name || t('Unknown')}</p>
                                                     <p className="text-xs text-secondary-500 font-mono">{code}</p>
                                                 </div>
                                             </li>
                                         )
                                     })}
                                     {scannedCodes.size === 0 && (
-                                        <div className="p-8 text-center text-secondary-400 text-sm">No items scanned yet.</div>
+                                        <div className="p-8 text-center text-secondary-400 text-sm">{t('No items scanned yet.')}</div>
                                     )}
                                 </ul>
                             ) : (
@@ -255,7 +257,7 @@ export default function StockCheckModal({ isOpen, onClose }) {
                                         <li key={item.id} className="p-3 hover:bg-secondary-50 flex items-center gap-3 border-l-4 border-transparent hover:border-danger-400">
                                             <AlertTriangle size={16} className="text-danger-400 shrink-0" />
                                             <div className="min-w-0">
-                                                <p className="text-sm font-medium text-secondary-900 truncate">{item.product?.name || 'Unknown'}</p>
+                                                <p className="text-sm font-medium text-secondary-900 truncate">{item.product?.name || t('Unknown')}</p>
                                                 <p className="text-xs text-secondary-500 font-mono">{item.qr_code}</p>
                                                 <p className="text-[10px] text-secondary-400">{item.current_location}</p>
                                             </div>
@@ -264,8 +266,8 @@ export default function StockCheckModal({ isOpen, onClose }) {
                                     {missingItems.length === 0 && (
                                         <div className="p-8 text-center text-success-600 bg-success-50 m-4 rounded-lg">
                                             <CheckCircle size={32} className="mx-auto mb-2" />
-                                            <p className="font-bold">All Clear!</p>
-                                            <p className="text-sm">No items missing from stock.</p>
+                                            <p className="font-bold">{t('All Clear!')}</p>
+                                            <p className="text-sm">{t('No items missing from stock.')}</p>
                                         </div>
                                     )}
                                 </ul>

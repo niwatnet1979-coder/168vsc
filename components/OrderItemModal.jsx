@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import ProductCard from './ProductCard'
@@ -275,8 +275,8 @@ const OrderItemModal = React.forwardRef(({
     const total = (Number(formData.qty) || 0) * (Number(formData.unitPrice) || 0)
 
     const Wrapper = isInline ? 'div' : 'div'
-    const wrapperProps = isInline ? { className: "w-full h-full bg-secondary-50 flex flex-col" } : { className: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-xl shadow-xl w-[512px] h-[600px] flex flex-col" }
+    const wrapperProps = isInline ? { className: "w-full h-full bg-secondary-50 flex flex-col" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
+    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-2xl shadow-2xl border border-secondary-200 w-full max-w-md h-[600px] max-h-[90vh] flex flex-col overflow-hidden" }
 
     return (
         <Wrapper {...wrapperProps}>
@@ -297,12 +297,27 @@ const OrderItemModal = React.forwardRef(({
                 <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
                     {/* Product Search / Selected Item */}
                     <div className="relative">
-                        <label className="block text-xs font-medium text-secondary-700 mb-1">
-                            สินค้า <span className="text-danger-500">*</span>
-                        </label>
+
 
                         {formData.code ? (
-                            <div className="relative">
+                            <div
+                                onClick={() => {
+                                    if (confirm('ต้องการเปลี่ยนสินค้า?')) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
+                                            image: null, length: '', width: '', height: '',
+                                            material: '', color: '', crystalColor: '',
+                                            bulbType: '', light: '', remote: '', category: '', subcategory: '',
+                                            selectedVariant: null
+                                        }))
+                                    }
+                                }}
+                                className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
+                            >
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">
+                                    สินค้า <span className="text-danger-500">*</span>
+                                </label>
                                 <ProductCard
                                     product={{
                                         name: formData.name,
@@ -313,45 +328,40 @@ const OrderItemModal = React.forwardRef(({
                                         description: formData.description,
                                         variants: productVariants
                                     }}
-                                    variant="default"
+                                    variant="ghost"
                                     showImage={true}
                                     showPrice={true}
                                     showStock={true}
                                 />
-                                {/* Close Button - Positioned absolutely */}
-                                <button
-                                    onClick={() => setFormData(prev => ({
-                                        ...prev,
-                                        code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
-                                        image: null, length: '', width: '', height: '',
-                                        material: '', color: '', crystalColor: '',
-                                        bulbType: '', light: '', remote: '', category: '', subcategory: '',
-                                        selectedVariant: null
-                                    }))}
-                                    className="absolute top-2 right-2 p-1.5 text-secondary-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-all"
-                                    title="เลือกสินค้าใหม่"
-                                >
-                                    <X size={20} />
-                                </button>
+                                <div className="hidden group-hover:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm">
+                                    แตะเพื่อเปลี่ยน
+                                </div>
                             </div>
                         ) : (
-                            <div className="relative">
-                                <Search className="absolute left-3 top-2.5 text-secondary-400" size={18} />
-                                <input
-                                    type="text"
-                                    value={formData._searchTerm}
-                                    onChange={(e) => {
-                                        setFormData({ ...formData, _searchTerm: e.target.value })
-                                        setShowSearchPopup(true)
-                                    }}
-                                    onFocus={() => setShowSearchPopup(true)}
-                                    className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                                    placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                                />
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md relative">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">
+                                    สินค้า <span className="text-danger-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
+                                    <input
+                                        type="text"
+                                        value={formData._searchTerm}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, _searchTerm: e.target.value })
+                                            setShowSearchPopup(true)
+                                        }}
+                                        onFocus={() => setShowSearchPopup(true)}
+                                        onBlur={() => setTimeout(() => setShowSearchPopup(false), 200)}
+                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
+                                        placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
+                                        autoFocus
+                                    />
+                                </div>
 
                                 {/* Search Popup */}
                                 {showSearchPopup && (
-                                    <div className="absolute z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                    <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[450px] overflow-y-auto">
                                         {searchResults.length > 0 ? (
                                             searchResults.map(p => (
                                                 <div
@@ -457,87 +467,117 @@ const OrderItemModal = React.forwardRef(({
 
                     {/* Product Options Dropdowns & Remark */}
                     {formData.code && (
-                        <div className="bg-secondary-50 p-4 rounded-lg border border-secondary-200 space-y-4">
+                        <div className="space-y-4">
                             {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
                             {productVariants.length > 0 && (
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">
                                         Variant
                                     </label>
-                                    <select
-                                        value={formData.selectedVariantIndex ?? ''}
-                                        onChange={(e) => handleVariantSelect(e.target.value)}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">-- เลือก Variant --</option>
-                                        {productVariants.map((variant, i) => (
-                                            <option key={i} value={i}>
-                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.selectedVariantIndex ?? ''}
+                                            onChange={(e) => handleVariantSelect(e.target.value)}
+                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
+                                        >
+                                            <option value="">-- เลือก Variant --</option>
+                                            {productVariants.map((variant, i) => (
+                                                <option key={i} value={i}>
+                                                    {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
                                 </div>
                             )}
 
-                            {/* Row 2: Light Color, Crystal Color */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">สีแสงไฟ</label>
-                                    <select
-                                        value={formData.lightColor}
-                                        onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">-- เลือกสีแสงไฟ --</option>
-                                        {productOptions.lightColors.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
+                            {/* Row 2: Options Grid (2 Cols) */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Light Color */}
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.lightColor}
+                                            onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
+                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
+                                        >
+                                            <option value="">-- เลือกสีแสงไฟ --</option>
+                                            {productOptions.lightColors.map((opt, i) => (
+                                                <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
                                 </div>
-                                <div>
-                                    {/* Crystal Color Dropdown Removed - Managed by Variant */}
+
+                                {/* Crystal Color */}
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">สีคริสตัล</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.crystalColor || ''}
+                                            onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
+                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
+                                        >
+                                            <option value="">-- เลือกสีคริสตัล --</option>
+                                            <option value="-">-</option>
+                                            <option value="Clear">Clear</option>
+                                            <option value="Amber">Amber</option>
+                                            <option value="Smoke">Smoke</option>
+                                            <option value="Mixed">Mixed</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
+                                </div>
+
+                                {/* Bulb Type */}
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">
+                                        ประเภทหลอดไฟ
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.bulbType}
+                                            onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
+                                        >
+                                            <option value="">เลือกประเภทหลอด</option>
+                                            {productOptions.bulbTypes.map((opt, i) => (
+                                                <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
+                                </div>
+
+                                {/* Remote */}
+                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                    <label className="block text-xs font-medium text-secondary-500 mb-1">รีโมท</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.remote}
+                                            onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
+                                        >
+                                            <option value="">-- เลือกรีโมท --</option>
+                                            {productOptions.remotes.map((opt, i) => (
+                                                <option key={i} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Row 3: Bulb Type, Remote */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* Bulb Type */}
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">
-                                        ประเภทหลอดไฟ
-                                    </label>
-                                    <select
-                                        value={formData.bulbType}
-                                        onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">เลือกประเภทหลอด</option>
-                                        {productOptions.bulbTypes.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-secondary-700 mb-1">รีโมท</label>
-                                    <select
-                                        value={formData.remote}
-                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
-                                        className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                                    >
-                                        <option value="">-- เลือกรีโมท --</option>
-                                        {productOptions.remotes.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-secondary-700 mb-1">หมายเหตุ</label>
-                                <input
-                                    type="text"
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">หมายเหตุ</label>
+                                <textarea
+                                    rows={1}
                                     value={formData.remark}
                                     onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
+                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 resize-none"
                                     placeholder="ระบุรายละเอียดเพิ่มเติม..."
                                 />
                             </div>
@@ -545,30 +585,37 @@ const OrderItemModal = React.forwardRef(({
                     )}
 
                     {/* Quantity, Price & Total - Single Row */}
+                    {/* Quantity, Price & Total - Single Row */}
                     <div className="grid grid-cols-12 gap-4 items-end">
                         <div className="col-span-3">
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">จำนวน</label>
-                            <input
-                                type="number"
-                                value={formData.qty}
-                                onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right text-sm"
-                                min="1"
-                            />
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">จำนวน</label>
+                                <input
+                                    type="number"
+                                    value={formData.qty}
+                                    onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
+                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right"
+                                    min="1"
+                                />
+                            </div>
                         </div>
                         <div className="col-span-4">
-                            <label className="block text-xs font-medium text-secondary-700 mb-1">ราคา/หน่วย</label>
-                            <input
-                                type="number"
-                                value={formData.unitPrice}
-                                onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-right text-sm"
-                            />
+                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">ราคา/หน่วย</label>
+                                <input
+                                    type="number"
+                                    value={formData.unitPrice}
+                                    onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
+                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right"
+                                />
+                            </div>
                         </div>
                         <div className="col-span-5">
-                            <label className="block text-xs font-medium text-secondary-700 mb-1 text-right">รวมเป็นเงิน</label>
-                            <div className="w-full px-3 py-2 bg-primary-50 border border-primary-100 rounded-lg text-right">
-                                <span className="text-sm font-bold text-primary-700">{currency(total)}</span>
+                            <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 transition-all hover:shadow-md">
+                                <label className="block text-xs font-medium text-primary-600 mb-1 text-right">รวมเป็นเงิน</label>
+                                <div className="text-right">
+                                    <span className="text-lg font-bold text-primary-700">{currency(total)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>

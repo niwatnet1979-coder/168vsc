@@ -20,7 +20,8 @@ import {
     Package,
     MoreHorizontal,
     RotateCcw,
-    Menu
+    Menu,
+    ListTree
 } from 'lucide-react'
 
 export default function OrdersListPage() {
@@ -166,10 +167,19 @@ export default function OrdersListPage() {
     }
 
     const getJobTypeIcon = (type) => {
-        if (!type) return <Package size={14} className="mr-1" />
-        if (type.includes('ติดตั้ง')) return <Wrench size={14} className="mr-1" />
-        if (type.includes('ส่งของ') || type.includes('ขนส่ง')) return <Truck size={14} className="mr-1" />
-        return <Package size={14} className="mr-1" />
+        if (!type) return <Package size={14} />
+        if (type === 'separate') return <ListTree size={14} />
+        if (type.includes('ติดตั้ง') || type.includes('installation')) return <Wrench size={14} />
+        if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return <Truck size={14} />
+        return <Package size={14} />
+    }
+
+    const getJobTypeLabel = (type) => {
+        if (!type) return '-'
+        if (type === 'separate') return 'งานแยก'
+        if (type.includes('ติดตั้ง') || type.includes('installation')) return 'งานติดตั้ง'
+        if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return 'งานขนส่ง'
+        return type
     }
 
     return (
@@ -297,6 +307,7 @@ export default function OrdersListPage() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่สร้างออเดอร์</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">รายการ</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">จำนวน</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดค้างชำระ</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
@@ -322,6 +333,11 @@ export default function OrdersListPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
                                                 {Array.isArray(order.items) ? order.items.length : order.items}
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
+                                                {Array.isArray(order.items)
+                                                    ? order.items.reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0)
+                                                    : '-'}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="text-sm font-bold text-primary-700">฿{(order.totalAmount || order.total || 0).toLocaleString()}</div>
                                             </td>
@@ -331,9 +347,9 @@ export default function OrdersListPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(order.jobType)}`}>
+                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(order.jobType)}`}>
                                                     {getJobTypeIcon(order.jobType)}
-                                                    {order.jobType}
+                                                    {getJobTypeLabel(order.jobType)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -357,7 +373,7 @@ export default function OrdersListPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="9" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="10" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileText size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคำสั่งซื้อ</p>

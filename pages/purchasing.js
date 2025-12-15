@@ -3,6 +3,7 @@ import Head from 'next/head'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
 import PurchaseOrderModal from '../components/PurchaseOrderModal'
+import { useLanguage } from '../contexts/LanguageContext'
 import {
     ShoppingBag,
     Plus,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react'
 
 export default function PurchasingPage() {
+    const { t } = useLanguage()
     const [orders, setOrders] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
@@ -79,7 +81,7 @@ export default function PurchasingPage() {
     return (
         <AppLayout>
             <Head>
-                <title>Purchasing - 168VSC System</title>
+                <title>{t('Purchasing')} - 168VSC System</title>
             </Head>
 
             <div className="space-y-6">
@@ -88,16 +90,16 @@ export default function PurchasingPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
                             <ShoppingBag className="text-primary-600" />
-                            Procurement (Purchasing)
+                            {t('Procurement (Purchasing)')}
                         </h1>
-                        <p className="text-secondary-500 text-sm">Manage Purchase Orders and Landed Costs</p>
+                        <p className="text-secondary-500 text-sm">{t('Manage Purchase Orders and Landed Costs')}</p>
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm"
                     >
                         <Plus size={20} />
-                        New PO
+                        {t('New PO')}
                     </button>
                 </div>
 
@@ -112,7 +114,7 @@ export default function PurchasingPage() {
                             ? 'border-primary-600 text-primary-700'
                             : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
                 >
-                    Purchase Orders
+                    {t('Purchase Orders')}
                 </button>
                 <button
                     onClick={() => setViewMode('suggestions')}
@@ -121,9 +123,9 @@ export default function PurchasingPage() {
                             ? 'border-primary-600 text-primary-700'
                             : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
                 >
-                    <span>Reorder Suggestions</span>
+                    <span>{t('Reorder Suggestions')}</span>
                     <span className="bg-danger-100 text-danger-700 text-xs px-1.5 py-0.5 rounded-full">
-                        Low Stock
+                        {t('Low Stock')}
                     </span>
                 </button>
             </div>
@@ -133,23 +135,23 @@ export default function PurchasingPage() {
                     <table className="w-full text-left">
                         <thead className="bg-warning-50 border-b border-warning-100">
                             <tr>
-                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase">Product</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">Current Stock</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">Min Level</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">Suggested Order</th>
-                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase">Action</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase">{t('Product')}</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">{t('Current Stock')}</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">{t('Min Level')}</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase text-center">{t('Suggested Order')}</th>
+                                <th className="px-6 py-3 text-xs font-semibold text-warning-800 uppercase">{t('Action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-secondary-200">
                             {isLoading ? (
-                                <tr><td colSpan="5" className="px-6 py-8 text-center text-secondary-500">Scanning inventory...</td></tr>
+                                <tr><td colSpan="5" className="px-6 py-8 text-center text-secondary-500">{t('Scanning inventory...')}</td></tr>
                             ) : suggestions.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-12 text-center text-secondary-500">
                                         <div className="flex flex-col items-center">
                                             <CheckCircle size={48} className="text-success-500 mb-2" />
-                                            <p className="text-secondary-900 font-medium">All Stock Levels Healthy</p>
-                                            <p className="text-sm">No items are below minimum stock level.</p>
+                                            <p className="text-secondary-900 font-medium">{t('All Stock Levels Healthy')}</p>
+                                            <p className="text-sm">{t('No items are below minimum stock level.')}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -195,9 +197,14 @@ export default function PurchasingPage() {
                                             {item.min_stock_level}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-lg font-medium">
+                                            <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-lg font-medium block">
                                                 +{item.reorder_qty}
                                             </span>
+                                            {item.allocated_qty > 0 && (
+                                                <div className="text-[10px] text-secondary-500 mt-1">
+                                                    ({t('Pending')}: {item.allocated_qty})
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <button
@@ -207,7 +214,7 @@ export default function PurchasingPage() {
                                                 }}
                                                 className="text-primary-600 hover:text-primary-700 text-sm font-medium hover:underline"
                                             >
-                                                Create PO
+                                                {t('Create PO')}
                                             </button>
                                         </td>
                                     </tr>
@@ -225,7 +232,7 @@ export default function PurchasingPage() {
                             <Search className="absolute left-3 top-2.5 text-secondary-400" size={20} />
                             <input
                                 type="text"
-                                placeholder="Search Supplier or PO #"
+                                placeholder={t('Search Supplier or PO #')}
                                 className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
@@ -236,11 +243,11 @@ export default function PurchasingPage() {
                             onChange={e => setFilterStatus(e.target.value)}
                             className="px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
-                            <option value="all">All Status</option>
-                            <option value="draft">Draft</option>
-                            <option value="ordered">Ordered</option>
-                            <option value="shipping">Shipping</option>
-                            <option value="received">Received</option>
+                            <option value="all">{t('All Status')}</option>
+                            <option value="draft">{t('Draft')}</option>
+                            <option value="ordered">{t('Ordered')}</option>
+                            <option value="shipping">{t('Shipping')}</option>
+                            <option value="received">{t('Received')}</option>
                         </select>
                     </div>
 
@@ -249,25 +256,25 @@ export default function PurchasingPage() {
                         <table className="w-full text-left">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">PO #</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">Supplier</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">Expect Date</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase text-right">Total Cost</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">Actions</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('PO #')}</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Supplier')}</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Status')}</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Expect Date')}</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase text-right">{t('Total Cost')}</th>
+                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-200">
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan="6" className="px-6 py-8 text-center text-secondary-500">
-                                            Loading orders...
+                                            {t('Loading orders...')}
                                         </td>
                                     </tr>
                                 ) : filteredOrders.length === 0 ? (
                                     <tr>
                                         <td colSpan="6" className="px-6 py-8 text-center text-secondary-500">
-                                            No purchase orders found.
+                                            {t('No purchase orders found.')}
                                         </td>
                                     </tr>
                                 ) : (
