@@ -21,6 +21,7 @@ import Card from './Card'
 import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import OrderItemModal from './OrderItemModal'
+import ProductDetailView from './ProductDetailView'
 import PaymentSummaryCard from './PaymentSummaryCard'
 
 function convertToEmbedUrl(url) {
@@ -1635,27 +1636,45 @@ export default function OrderForm() {
                             </div>
 
                             {/* Order Item Modal */}
-                            <OrderItemModal
-                                isOpen={showOrderItemModal}
-                                onClose={() => setShowOrderItemModal(false)}
-                                onSave={handleSaveItem}
-                                onDelete={handleDeleteItem}
-                                item={editingItemIndex !== null ? items[editingItemIndex] : null}
-                                productsData={productsData}
-                                isEditing={editingItemIndex !== null}
-                                onOpenSubJob={() => {
-                                    if (editingItemIndex !== null) {
-                                        setShowOrderItemModal(false)
-                                        setCurrentSubJobItemIndex(editingItemIndex)
-                                        setShowSubJobModal(true)
-                                    } else {
-                                        alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
-                                    }
-                                }}
-                                onAddNewProduct={() => setShowProductModal(true)}
-                                lastCreatedProduct={lastCreatedProduct}
-                                onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
-                            />
+                            {/* Order Item Modal OR Product Detail View for Adding */}
+                            {showOrderItemModal && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                                    {/* If ADDING NEW ITEM -> Use ProductDetailView */}
+                                    {editingItemIndex === null ? (
+                                        <div className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+                                            <ProductDetailView
+                                                isAdding={true}
+                                                productsData={productsData}
+                                                onClose={() => setShowOrderItemModal(false)}
+                                                onSave={(newItem) => {
+                                                    handleSaveItem(newItem) // Reuse existing save handler
+                                                    // handleSaveItem usually expects ID if editing, or no ID if adding. 
+                                                    // It should handle the new item object correctly.
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        /* If EDITING EXISTING -> Use Old Modal (to preserve SubJob features for now) */
+                                        <OrderItemModal
+                                            isOpen={true}
+                                            onClose={() => setShowOrderItemModal(false)}
+                                            onSave={handleSaveItem}
+                                            onDelete={handleDeleteItem}
+                                            item={items[editingItemIndex]}
+                                            productsData={productsData}
+                                            isEditing={true}
+                                            onOpenSubJob={() => {
+                                                setShowOrderItemModal(false)
+                                                setCurrentSubJobItemIndex(editingItemIndex)
+                                                setShowSubJobModal(true)
+                                            }}
+                                            onAddNewProduct={() => setShowProductModal(true)}
+                                            lastCreatedProduct={lastCreatedProduct}
+                                            onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
+                                        />
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

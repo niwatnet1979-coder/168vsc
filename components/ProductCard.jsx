@@ -41,7 +41,7 @@ export default function ProductCard({
 
     const priceDisplay = getPriceDisplay()
     const totalStock = getTotalStock()
-    const productCode = product.product_code || product.id || product.code
+    const productCode = product.product_code || product.code
 
     // Compact variant (for search dropdown)
     if (variant === 'compact') {
@@ -130,9 +130,9 @@ export default function ProductCard({
     if (variant === 'ghost') {
         return (
             <div className={`bg-transparent ${className}`}>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
                     {showImage && (
-                        <div className="w-12 h-12 flex-shrink-0 bg-white rounded overflow-hidden border border-secondary-200">
+                        <div className="w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden border border-secondary-100">
                             {product.variants?.[0]?.images?.[0] ? (
                                 <img
                                     src={product.variants[0].images[0]}
@@ -141,28 +141,29 @@ export default function ProductCard({
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                    <Package size={20} className="text-secondary-400" />
+                                    <Package size={32} className="text-secondary-400" />
                                 </div>
                             )}
                         </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-secondary-900">{product.name}</div>
-                        <div className="text-sm text-secondary-600 mt-0.5">
+                    <div className="flex-1 min-w-0 py-1">
+                        <div className="font-bold text-lg text-secondary-900 leading-tight">{product.name}</div>
+                        <div className="text-sm text-secondary-500 mt-1">
                             {productCode}
                             {product.category && ` • ${product.category}`}
+                            {product.material && ` • ${product.material}`}
                         </div>
                         {product.description && (
-                            <div className="text-xs text-secondary-500 mt-1 truncate">
+                            <div className="text-sm text-secondary-500 mt-2 line-clamp-2">
                                 {product.description}
                             </div>
                         )}
                     </div>
                     {showPrice && (
-                        <div className="text-right flex-shrink-0">
-                            <div className="font-bold text-primary-600">{priceDisplay}</div>
+                        <div className="text-right flex-shrink-0 py-1">
+                            <div className="font-bold text-primary-600 text-xl">{priceDisplay}</div>
                             {showStock && (
-                                <div className="text-xs text-secondary-500 mt-0.5">คงเหลือ {totalStock}</div>
+                                <div className="text-sm text-secondary-600 mt-1">คงเหลือ {totalStock}</div>
                             )}
                         </div>
                     )}
@@ -174,9 +175,9 @@ export default function ProductCard({
     // Default variant (for selected product display)
     return (
         <div className={`bg-white border border-secondary-200 rounded-xl shadow-sm ${className}`}>
-            <div className="p-3 flex items-start gap-3">
+            <div className="p-4 flex items-start gap-4">
                 {showImage && (
-                    <div className="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
+                    <div className="w-20 h-20 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100">
                         {product.variants?.[0]?.images?.[0] ? (
                             <img
                                 src={product.variants[0].images[0]}
@@ -185,29 +186,29 @@ export default function ProductCard({
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                                <Package size={24} className="text-secondary-400" />
+                                <Package size={32} className="text-secondary-400" />
                             </div>
                         )}
                     </div>
                 )}
-                <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-secondary-900">{product.name}</div>
-                    <div className="text-sm text-secondary-600 mt-1">
+                <div className="flex-1 min-w-0 py-1">
+                    <div className="font-bold text-lg text-secondary-900 leading-tight">{product.name}</div>
+                    <div className="text-sm text-secondary-500 mt-1">
                         {productCode}
                         {product.category && ` • ${product.category}`}
                         {product.material && ` • ${product.material}`}
                     </div>
                     {product.description && (
-                        <div className="text-xs text-secondary-500 mt-2">
+                        <div className="text-sm text-secondary-500 mt-2 line-clamp-2">
                             {product.description}
                         </div>
                     )}
                 </div>
                 {showPrice && (
-                    <div className="text-right flex-shrink-0">
-                        <div className="font-bold text-primary-600">{priceDisplay}</div>
+                    <div className="text-right flex-shrink-0 py-1">
+                        <div className="font-bold text-primary-600 text-xl">{priceDisplay}</div>
                         {showStock && (
-                            <div className="text-sm text-secondary-600 mt-1">คงเหลือ {totalStock}</div>
+                            <div className="text-sm text-secondary-500 mt-1">คงเหลือ {totalStock}</div>
                         )}
                     </div>
                 )}

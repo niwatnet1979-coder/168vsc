@@ -448,20 +448,22 @@ export default function MobileJobDetail() {
                         />
                     )}
 
-                    <ProductDetailView
-                        ref={orderItemModalRef} // Use the same ref approach for imperative save
-                        product={{
-                            ...product,
-                            productName: product?.name || job.productName,
-                            productId: product?.id || job.productId,
-                            price: product?.price || 0,
-                            variants: product?.variants || [],
-                        }}
-                        isEditing={isEditingProduct}
-                        onSave={handleSaveProductItem}
-                        onEdit={() => setIsEditingProduct(true)}
-                        hideEditButton={true}
-                    />
+                    {activeTab === 'product' && (
+                        <ProductDetailView
+                            ref={orderItemModalRef} // Use the same ref approach for imperative save
+                            product={{
+                                ...product,
+                                productName: product?.name || job.productName,
+                                productId: product?.id || job.productId,
+                                price: product?.price || 0,
+                                variants: product?.variants || [],
+                            }}
+                            isEditing={isEditingProduct}
+                            onSave={handleSaveProductItem}
+                            onEdit={() => setIsEditingProduct(true)}
+                            hideEditButton={true}
+                        />
+                    )}
 
                     {activeTab === 'payment' && (
                         <div className="space-y-4">
