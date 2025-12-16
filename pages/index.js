@@ -251,7 +251,7 @@ export default function Home() {
                     recentOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-secondary-50">
                         <td className="px-6 py-4 text-sm font-mono font-medium text-primary-600">
-                          <Link href={`/order?id=${order.id}`}>
+                          <Link href={`/order-sa?id=${order.id}`}>
                             {order.id}
                           </Link>
                         </td>

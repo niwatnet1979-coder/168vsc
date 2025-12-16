@@ -128,14 +128,14 @@ export default function JobDetailPage() {
                                 </span>
                             </h1>
                             <div className="text-xs text-secondary-500 flex items-center gap-2">
-                                <span>Order ID: <Link href={`/order?id=${job.orderId}`} className="hover:underline hover:text-primary-600">{job.orderId}</Link></span>
+                                <span>Order ID: <Link href={`/order-sa?id=${job.orderId}`} className="hover:underline hover:text-primary-600">{job.orderId}</Link></span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Link
-                            href={`/order?id=${job.orderId}`}
+                            href={`/order-sa?id=${job.orderId}`}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
                         >
                             <Edit size={16} />

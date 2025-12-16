@@ -329,7 +329,7 @@ export default function ReportsPage() {
                                     recentOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-secondary-50">
                                             <td className="px-6 py-4 text-sm font-mono font-medium text-primary-600">
-                                                <Link href={`/order?id=${order.id}`} className="hover:underline">
+                                                <Link href={`/order-sa?id=${order.id}`} className="hover:underline">
                                                     {order.id}
                                                 </Link>
                                             </td>

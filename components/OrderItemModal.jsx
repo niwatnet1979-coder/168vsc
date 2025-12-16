@@ -284,12 +284,24 @@ const OrderItemModal = React.forwardRef(({
                 {/* Header */}
                 {!isInline && (
                     <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between z-10">
-                        <h2 className="text-lg font-bold text-secondary-900">
+                        <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                            <Package size={20} className="text-primary-600" />
                             {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
                         </h2>
-                        <button onClick={onClose} className="text-secondary-500 hover:text-secondary-700">
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={onClose}
+                                className="px-3 py-1.5 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
+                            >
+                                ยกเลิก
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+                            >
+                                บันทึก
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -587,7 +599,7 @@ const OrderItemModal = React.forwardRef(({
                     {/* Quantity, Price & Total - Single Row */}
                     {/* Quantity, Price & Total - Single Row */}
                     <div className="grid grid-cols-12 gap-4 items-end">
-                        <div className="col-span-3">
+                        <div className="col-span-4">
                             <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">จำนวน</label>
                                 <input
@@ -610,7 +622,7 @@ const OrderItemModal = React.forwardRef(({
                                 />
                             </div>
                         </div>
-                        <div className="col-span-5">
+                        <div className="col-span-4">
                             <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 transition-all hover:shadow-md">
                                 <label className="block text-xs font-medium text-primary-600 mb-1 text-right">รวมเป็นเงิน</label>
                                 <div className="text-right">
@@ -625,38 +637,20 @@ const OrderItemModal = React.forwardRef(({
                 </div>
 
                 {/* Footer */}
-                {!hideControls && (
-                    <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-between z-10">
-                        <div>
-                            {isEditing && onDelete && (
-                                <button
-                                    onClick={() => {
-                                        if (confirm('ต้องการลบรายการนี้?')) {
-                                            onDelete()
-                                            onClose()
-                                        }
-                                    }}
-                                    className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
-                                >
-                                    <Trash2 size={16} />
-                                    ลบ
-                                </button>
-                            )}
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={onClose}
-                                className="px-4 py-2 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
-                            >
-                                บันทึก
-                            </button>
-                        </div>
+                {!hideControls && isEditing && onDelete && (
+                    <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-start z-10">
+                        <button
+                            onClick={() => {
+                                if (confirm('ต้องการลบรายการนี้?')) {
+                                    onDelete()
+                                    onClose()
+                                }
+                            }}
+                            className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
+                        >
+                            <Trash2 size={16} />
+                            ลบ
+                        </button>
                     </div>
                 )}
             </div>
