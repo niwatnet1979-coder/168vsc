@@ -837,6 +837,7 @@ export default function MobilePage() {
                     </div>
                 ) : (() => {
                     // Merge leave requests and jobs, then sort by date
+
                     const mergedItems = [
                         ...leaveRequests.map(leave => ({
                             type: 'leave',
@@ -848,7 +849,8 @@ export default function MobilePage() {
                             data: job,
                             sortDate: new Date(job.appointmentDate || job.date)
                         }))
-                    ].sort((a, b) => a.sortDate - b.sortDate) // Sort ascending (earliest first)
+                    ].sort((a, b) => a.sortDate - b.sortDate)
+
 
                     return (
                         <div className="space-y-3">
