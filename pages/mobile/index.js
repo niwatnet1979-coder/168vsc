@@ -302,7 +302,7 @@ export default function MobilePage() {
 
         let filteredJobs = allJobs.filter(job => {
             // Type Filter
-            const jobDate = new Date(job.jobDate)
+            const jobDate = new Date(job.appointmentDate || job.date)
             const isCompleted = job.status === 'completed'
             const isInstallation = job.jobType === 'ติดตั้ง' || job.jobType === 'installation'
             const isDelivery = job.jobType === 'ขนส่ง' || job.jobType === 'delivery' || job.jobType === 'delivery_installation'
@@ -360,8 +360,8 @@ export default function MobilePage() {
 
         // Sort
         filteredJobs.sort((a, b) => {
-            const dateA = new Date(`${a.jobDate}T${a.jobTime}`)
-            const dateB = new Date(`${b.jobDate}T${b.jobTime}`)
+            const dateA = new Date(`${a.appointmentDate}T${a.jobTime}`)
+            const dateB = new Date(`${b.appointmentDate}T${b.jobTime}`)
             return activeTab === 'previous' ? dateB - dateA : dateA - dateB
         })
 
@@ -497,7 +497,7 @@ export default function MobilePage() {
                             {/* Appointment Date */}
                             <div className="flex items-center gap-1" title="วันที่นัดหมาย">
                                 <Calendar size={12} />
-                                <span>{formatDate(job.jobDate, job.jobTime)}</span>
+                                <span>{formatDate(job.appointmentDate, job.jobTime)}</span>
                             </div>
 
 
