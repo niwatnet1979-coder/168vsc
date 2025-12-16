@@ -276,15 +276,15 @@ const OrderItemModal = React.forwardRef(({
 
     const Wrapper = isInline ? 'div' : 'div'
     const wrapperProps = isInline ? { className: "w-full h-full bg-secondary-50 flex flex-col" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-2xl shadow-2xl border border-secondary-200 w-full max-w-md h-[600px] max-h-[90vh] flex flex-col overflow-hidden" }
+    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-2xl shadow-2xl border border-secondary-200 w-full max-w-md h-[750px] max-h-[90vh] flex flex-col overflow-hidden" }
 
     return (
         <Wrapper {...wrapperProps}>
             <div {...containerProps}>
                 {/* Header */}
                 {!isInline && (
-                    <div className="sticky top-0 bg-white border-b border-secondary-200 px-4 py-3 flex items-center justify-between z-10">
-                        <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
+                    <div className="sticky top-0 bg-white px-4 py-3 flex items-center justify-between z-10">
+                        <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2" spellCheck="false">
                             <Package size={20} className="text-primary-600" />
                             {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
                         </h2>
@@ -365,9 +365,11 @@ const OrderItemModal = React.forwardRef(({
                                         }}
                                         onFocus={() => setShowSearchPopup(true)}
                                         onBlur={() => setTimeout(() => setShowSearchPopup(false), 200)}
-                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
+                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 focus:outline-none outline-none placeholder-secondary-400 placeholder:font-normal"
                                         placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
                                         autoFocus
+                                        autoComplete="off"
+                                        spellCheck="false"
                                     />
                                 </div>
 
