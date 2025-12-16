@@ -201,12 +201,12 @@ const ProductDetailView = forwardRef(({ product, onEdit, onSave, onClose, produc
                         // Search Mode - Standard Input Style (Clean White)
                         <div className="relative group/search" ref={searchContainerRef}>
                             <div
-                                className={`flex items-center gap-3 border border-secondary-300 px-3 py-2.5 bg-white transition-all shadow-sm ${showResults && searchResults.length > 0
-                                    ? 'rounded-t-xl rounded-b-none border-b-secondary-100'
-                                    : 'rounded-xl'
+                                className={`flex items-center gap-3 px-3 py-5 transition-all border ${showResults && searchResults.length > 0
+                                    ? 'bg-white border-secondary-300 rounded-t-lg rounded-b-none border-b-secondary-100 shadow-sm'
+                                    : 'bg-secondary-50 border-transparent rounded-lg hover:bg-secondary-100'
                                     }`}
                             >
-                                <Search size={20} className="text-secondary-400 shrink-0" />
+                                <Search size={18} className="text-secondary-400 shrink-0" />
                                 <input
                                     type="text"
                                     value={searchTerm}
@@ -214,23 +214,23 @@ const ProductDetailView = forwardRef(({ product, onEdit, onSave, onClose, produc
                                         setSearchTerm(e.target.value)
                                         setShowResults(true)
                                     }}
-                                    onFocus={() => setShowResults(true)}
+                                    onClick={() => setShowResults(prev => !prev)}
                                     placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                                    className="w-full bg-transparent border-none p-0 text-base text-secondary-900 focus:ring-0 focus:outline-none placeholder-secondary-400 font-medium"
+                                    className="w-full bg-transparent border-none p-0 text-sm text-secondary-900 focus:ring-0 focus:outline-none placeholder-secondary-400 font-medium"
                                     autoFocus
                                 />
                             </div>
 
                             {/* Search Results Dropdown */}
                             {showResults && searchResults.length > 0 && (
-                                <div className="relative w-full -mt-px z-10 bg-white rounded-b-xl shadow-xl border border-secondary-300 border-t-0 flex flex-col">
+                                <div className="relative w-full -mt-px z-10 bg-white rounded-lg shadow-lg border border-secondary-200 border-t-0 flex flex-col">
                                     {/* Full height list - No Scrollbar */}
                                     <div className="py-1">
                                         {searchResults.map((p, i) => (
                                             <div
                                                 key={i}
                                                 onClick={() => handleSelectProduct(p)}
-                                                className="p-3 hover:bg-primary-50 cursor-pointer flex items-start gap-3 transition-colors border-b border-secondary-50 last:border-none group/item"
+                                                className="px-3 py-2 hover:bg-secondary-50 cursor-pointer flex items-start gap-3 transition-colors border-b border-secondary-100 last:border-0 group/item"
                                             >
                                                 {/* Image */}
                                                 <div className="w-10 h-10 bg-secondary-100 rounded-lg overflow-hidden flex-shrink-0 border border-secondary-200 mt-1">
