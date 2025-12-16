@@ -340,12 +340,30 @@ export default function ProductManagement() {
                                                                     {product.subcategory && <span>• {product.subcategory}</span>}
 
                                                                     {/* Dimensions */}
-                                                                    {(product.length || product.width || product.height) && (
-                                                                        <div className="flex items-center gap-1 text-secondary-500" title="ขนาด">
-                                                                            <Scaling size={14} />
-                                                                            <span>{product.length || '-'}×{product.width || '-'}×{product.height || '-'} cm</span>
-                                                                        </div>
-                                                                    )}
+                                                                    {(() => {
+                                                                        // Try product-level dimensions first
+                                                                        if (product.length || product.width || product.height) {
+                                                                            return (
+                                                                                <div className="flex items-center gap-1 text-secondary-500" title="ขนาด">
+                                                                                    <Scaling size={14} />
+                                                                                    <span>{product.length || '-'}×{product.width || '-'}×{product.height || '-'} cm</span>
+                                                                                </div>
+                                                                            )
+                                                                        }
+                                                                        // Fallback to first variant's dimensions
+                                                                        if (product.variants && product.variants.length > 0) {
+                                                                            const firstVariant = product.variants[0]
+                                                                            if (firstVariant.dimensions && (firstVariant.dimensions.length || firstVariant.dimensions.width || firstVariant.dimensions.height)) {
+                                                                                return (
+                                                                                    <div className="flex items-center gap-1 text-secondary-500" title="ขนาด">
+                                                                                        <Scaling size={14} />
+                                                                                        <span>{firstVariant.dimensions.length || '-'}×{firstVariant.dimensions.width || '-'}×{firstVariant.dimensions.height || '-'} cm</span>
+                                                                                    </div>
+                                                                                )
+                                                                            }
+                                                                        }
+                                                                        return null
+                                                                    })()}
 
                                                                     {hasVariants && (
                                                                         <span className="ml-1 px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] rounded-full font-medium whitespace-nowrap flex items-center gap-1">

@@ -292,14 +292,14 @@ export default function MobileJobDetail() {
                     <div className="bg-white sticky top-0 z-30 shadow-sm">
                         {/* Top Header */}
                         <header className="h-16 border-b border-secondary-200 relative flex items-center justify-between px-4">
-                            {/* Left: Menu */}
-                            <button
-                                className="lg:hidden p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg z-10"
-                                onClick={() => setIsSidebarOpen(true)}
+                            {/* Left: Back Button */}
+                            <Link
+                                href="/mobile"
+                                className="p-2 -ml-2 text-secondary-600 hover:bg-secondary-100 rounded-lg z-10 flex items-center gap-1"
                             >
-                                <div className="sr-only">Menu</div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
-                            </button>
+                                <ArrowLeft size={20} />
+                                <span className="text-xs font-medium">Back</span>
+                            </Link>
 
                             {/* Center: Title */}
                             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full pointer-events-none">
