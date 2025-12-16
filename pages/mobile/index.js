@@ -30,6 +30,7 @@ import { supabase } from '../../lib/supabaseClient'
 import AppLayout from '../../components/AppLayout'
 import { useJobs } from '../../hooks/useJobs'
 import LeaveBookingModal from '../../components/LeaveBookingModal'
+import LeaveApprovalModal from '../../components/LeaveApprovalModal'
 
 // Helper to format date
 // Helper to format date
@@ -110,6 +111,10 @@ export default function MobilePage() {
     // Leave Booking State
     const [showLeaveModal, setShowLeaveModal] = useState(false)
     const [leaveRequests, setLeaveRequests] = useState([])
+
+    // Leave Approval State
+    const [showLeaveApprovalModal, setShowLeaveApprovalModal] = useState(false)
+    const [selectedLeaveRequest, setSelectedLeaveRequest] = useState(null)
 
     // Get user role and team
     const userRole = session?.user?.role
@@ -266,6 +271,28 @@ export default function MobilePage() {
         }
     }
 
+    const handleApproveLeave = async (leaveId) => {
+        try {
+            await DataManager.approveLeaveRequest(leaveId)
+            await loadLeaveRequests()
+            alert('อนุมัติการลาเรียบร้อย')
+        } catch (error) {
+            console.error('Error approving leave:', error)
+            throw error
+        }
+    }
+
+    const handleRejectLeave = async (leaveId, reason) => {
+        try {
+            await DataManager.rejectLeaveRequest(leaveId, reason)
+            await loadLeaveRequests()
+            alert('ปฏิเสธการลาเรียบร้อย')
+        } catch (error) {
+            console.error('Error rejecting leave:', error)
+            throw error
+        }
+    }
+
     const filterJobs = () => {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -390,7 +417,13 @@ export default function MobilePage() {
         const badge = getStatusBadge(leave.status)
 
         return (
-            <div className="bg-purple-50 rounded-xl shadow-sm border border-purple-200 overflow-hidden">
+            <div
+                className="bg-purple-50 rounded-xl shadow-sm border border-purple-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-purple-300 transition-all"
+                onClick={() => {
+                    setSelectedLeaveRequest(leave)
+                    setShowLeaveApprovalModal(true)
+                }}
+            >
                 <div className="p-3 space-y-2">
                     {/* Header */}
                     <div className="flex items-center justify-between">
@@ -644,6 +677,18 @@ export default function MobilePage() {
                     name: session?.user?.name || session?.user?.email,
                     team: userTeam
                 }}
+            />
+
+            {/* Leave Approval Modal */}
+            <LeaveApprovalModal
+                isOpen={showLeaveApprovalModal}
+                onClose={() => {
+                    setShowLeaveApprovalModal(false)
+                    setSelectedLeaveRequest(null)
+                }}
+                leaveRequest={selectedLeaveRequest}
+                onApprove={handleApproveLeave}
+                onReject={handleRejectLeave}
             />
 
             {/* Content Body - No padding bottom needed as nav is outside scroll area */}
