@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, Calendar, Clock, User, Users, FileText, CheckCircle, XCircle } from 'lucide-react'
 
-export default function LeaveApprovalModal({ isOpen, onClose, leaveRequest, onApprove, onReject }) {
+export default function LeaveApprovalModal({ isOpen, onClose, leaveRequest, onApprove, onReject, onCancel, currentUser }) {
     const [isRejecting, setIsRejecting] = useState(false)
     const [rejectionReason, setRejectionReason] = useState('')
     const [isProcessing, setIsProcessing] = useState(false)
@@ -168,59 +168,123 @@ export default function LeaveApprovalModal({ isOpen, onClose, leaveRequest, onAp
 
                 {/* Footer */}
                 <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-6 py-4 rounded-b-2xl">
-                    {leaveRequest.status === 'pending' && (
-                        <div className="flex gap-3">
-                            {!isRejecting ? (
-                                <>
-                                    <button
-                                        onClick={handleApprove}
-                                        disabled={isProcessing}
-                                        className="flex-1 py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <CheckCircle size={20} />
-                                        {isProcessing ? 'กำลังอนุมัติ...' : 'อนุมัติ'}
-                                    </button>
-                                    <button
-                                        onClick={() => setIsRejecting(true)}
-                                        disabled={isProcessing}
-                                        className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <XCircle size={20} />
-                                        ปฏิเสธ
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={() => {
-                                            setIsRejecting(false)
-                                            setRejectionReason('')
-                                        }}
-                                        disabled={isProcessing}
-                                        className="flex-1 py-3 px-4 bg-secondary-200 hover:bg-secondary-300 disabled:bg-secondary-100 text-secondary-700 font-bold rounded-xl transition-colors"
-                                    >
-                                        ยกเลิก
-                                    </button>
-                                    <button
-                                        onClick={handleReject}
-                                        disabled={isProcessing}
-                                        className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-bold rounded-xl transition-colors"
-                                    >
-                                        {isProcessing ? 'กำลังปฏิเสธ...' : 'ยืนยันปฏิเสธ'}
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
+                    <div className="flex gap-3 flex-wrap">
+                        {/* Check Permissions */}
+                        {(() => {
+                            const isOwner = currentUser?.name === leaveRequest.user_name || currentUser?.id === leaveRequest.user_id
+                            const isAdmin = currentUser?.role === 'admin' || currentUser?.email === 'niwatnet1979@gmail.com'
+                            const isPending = leaveRequest.status === 'pending'
 
-                    {leaveRequest.status !== 'pending' && (
-                        <button
-                            onClick={onClose}
-                            className="w-full py-3 px-4 bg-secondary-200 hover:bg-secondary-300 text-secondary-700 font-bold rounded-xl transition-colors"
-                        >
-                            ปิด
-                        </button>
-                    )}
+                            // Case 1: Pending Request
+                            if (isPending) {
+                                if (isAdmin) {
+                                    // Admin View: Valid Actions = Approve, Reject, Cancel (if owner)
+                                    return !isRejecting ? (
+                                        <>
+                                            <button
+                                                onClick={handleApprove}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 px-4 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle size={20} />
+                                                {isProcessing ? 'กำลังอนุมัติ...' : 'อนุมัติ'}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsRejecting(true)}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <XCircle size={20} />
+                                                ปฏิเสธ
+                                            </button>
+                                            {isOwner && (
+                                                <button
+                                                    onClick={() => onCancel && onCancel(leaveRequest.id)}
+                                                    disabled={isProcessing}
+                                                    className="flex-1 py-3 px-4 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    ยกเลิกคำขอ
+                                                </button>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setIsRejecting(false)
+                                                    setRejectionReason('')
+                                                }}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 px-4 bg-secondary-200 hover:bg-secondary-300 disabled:bg-secondary-100 text-secondary-700 font-bold rounded-xl transition-colors"
+                                            >
+                                                ยกเลิก
+                                            </button>
+                                            <button
+                                                onClick={handleReject}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-bold rounded-xl transition-colors"
+                                            >
+                                                {isProcessing ? 'กำลังปฏิเสธ...' : 'ยืนยันปฏิเสธ'}
+                                            </button>
+                                        </>
+                                    )
+                                } else if (isOwner) {
+                                    // Owner View (Non-Admin): Cancel Only
+                                    return (
+                                        <>
+                                            <button
+                                                onClick={() => onCancel && onCancel(leaveRequest.id)}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <XCircle size={20} />
+                                                {isProcessing ? 'กำลังยกเลิก...' : 'ยกเลิกคำขอ'}
+                                            </button>
+                                            <button
+                                                onClick={onClose}
+                                                className="flex-1 py-3 px-4 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-bold rounded-xl transition-colors"
+                                            >
+                                                ปิด
+                                            </button>
+                                        </>
+                                    )
+                                }
+                            }
+
+                            // Case 2: Non-Pending (Approved/Rejected)
+                            // If Owner, show Cancel button. Everyone else -> Close
+                            if (isOwner) {
+                                return (
+                                    <>
+                                        <button
+                                            onClick={() => onCancel && onCancel(leaveRequest.id)}
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <XCircle size={20} />
+                                            {isProcessing ? 'กำลังยกเลิก...' : 'ยกเลิกคำขอ'}
+                                        </button>
+                                        <button
+                                            onClick={onClose}
+                                            className="flex-1 py-3 px-4 bg-secondary-100 hover:bg-secondary-200 text-secondary-700 font-bold rounded-xl transition-colors"
+                                        >
+                                            ปิด
+                                        </button>
+                                    </>
+                                )
+                            }
+
+                            // Default: Close Button
+                            return (
+                                <button
+                                    onClick={onClose}
+                                    className="w-full py-3 px-4 bg-secondary-200 hover:bg-secondary-300 text-secondary-700 font-bold rounded-xl transition-colors"
+                                >
+                                    ปิด
+                                </button>
+                            )
+                        })()}
+                    </div>
                 </div>
             </div>
         </div>

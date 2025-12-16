@@ -115,6 +115,7 @@ export default function MobilePage() {
     // Leave Approval State
     const [showLeaveApprovalModal, setShowLeaveApprovalModal] = useState(false)
     const [selectedLeaveRequest, setSelectedLeaveRequest] = useState(null)
+    const [searchTerm, setSearchTerm] = useState('')
 
     // Get user role and team
     const userRole = session?.user?.role
@@ -293,6 +294,21 @@ export default function MobilePage() {
         }
     }
 
+    const handleCancelLeave = async (leaveId) => {
+        if (!confirm('คุณต้องการยกเลิกคำขอลานี้ใช่หรือไม่?')) return
+        try {
+            const { error } = await supabase.from('leave_requests').delete().eq('id', leaveId)
+            if (error) throw error
+            await loadLeaveRequests()
+            alert('ยกเลิกคำขอลาเรียบร้อย')
+            setShowLeaveApprovalModal(false)
+            setSelectedLeaveRequest(null)
+        } catch (error) {
+            console.error('Error cancelling leave:', error)
+            alert('เกิดข้อผิดพลาดในการยกเลิก')
+        }
+    }
+
     const filterJobs = () => {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -467,7 +483,7 @@ export default function MobilePage() {
         const bgColor = isInstallation ? 'bg-blue-50' : 'bg-orange-50'
 
         return (
-            <Link href={`/mobile/${job.id}`} className="block bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden active:scale-[0.98] transition-transform">
+            <div onClick={() => router.push(`/mobile/${job.id}`)} className="cursor-pointer block bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden active:scale-[0.98] transition-transform">
                 <div className="flex">
                     {/* Left: Image */}
                     <div className="w-24 h-24 bg-secondary-100 flex-shrink-0 relative">
@@ -582,7 +598,7 @@ export default function MobilePage() {
                         </div>
                     </div>
                 )}
-            </Link>
+            </div>
         )
     }
 
@@ -632,6 +648,8 @@ export default function MobilePage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={18} />
                             <input
                                 type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="ค้นหางาน, ลูกค้า..."
                                 className="w-full bg-secondary-50 border border-secondary-200 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             />
@@ -687,8 +705,10 @@ export default function MobilePage() {
                     setSelectedLeaveRequest(null)
                 }}
                 leaveRequest={selectedLeaveRequest}
+                currentUser={session?.user}
                 onApprove={handleApproveLeave}
                 onReject={handleRejectLeave}
+                onCancel={handleCancelLeave}
             />
 
             {/* Content Body - No padding bottom needed as nav is outside scroll area */}
@@ -838,13 +858,36 @@ export default function MobilePage() {
                 ) : (() => {
                     // Merge leave requests and jobs, then sort by date
 
+                    const filteredLeaves = leaveRequests.filter(leave => {
+                        if (!searchTerm) return true
+                        const term = searchTerm.toLowerCase()
+                        return (
+                            (leave.user_name && leave.user_name.toLowerCase().includes(term)) ||
+                            (leave.reason && leave.reason.toLowerCase().includes(term)) ||
+                            (leave.user_team && leave.user_team.toLowerCase().includes(term))
+                        )
+                    })
+
+                    const filteredJobs = jobs.filter(job => {
+                        if (!searchTerm) return true // Jobs are already filtered by DataManager? No, DataManager filters by team. Search is usually local.
+                        // Wait, previous code didn't implement search locally for jobs either?
+                        // Let's implement it now for consistency.
+                        const term = searchTerm.toLowerCase()
+                        return (
+                            (job.customerName && job.customerName.toLowerCase().includes(term)) ||
+                            (job.location && job.location.toLowerCase().includes(term)) ||
+                            (job.jobCode && job.jobCode.toLowerCase().includes(term)) ||
+                            (job.technicianName && job.technicianName.toLowerCase().includes(term))
+                        )
+                    })
+
                     const mergedItems = [
-                        ...leaveRequests.map(leave => ({
+                        ...filteredLeaves.map(leave => ({
                             type: 'leave',
                             data: leave,
                             sortDate: new Date(leave.start_date)
                         })),
-                        ...jobs.map(job => ({
+                        ...filteredJobs.map(job => ({
                             type: 'job',
                             data: job,
                             sortDate: new Date(job.appointmentDate || job.date)

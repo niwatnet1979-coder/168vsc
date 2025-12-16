@@ -102,7 +102,14 @@ export default function LeaveBookingModal({ isOpen, onClose, onSave, userInfo })
                             <input
                                 type="date"
                                 value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                                onChange={(e) => {
+                                    const newDate = e.target.value
+                                    setStartDate(newDate)
+                                    // Auto-set end date to start date if it's empty or if start date is after end date
+                                    if (!endDate || newDate > endDate) {
+                                        setEndDate(newDate)
+                                    }
+                                }}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             />
                         </div>
