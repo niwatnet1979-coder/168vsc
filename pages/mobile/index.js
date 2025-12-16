@@ -835,19 +835,31 @@ export default function MobilePage() {
 
 
                     </div>
-                ) : (
-                    <div className="space-y-3">
-                        {/* Display Leave Requests */}
-                        {leaveRequests.map(leave => (
-                            <LeaveCard key={leave.id} leave={leave} />
-                        ))}
+                ) : (() => {
+                    // Merge leave requests and jobs, then sort by date
+                    const mergedItems = [
+                        ...leaveRequests.map(leave => ({
+                            type: 'leave',
+                            data: leave,
+                            sortDate: new Date(leave.start_date)
+                        })),
+                        ...jobs.map(job => ({
+                            type: 'job',
+                            data: job,
+                            sortDate: new Date(job.appointmentDate || job.date)
+                        }))
+                    ].sort((a, b) => a.sortDate - b.sortDate) // Sort ascending (earliest first)
 
-                        {/* Display Jobs */}
-                        {jobs.map(job => (
-                            <JobCard key={job.id} job={job} />
-                        ))}
-                    </div>
-                )}
+                    return (
+                        <div className="space-y-3">
+                            {mergedItems.map((item, index) => (
+                                item.type === 'leave'
+                                    ? <LeaveCard key={`leave-${item.data.id}`} leave={item.data} />
+                                    : <JobCard key={`job-${item.data.id}`} job={item.data} />
+                            ))}
+                        </div>
+                    )
+                })()}
             </div>
 
             <style jsx global>{`
