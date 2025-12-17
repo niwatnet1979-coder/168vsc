@@ -9,7 +9,8 @@ export default function ContactSelector({
     onChange,
     placeholder = "ค้นหาผู้ติดต่อ...",
     variant = "default",
-    onAddNew // New prop for adding contact
+    onAddNew, // New prop for adding contact
+    readOnly = false // Add readOnly prop
 }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [showDropdown, setShowDropdown] = useState(false)
@@ -21,12 +22,14 @@ export default function ContactSelector({
     )
 
     const handleSelect = (contact) => {
+        if (readOnly) return
         onChange(contact)
         setSearchTerm('')
         setShowDropdown(false)
     }
 
     const handleClear = () => {
+        if (readOnly) return
         onChange(null)
     }
 
@@ -41,19 +44,22 @@ export default function ContactSelector({
                         type="text"
                         value={searchTerm}
                         onChange={(e) => {
-                            setSearchTerm(e.target.value)
-                            setShowDropdown(true)
+                            if (!readOnly) {
+                                setSearchTerm(e.target.value)
+                                setShowDropdown(true)
+                            }
                         }}
-                        onFocus={() => setShowDropdown(true)}
+                        onFocus={() => !readOnly && setShowDropdown(true)}
                         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                        className={variant === 'seamless'
+                        readOnly={readOnly}
+                        className={`${variant === 'seamless'
                             ? "w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal"
                             : "w-full pl-9 pr-4 py-2.5 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm bg-white"
-                        }
-                        placeholder={placeholder}
+                            } ${readOnly ? 'cursor-default focus:ring-0' : ''}`}
+                        placeholder={readOnly ? "-" : placeholder}
                         autoFocus={variant === 'seamless' && showDropdown} // Autofocus if switched from click
                     />
-                    {showDropdown && (
+                    {showDropdown && !readOnly && (
                         <div className={`absolute z-10 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg overflow-hidden flex flex-col ${variant === 'seamless' ? 'left-0 mt-2' : ''}`}>
                             <div className="overflow-y-auto max-h-48">
                                 {filteredContacts.length > 0 ? (
@@ -94,6 +100,7 @@ export default function ContactSelector({
             ) : (
                 <div
                     onClick={() => {
+                        if (readOnly) return
                         if (variant === 'seamless') {
                             onChange(null); // Clear value to switch to input mode
                             setSearchTerm(''); // Reset search

@@ -145,8 +145,8 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                   `}
                                     onClick={(e) => {
                                         setIsSidebarOpen(false)
-                                        // WORKAROUND: Force hard refresh when leaving mobile detail view to prevent stuck UI
-                                        if (router.pathname.includes('/mobile/') && router.pathname !== '/mobile' && item.path !== '/mobile') {
+                                        // WORKAROUND: Force hard refresh when leaving mobile detail view or job detail view to prevent stuck UI
+                                        if ((router.pathname.includes('/mobile/') && router.pathname !== '/mobile' && item.path !== '/mobile') || router.pathname === '/job') {
                                             e.preventDefault()
                                             window.location.href = item.path
                                         }

@@ -270,47 +270,47 @@ const OrderItemModal = React.forwardRef(({
         onClose()
     }
 
+    // Expose triggerSave to parent via ref
+    React.useImperativeHandle(ref, () => ({
+        triggerSave: () => {
+            // Validate and Save
+            handleSave()
+        }
+    }));
+
     if (!isOpen && !isInline) return null
 
     const total = (Number(formData.qty) || 0) * (Number(formData.unitPrice) || 0)
 
     const Wrapper = isInline ? 'div' : 'div'
-    const wrapperProps = isInline ? { className: "w-full h-full bg-secondary-50 flex flex-col" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full h-full flex flex-col bg-transparent" } : { className: "bg-white rounded-2xl shadow-2xl border border-secondary-200 w-full max-w-md h-[750px] max-h-[90vh] flex flex-col overflow-hidden" }
+    const wrapperProps = isInline ? { className: "w-full h-full flex flex-col p-4" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
+    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] max-h-[90vh] flex flex-col overflow-hidden" }
+
 
     return (
         <Wrapper {...wrapperProps}>
             <div {...containerProps}>
                 {/* Header */}
-                {!isInline && (
-                    <div className="sticky top-0 bg-white px-4 py-3 flex items-center justify-between z-10">
-                        <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2" spellCheck="false">
-                            <Package size={20} className="text-primary-600" />
-                            {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
-                        </h2>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onClose}
-                                className="px-3 py-1.5 text-sm border border-secondary-300 rounded-lg hover:bg-secondary-50 font-medium"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
-                            >
-                                บันทึก
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <div className="sticky top-0 bg-white px-4 pt-4 pb-0 flex items-center justify-between z-10">
+                    <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2" spellCheck="false">
+                        <Package size={20} className="text-primary-600" />
+                        {isEditing ? 'แก้ไขรายการสินค้า' : 'เพิ่มรายการสินค้า'}
+                    </h2>
+                    {!isInline && (
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-secondary-100 rounded-full text-secondary-500 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    )}
+                </div>
 
                 {/* Body */}
-                <div className="p-4 space-y-4 flex-1 overflow-y-auto min-h-0">
+                <div className={`px-4 pb-2 pt-2 space-y-3 bg-white ${isInline ? 'h-full' : 'flex-1 overflow-y-auto min-h-0'}`}>
+                    {/* ... (Existing Body Content) ... */}
                     {/* Product Search / Selected Item */}
                     <div className="relative">
-
-
                         {formData.code ? (
                             <div
                                 onClick={() => {
@@ -367,7 +367,6 @@ const OrderItemModal = React.forwardRef(({
                                         onBlur={() => setTimeout(() => setShowSearchPopup(false), 200)}
                                         className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 focus:outline-none outline-none placeholder-secondary-400 placeholder:font-normal"
                                         placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                                        autoFocus
                                         autoComplete="off"
                                         spellCheck="false"
                                     />
@@ -480,152 +479,137 @@ const OrderItemModal = React.forwardRef(({
                     </div>
 
                     {/* Product Options Dropdowns & Remark */}
-                    {formData.code && (
-                        <div className="space-y-4">
-                            {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
-                            {productVariants.length > 0 && (
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                        Variant
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.selectedVariantIndex ?? ''}
-                                            onChange={(e) => handleVariantSelect(e.target.value)}
-                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
-                                        >
-                                            <option value="">-- เลือก Variant --</option>
-                                            {productVariants.map((variant, i) => (
-                                                <option key={i} value={i}>
-                                                    {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
-                                    </div>
+                    <div className="space-y-3">
+                        {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
+                        {productVariants.length > 0 && (
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">
+                                    Variant
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.selectedVariantIndex ?? ''}
+                                        onChange={(e) => handleVariantSelect(e.target.value)}
+                                        disabled={!formData.code}
+                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- เลือก Variant --</option>
+                                        {productVariants.map((variant, i) => (
+                                            <option key={i} value={i}>
+                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* Row 2: Options Grid (2 Cols) */}
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Light Color */}
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.lightColor}
-                                            onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
-                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
-                                        >
-                                            <option value="">-- เลือกสีแสงไฟ --</option>
-                                            {productOptions.lightColors.map((opt, i) => (
-                                                <option key={i} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
 
-                                {/* Crystal Color */}
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">สีคริสตัล</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.crystalColor || ''}
-                                            onChange={(e) => setFormData({ ...formData, crystalColor: e.target.value })}
-                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
-                                        >
-                                            <option value="">-- เลือกสีคริสตัล --</option>
-                                            <option value="-">-</option>
-                                            <option value="Clear">Clear</option>
-                                            <option value="Amber">Amber</option>
-                                            <option value="Smoke">Smoke</option>
-                                            <option value="Mixed">Mixed</option>
-                                        </select>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-
-                                {/* Bulb Type */}
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                        ประเภทหลอดไฟ
-                                    </label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.bulbType}
-                                            onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
-                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
-                                        >
-                                            <option value="">เลือกประเภทหลอด</option>
-                                            {productOptions.bulbTypes.map((opt, i) => (
-                                                <option key={i} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
-                                    </div>
-                                </div>
-
-                                {/* Remote */}
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">รีโมท</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.remote}
-                                            onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
-                                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6"
-                                        >
-                                            <option value="">-- เลือกรีโมท --</option>
-                                            {productOptions.remotes.map((opt, i) => (
-                                                <option key={i} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
-                                    </div>
+                        {/* Row 2: Options Grid (3 Cols) - Light Color, Bulb Type, Remote */}
+                        <div className="grid grid-cols-3 gap-2">
+                            {/* Light Color */}
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.lightColor}
+                                        onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
+                                        disabled={!formData.code}
+                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- เลือก --</option>
+                                        {productOptions.lightColors.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                                 </div>
                             </div>
 
-                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                                <label className="block text-xs font-medium text-secondary-500 mb-1">หมายเหตุ</label>
-                                <textarea
-                                    rows={1}
-                                    value={formData.remark}
-                                    onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
-                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 resize-none"
-                                    placeholder="ระบุรายละเอียดเพิ่มเติม..."
-                                />
+                            {/* Bulb Type */}
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">
+                                    ประเภทหลอดไฟ
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.bulbType}
+                                        onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                                        disabled={!formData.code}
+                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- เลือก --</option>
+                                        {productOptions.bulbTypes.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            {/* Remote */}
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">รีโมท</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.remote}
+                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                        disabled={!formData.code}
+                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">-- เลือก --</option>
+                                        {productOptions.remotes.map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Quantity, Price & Total - Single Row */}
+                        <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <label className="block text-xs font-medium text-secondary-500 mb-1">หมายเหตุ</label>
+                            <textarea
+                                rows={1}
+                                value={formData.remark}
+                                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+                                disabled={!formData.code}
+                                className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 resize-none disabled:cursor-not-allowed"
+                                placeholder="ระบุรายละเอียดเพิ่มเติม..."
+                            />
+                        </div>
+                    </div >
+
                     {/* Quantity, Price & Total - Single Row */}
                     <div className="grid grid-cols-12 gap-4 items-end">
                         <div className="col-span-4">
-                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">จำนวน</label>
                                 <input
                                     type="number"
                                     value={formData.qty}
                                     onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
-                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right"
+                                    disabled={!formData.code}
+                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right disabled:cursor-not-allowed"
                                     min="1"
                                 />
                             </div>
                         </div>
                         <div className="col-span-4">
-                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ราคา/หน่วย</label>
                                 <input
                                     type="number"
                                     value={formData.unitPrice}
                                     onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right"
+                                    disabled={!formData.code}
+                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
                         <div className="col-span-4">
-                            <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 transition-all hover:shadow-md">
+                            <div className="bg-primary-50 p-2 rounded-lg border border-primary-100 transition-all hover:shadow-md">
                                 <label className="block text-xs font-medium text-primary-600 mb-1 text-right">รวมเป็นเงิน</label>
                                 <div className="text-right">
                                     <span className="text-lg font-bold text-primary-700">{currency(total)}</span>
@@ -633,30 +617,44 @@ const OrderItemModal = React.forwardRef(({
                             </div>
                         </div>
                     </div>
-
-
-
-                </div>
+                </div >
 
                 {/* Footer */}
-                {!hideControls && isEditing && onDelete && (
-                    <div className="sticky bottom-0 bg-white border-t border-secondary-200 px-4 py-3 flex gap-2 justify-start z-10">
-                        <button
-                            onClick={() => {
-                                if (confirm('ต้องการลบรายการนี้?')) {
-                                    onDelete()
-                                    onClose()
-                                }
-                            }}
-                            className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
-                        >
-                            <Trash2 size={16} />
-                            ลบ
-                        </button>
-                    </div>
-                )}
-            </div>
-        </Wrapper>
+                {/* Footer */}
+                {
+                    !hideControls && (
+                        <div className="flex items-center justify-end gap-3 px-3 pt-2 pb-3 border-t border-secondary-200 bg-white flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 sticky bottom-0 rounded-b-2xl">
+                            {isEditing && onDelete && (
+                                <button
+                                    onClick={() => {
+                                        if (confirm('ต้องการลบรายการนี้?')) {
+                                            onDelete()
+                                            onClose()
+                                        }
+                                    }}
+                                    className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1 mr-auto"
+                                >
+                                    <Trash2 size={16} />
+                                    ลบ
+                                </button>
+                            )}
+                            <button
+                                onClick={onClose}
+                                className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium"
+                            >
+                                ยกเลิก
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30 transition-all active:scale-95"
+                            >
+                                บันทึก
+                            </button>
+                        </div>
+                    )
+                }
+            </div >
+        </Wrapper >
     )
 })
 

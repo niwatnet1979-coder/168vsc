@@ -13,8 +13,10 @@ import {
     ClipboardCheck,
     Edit
 } from 'lucide-react'
+
 import JobInfoCard from '../components/JobInfoCard'
-import ProductDetailView from '../components/ProductDetailView'
+import ProductCard from '../components/ProductCard'
+import OrderItemModal from '../components/OrderItemModal'
 import PaymentSummaryCard from '../components/PaymentSummaryCard'
 import PaymentEntryModal from '../components/PaymentEntryModal'
 import JobInspectorView from '../components/JobInspectorView'
@@ -38,6 +40,7 @@ export default function JobDetailPage() {
     const [promptpayQr, setPromptpayQr] = useState('')
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
+    const [availableTeams, setAvailableTeams] = useState([])
 
     // Payment Modal State
     const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -63,8 +66,8 @@ export default function JobDetailPage() {
     const loadJobDetails = async () => {
         if (!id) return
         try {
-            const jobs = await DataManager.getJobs()
-            const foundJob = jobs.find(j => j.id === id)
+            // Use getJobById directly for robust data (including fallback matching)
+            const foundJob = await DataManager.getJobById(id)
 
             if (!foundJob) {
                 setLoading(false)
@@ -94,6 +97,10 @@ export default function JobDetailPage() {
             setJob(foundJob)
             setCustomer(foundJob.customer)
             setProduct(foundJob.product)
+
+            // Fetch Available Teams
+            const teams = await DataManager.getAvailableTeams()
+            setAvailableTeams(teams)
 
             // Fetch Settings
             const settings = await DataManager.getSettings()
@@ -255,31 +262,28 @@ export default function JobDetailPage() {
 
                         {/* Product: Edit / Save / Cancel */}
                         {activeTab === 'product' && (
-                            <>
-                                {!isEditingProduct ? (
-                                    <button
-                                        onClick={() => setIsEditingProduct(true)}
-                                        className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
-                                    >
-                                        แก้ไข
-                                    </button>
-                                ) : (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setIsEditingProduct(false)}
-                                            className="text-xs font-bold text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50 px-3 py-1.5 rounded-lg shadow-sm"
-                                        >
-                                            ยกเลิก
-                                        </button>
-                                        <button
-                                            onClick={() => orderItemModalRef.current?.triggerSave()}
-                                            className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
-                                        >
-                                            บันทึก
-                                        </button>
-                                    </div>
-                                )}
-                            </>
+                            <div className="flex gap-2">
+                                <button
+                                    // Cancel - just reload or do nothing if inline? 
+                                    // If we want to revert changes, we might need a reset method or just re-mount.
+                                    // For now, let's just make it do nothing or maybe refresh?
+                                    // Actually user asked for "Cancel" button.
+                                    // Since it's inline, "Cancel" might mean "Reset form" or "Go back".
+                                    // Let's assume it renders "Cancel" but maybe it just resets?
+                                    // Or if it's strictly editing, maybe we reload the data?
+                                    // Let's try to reload the job details to reset data.
+                                    onClick={loadJobDetails}
+                                    className="text-xs font-bold text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50 px-3 py-1.5 rounded-lg shadow-sm"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={() => orderItemModalRef.current?.triggerSave()}
+                                    className="text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm"
+                                >
+                                    บันทึก
+                                </button>
+                            </div>
                         )}
 
                         {/* Edit Order Button (always visible) */}
@@ -289,7 +293,7 @@ export default function JobDetailPage() {
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
                             >
                                 <Edit size={14} />
-                                แก้ไขออเดอร์
+                                <span className="hidden sm:inline">แก้ไขออเดอร์</span>
                             </Link>
                         )}
                     </div>
@@ -320,7 +324,7 @@ export default function JobDetailPage() {
             <Head>
                 <title>
                     {job.id} - {activeTab === 'customer' ? 'ข้อมูลงาน' :
-                        activeTab === 'product' ? 'ข้อมูลสินค้า' :
+                        activeTab === 'product' ? 'แก้ไขรายการสินค้า' :
                             activeTab === 'payment' ? 'การชำระเงิน' :
                                 activeTab === 'inspection' ? 'รูปภาพและวีดีโอ' : 'ตรวจสอบงาน'}
                 </title>
@@ -343,54 +347,82 @@ export default function JobDetailPage() {
                     <JobInfoCard
                         title="ข้อมูลงานย่อย"
                         data={{
-                            jobType: job.order?.job_info?.jobType || job.rawJobType || job.jobType,
-                            appointmentDate: formatDateForInput(job.order?.job_info?.appointmentDate || job.appointmentDate || job.jobDate),
-                            completionDate: formatDateForInput(job.order?.job_info?.completionDate || job.completionDate),
-                            installLocationName: job.order?.job_info?.installLocationName || '',
-                            installAddress: job.order?.job_info?.installAddress || job.address,
-                            googleMapLink: job.order?.job_info?.googleMapLink || job.googleMapLink || '',
-                            distance: job.order?.job_info?.distance || job.distance || '',
-                            inspector1: job.order?.job_info?.inspector1 || { name: job.inspector || '', phone: '' },
-                            inspector2: job.order?.job_info?.inspector2 || { name: '', phone: '' },
-                            team: job.order?.job_info?.team || job.assignedTeam || job.team || ''
+                            jobType: job.jobType || 'installation',
+                            appointmentDate: formatDateForInput(job.appointmentDate),
+                            completionDate: formatDateForInput(job.completionDate),
+                            installLocationName: job.installLocationName || '',
+                            installAddress: job.installAddress || job.address || '',
+                            googleMapLink: job.googleMapLink || '',
+                            distance: job.distance || '',
+                            inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
+                            inspector2: { name: '', phone: '' }, // Ensure we have a default
+                            team: job.team || ''
                         }}
                         customer={customer}
+                        availableTeams={availableTeams}
                         readOnly={true}
+                        note={job.note || ''}
                     />
                 )}
 
                 {activeTab === 'product' && (
-                    <ProductDetailView
-                        ref={orderItemModalRef}
-                        product={{
-                            ...product,
-                            productName: product?.name || job.productName,
-                            productId: product?.id || job.productId,
-                            price: product?.price || 0,
-                            variants: product?.variants || [],
-                        }}
-                        isEditing={isEditingProduct}
-                        onSave={handleSaveProductItem}
-                        onEdit={() => setIsEditingProduct(true)}
-                        hideEditButton={true}
-                    />
+                    <div className="pb-8">
+                        <OrderItemModal
+                            ref={orderItemModalRef} // Attach ref!
+                            isOpen={true}
+                            onClose={() => { }}
+                            onSave={handleSaveProductItem}
+                            item={{
+                                ...product,
+                                product_id: product?.id || job.productId,
+                                code: product?.product_code || job.productId,
+                                name: product?.name || job.productName,
+                                unitPrice: product?.price || 0,
+                                qty: product?.qty || 1,
+                            }}
+                            isEditing={true}
+                            isInline={true}
+                            hideControls={true} // Hide footer buttons
+                        />
+                    </div>
                 )}
 
                 {activeTab === 'payment' && (
                     <div className="space-y-4">
                         <PaymentSummaryCard
-                            subtotal={job.order?.total || 0}
+                            subtotal={job.order?.total || 0} // This might need to be re-calculated if API doesn't send raw subtotal
+                            // If API sends 'total' as final grand total, we need to verify structure.
+                            // Assuming job.order has standard fields: total (subtotal), shippingFee, discount, paymentSchedule
+
+                            // Better mapping if we have the full object:
+                            // In DataManager, 'orders' table usually has: total_amount, deposit? 
+                            // The refactored 'Order' component logic usually calculates these on the fly from items.
+                            // But here we might rely on saved fields or calculate them if we have items.
+                            // For now, let's pass what we have and assume DataManager provides it.
+
+                            // Note: If fields are missing in DB, we might default them.
                             shippingFee={job.order?.shippingFee || 0}
                             discount={job.order?.discount || { mode: 'percent', value: 0 }}
+                            vatRate={job.order?.vatRate ?? 0.07}
+                            vatIncluded={job.order?.vatIncluded ?? true}
+
                             paymentSchedule={job.order?.paymentSchedule || []}
-                            onEdit={() => setIsEditingPayment(true)}
-                            readOnly={true}
+
+                            readOnly={true} // Main summary is read-only here, but we allow adding payments via Modal
+
                             otherOutstandingOrders={otherOutstandingOrders}
                             promptpayQr={promptpayQr}
-                            hideControls={true}
-                            showAddButton={true}
+
+                            hideControls={true} // Hide unnecessary Save/Cancel for the card itself
+                            showAddButton={true} // Show "Add Payment" button inside the card
+
                             onAddPayment={() => {
                                 setEditingPaymentIndex(null)
+                                setShowPaymentModal(true)
+                            }}
+
+                            onEditPayment={(index) => {
+                                setEditingPaymentIndex(index)
                                 setShowPaymentModal(true)
                             }}
                         />

@@ -1,6 +1,6 @@
 {
   "name": "168vsc",
-  "version": "5.2.5",
+  "version": "5.2.6",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.87.1",
+    "@supabase/supabase-js": "^2.39.7",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "html5-qrcode": "^2.3.8",

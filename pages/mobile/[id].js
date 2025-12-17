@@ -17,6 +17,7 @@ import {
     Upload,
     ClipboardCheck
 } from 'lucide-react'
+
 import JobInfoCard from '../../components/JobInfoCard'
 import OrderItemModal from '../../components/OrderItemModal'
 import PaymentSummaryCard from '../../components/PaymentSummaryCard'
@@ -43,6 +44,7 @@ export default function MobileJobDetail() {
     const [customer, setCustomer] = useState(null)
     const [product, setProduct] = useState(null)
     const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
+    const [availableTeams, setAvailableTeams] = useState([])
     const [promptpayQr, setPromptpayQr] = useState('')
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
@@ -72,6 +74,15 @@ export default function MobileJobDetail() {
                 return
             }
 
+            setJob(foundJob)
+            // Use joined data from DataManager
+            setCustomer(foundJob.customer)
+            setProduct(foundJob.product)
+
+            // Fetch Available Teams
+            const teams = await DataManager.getAvailableTeams()
+            setAvailableTeams(teams)
+
             // Fetch other orders for this customer (for outstanding balance check)
             let otherOutstanding = []
             if (foundJob.customerId) {
@@ -91,16 +102,6 @@ export default function MobileJobDetail() {
                     .filter(o => o.outstanding > 0) // Only show if debt exists
             }
             setOtherOutstandingOrders(otherOutstanding)
-
-            if (!foundJob) {
-                setLoading(false)
-                return
-            }
-
-            setJob(foundJob)
-            // Use joined data from DataManager
-            setCustomer(foundJob.customer)
-            setProduct(foundJob.product)
 
             // Fetch Settings
             const settings = await DataManager.getSettings()
@@ -433,18 +434,21 @@ export default function MobileJobDetail() {
                         <JobInfoCard
                             title="ข้อมูลงานย่อย"
                             data={{
-                                jobType: job.rawJobType || job.jobType,
-                                appointmentDate: formatDateForInput(job.appointmentDate || job.jobDate),
+                                jobType: job.jobType || 'installation',
+                                appointmentDate: formatDateForInput(job.appointmentDate),
                                 completionDate: formatDateForInput(job.completionDate),
-                                installLocationName: job.order?.job_info?.installLocationName || '',
-                                installAddress: job.address,
+                                installLocationName: job.installLocationName || '',
+                                installAddress: job.installAddress || job.address || '',
                                 googleMapLink: job.googleMapLink || '',
                                 distance: job.distance || '',
-                                inspector1: { name: job.inspector || '', phone: '' },
-                                team: job.assignedTeam
+                                inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
+                                inspector2: { name: '', phone: '' },
+                                team: job.team || ''
                             }}
                             customer={customer}
+                            availableTeams={availableTeams}
                             readOnly={true}
+                            note={job.note || ''}
                         />
                     )}
 
