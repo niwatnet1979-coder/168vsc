@@ -173,7 +173,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <Link href="/orders" className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30 w-full sm:w-auto justify-center">
+            <Link href="/order" className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30 w-full sm:w-auto justify-center">
               <Plus size={18} />
               สร้างออเดอร์ใหม่
             </Link>
@@ -251,7 +251,7 @@ export default function Home() {
                     recentOrders.map((order) => (
                       <tr key={order.id} className="hover:bg-secondary-50">
                         <td className="px-6 py-4 text-sm font-mono font-medium text-primary-600">
-                          <Link href={`/order-sa?id=${order.id}`}>
+                          <Link href={`/order?id=${order.id}`}>
                             {order.id}
                           </Link>
                         </td>

@@ -285,7 +285,7 @@ export default function FinancePage() {
                                         return (
                                             <tr key={payment.id} className={`hover:bg-secondary-50 transition-colors ${isOverdue ? 'bg-danger-50/30' : ''}`}>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <Link href={`/order-sa?id=${payment.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                    <Link href={`/order?id=${payment.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
                                                         {payment.id}
                                                     </Link>
                                                 </td>

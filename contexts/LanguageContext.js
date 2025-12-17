@@ -109,7 +109,7 @@ export const translations = {
     th: {
         'Dashboard': 'แดชบอร์ด',
         'Order Entry': 'บันทึกออเดอร์',
-        'Order Entry By SA': 'บันทึกออเดอร์ (SA)',
+        'Order Entry By SA': 'บันทึกออเดอร์',
         'Orders List': 'รายการออเดอร์',
         'Products': 'สินค้า',
         'Inventory': 'คลังสินค้า',

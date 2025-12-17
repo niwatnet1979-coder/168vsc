@@ -205,7 +205,7 @@ export default function OrdersListPage() {
                         <div className="flex items-center gap-3 w-full sm:w-auto">
 
                             <button
-                                onClick={() => router.push('/order-sa')}
+                                onClick={() => router.push('/order')}
                                 className="flex-1 sm:flex-none justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-primary-500/30 text-sm"
                             >
                                 <Plus size={18} />
@@ -320,7 +320,7 @@ export default function OrdersListPage() {
                                     paginatedOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-secondary-50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Link href={`/order-sa?id=${order.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                <Link href={`/order?id=${order.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
                                                     {order.id}
                                                 </Link>
                                             </td>

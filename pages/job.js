@@ -285,7 +285,7 @@ export default function JobDetailPage() {
                         {/* Edit Order Button (always visible) */}
                         {activeTab !== 'product' && activeTab !== 'completion' && activeTab !== 'inspection' && (
                             <Link
-                                href={`/order-sa?id=${job.orderId}`}
+                                href={`/order?id=${job.orderId}`}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
                             >
                                 <Edit size={14} />

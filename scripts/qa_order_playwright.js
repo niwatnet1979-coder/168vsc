@@ -8,7 +8,7 @@ const path = require('path')
     if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true })
 
     const report = {
-      url: 'http://localhost:3001/order-sa',
+      url: 'http://localhost:3001/order',
       timestamp: new Date().toISOString(),
       headings: {},
       dateInputsFound: [],
