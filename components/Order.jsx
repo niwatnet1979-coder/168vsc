@@ -15,6 +15,7 @@ import ProductModal from './ProductModal'
 import SubJobModal from './SubJobModal'
 import AddressSelector from './AddressSelector' // Import AddressSelector
 import ContactSelector from './ContactSelector'
+import ContactDisplayCard from './ContactDisplayCard'
 import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
 import Card from './Card'
@@ -1279,16 +1280,10 @@ export default function OrderForm() {
                                                 onAddNew={() => handleAddNewContact('purchaserContact')}
                                             />
                                         ) : (
-                                            <div
+                                            <ContactDisplayCard
+                                                contact={purchaserContact}
                                                 onClick={() => setPurchaserContact(null)}
-                                                className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
-                                                title="คลิกเพื่อเปลี่ยนผู้ติดต่อ"
-                                            >
-                                                {renderContactDetails(purchaserContact)}
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Edit2 size={12} className="text-secondary-400" />
-                                                </div>
-                                            </div>
+                                            />
                                         )}
                                     </div>
                                 </div>
@@ -1557,16 +1552,10 @@ export default function OrderForm() {
                                                 onAddNew={() => handleAddNewContact('receiverContact')}
                                             />
                                         ) : (
-                                            <div
+                                            <ContactDisplayCard
+                                                contact={receiverContact}
                                                 onClick={() => setReceiverContact(null)}
-                                                className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
-                                                title="คลิกเพื่อเปลี่ยนผู้ติดต่อ"
-                                            >
-                                                {renderContactDetails(receiverContact)}
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Edit2 size={12} className="text-secondary-400" />
-                                                </div>
-                                            </div>
+                                            />
                                         )}
                                     </div>
 
@@ -1662,7 +1651,7 @@ export default function OrderForm() {
                                                         {item.code || '-'}
                                                     </span>
                                                     {/* Name */}
-                                                    <span className="font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
+                                                    <span className="text-sm font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
 
                                                     {/* Price & Stock - Moved from Right */}
                                                     <div className="flex items-center gap-3 flex-shrink-0 ml-2">

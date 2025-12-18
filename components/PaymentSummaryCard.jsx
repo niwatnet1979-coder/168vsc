@@ -113,20 +113,21 @@ export default function PaymentSummaryCard({
                 )}
             </div>
 
-            <div className="flex-1 space-y-5 text-sm">
-                <div className="flex justify-between text-secondary-600">
-                    <span>รวมเป็นเงิน</span>
+            <div className="flex-1 space-y-3">
+                <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-secondary-500">รวมเป็นเงิน</span>
                     <DataSourceTooltip isRealtime={false} source="calculated">
-                        <span>{currency(numSubtotal)}</span>
+                        <span className="text-sm font-medium text-secondary-900">{currency(numSubtotal)}</span>
                     </DataSourceTooltip>
                 </div>
 
                 {/* Shipping Fee */}
-                <div className="flex justify-between items-center text-secondary-600">
-                    <span>ค่าขนส่ง</span>
+                {/* Shipping Fee */}
+                <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-secondary-500">ค่าขนส่ง</span>
                     {readOnly ? (
                         <DataSourceTooltip isRealtime={false} source="saved">
-                            <span className="font-medium text-secondary-900">{numShippingFee > 0 ? currency(numShippingFee) : '-'}</span>
+                            <span className="text-sm font-medium text-secondary-900">{numShippingFee > 0 ? currency(numShippingFee) : '-'}</span>
                         </DataSourceTooltip>
                     ) : (
                         <DataSourceTooltip isRealtime={false} source="input">
@@ -134,17 +135,18 @@ export default function PaymentSummaryCard({
                                 type="number"
                                 value={localShipping}
                                 onChange={e => handleShippingChange(Number(e.target.value))}
-                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm font-medium text-secondary-900"
                             />
                         </DataSourceTooltip>
                     )}
                 </div>
 
                 {/* Discount */}
-                <div className="flex justify-between items-center text-secondary-600">
-                    <span>ส่วนลด</span>
+                {/* Discount */}
+                <div className="flex justify-between items-center">
+                    <span className="text-xs font-medium text-secondary-500">ส่วนลด</span>
                     {readOnly ? (
-                        <span className="font-medium text-secondary-900">
+                        <span className="text-sm font-medium text-secondary-900">
                             {numDiscountValue > 0
                                 ? (localDiscount.mode === 'percent' ? `${numDiscountValue}% (${currency(discountAmt)})` : currency(discountAmt))
                                 : '-'}
@@ -158,7 +160,7 @@ export default function PaymentSummaryCard({
                                     setLocalDiscount(newDiscount)
                                     if (onDiscountChange) onDiscountChange(newDiscount)
                                 }}
-                                className="border border-secondary-300 rounded text-xs px-1"
+                                className="border border-secondary-300 rounded text-xs px-1 text-secondary-900"
                             >
                                 <option value="percent">%</option>
                                 <option value="amount">฿</option>
@@ -171,15 +173,15 @@ export default function PaymentSummaryCard({
                                     setLocalDiscount(newDiscount)
                                     if (onDiscountChange) onDiscountChange(newDiscount)
                                 }}
-                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm"
+                                className="w-24 px-2 py-1 border border-secondary-300 rounded text-right text-sm font-medium text-secondary-900"
                             />
                         </div>
                     )}
                 </div>
 
-                <div className="flex justify-between text-secondary-900 font-medium pt-3 border-t border-secondary-100">
-                    <span>หลังหักส่วนลด</span>
-                    <span>{currency(afterDiscount)}</span>
+                <div className="flex justify-between items-center pt-3 border-t border-secondary-100">
+                    <span className="text-xs font-bold text-secondary-700">หลังหักส่วนลด</span>
+                    <span className="text-sm font-bold text-secondary-900">{currency(afterDiscount)}</span>
                 </div>
 
                 {/* VAT */}
@@ -192,9 +194,9 @@ export default function PaymentSummaryCard({
                 )}
 
                 {/* VAT */}
-                <div className="flex justify-between items-center text-secondary-600">
+                <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <span>ภาษีมูลค่าเพิ่ม</span>
+                        <span className="text-xs font-medium text-secondary-500">ภาษีมูลค่าเพิ่ม</span>
                         {!readOnly && (
                             <select
                                 value={localVatRate === 0 ? 'novat' : (localVatIncluded ? 'invat' : 'exvat')}
@@ -224,13 +226,13 @@ export default function PaymentSummaryCard({
                             </select>
                         )}
                     </div>
-                    <span className={localVatRate > 0 ? "" : "text-gray-400"}>
+                    <span className={`text-sm font-medium ${localVatRate > 0 ? "text-secondary-900" : "text-gray-400"}`}>
                         {localVatRate > 0 ? currency(displayVatAmt) : '-'}
                     </span>
                 </div>
 
-                <div className="flex justify-between text-xl font-bold text-primary-700 pt-5 border-t border-secondary-200">
-                    <span>ยอดรวมออเดอร์นี้</span>
+                <div className="flex justify-between items-center pt-3 border-t border-secondary-200">
+                    <span className="text-sm font-bold text-primary-900">ยอดรวมออเดอร์นี้</span>
                     <DataSourceTooltip isRealtime={false} source="calculated">
                         <span>{currency(total)}</span>
                     </DataSourceTooltip>
@@ -238,7 +240,7 @@ export default function PaymentSummaryCard({
 
                 {/* Payment Schedule List */}
                 {otherOutstandingOrders.length > 0 && (
-                    <div className="pt-5 border-t border-secondary-200">
+                    <div className="pt-3 border-t border-secondary-200">
                         <h3 className="text-sm font-bold text-secondary-900 mb-3">ยอดค้างจากออเดอร์อื่น</h3>
                         <div className="space-y-2 mb-3">
                             {otherOutstandingOrders.map((order) => (
@@ -257,7 +259,7 @@ export default function PaymentSummaryCard({
                     </div>
                 )}
 
-                <div className="pt-5 border-t border-secondary-200">
+                <div className="pt-3 border-t border-secondary-200">
                     <h3 className="text-sm font-bold text-secondary-900 mb-4">รายการการชำระเงิน</h3>
 
                     {/* Payment List */}
@@ -297,7 +299,7 @@ export default function PaymentSummaryCard({
 
 
                     {/* Outstanding Balance */}
-                    <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-5 border-t border-secondary-200">
+                    <div className="flex justify-between text-secondary-900 font-bold text-sm mt-4 pt-3 border-t border-secondary-200">
                         <span>รวมยอดค้างชำระ</span>
                         <DataSourceTooltip isRealtime={false} source="calculated">
                             <span>{currency(outstanding + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}</span>

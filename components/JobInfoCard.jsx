@@ -3,6 +3,7 @@ import { Wrench, ChevronDown, Search, Phone, Mail, MessageCircle, Edit2 } from '
 import AddressCard from './AddressCard'
 import Card from './Card'
 import ContactSelector from './ContactSelector'
+import ContactDisplayCard from './ContactDisplayCard'
 import { calculateDistance, extractCoordinates } from '../lib/utils'
 import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 import AddressSelector from './AddressSelector'
@@ -178,57 +179,11 @@ export default function JobInfoCard({
                                     onAddNew={onAddNewInspector} // Pass through
                                 />
                             ) : (
-                                <div
+                                <ContactDisplayCard
+                                    contact={data.inspector1}
                                     onClick={() => handleUpdate({ inspector1: null })}
-                                    className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
-                                    title="คลิกเพื่อเปลี่ยนผู้ตรวจงาน"
-                                >
-                                    <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1.5 p-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                                        {/* Row 2: Name & Position */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-sm text-secondary-900">{data.inspector1.name}</span>
-                                            {data.inspector1.position && (
-                                                <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100 uppercase tracking-wide">
-                                                    {data.inspector1.position}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Row 3: Phone | Email | Line */}
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-600">
-                                            {data.inspector1.phone && (
-                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors">
-                                                    <Phone size={11} className="text-secondary-400 shrink-0" />
-                                                    <span>{data.inspector1.phone}</span>
-                                                </div>
-                                            )}
-                                            {data.inspector1.email && (
-                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
-                                                    <Mail size={11} className="text-secondary-400 shrink-0" />
-                                                    <span className="truncate max-w-[150px]">{data.inspector1.email}</span>
-                                                </div>
-                                            )}
-                                            {(data.inspector1.lineId || data.inspector1.line) && (
-                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
-                                                    <MessageCircle size={11} className="text-[#06c755] shrink-0" />
-                                                    <span className="font-medium text-[#06c755]">{data.inspector1.lineId || data.inspector1.line}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Row 4: Note */}
-                                        {data.inspector1.note && (
-                                            <div className="flex items-start gap-1.5 mt-1 bg-secondary-50/80 p-2 rounded-md border border-dashed border-secondary-200">
-                                                <span className="text-[10px] font-bold text-secondary-500 whitespace-nowrap mt-0.5">Note:</span>
-                                                <span className="text-[11px] text-secondary-700 leading-relaxed italic">{data.inspector1.note}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Edit2 size={12} className="text-secondary-400" />
-                                    </div>
-                                </div>
+                                    className="sm:mt-0" // Small adjustment if needed, but mt-1 in component is fine
+                                />
                             )}
                         </div>
                     </>
