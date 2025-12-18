@@ -542,19 +542,46 @@ export default function OrderForm() {
             }
         }
 
-        // Check for new INSPECTOR (Contact)
+        // Check for new INSPECTOR / PURCHASER / RECEIVER (Contact)
         const prevContacts = customer.contacts || []
         const newContacts = updatedCustomer.contacts || []
-        if (newContacts.length > prevContacts.length && addingContactFor === 'inspector') {
+        if (newContacts.length > prevContacts.length && addingContactFor) {
             const newContact = newContacts.find(n => !prevContacts.some(p => p.id === n.id))
             if (newContact) {
-                setJobInfo(prev => ({
-                    ...prev,
-                    inspector1: {
+                if (addingContactFor === 'inspector') {
+                    setJobInfo(prev => ({
+                        ...prev,
+                        inspector1: {
+                            id: newContact.id,
+                            name: newContact.name,
+                            phone: newContact.phone || '',
+                            email: newContact.email || '',
+                            lineId: newContact.lineId || '',
+                            position: newContact.position || '',
+                            note: newContact.note || ''
+                        }
+                    }))
+                } else if (addingContactFor === 'purchaserContact') {
+                    setPurchaserContact({
+                        id: newContact.id,
                         name: newContact.name,
-                        phone: newContact.phone || ''
-                    }
-                }))
+                        phone: newContact.phone || '',
+                        email: newContact.email || '',
+                        lineId: newContact.lineId || '',
+                        position: newContact.position || '',
+                        note: newContact.note || ''
+                    })
+                } else if (addingContactFor === 'receiverContact') {
+                    setReceiverContact({
+                        id: newContact.id,
+                        name: newContact.name,
+                        phone: newContact.phone || '',
+                        email: newContact.email || '',
+                        lineId: newContact.lineId || '',
+                        position: newContact.position || '',
+                        note: newContact.note || ''
+                    })
+                }
             }
         }
 
