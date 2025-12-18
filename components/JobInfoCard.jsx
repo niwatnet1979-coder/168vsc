@@ -123,14 +123,16 @@ export default function JobInfoCard({
                             label="สถานที่ติดตั้ง / ขนส่ง"
                             addresses={customer?.addresses || []}
                             value={{
-                                label: data.installLocationName,
-                                address: data.installAddress,
+                                installLocationId: data.installLocationId,
+                                installLocationName: data.installLocationName,
+                                installAddress: data.installAddress,
                                 googleMapLink: data.googleMapLink,
                                 distance: data.distance
                             }}
                             onChange={(newValue) => {
                                 if (newValue) {
                                     handleUpdate({
+                                        installLocationId: newValue.id,
                                         installLocationName: newValue.label,
                                         installAddress: newValue.address,
                                         googleMapLink: newValue.googleMapLink,
@@ -139,6 +141,7 @@ export default function JobInfoCard({
                                 } else {
                                     // Reset
                                     handleUpdate({
+                                        installLocationId: null,
                                         installLocationName: '',
                                         installAddress: '',
                                         googleMapLink: '',

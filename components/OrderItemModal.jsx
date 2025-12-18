@@ -188,7 +188,6 @@ const OrderItemModal = React.forwardRef(({
             basePrice: basePrice,  // Store base price (from first variant)
             unitPrice: basePrice,
             qty: prev.qty || 1,
-            discount: prev.discount || 0,
 
             // Reset variant selection
             selectedVariant: null,

@@ -39,8 +39,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                     label: '',
                     address: '',
                     googleMapsLink: '',
-                    inspector1: { name: '', phone: '' },
-                    inspector2: { name: '', phone: '' }
+                    inspector1: { name: '', phone: '' }
                 }],
                 contacts: [{
                     id: (Date.now() + 2).toString(),
@@ -114,8 +113,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                 label: '',
                 address: '',
                 googleMapsLink: '',
-                inspector1: { name: '', phone: '' },
-                inspector2: { name: '', phone: '' }
+                inspector1: { name: '', phone: '' }
             }]
         }))
     }

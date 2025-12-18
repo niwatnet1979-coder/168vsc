@@ -35,18 +35,14 @@ const MOCK_CUSTOMERS = [
                 address: '123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กทม. 10110',
                 mapLink: 'https://goo.gl/maps/xyz',
                 inspector1: 'คุณสมชาย',
-                inspector1Phone: '081-111-1111',
-                inspector2: '-',
-                inspector2Phone: '-'
+                inspector1Phone: '081-111-1111'
             },
             {
                 name: 'ออฟฟิศ',
-                address: '456 ถ.สีลม แขวงสีลม เขตบางรัก กทม. 10500',
+                address: '456 ถ.สีลม แขวงคลองเตย เขตคลองเตย กทม. 10500',
                 mapLink: '',
                 inspector1: '-',
-                inspector1Phone: '-',
-                inspector2: '-',
-                inspector2Phone: '-'
+                inspector1Phone: '-'
             }
         ],
         orders: [
@@ -186,7 +182,7 @@ const MOCK_CUSTOMERS = [
             }
         ],
         savedAddresses: [
-            { name: 'หน้าร้าน', address: '888 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กทม. 10310', mapLink: 'https://maps.google.com/?q=13.75,100.55', inspector1: '-', inspector1Phone: '-', inspector2: '-', inspector2Phone: '-' }
+            { name: 'หน้าร้าน', address: '888 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กทม. 10310', mapLink: 'https://maps.google.com/?q=13.75,100.55', inspector1: '-', inspector1Phone: '-' }
         ],
         orders: [
             {
@@ -362,9 +358,7 @@ export default function CustomerDetailPage() {
                     address: '',
                     mapLink: '',
                     inspector1: '',
-                    inspector1Phone: '',
-                    inspector2: '',
-                    inspector2Phone: ''
+                    inspector1Phone: ''
                 }
             ]
         }))
@@ -867,38 +861,6 @@ export default function CustomerDetailPage() {
                                                         />
                                                     ) : (
                                                         <div className="value">{addr.inspector1Phone || '-'}</div>
-                                                    )}
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>ผู้ตรวจงาน 2</label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            className="edit-input"
-                                                            value={addr.inspector2}
-                                                            onChange={(e) => {
-                                                                const newAddresses = [...formData.savedAddresses];
-                                                                newAddresses[i] = { ...newAddresses[i], inspector2: e.target.value };
-                                                                setFormData({ ...formData, savedAddresses: newAddresses });
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="value">{addr.inspector2 || '-'}</div>
-                                                    )}
-                                                </div>
-                                                <div className="info-group">
-                                                    <label>เบอร์โทร 2</label>
-                                                    {isEditing ? (
-                                                        <input
-                                                            className="edit-input"
-                                                            value={addr.inspector2Phone}
-                                                            onChange={(e) => {
-                                                                const newAddresses = [...formData.savedAddresses];
-                                                                newAddresses[i] = { ...newAddresses[i], inspector2Phone: e.target.value };
-                                                                setFormData({ ...formData, savedAddresses: newAddresses });
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="value">{addr.inspector2Phone || '-'}</div>
                                                     )}
                                                 </div>
                                             </div>

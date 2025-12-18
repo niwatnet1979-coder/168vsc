@@ -86,6 +86,7 @@ export default function AddressSelector({
         }
 
         onChange({
+            id: addr.id, // Phase 5: Pass through ID for relational storage
             label: addr.label || '',
             address: fullAddress,
             googleMapLink: finalMapLink,

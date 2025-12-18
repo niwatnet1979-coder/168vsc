@@ -442,7 +442,6 @@ export default function MobileJobDetail() {
                                 googleMapLink: job.googleMapLink || '',
                                 distance: job.distance || '',
                                 inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
-                                inspector2: { name: '', phone: '' },
                                 team: job.team || ''
                             }}
                             customer={customer}

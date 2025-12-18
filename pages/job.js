@@ -355,7 +355,6 @@ export default function JobDetailPage() {
                             googleMapLink: job.googleMapLink || '',
                             distance: job.distance || '',
                             inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
-                            inspector2: { name: '', phone: '' }, // Ensure we have a default
                             team: job.team || ''
                         }}
                         customer={customer}

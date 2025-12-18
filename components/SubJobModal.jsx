@@ -13,7 +13,6 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
         googleMapLink: '',
         distance: '',
         inspector1: { name: '', phone: '' },
-        inspector2: { name: '', phone: '' },
         description: '',
         team: ''
     })
@@ -24,12 +23,12 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
                 jobType: item.subJob.jobType || 'installation',
                 appointmentDate: item.subJob.appointmentDate || '',
                 completionDate: item.subJob.completionDate || '',
+                installLocationId: item.subJob.installLocationId || '',
                 installLocationName: item.subJob.installLocationName || '',
                 installAddress: item.subJob.installAddress || '',
                 googleMapLink: item.subJob.googleMapLink || '',
                 distance: item.subJob.distance || '',
                 inspector1: item.subJob.inspector1 || { name: '', phone: '' },
-                inspector2: item.subJob.inspector2 || { name: '', phone: '' },
                 description: item.subJob.description || '',
                 team: item.subJob.team || ''
             })
@@ -39,12 +38,12 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
                 jobType: 'installation',
                 appointmentDate: '',
                 completionDate: '',
+                installLocationId: '',
                 installLocationName: '',
                 installAddress: '',
                 googleMapLink: '',
                 distance: '',
                 inspector1: { name: '', phone: '' },
-                inspector2: { name: '', phone: '' },
                 description: '',
                 team: ''
             })

@@ -21,7 +21,8 @@ import {
     MoreHorizontal,
     RotateCcw,
     Menu,
-    ListTree
+    ListTree,
+    HelpCircle
 } from 'lucide-react'
 
 export default function OrdersListPage() {
@@ -160,22 +161,23 @@ export default function OrdersListPage() {
     }
 
     const getJobTypeColor = (type) => {
-        if (!type) return 'bg-primary-50 text-primary-700 border-primary-100'
+        if (!type || type === '-') return 'bg-secondary-100 text-secondary-500 border-secondary-200' // Changed to Gray for "Unspecified"
         if (type.includes('ติดตั้ง')) return 'bg-danger-50 text-danger-700 border-danger-100'
         if (type.includes('ส่งของ') || type.includes('ขนส่ง')) return 'bg-warning-50 text-warning-700 border-warning-100'
+        if (type === 'separate' || type === 'งานแยก') return 'bg-info-50 text-info-700 border-info-100' // Added Info color for "Separate" (Blue-ish)
         return 'bg-primary-50 text-primary-700 border-primary-100'
     }
 
     const getJobTypeIcon = (type) => {
-        if (!type) return <Package size={14} />
-        if (type === 'separate') return <ListTree size={14} />
+        if (!type || type === '-') return <HelpCircle size={14} /> // Changed icon for "Unspecified"
+        if (type === 'separate' || type === 'งานแยก') return <ListTree size={14} />
         if (type.includes('ติดตั้ง') || type.includes('installation')) return <Wrench size={14} />
         if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return <Truck size={14} />
         return <Package size={14} />
     }
 
     const getJobTypeLabel = (type) => {
-        if (!type) return '-'
+        if (!type || type === '-') return 'ไม่ระบุ' // Changed default to "Unspecified" (Thai)
         if (type === 'separate') return 'งานแยก'
         if (type.includes('ติดตั้ง') || type.includes('installation')) return 'งานติดตั้ง'
         if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return 'งานขนส่ง'

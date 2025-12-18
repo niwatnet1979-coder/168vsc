@@ -78,7 +78,6 @@ export default function OrderForm() {
         googleMapLink: '',
         team: '',
         inspector1: { name: '', phone: '' },
-        inspector2: { name: '', phone: '' },
         distance: '',
         description: '' // Added for job details/notes
     })
@@ -99,7 +98,6 @@ export default function OrderForm() {
                 googleMapLink: jobInfo.googleMapLink,
                 distance: jobInfo.distance,
                 inspector1: jobInfo.inspector1,
-                inspector2: jobInfo.inspector2,
                 team: jobInfo.team,
                 description: jobInfo.description // Use jobInfo.description directly
             }
@@ -344,7 +342,7 @@ export default function OrderForm() {
                     if (order.jobInfo) {
                         setJobInfo({
                             ...order.jobInfo,
-                            description: order.note || order.jobInfo.description || ''
+                            description: order.jobInfo.description || ''
                         })
                     }
 
