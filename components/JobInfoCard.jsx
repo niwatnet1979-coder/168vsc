@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Wrench, ChevronDown, Search } from 'lucide-react'
+import { Wrench, ChevronDown, Search, Phone, Mail, MessageCircle, Edit2 } from 'lucide-react'
 import AddressCard from './AddressCard'
 import Card from './Card'
 import ContactSelector from './ContactSelector'
@@ -155,61 +155,79 @@ export default function JobInfoCard({
                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                             {/* Note: ContactSelector has its own label usage, but we wrap it for consistency */}
                             <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ตรวจงาน / รับสินค้า</label>
-                            <ContactSelector
-                                variant="seamless"
-                                label={null} // Hide internal label
-                                contacts={customer.contacts || []}
-                                value={data.inspector1}
-                                onChange={(contact) => {
-                                    handleUpdate({
-                                        inspector1: contact ? {
-                                            id: contact.id,
-                                            name: contact.name,
-                                            phone: contact.phone || '',
-                                            email: contact.email || '',
-                                            lineId: contact.lineId || '',
-                                            position: contact.position || '',
-                                            note: contact.note || ''
-                                        } : { name: '', phone: '' }
-                                    })
-                                }}
-                                readOnly={readOnly}
-                                onAddNew={onAddNewInspector} // Pass through
-                            />
+                            {!data.inspector1 || !data.inspector1.name ? (
+                                <ContactSelector
+                                    variant="seamless"
+                                    label={null} // Hide internal label
+                                    contacts={customer.contacts || []}
+                                    value={data.inspector1}
+                                    onChange={(contact) => {
+                                        handleUpdate({
+                                            inspector1: contact ? {
+                                                id: contact.id,
+                                                name: contact.name,
+                                                phone: contact.phone || '',
+                                                email: contact.email || '',
+                                                lineId: contact.lineId || '',
+                                                position: contact.position || '',
+                                                note: contact.note || ''
+                                            } : null
+                                        })
+                                    }}
+                                    readOnly={readOnly}
+                                    onAddNew={onAddNewInspector} // Pass through
+                                />
+                            ) : (
+                                <div
+                                    onClick={() => handleUpdate({ inspector1: null })}
+                                    className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
+                                    title="คลิกเพื่อเปลี่ยนผู้ตรวจงาน"
+                                >
+                                    <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1.5 p-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                        {/* Row 2: Name & Position */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-sm text-secondary-900">{data.inspector1.name}</span>
+                                            {data.inspector1.position && (
+                                                <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100 uppercase tracking-wide">
+                                                    {data.inspector1.position}
+                                                </span>
+                                            )}
+                                        </div>
 
-                            {/* Full Info Display for Inspector */}
-                            {data.inspector1 && data.inspector1.name && (
-                                <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1">
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                        {data.inspector1.position && (
-                                            <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded uppercase">
-                                                {data.inspector1.position}
-                                            </span>
-                                        )}
-                                        {data.inspector1.phone && (
-                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
-                                                <span className="text-secondary-400 font-medium text-[9px] uppercase tracking-wider">Tel:</span>
-                                                {data.inspector1.phone}
-                                            </div>
-                                        )}
-                                        {data.inspector1.email && (
-                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
-                                                <span className="text-secondary-400 font-medium text-[9px] uppercase tracking-wider">Email:</span>
-                                                {data.inspector1.email}
-                                            </div>
-                                        )}
-                                        {data.inspector1.lineId && (
-                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
-                                                <span className="text-secondary-401 font-medium text-[9px] uppercase tracking-wider">Line:</span>
-                                                {data.inspector1.lineId}
+                                        {/* Row 3: Phone | Email | Line */}
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-600">
+                                            {data.inspector1.phone && (
+                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors">
+                                                    <Phone size={11} className="text-secondary-400 shrink-0" />
+                                                    <span>{data.inspector1.phone}</span>
+                                                </div>
+                                            )}
+                                            {data.inspector1.email && (
+                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
+                                                    <Mail size={11} className="text-secondary-400 shrink-0" />
+                                                    <span className="truncate max-w-[150px]">{data.inspector1.email}</span>
+                                                </div>
+                                            )}
+                                            {(data.inspector1.lineId || data.inspector1.line) && (
+                                                <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
+                                                    <MessageCircle size={11} className="text-[#06c755] shrink-0" />
+                                                    <span className="font-medium text-[#06c755]">{data.inspector1.lineId || data.inspector1.line}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Row 4: Note */}
+                                        {data.inspector1.note && (
+                                            <div className="flex items-start gap-1.5 mt-1 bg-secondary-50/80 p-2 rounded-md border border-dashed border-secondary-200">
+                                                <span className="text-[10px] font-bold text-secondary-500 whitespace-nowrap mt-0.5">Note:</span>
+                                                <span className="text-[11px] text-secondary-700 leading-relaxed italic">{data.inspector1.note}</span>
                                             </div>
                                         )}
                                     </div>
-                                    {data.inspector1.note && (
-                                        <div className="text-[10px] text-secondary-400 italic bg-secondary-100/50 p-1.5 rounded border border-dashed border-secondary-200 mt-1">
-                                            <span className="font-bold not-italic">Note:</span> {data.inspector1.note}
-                                        </div>
-                                    )}
+
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Edit2 size={12} className="text-secondary-400" />
+                                    </div>
                                 </div>
                             )}
                         </div>

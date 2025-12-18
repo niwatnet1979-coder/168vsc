@@ -43,7 +43,6 @@ export default function VariantManager({
                 height: ''
             },
             price: '',
-            price: '',
             stock: '',
             minStock: '',
             images: []
@@ -55,61 +54,48 @@ export default function VariantManager({
         setVariantForm({ ...variants[index] })
     }
 
-    const handleSaveVariant = () => {
-        // Validation
-        if (!variantForm.color) {
-            alert('กรุณาเลือกสี')
-            return
-        }
-
-        // Check for duplicate color (only when adding new, not editing)
-        if (editingIndex >= variants.length) {
-            const colorExists = variants.some(v => v.color === variantForm.color)
-            if (colorExists) {
-                alert(`สี "${variantForm.color}" มีอยู่แล้ว\nกรุณาเลือกสีอื่น`)
-                return
+    // Live Sync to parent state
+    const syncToParent = (updatedForm, index) => {
+        const newVariants = [...variants]
+        const formattedVariant = {
+            ...updatedForm,
+            price: parseFloat(updatedForm.price) || 0,
+            stock: parseInt(updatedForm.stock) || 0,
+            minStock: parseInt(updatedForm.minStock) || 0,
+            dimensions: {
+                length: updatedForm.dimensions?.length || '',
+                width: updatedForm.dimensions?.width || '',
+                height: updatedForm.dimensions?.height || ''
             }
         }
 
-        const newVariant = {
-            color: variantForm.color,
-            crystalColor: variantForm.crystalColor || '',
-            dimensions: {
-                length: variantForm.dimensions?.length || '',
-                width: variantForm.dimensions?.width || '',
-                height: variantForm.dimensions?.height || ''
-            },
-            price: parseFloat(variantForm.price) || 0,
-            price: parseFloat(variantForm.price) || 0,
-            stock: parseInt(variantForm.stock) || 0,
-            minStock: parseInt(variantForm.minStock) || 0,
-            images: variantForm.images || []
-            // NOTE: No 'id' field - it will be computed dynamically when needed
-        }
-
-        const newVariants = [...variants]
-        if (editingIndex < variants.length) {
-            newVariants[editingIndex] = newVariant
+        if (index < variants.length) {
+            newVariants[index] = formattedVariant
         } else {
-            newVariants.push(newVariant)
+            // New variant - only sync if color is present to avoid empty objects in list
+            if (updatedForm.color) {
+                newVariants[index] = formattedVariant
+                // If it was local only, we don't need to do anything special here as variants handles push automatically
+            } else {
+                return
+            }
         }
-
         onChange(newVariants)
+    }
+
+    const handleFormChange = (updates) => {
+        const updatedForm = { ...variantForm, ...updates }
+        setVariantForm(updatedForm)
+        syncToParent(updatedForm, editingIndex)
+    }
+
+    const handleCancelEdit = () => {
+        // If it was a new variant that synced partially, remove it
+        if (editingIndex === variants.length && variants[editingIndex]) {
+            const newVariants = variants.filter((_, i) => i !== editingIndex)
+            onChange(newVariants)
+        }
         setEditingIndex(null)
-        setVariantForm({
-            color: '',
-            crystalColor: '',
-            dimensions: {
-                length: '',
-                width: '',
-                height: ''
-            },
-            price: '',
-            price: '',
-            stock: '',
-            minStock: '',
-            images: []
-        })
     }
 
     const handleDeleteVariant = (index) => {
@@ -126,7 +112,9 @@ export default function VariantManager({
             if (imageUrl) {
                 const newImages = [...(variantForm.images || [])]
                 newImages[imageIndex] = imageUrl
-                setVariantForm({ ...variantForm, images: newImages })
+                const updatedForm = { ...variantForm, images: newImages }
+                setVariantForm(updatedForm)
+                syncToParent(updatedForm, editingIndex)
             } else {
                 alert('เกิดข้อผิดพลาดในการอัพโหลดรูปภาพ')
             }
@@ -136,7 +124,9 @@ export default function VariantManager({
     const handleRemoveImage = (imageIndex) => {
         const newImages = [...(variantForm.images || [])]
         newImages.splice(imageIndex, 1)
-        setVariantForm({ ...variantForm, images: newImages })
+        const updatedForm = { ...variantForm, images: newImages }
+        setVariantForm(updatedForm)
+        syncToParent(updatedForm, editingIndex)
     }
 
     if (!baseProductId) {
@@ -149,14 +139,14 @@ export default function VariantManager({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full">
                 {editingIndex === null && (
                     <button
                         type="button"
                         onClick={handleAddVariant}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all font-medium border border-primary-700 shadow-sm"
                     >
-                        <Plus size={16} />
+                        <Plus size={18} />
                         เพิ่ม Variant
                     </button>
                 )}
@@ -309,14 +299,15 @@ export default function VariantManager({
                                                     </div>
                                                 </>
                                             )}
+                                            {description && (
+                                                <>
+                                                    <span className="text-secondary-300">•</span>
+                                                    <span className="truncate max-w-[150px]" title={description}>{description}</span>
+                                                </>
+                                            )}
                                         </div>
 
-                                        {/* Description */}
-                                        {description && (
-                                            <p className="text-xs text-secondary-500 mt-1 truncate">
-                                                {description}
-                                            </p>
-                                        )}
+
                                     </div>
                                 </div>
                             </div>
@@ -348,8 +339,7 @@ export default function VariantManager({
                                 <input
                                     type="number"
                                     value={variantForm.dimensions?.length || ''}
-                                    onChange={(e) => setVariantForm({
-                                        ...variantForm,
+                                    onChange={(e) => handleFormChange({
                                         dimensions: {
                                             ...variantForm.dimensions,
                                             length: e.target.value
@@ -364,8 +354,7 @@ export default function VariantManager({
                                 <input
                                     type="number"
                                     value={variantForm.dimensions?.width || ''}
-                                    onChange={(e) => setVariantForm({
-                                        ...variantForm,
+                                    onChange={(e) => handleFormChange({
                                         dimensions: {
                                             ...variantForm.dimensions,
                                             width: e.target.value
@@ -380,8 +369,7 @@ export default function VariantManager({
                                 <input
                                     type="number"
                                     value={variantForm.dimensions?.height || ''}
-                                    onChange={(e) => setVariantForm({
-                                        ...variantForm,
+                                    onChange={(e) => handleFormChange({
                                         dimensions: {
                                             ...variantForm.dimensions,
                                             height: e.target.value
@@ -395,8 +383,8 @@ export default function VariantManager({
                         </div>
                     </div>
 
-                    {/* Color & Crystal Color */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Color, Crystal Color & Price - Single Row */}
+                    <div className="grid grid-cols-3 gap-3">
                         {/* Color */}
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-1">
@@ -404,44 +392,26 @@ export default function VariantManager({
                             </label>
                             <select
                                 value={variantForm.color}
-                                onChange={(e) => setVariantForm({ ...variantForm, color: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                onChange={(e) => handleFormChange({ color: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                                 required
                             >
                                 <option value="">เลือกสี</option>
                                 {materialColors.map((color, i) => {
-                                    // Check if this is the current variant's color (when editing)
                                     const isCurrentColor = editingIndex < variants.length && variants[editingIndex]?.color === color
-
-                                    // Check if color is used by main product
-                                    // Handle cases where:
-                                    // - dropdown color: "GD ทอง" but mainProductColor: "ทอง"
-                                    // - OR exact match: "ทอง" === "ทอง"
                                     const isMainProductColor = mainProductColor && (
-                                        color === mainProductColor || // Exact match
-                                        color.includes(mainProductColor) || // Dropdown has prefix (e.g., "GD ทอง" includes "ทอง")
-                                        mainProductColor.includes(color) // Main product has prefix (unlikely but safe)
+                                        color === mainProductColor ||
+                                        color.includes(mainProductColor) ||
+                                        mainProductColor.includes(color)
                                     )
-
-                                    // Check if color is used by other variants
                                     const usedByOtherVariants = variants
                                         .filter((_, idx) => idx !== editingIndex)
-                                        .some(v =>
-                                            v.color === color ||
-                                            color.includes(v.color) ||
-                                            v.color.includes(color)
-                                        )
+                                        .some(v => v.color === color || color.includes(v.color) || v.color.includes(color))
 
-                                    // Disable if used by main product or other variants (but not if it's current color)
                                     const isDisabled = !isCurrentColor && (isMainProductColor || usedByOtherVariants)
 
                                     return (
-                                        <option
-                                            key={i}
-                                            value={color}
-                                            disabled={isDisabled}
-                                            style={isDisabled ? { color: '#9ca3af' } : {}}
-                                        >
+                                        <option key={i} value={color} disabled={isDisabled}>
                                             {color}{isDisabled ? ' (ใช้แล้ว)' : ''}
                                         </option>
                                     )
@@ -456,8 +426,8 @@ export default function VariantManager({
                             </label>
                             <select
                                 value={variantForm.crystalColor}
-                                onChange={(e) => setVariantForm({ ...variantForm, crystalColor: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                onChange={(e) => handleFormChange({ crystalColor: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                             >
                                 <option value="">เลือกสีคริสตัล (ถ้ามี)</option>
                                 {crystalColors.map((color, i) => (
@@ -465,29 +435,15 @@ export default function VariantManager({
                                 ))}
                             </select>
                         </div>
-                    </div>
 
-
-
-                    {/* Price & Min Stock */}
-                    <div className="grid grid-cols-2 gap-3">
+                        {/* Price */}
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-1">ราคา (บาท)</label>
                             <input
                                 type="number"
                                 value={variantForm.price}
-                                onChange={(e) => setVariantForm({ ...variantForm, price: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">จุดสั่งซื้อ (Min)</label>
-                            <input
-                                type="number"
-                                value={variantForm.minStock}
-                                onChange={(e) => setVariantForm({ ...variantForm, minStock: e.target.value })}
-                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                onChange={(e) => handleFormChange({ price: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                                 placeholder="0"
                             />
                         </div>
@@ -535,18 +491,10 @@ export default function VariantManager({
                     <div className="flex gap-3 pt-4">
                         <button
                             type="button"
-                            onClick={handleSaveVariant}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-                        >
-                            <Save size={16} />
-                            บันทึก Variant
-                        </button>
-                        <button
-                            type="button"
                             onClick={() => setEditingIndex(null)}
-                            className="px-4 py-2 bg-secondary-200 text-secondary-700 rounded-lg hover:bg-secondary-300 transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary-100 text-secondary-900 rounded-lg hover:bg-secondary-200 transition-all font-medium border border-secondary-300 shadow-sm"
                         >
-                            ยกเลิก
+                            เสร็จสิ้น (ปิดหน้าต่างนี้)
                         </button>
                     </div>
                 </div>

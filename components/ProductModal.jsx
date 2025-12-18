@@ -193,7 +193,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                             <div>
                                 <label className="block text-sm font-semibold text-secondary-700 mb-2">
                                     รหัสสินค้า *
-                                    <span className="text-xs font-normal text-secondary-500 ml-2">(แก้ไขเลข 3 หลักท้ายได้)</span>
                                 </label>
                                 <input
                                     type="text"
@@ -251,7 +250,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                     className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg bg-white font-mono text-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                     placeholder="AA001"
                                 />
-                                <p className="text-xs text-secondary-500 mt-1">รูปแบบ: AA### (5 หลัก เช่น AA001) - 2 หลักแรกมาจากประเภท, แก้ไขเฉพาะเลข 3 หลักท้ายได้</p>
+
                             </div>
                         </div>
 
@@ -285,22 +284,19 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
                         <div>
                             <label className="block text-sm font-semibold text-secondary-700 mb-2">รายละเอียด</label>
-                            <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows="3" className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                            <input
+                                type="text"
+                                value={formData.description}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                className="w-full px-4 py-2.5 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                placeholder="รายละเอียดสินค้า"
+                            />
                         </div>
 
-                        {/* Always show helper text - dimensions, price, stock, color, and images managed in Variants */}
-                        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                            <p className="text-sm text-primary-700 flex items-center gap-2 font-medium">
-                                <span>💡</span>
-                                <span>ขนาด, สี, ราคา, สต็อก และรูปภาพ ถูกกำหนดในแต่ละ Variant</span>
-                            </p>
-                            <p className="text-xs text-primary-600 mt-1 ml-6">
-                                กรุณาคลิก "เพิ่มสี" ด้านล่างเพื่อเพิ่มข้อมูลสินค้า (ขนาดและสีต่างๆ)
-                            </p>
-                        </div>
+
 
                         {/* Variant Management Section */}
-                        <div className="border-t border-secondary-200 pt-6">
+                        <div className="pt-2">
                             <VariantManager
                                 baseProductId={formData.product_code || formData.id}
                                 material={formData.material}

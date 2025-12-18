@@ -237,7 +237,7 @@ export default function CustomersPage() {
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">ชื่อลูกค้า</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">เบอร์โทร</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">Social</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">ผู้ติดต่อ</th>
+
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-700 uppercase">สื่อ</th>
                                     <th className="px-6 py-3 text-right text-xs font-semibold text-secondary-700 uppercase">จัดการ</th>
                                 </tr>
@@ -245,7 +245,7 @@ export default function CustomersPage() {
                             <tbody className="divide-y divide-secondary-100">
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="6" className="px-6 py-12 text-center text-secondary-500">
                                             กำลังโหลดข้อมูล...
                                         </td>
                                     </tr>
@@ -290,16 +290,7 @@ export default function CustomersPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-secondary-600">
-                                                    {customer.contact1?.name ? (
-                                                        <div className="flex flex-col">
-                                                            <span>{customer.contact1.name}</span>
-                                                            <span className="text-xs text-secondary-400">{customer.contact1.phone}</span>
-                                                        </div>
-                                                    ) : '-'}
-                                                </div>
-                                            </td>
+
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-700">
                                                     {customer.mediaSource === 'อื่นๆระบุ' ? customer.mediaSourceOther : (customer.mediaSource || '-')}
@@ -327,7 +318,7 @@ export default function CustomersPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="6" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <Users size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลลูกค้า</p>

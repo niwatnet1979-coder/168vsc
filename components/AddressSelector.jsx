@@ -61,12 +61,10 @@ export default function AddressSelector({
         }
 
         // Helper to build full address string
-        const addressText = typeof addr.address === 'string'
-            ? addr.address
-            : (addr.address || '')
+        let fullAddress = ''
 
-        let fullAddress = addressText
-        if (!fullAddress && typeof addr === 'object') {
+        // Priority: Construct from components if available (to ensure full detail)
+        if (typeof addr === 'object' && (addr.addrNumber || addr.addrRoad || addr.addrTambon || addr.addrAmphoe || addr.province)) {
             const p = []
             if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
             if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`)
@@ -78,6 +76,13 @@ export default function AddressSelector({
             if (addr.province) p.push(`จังหวัด ${addr.province}`)
             if (addr.zipcode) p.push(addr.zipcode)
             fullAddress = p.join(' ')
+        }
+
+        // Fallback: Use existing address string if construction failed or no components
+        if (!fullAddress) {
+            fullAddress = typeof addr.address === 'string'
+                ? addr.address
+                : (addr.address || '')
         }
 
         onChange({
@@ -135,21 +140,16 @@ export default function AddressSelector({
                                                 : (addr.address || '')
                                             let fullAddress = addressText
                                             if (!fullAddress && typeof addr === 'object') {
-                                                // Simplified check for object address to string
-                                                const p = []
-                                                if (addr.label) {/* Skip label in address text if strictly address */ }
-                                                // (Same join logic as above)
-                                                if (addr.addrNumber) p.push(addr.addrNumber) // Brief
-                                                if (addr.province) p.push(addr.province)
-                                                // Keep it simple for dropdown display
-                                            }
-                                            if (!fullAddress && typeof addr === 'object') {
-                                                // Fallback reuse the join logic
                                                 const p = []
                                                 if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
-                                                if (addr.addrRoad) p.push(`ถ. ${addr.addrRoad}`)
-                                                if (addr.addrTambon) p.push(`ต. ${addr.addrTambon}`)
-                                                if (addr.province) p.push(`จ. ${addr.province}`)
+                                                if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`)
+                                                if (addr.addrVillage) p.push(addr.addrVillage)
+                                                if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`)
+                                                if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`)
+                                                if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`)
+                                                if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`)
+                                                if (addr.province) p.push(`จังหวัด ${addr.province}`)
+                                                if (addr.zipcode) p.push(addr.zipcode)
                                                 fullAddress = p.join(' ')
                                             }
 

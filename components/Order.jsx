@@ -396,13 +396,22 @@ export default function OrderForm() {
                                 p.product_code === item.code
                             )
 
-                            if (product && product.variants && product.variants.length > 0) {
-                                // Get image from first variant if item doesn't have image
-                                if (!item.image && product.variants[0].images && product.variants[0].images[0]) {
-                                    return {
-                                        ...item,
-                                        image: product.variants[0].images[0]
-                                    }
+                            if (product) {
+                                // Sync missing fields from product to item (Normalization)
+                                // This ensures consistent display between "New Item" and "Loaded Item"
+                                return {
+                                    ...item,
+                                    product, // Attach full product object
+                                    // Fallbacks if missing in order_item record
+                                    material: item.material || product.material,
+                                    category: item.category || product.category,
+                                    subcategory: item.subcategory || product.subcategory,
+                                    // Dimensions fallback (if not in item)
+                                    length: item.length || product.length,
+                                    width: item.width || product.width,
+                                    height: item.height || product.height,
+                                    // Image fallback
+                                    image: item.image || product.variants?.[0]?.images?.[0] || null
                                 }
                             }
 
@@ -433,12 +442,86 @@ export default function OrderForm() {
 
     // Distance Calculation
     useEffect(() => {
-        const coords = extractCoordinates(jobInfo.googleMapLink)
-        if (coords) {
-            const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
-            setJobInfo(prev => ({ ...prev, distance: dist }))
+        const calculate = async () => {
+            if (!jobInfo.googleMapLink) return;
+
+            let coords = extractCoordinates(jobInfo.googleMapLink)
+
+            // If direct extraction fails, try resolving short link
+            if (!coords && jobInfo.googleMapLink.includes('goo.gl') || jobInfo.googleMapLink.includes('maps.app.goo.gl')) {
+                try {
+                    const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(jobInfo.googleMapLink)}`)
+                    if (res.ok) {
+                        const data = await res.json()
+                        if (data.url) {
+                            coords = extractCoordinates(data.url)
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error resolving map link:', error)
+                }
+            }
+
+            if (coords) {
+                const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
+                setJobInfo(prev => ({ ...prev, distance: dist }))
+            }
         }
+
+        calculate()
     }, [jobInfo.googleMapLink])
+
+    // Auto-repair incomplete jobInfo address from Customer data
+    useEffect(() => {
+        if (!jobInfo.installLocationName || !customer.addresses) return
+
+        // If address seems incomplete (e.g. just a zipcode like "10210")
+        const currentAddr = jobInfo.installAddress || ''
+        const seemsIncomplete = currentAddr.length < 10 && /^\d+$/.test(currentAddr.replace(/\s/g, ''))
+
+        if (seemsIncomplete) {
+            // Find better address in customer data
+            let match = customer.addresses.find(a =>
+                a.label && a.label.trim().toLowerCase() === jobInfo.installLocationName.trim().toLowerCase()
+            )
+
+            // Fallback: match by zipcode if no label match
+            if (!match && /^\d{5}$/.test(currentAddr.trim())) {
+                match = customer.addresses.find(a => a.zipcode === currentAddr.trim())
+            }
+
+            if (match && match.address && match.address.length > currentAddr.length) {
+                console.log('Auto-repairing incomplete address:', currentAddr, '->', match.address)
+                setJobInfo(prev => ({
+                    ...prev,
+                    installAddress: match.address,
+                    // Ensure map link is also recovered if missing or different
+                    googleMapLink: match.googleMapsLink || prev.googleMapLink,
+                }))
+
+                // Also sync Tax Invoice Address if it matches the broken one or is linked
+                // Also sync Tax Invoice Address if it matches the broken one or is linked
+                setTaxInvoiceDeliveryAddress(prev => {
+                    // Check if it looks like the stale address (short) and has same label
+                    const isStale = (prev.address === currentAddr) ||
+                        (prev.label && prev.label.trim() === jobInfo.installLocationName.trim() && prev.address && prev.address.length < 15);
+
+                    const isLinked = prev.type === 'same' || isStale;
+
+                    if (isLinked) {
+                        return {
+                            ...prev,
+                            address: match.address,
+                            googleMapLink: match.googleMapsLink || prev.googleMapLink,
+                            // If we forced an update, it effectively becomes the same/linked
+                            type: 'same'
+                        }
+                    }
+                    return prev
+                })
+            }
+        }
+    }, [customer.addresses, jobInfo.installLocationName, jobInfo.installAddress])
 
     // --- Handlers ---
     const handleSelectCustomer = (c) => {
@@ -949,36 +1032,44 @@ export default function OrderForm() {
     const renderContactDetails = (contact) => {
         if (!contact || !contact.name) return null;
         return (
-            <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1.5 p-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                {/* Row 2: Name & Position */}
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-secondary-900">{contact.name}</span>
                     {contact.position && (
-                        <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded uppercase">
+                        <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full border border-primary-100 uppercase tracking-wide">
                             {contact.position}
                         </span>
                     )}
+                </div>
+
+                {/* Row 3: Phone | Email | Line */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-secondary-600">
                     {contact.phone && (
-                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
-                            <Phone size={10} className="text-secondary-400" />
-                            {contact.phone}
+                        <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors">
+                            <Phone size={11} className="text-secondary-400 shrink-0" />
+                            <span>{contact.phone}</span>
                         </div>
                     )}
                     {contact.email && (
-                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
-                            <Mail size={10} className="text-secondary-400" />
-                            {contact.email}
+                        <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
+                            <Mail size={11} className="text-secondary-400 shrink-0" />
+                            <span className="truncate max-w-[150px]">{contact.email}</span>
                         </div>
                     )}
                     {(contact.lineId || contact.line) && (
-                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
-                            <MessageCircle size={10} className="text-[#06c755]" />
-                            <span className="text-secondary-400 text-[9px] font-medium uppercase px-1">Line:</span>
-                            <span className="font-medium text-secondary-900">{contact.lineId || contact.line}</span>
+                        <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
+                            <MessageCircle size={11} className="text-[#06c755] shrink-0" />
+                            <span className="font-medium text-[#06c755]">{contact.lineId || contact.line}</span>
                         </div>
                     )}
                 </div>
+
+                {/* Row 4: Note */}
                 {contact.note && (
-                    <div className="text-[10px] text-secondary-400 italic bg-secondary-100/50 p-1.5 rounded border border-dashed border-secondary-200 mt-1">
-                        <span className="font-bold not-italic text-secondary-500">Note:</span> {contact.note}
+                    <div className="flex items-start gap-1.5 mt-1 bg-secondary-50/80 p-2 rounded-md border border-dashed border-secondary-200">
+                        <span className="text-[10px] font-bold text-secondary-500 whitespace-nowrap mt-0.5">Note:</span>
+                        <span className="text-[11px] text-secondary-700 leading-relaxed italic">{contact.note}</span>
                     </div>
                 )}
             </div>
@@ -1170,31 +1261,35 @@ export default function OrderForm() {
                                                 )}
                                             </div>
 
-                                            {/* Address - Simple Text */}
-                                            {customer.address && (
-                                                <div className="pt-2 border-t border-secondary-200/50">
-                                                    <div className="flex items-start gap-2">
-                                                        <MapPin size={12} className="text-secondary-400 mt-0.5 shrink-0" />
-                                                        <p className="text-xs text-secondary-600 leading-relaxed max-w-lg">{customer.address}</p>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            {/* Address removed as per request */}
                                         </div>
                                     )}
 
                                     {/* Contact Person Selection - Always Visible */}
                                     <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                                         <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อจัดซื้อ</label>
-                                        <ContactSelector
-                                            label={null}
-                                            contacts={customer.contacts || []}
-                                            value={purchaserContact}
-                                            onChange={setPurchaserContact}
-                                            variant="seamless"
-                                            placeholder="ค้นหาผู้ติดต่อ..."
-                                            onAddNew={() => handleAddNewContact('purchaserContact')}
-                                        />
-                                        {renderContactDetails(purchaserContact)}
+                                        {!purchaserContact ? (
+                                            <ContactSelector
+                                                label={null}
+                                                contacts={customer.contacts || []}
+                                                value={purchaserContact}
+                                                onChange={setPurchaserContact}
+                                                variant="seamless"
+                                                placeholder="ค้นหาผู้ติดต่อ..."
+                                                onAddNew={() => handleAddNewContact('purchaserContact')}
+                                            />
+                                        ) : (
+                                            <div
+                                                onClick={() => setPurchaserContact(null)}
+                                                className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
+                                                title="คลิกเพื่อเปลี่ยนผู้ติดต่อ"
+                                            >
+                                                {renderContactDetails(purchaserContact)}
+                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Edit2 size={12} className="text-secondary-400" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </Card>
@@ -1451,16 +1546,28 @@ export default function OrderForm() {
                                     {/* Contact Selector - Delivery - Always Visible */}
                                     <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                                         <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ติดต่อรับเอกสาร</label>
-                                        <ContactSelector
-                                            label={null}
-                                            contacts={customer.contacts || []}
-                                            value={receiverContact}
-                                            onChange={setReceiverContact}
-                                            variant="seamless"
-                                            placeholder="ค้นหาผู้ติดต่อ..."
-                                            onAddNew={() => handleAddNewContact('receiverContact')}
-                                        />
-                                        {renderContactDetails(receiverContact)}
+                                        {!receiverContact ? (
+                                            <ContactSelector
+                                                label={null}
+                                                contacts={customer.contacts || []}
+                                                value={receiverContact}
+                                                onChange={setReceiverContact}
+                                                variant="seamless"
+                                                placeholder="ค้นหาผู้ติดต่อ..."
+                                                onAddNew={() => handleAddNewContact('receiverContact')}
+                                            />
+                                        ) : (
+                                            <div
+                                                onClick={() => setReceiverContact(null)}
+                                                className="cursor-pointer group relative -mt-2 hover:bg-secondary-50 transition-colors rounded-lg"
+                                                title="คลิกเพื่อเปลี่ยนผู้ติดต่อ"
+                                            >
+                                                {renderContactDetails(receiverContact)}
+                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Edit2 size={12} className="text-secondary-400" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                 </div>
@@ -1494,6 +1601,7 @@ export default function OrderForm() {
                                     otherOutstandingOrders={otherOutstandingOrders}
                                     vatIncluded={vatIncluded}
                                     onVatIncludedChange={setVatIncluded}
+                                    className="h-full"
                                 />
                             </div>
                         </div>
@@ -1592,18 +1700,32 @@ export default function OrderForm() {
                                                     )}
                                                     {/* Dimensions */}
                                                     {(() => {
-                                                        const w = item.width || item.dimensions?.width
-                                                        const l = item.length || item.dimensions?.length
-                                                        const h = item.height || item.dimensions?.height
+                                                        const getDims = (obj) => {
+                                                            if (!obj) return null
+                                                            if (obj.width || obj.length || obj.height) {
+                                                                return { w: obj.width, l: obj.length, h: obj.height }
+                                                            }
+                                                            if (obj.dimensions) {
+                                                                return { w: obj.dimensions.width, l: obj.dimensions.length, h: obj.dimensions.height }
+                                                            }
+                                                            return null
+                                                        }
 
-                                                        if (w || l || h) {
+                                                        // Priority: Item -> Selected Variant -> Product -> First Variant
+                                                        const dims = getDims(item) ||
+                                                            getDims(item.selectedVariant) ||
+                                                            getDims(item.product) ||
+                                                            (item.product?.variants?.[0] ? getDims(item.product.variants[0]) : null)
+
+                                                        if (dims && (dims.w || dims.l || dims.h)) {
                                                             return (
                                                                 <div className="flex items-center gap-1" title="ขนาด">
                                                                     <Scaling size={12} />
                                                                     <span>
-                                                                        {w ? `W:${w} ` : ''}
-                                                                        {l ? `L:${l} ` : ''}
-                                                                        {h ? `H:${h}` : ''}
+                                                                        {dims.l ? `${dims.l}x` : ''}
+                                                                        {dims.w ? `${dims.w}x` : ''}
+                                                                        {dims.h ? `${dims.h}` : ''}
+                                                                        {' cm'}
                                                                     </span>
                                                                 </div>
                                                             )
