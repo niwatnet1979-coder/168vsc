@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
@@ -295,8 +295,8 @@ export default function ProductManagement() {
                                             const isExpanded = expandedProducts.has(product.id)
 
                                             return (
-                                                <>
-                                                    <tr key={product.id} className="hover:bg-secondary-50 transition-colors">
+                                                <React.Fragment key={product.id}>
+                                                    <tr className="hover:bg-secondary-50 transition-colors">
                                                         <td className="px-4 py-4 text-sm text-secondary-500 text-center">
                                                             <div className="flex items-center justify-center gap-2">
                                                                 {hasVariants && (
@@ -634,7 +634,7 @@ export default function ProductManagement() {
                                                             ))}
                                                         </>
                                                     )}
-                                                </>
+                                                </React.Fragment>
                                             )
                                         })
                                     ) : (

@@ -496,7 +496,7 @@ const OrderItemModal = React.forwardRef(({
                                         <option value="">-- เลือก Variant --</option>
                                         {productVariants.map((variant, i) => (
                                             <option key={i} value={i}>
-                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • สต็อค {variant.stock || 0}
+                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • พร้อมส่ง {variant.available ?? variant.stock ?? 0}
                                             </option>
                                         ))}
                                     </select>

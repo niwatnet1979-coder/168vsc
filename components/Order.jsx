@@ -58,8 +58,8 @@ export default function OrderForm() {
         address: ''
     })
 
-    const [selectedContact, setSelectedContact] = useState(null)
-    const [activeCustomerContact, setActiveCustomerContact] = useState(null)
+    const [receiverContact, setReceiverContact] = useState(null)
+    const [purchaserContact, setPurchaserContact] = useState(null)
 
     const [showTaxInvoiceDropdown, setShowTaxInvoiceDropdown] = useState(false)
     const [taxInvoiceSearchTerm, setTaxInvoiceSearchTerm] = useState('')
@@ -204,6 +204,39 @@ export default function OrderForm() {
             }
         }
         loadData()
+
+        // Realtime Subscription for Stock Updates
+        const channel = DataManager.supabase
+            .channel('order_form_stock_updates')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'order_items' },
+                () => {
+                    console.log('Realtime: order_items changed, reloading products...')
+                    DataManager.getProducts().then(setProductsData)
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'inventory_transactions' },
+                () => {
+                    console.log('Realtime: inventory changed, reloading products...')
+                    DataManager.getProducts().then(setProductsData)
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'product_variants' },
+                () => {
+                    console.log('Realtime: variants changed, reloading products...')
+                    DataManager.getProducts().then(setProductsData)
+                }
+            )
+            .subscribe()
+
+        return () => {
+            DataManager.supabase.removeChannel(channel)
+        }
     }, [])
 
     // Fetch other outstanding orders
@@ -292,29 +325,19 @@ export default function OrderForm() {
                 const order = await DataManager.getOrderById(router.query.id)
 
                 if (order) {
-                    // Fetch full customer data from customers table
-                    // (customer_details now only stores essential fields for optimization)
-                    if (order.customerDetails?.id) {
-                        const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
-                        if (fullCustomer) {
-                            setCustomer(fullCustomer)
-                        } else {
-                            // Fallback: use customer_details if getCustomerById fails
-                            setCustomer({
-                                ...order.customerDetails,
-                                contacts: Array.isArray(order.customerDetails.contacts) ? order.customerDetails.contacts : [],
-                                addresses: Array.isArray(order.customerDetails.addresses) ? order.customerDetails.addresses : [],
-                                taxInvoices: Array.isArray(order.customerDetails.taxInvoices) ? order.customerDetails.taxInvoices : []
-                            })
-                        }
+                    // Use joined customer data directly (No need to re-fetch)
+                    if (order.customer && order.customer.id) {
+                        // Normalize relational data field names if needed (e.g. taxInvoices vs tax_invoice_info)
+                        // But getOrderById now maps them to: addresses, contacts, taxInvoices
+                        setCustomer(order.customer)
                     } else if (order.customerDetails) {
-                        // Backward compatibility: handle old orders with full customer_details
-                        setCustomer({
-                            ...order.customerDetails,
-                            contacts: Array.isArray(order.customerDetails.contacts) ? order.customerDetails.contacts : [],
-                            addresses: Array.isArray(order.customerDetails.addresses) ? order.customerDetails.addresses : [],
-                            taxInvoices: Array.isArray(order.customerDetails.taxInvoices) ? order.customerDetails.taxInvoices : []
-                        })
+                        // Legacy Fallback
+                        if (order.customerDetails.id) {
+                            const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
+                            setCustomer(fullCustomer || order.customerDetails)
+                        } else {
+                            setCustomer(order.customerDetails)
+                        }
                     }
                     if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
                     if (order.jobInfo) {
@@ -391,8 +414,8 @@ export default function OrderForm() {
 
                     if (order.discount) setDiscount(order.discount)
                     if (order.shippingFee) setShippingFee(order.shippingFee)
-                    if (order.activeCustomerContact) setActiveCustomerContact(order.activeCustomerContact)
-                    if (order.selectedContact) setSelectedContact(order.selectedContact)
+                    setPurchaserContact(order.purchaserContact || order.activeCustomerContact || null)
+                    setReceiverContact(order.receiverContact || order.selectedContact || null)
                     if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
                     // Load payment schedule
                     if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
@@ -430,8 +453,8 @@ export default function OrderForm() {
         setShowCustomerDropdown(false)
 
         // Reset contacts
-        setSelectedContact(null)
-        setActiveCustomerContact(null)
+        setReceiverContact(null)
+        setPurchaserContact(null)
     }
 
     const handleUpdateCustomer = async (updatedCustomer) => {
@@ -457,10 +480,10 @@ export default function OrderForm() {
 
         // Auto-select if we were adding a contact
         if (addingContactFor && addedContact) {
-            if (addingContactFor === 'activeCustomerContact') {
-                setActiveCustomerContact(addedContact)
-            } else if (addingContactFor === 'selectedContact') {
-                setSelectedContact(addedContact)
+            if (addingContactFor === 'purchaserContact') {
+                setPurchaserContact(addedContact)
+            } else if (addingContactFor === 'receiverContact') {
+                setReceiverContact(addedContact)
             }
         }
 
@@ -559,8 +582,8 @@ export default function OrderForm() {
                 contact2: savedCustomer.contact2 || { name: '', phone: '' }
             })
             // Reset contacts
-            setSelectedContact(null)
-            setActiveCustomerContact(null)
+            setReceiverContact(null)
+            setPurchaserContact(null)
 
             setShowAddCustomerModal(false)
         } else {
@@ -750,7 +773,7 @@ export default function OrderForm() {
         if (!confirmed) return
 
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
-        if (items.length === 0 || !items[0].code) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
+        if (items.length === 0) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
 
         console.log('[OrderForm] Saving order with items:', items)
         console.log('[OrderForm] First item structure:', items[0])
@@ -851,8 +874,8 @@ export default function OrderForm() {
             jobInfo: jobInfo, // jobInfo.description already contains the note
             taxInvoice: taxInvoice,
             taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
-            activeCustomerContact: activeCustomerContact,
-            selectedContact: selectedContact,
+            purchaserContact: purchaserContact,
+            receiverContact: receiverContact,
             discount: discount,
             shippingFee: shippingFee,
             note: jobInfo.description, // Save description as note for backward compatibility
@@ -1099,11 +1122,11 @@ export default function OrderForm() {
                                         <ContactSelector
                                             label={null}
                                             contacts={customer.contacts || []}
-                                            value={activeCustomerContact}
-                                            onChange={setActiveCustomerContact}
+                                            value={purchaserContact}
+                                            onChange={setPurchaserContact}
                                             variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
-                                            onAddNew={() => handleAddNewContact('activeCustomerContact')}
+                                            onAddNew={() => handleAddNewContact('purchaserContact')}
                                         />
                                     </div>
                                 </div>
@@ -1364,11 +1387,11 @@ export default function OrderForm() {
                                         <ContactSelector
                                             label={null}
                                             contacts={customer.contacts || []}
-                                            value={selectedContact}
-                                            onChange={setSelectedContact}
+                                            value={receiverContact}
+                                            onChange={setReceiverContact}
                                             variant="seamless"
                                             placeholder="ค้นหาผู้ติดต่อ..."
-                                            onAddNew={() => handleAddNewContact('selectedContact')}
+                                            onAddNew={() => handleAddNewContact('receiverContact')}
                                         />
                                     </div>
 
