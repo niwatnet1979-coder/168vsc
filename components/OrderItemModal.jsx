@@ -260,7 +260,12 @@ const OrderItemModal = React.forwardRef(({
             length: formData.selectedVariant?.dimensions?.length || formData.length || '',
             height: formData.selectedVariant?.dimensions?.height || formData.height || '',
             // dimensions: formData.selectedVariant?.dimensions || null, // No longer needed as nested object
-            // unitPrice already set from variant
+            // Mapping for DataManager
+            light: formData.bulbType || '', // Map bulbType to 'light' column
+            lightColor: formData.lightColor || '',
+            remote: formData.remote || '',
+            // Ensure subJob is passed through if it exists in formData
+            subJob: formData.subJob || null,
         }
 
         console.log('[OrderItemModal] Saving item:', itemData)
