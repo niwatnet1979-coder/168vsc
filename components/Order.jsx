@@ -919,6 +919,45 @@ export default function OrderForm() {
     const totalPaid = paymentSchedule.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0)
     const outstanding = Math.max(0, total - totalPaid)
 
+    const renderContactDetails = (contact) => {
+        if (!contact || !contact.name) return null;
+        return (
+            <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {contact.position && (
+                        <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded uppercase">
+                            {contact.position}
+                        </span>
+                    )}
+                    {contact.phone && (
+                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
+                            <Phone size={10} className="text-secondary-400" />
+                            {contact.phone}
+                        </div>
+                    )}
+                    {contact.email && (
+                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
+                            <Mail size={10} className="text-secondary-400" />
+                            {contact.email}
+                        </div>
+                    )}
+                    {(contact.lineId || contact.line) && (
+                        <div className="flex items-center gap-1 text-[11px] text-secondary-700">
+                            <MessageCircle size={10} className="text-[#06c755]" />
+                            <span className="text-secondary-400 text-[9px] font-medium uppercase px-1">Line:</span>
+                            <span className="font-medium text-secondary-900">{contact.lineId || contact.line}</span>
+                        </div>
+                    )}
+                </div>
+                {contact.note && (
+                    <div className="text-[10px] text-secondary-400 italic bg-secondary-100/50 p-1.5 rounded border border-dashed border-secondary-200 mt-1">
+                        <span className="font-bold not-italic text-secondary-500">Note:</span> {contact.note}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <AppLayout
             renderHeader={({ setIsSidebarOpen }) => (
@@ -1128,6 +1167,7 @@ export default function OrderForm() {
                                             placeholder="ค้นหาผู้ติดต่อ..."
                                             onAddNew={() => handleAddNewContact('purchaserContact')}
                                         />
+                                        {renderContactDetails(purchaserContact)}
                                     </div>
                                 </div>
                             </Card>
@@ -1393,6 +1433,7 @@ export default function OrderForm() {
                                             placeholder="ค้นหาผู้ติดต่อ..."
                                             onAddNew={() => handleAddNewContact('receiverContact')}
                                         />
+                                        {renderContactDetails(receiverContact)}
                                     </div>
 
                                 </div>

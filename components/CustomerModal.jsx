@@ -47,6 +47,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                     name: '',
                     position: '',
                     phone: '',
+                    email: '',
                     note: ''
                 }]
             })
@@ -140,6 +141,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
             name: '',
             position: '',
             phone: '',
+            email: '',
             note: ''
         }
         setFormData(prev => ({
@@ -600,6 +602,42 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                                                     />
                                                 </div>
                                             </div>
+                                            <div>
+                                                <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
+                                                    <label className="block text-xs font-medium text-secondary-500 mb-1">อีเมล</label>
+                                                    <input
+                                                        type="email"
+                                                        value={contact.email}
+                                                        onChange={e => updateContact(contact.id, 'email', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
+                                                        placeholder="example@mail.com"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
+                                                    <label className="block text-xs font-medium text-secondary-500 mb-1">Line ID</label>
+                                                    <input
+                                                        type="text"
+                                                        value={contact.lineId}
+                                                        onChange={e => updateContact(contact.id, 'lineId', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
+                                                        placeholder="ไอดีไลน์..."
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
+                                                    <label className="block text-xs font-medium text-secondary-500 mb-1">หมายเหตุ</label>
+                                                    <textarea
+                                                        value={contact.note}
+                                                        onChange={e => updateContact(contact.id, 'note', e.target.value)}
+                                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
+                                                        placeholder="ระบุหมายเหตุเพิ่มเติม..."
+                                                        rows={2}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -625,6 +663,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                     </button>
                 </div>
             </div>
-        </div >
+        </div>
     )
 }

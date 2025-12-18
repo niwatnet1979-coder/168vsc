@@ -163,14 +163,55 @@ export default function JobInfoCard({
                                 onChange={(contact) => {
                                     handleUpdate({
                                         inspector1: contact ? {
+                                            id: contact.id,
                                             name: contact.name,
-                                            phone: contact.phone || ''
+                                            phone: contact.phone || '',
+                                            email: contact.email || '',
+                                            lineId: contact.lineId || '',
+                                            position: contact.position || '',
+                                            note: contact.note || ''
                                         } : { name: '', phone: '' }
                                     })
                                 }}
                                 readOnly={readOnly}
                                 onAddNew={onAddNewInspector} // Pass through
                             />
+
+                            {/* Full Info Display for Inspector */}
+                            {data.inspector1 && data.inspector1.name && (
+                                <div className="mt-2 pt-2 border-t border-secondary-100 space-y-1">
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        {data.inspector1.position && (
+                                            <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded uppercase">
+                                                {data.inspector1.position}
+                                            </span>
+                                        )}
+                                        {data.inspector1.phone && (
+                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
+                                                <span className="text-secondary-400 font-medium text-[9px] uppercase tracking-wider">Tel:</span>
+                                                {data.inspector1.phone}
+                                            </div>
+                                        )}
+                                        {data.inspector1.email && (
+                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
+                                                <span className="text-secondary-400 font-medium text-[9px] uppercase tracking-wider">Email:</span>
+                                                {data.inspector1.email}
+                                            </div>
+                                        )}
+                                        {data.inspector1.lineId && (
+                                            <div className="flex items-center gap-1 text-[11px] text-secondary-600">
+                                                <span className="text-secondary-401 font-medium text-[9px] uppercase tracking-wider">Line:</span>
+                                                {data.inspector1.lineId}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {data.inspector1.note && (
+                                        <div className="text-[10px] text-secondary-400 italic bg-secondary-100/50 p-1.5 rounded border border-dashed border-secondary-200 mt-1">
+                                            <span className="font-bold not-italic">Note:</span> {data.inspector1.note}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
