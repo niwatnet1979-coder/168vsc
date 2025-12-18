@@ -882,7 +882,7 @@ export default function OrderForm() {
         if (!confirmed) return
 
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
-        if (items.length === 0) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
+        // if (items.length === 0) return alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ')
 
         console.log('[OrderForm] Saving order with items:', items)
         console.log('[OrderForm] First item structure:', items[0])
@@ -988,15 +988,23 @@ export default function OrderForm() {
             discount: discount,
             shippingFee: shippingFee,
             note: jobInfo.description, // Save description as note for backward compatibility
-            paymentSchedule: paymentSchedule || [] // Ensure it exists
+            paymentSchedule: paymentSchedule || [], // Ensure it exists
+            // Map Installation Location as Delivery Address
+            deliveryAddress: {
+                id: jobInfo.installLocationId,
+                address: jobInfo.installAddress,
+                googleMapLink: jobInfo.googleMapLink,
+                distance: jobInfo.distance
+            }
         }
 
-        const success = await DataManager.saveOrder(newOrder)
+        const result = await DataManager.saveOrder(newOrder)
 
-        if (success) {
+        if (result === true) {
             window.location.href = '/orders'
         } else {
-            alert('บันทึกออเดอร์ไม่สำเร็จ')
+            console.error('Save failed result:', result)
+            alert('บันทึกออเดอร์ไม่สำเร็จ: ' + (result?.message || 'ไม่ทราบสาเหตุ'))
         }
     }
 

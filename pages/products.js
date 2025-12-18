@@ -129,11 +129,11 @@ export default function ProductManagement() {
 
     const handleDelete = async (id) => {
         if (confirm('ยืนยันการลบสินค้า?')) {
-            const success = await DataManager.deleteProduct(id)
-            if (success) {
+            const result = await DataManager.deleteProduct(id)
+            if (result.success) {
                 setProducts(products.filter(p => p.id !== id))
             } else {
-                alert('ไม่สามารถลบสินค้าได้\n\nสินค้านี้อาจถูกใช้งานใน Order แล้ว\nกรุณาตรวจสอบ Console (F12) สำหรับรายละเอียด')
+                alert(result.error || 'ไม่สามารถลบสินค้าได้')
             }
         }
     }
@@ -160,14 +160,7 @@ export default function ProductManagement() {
 
         const savedProduct = await DataManager.saveProduct(productData)
         if (savedProduct) {
-            const existingIndex = products.findIndex(p => p.id === savedProduct.id)
-            if (existingIndex >= 0) {
-                const updatedProducts = [...products]
-                updatedProducts[existingIndex] = savedProduct
-                setProducts(updatedProducts)
-            } else {
-                setProducts([...products, savedProduct])
-            }
+            await loadProducts() // Reload to ensure full data structure (variants, stock view) and correct mappings
             setShowModal(false)
             setCurrentProduct(null)
         } else {

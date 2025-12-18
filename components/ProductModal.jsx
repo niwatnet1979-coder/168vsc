@@ -318,11 +318,15 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                         {product && product.uuid && (
                             <button
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
                                     if (confirm('ต้องการลบสินค้านี้?')) {
-                                        DataManager.deleteProduct(product.uuid)
-                                        onClose()
-                                        window.location.reload()
+                                        const result = await DataManager.deleteProduct(product.uuid)
+                                        if (result.success) {
+                                            onClose()
+                                            window.location.reload()
+                                        } else {
+                                            alert(result.error || 'ไม่สามารถลบสินค้าได้')
+                                        }
                                     }
                                 }}
                                 className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1"
