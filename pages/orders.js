@@ -161,47 +161,41 @@ export default function OrdersListPage() {
     }
 
     const getJobTypeColor = (type) => {
-        if (!type || type === '-') return 'bg-secondary-100 text-secondary-500 border-secondary-200' // Changed to Gray for "Unspecified"
-        if (type.includes('ติดตั้ง')) return 'bg-danger-50 text-danger-700 border-danger-100'
-        if (type.includes('ส่งของ') || type.includes('ขนส่ง')) return 'bg-warning-50 text-warning-700 border-warning-100'
-        if (type === 'separate' || type === 'งานแยก') return 'bg-info-50 text-info-700 border-info-100' // Added Info color for "Separate" (Blue-ish)
-        return 'bg-primary-50 text-primary-700 border-primary-100'
+        switch (type) {
+            case 'installation': return 'bg-danger-50 text-danger-700 border-danger-100'
+            case 'delivery': return 'bg-warning-50 text-warning-700 border-warning-100'
+            case 'separate': return 'bg-info-50 text-info-700 border-info-100'
+            case 'mixed': return 'bg-purple-50 text-purple-700 border-purple-100'
+            default: return 'bg-secondary-100 text-secondary-500 border-secondary-200'
+        }
     }
 
     const getJobTypeIcon = (type) => {
-        if (!type || type === '-') return <HelpCircle size={14} /> // Changed icon for "Unspecified"
-        if (type === 'separate' || type === 'งานแยก') return <ListTree size={14} />
         switch (type) {
             case 'installation': return <Wrench size={14} />
             case 'delivery': return <Truck size={14} />
             case 'separate': return <ListTree size={14} />
-            case 'mixed': return <MoreHorizontal size={14} /> // New icon for mixed
-            case null:
-            case '-': return <HelpCircle size={14} />
-            default: return <Package size={14} />
+            case 'mixed': return <MoreHorizontal size={14} />
+            default: return <HelpCircle size={14} />
         }
     }
 
     const getJobTypeLabel = (type) => {
-        if (!type || type === '-') return 'ไม่ระบุ'
-        if (type === 'mixed') return 'งานรวม'
-        switch (type?.toLowerCase()) {
-            case 'installation':
-            case 'งานติดตั้ง': return 'งานติดตั้ง'
-            case 'delivery':
-            case 'ขนส่ง': return 'ขนส่ง'
-            case 'separate':
-            case 'งานแยก': return 'งานแยก'
-            default: return type || '-'
+        switch (type) {
+            case 'installation': return 'งานติดตั้ง'
+            case 'delivery': return 'ขนส่ง'
+            case 'separate': return 'งานแยก'
+            case 'mixed': return 'งานรวม'
+            default: return 'ไม่ระบุ'
         }
     }
 
     const normalizeJobType = (type) => {
-        const t = type?.trim()?.toLowerCase()
-        if (!t) return null
-        if (t === 'installation' || t === 'งานติดตั้ง') return 'installation'
-        if (t === 'delivery' || t === 'ขนส่ง') return 'delivery'
-        if (t === 'separate' || t === 'งานแยก') return 'separate'
+        if (!type || type === '-' || type === 'ไม่ระบุ') return null
+        const t = String(type).trim().toLowerCase()
+        if (t.includes('ติดตั้ง') || t.includes('install')) return 'installation'
+        if (t.includes('ขนส่ง') || t.includes('ส่งของ') || t.includes('delivery')) return 'delivery'
+        if (t.includes('แยก') || t === 'separate') return 'separate'
         return t
     }
 
@@ -376,15 +370,15 @@ export default function OrdersListPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 font-bold text-primary-600">
                                                 {(() => {
-                                                    const allRawTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type))
-                                                    const normalizedTypes = allRawTypes.map(t => normalizeJobType(t)).filter(Boolean)
+                                                    // Flatten all job types across all items
+                                                    const rawTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type))
+                                                    const normalizedTypes = rawTypes.map(normalizeJobType).filter(Boolean)
                                                     const uniqueTypes = [...new Set(normalizedTypes)]
 
-                                                    if (uniqueTypes.length === 0) return '-'
+                                                    const displayType = uniqueTypes.length > 1 ? 'mixed' : (uniqueTypes[0] || null)
 
-                                                    const displayType = uniqueTypes.length > 1 ? 'mixed' : uniqueTypes[0]
                                                     return (
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(displayType)}`}>
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${getJobTypeColor(displayType)}`}>
                                                             {getJobTypeIcon(displayType)}
                                                             {getJobTypeLabel(displayType)}
                                                         </span>
