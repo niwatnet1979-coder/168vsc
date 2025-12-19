@@ -171,17 +171,38 @@ export default function OrdersListPage() {
     const getJobTypeIcon = (type) => {
         if (!type || type === '-') return <HelpCircle size={14} /> // Changed icon for "Unspecified"
         if (type === 'separate' || type === 'งานแยก') return <ListTree size={14} />
-        if (type.includes('ติดตั้ง') || type.includes('installation')) return <Wrench size={14} />
-        if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return <Truck size={14} />
-        return <Package size={14} />
+        switch (type) {
+            case 'installation': return <Wrench size={14} />
+            case 'delivery': return <Truck size={14} />
+            case 'separate': return <ListTree size={14} />
+            case 'mixed': return <MoreHorizontal size={14} /> // New icon for mixed
+            case null:
+            case '-': return <HelpCircle size={14} />
+            default: return <Package size={14} />
+        }
     }
 
     const getJobTypeLabel = (type) => {
-        if (!type || type === '-') return 'ไม่ระบุ' // Changed default to "Unspecified" (Thai)
-        if (type === 'separate') return 'งานแยก'
-        if (type.includes('ติดตั้ง') || type.includes('installation')) return 'งานติดตั้ง'
-        if (type.includes('ส่งของ') || type.includes('ขนส่ง') || type.includes('delivery')) return 'งานขนส่ง'
-        return type
+        if (!type || type === '-') return 'ไม่ระบุ'
+        if (type === 'mixed') return 'งานรวม'
+        switch (type?.toLowerCase()) {
+            case 'installation':
+            case 'งานติดตั้ง': return 'งานติดตั้ง'
+            case 'delivery':
+            case 'ขนส่ง': return 'ขนส่ง'
+            case 'separate':
+            case 'งานแยก': return 'งานแยก'
+            default: return type || '-'
+        }
+    }
+
+    const normalizeJobType = (type) => {
+        const t = type?.trim()?.toLowerCase()
+        if (!t) return null
+        if (t === 'installation' || t === 'งานติดตั้ง') return 'installation'
+        if (t === 'delivery' || t === 'ขนส่ง') return 'delivery'
+        if (t === 'separate' || t === 'งานแยก') return 'separate'
+        return t
     }
 
     return (
@@ -355,11 +376,11 @@ export default function OrdersListPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 font-bold text-primary-600">
                                                 {(() => {
-                                                    const allJobTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type)).filter(Boolean)
-                                                    const uniqueTypes = [...new Set(allJobTypes)]
-                                                    const jobCount = allJobTypes.length
+                                                    const allRawTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type))
+                                                    const normalizedTypes = allRawTypes.map(t => normalizeJobType(t)).filter(Boolean)
+                                                    const uniqueTypes = [...new Set(normalizedTypes)]
 
-                                                    if (jobCount === 0) return '-'
+                                                    if (uniqueTypes.length === 0) return '-'
 
                                                     const displayType = uniqueTypes.length > 1 ? 'mixed' : uniqueTypes[0]
                                                     return (
