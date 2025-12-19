@@ -314,7 +314,6 @@ export default function OrdersListPage() {
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดค้างชำระ</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
                                 </tr>
                             </thead>
@@ -354,16 +353,22 @@ export default function OrdersListPage() {
                                                     ฿{(order.totalCustomerOutstanding || 0).toLocaleString()}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(order.jobType)}`}>
-                                                    {getJobTypeIcon(order.jobType)}
-                                                    {getJobTypeLabel(order.jobType)}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                                                    {order.status}
-                                                </span>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 font-bold text-primary-600">
+                                                {(() => {
+                                                    const allJobTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type)).filter(Boolean)
+                                                    const uniqueTypes = [...new Set(allJobTypes)]
+                                                    const jobCount = allJobTypes.length
+
+                                                    if (jobCount === 0) return '-'
+
+                                                    const displayType = uniqueTypes.length > 1 ? 'mixed' : uniqueTypes[0]
+                                                    return (
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getJobTypeColor(displayType)}`}>
+                                                            {getJobTypeIcon(displayType)}
+                                                            {getJobTypeLabel(displayType)}
+                                                        </span>
+                                                    )
+                                                })()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
@@ -381,7 +386,7 @@ export default function OrdersListPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="11" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="10" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileText size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคำสั่งซื้อ</p>
