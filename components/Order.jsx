@@ -1827,6 +1827,12 @@ export default function OrderForm() {
 
                                                     {/* Dates - Moved to 2nd position */}
                                                     <div className="flex items-center gap-3">
+                                                        {/* Job Sequence Indicator */}
+                                                        <div className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                            <Wrench size={10} />
+                                                            <span>{item.latestJobIndex || item.jobs?.length || 1}</span>
+                                                        </div>
+
                                                         <div className="flex items-center gap-1">
                                                             <Calendar size={12} />
                                                             <span>
