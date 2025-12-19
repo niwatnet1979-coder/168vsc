@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import {
     X, User, FileText, MapPin, Plus, Trash2, Home, Phone, Mail,
-    MessageCircle, Facebook, Instagram, Globe
+    MessageCircle, Facebook, Instagram, Globe, Sparkles
 } from 'lucide-react'
+import TaxAddressParserModal from './TaxAddressParserModal'
 
-export default function CustomerModal({ isOpen, onClose, customer, onSave, initialTab = 'customer' }) {
+export default function CustomerModal({ isOpen, onClose, customer, onSave, onDelete, initialTab = 'customer' }) {
     const [activeTab, setActiveTab] = useState(initialTab)
     const [isSaving, setIsSaving] = useState(false)
     const [formData, setFormData] = useState({
@@ -15,6 +16,13 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
         addresses: [],
         contacts: []  // New contacts array
     })
+
+    // Parser State
+    const [isParserOpen, setIsParserOpen] = useState(false)
+    const [activeParserTaxId, setActiveParserTaxId] = useState(null)
+    const [activeParserAddressId, setActiveParserAddressId] = useState(null)
+    const [activeParserContactId, setActiveParserContactId] = useState(null)
+    const [activeParserBasicInfo, setActiveParserBasicInfo] = useState(false)
 
     useEffect(() => {
         if (customer) {
@@ -162,6 +170,87 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
         }))
     }
 
+    const handleParserResult = (result) => {
+        // Handle Tax Invoice Parse
+        if (activeParserTaxId) {
+            setFormData(prev => ({
+                ...prev,
+                taxInvoices: prev.taxInvoices.map(t => {
+                    if (t.id === activeParserTaxId) {
+                        return {
+                            ...t,
+                            companyName: result.companyName || t.companyName,
+                            taxId: result.taxId || t.taxId,
+                            branch: result.branch || t.branch,
+                            // Address fields
+                            addrNumber: result.addrNumber || t.addrNumber,
+                            addrMoo: result.addrMoo || t.addrMoo,
+                            addrVillage: result.addrVillage || t.addrVillage,
+                            addrSoi: result.addrSoi || t.addrSoi,
+                            addrRoad: result.addrRoad || t.addrRoad,
+                            addrTambon: result.addrTambon || t.addrTambon,
+                            addrAmphoe: result.addrAmphoe || t.addrAmphoe,
+                            addrProvince: result.addrProvince || t.addrProvince,
+                            addrZipcode: result.addrZipcode || t.addrZipcode
+                        }
+                    }
+                    return t
+                })
+            }))
+            setActiveParserTaxId(null) // Reset
+        }
+
+        // Handle Delivery Address Parse
+        if (activeParserAddressId) {
+            setFormData(prev => ({
+                ...prev,
+                addresses: prev.addresses.map(a => {
+                    if (a.id === activeParserAddressId) {
+                        return {
+                            ...a,
+                            label: result.fullLabel || result.companyName || a.label, // Use Full Label (Person + Company) if available
+                            addrNumber: result.addrNumber || a.addrNumber,
+                            addrMoo: result.addrMoo || a.addrMoo,
+                            addrVillage: result.addrVillage || a.addrVillage,
+                            addrSoi: result.addrSoi || a.addrSoi,
+                            addrRoad: result.addrRoad || a.addrRoad,
+                            addrTambon: result.addrTambon || a.addrTambon,
+                            addrAmphoe: result.addrAmphoe || a.addrAmphoe,
+                            province: result.addrProvince || a.province, // Map addrProvince -> province
+                            zipcode: result.addrZipcode || a.zipcode // Map addrZipcode -> zipcode
+                        }
+                    }
+                    return a
+                })
+            }))
+            setActiveParserAddressId(null) // Reset
+        } else if (activeParserContactId) {
+            setFormData(prev => ({
+                ...prev,
+                contacts: prev.contacts.map(c => {
+                    if (c.id === activeParserContactId) {
+                        return {
+                            ...c,
+                            name: result.companyName || c.name, // Use extracted company/name
+                            phone: result.phone || c.phone,
+                            email: result.email || c.email
+                        }
+                    }
+                    return c
+                })
+            }))
+            setActiveParserContactId(null)
+        } else if (activeParserBasicInfo) {
+            setFormData(prev => ({
+                ...prev,
+                name: result.fullLabel || result.companyName || prev.name,
+                phone: result.phone || prev.phone,
+                email: result.email || prev.email
+            }))
+            setActiveParserBasicInfo(false)
+        }
+    }
+
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col">
@@ -203,7 +292,35 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                         <div className="p-4 space-y-4">
                             {/* Basic Information Card */}
                             <div className="p-4 border-2 border-secondary-200 rounded-xl bg-secondary-50">
-                                <h4 className="font-semibold text-secondary-900 mb-4">ข้อมูลพื้นฐาน</h4>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold text-secondary-900">ข้อมูลพื้นฐาน</h4>
+                                        <button
+                                            onClick={() => {
+                                                setActiveParserBasicInfo(true)
+                                                setIsParserOpen(true)
+                                            }}
+                                            className="p-1.5 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors flex items-center justify-center"
+                                            title="กรอกอัตโนมัติ"
+                                        >
+                                            <Sparkles size={16} />
+                                        </button>
+                                    </div>
+                                    {/* Show delete button only if it's an existing customer (customer prop exists) and onDelete is provided */}
+                                    {customer && onDelete && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm('คุณต้องการลบลูกค้าคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+                                                    onDelete(customer.id)
+                                                }
+                                            }}
+                                            className="p-1.5 text-danger-600 bg-danger-50 hover:bg-danger-100 rounded-full transition-colors flex items-center justify-center"
+                                            title="ลบลูกค้า"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
                                         <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
@@ -350,7 +467,19 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                             {Array.isArray(formData.taxInvoices) && formData.taxInvoices.map((tax, index) => (
                                 <div key={tax.id} className="p-4 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative mb-4">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h4 className="font-bold text-secondary-900">ข้อมูลชุดที่ {index + 1}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-secondary-900">ข้อมูลชุดที่ {index + 1}</h4>
+                                            <button
+                                                onClick={() => {
+                                                    setActiveParserTaxId(tax.id)
+                                                    setIsParserOpen(true)
+                                                }}
+                                                className="p-1.5 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors flex items-center justify-center"
+                                                title="กรอกอัตโนมัติ"
+                                            >
+                                                <Sparkles size={16} />
+                                            </button>
+                                        </div>
                                         <button onClick={() => removeTaxInvoice(tax.id)} className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,7 +585,19 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                             {Array.isArray(formData.addresses) && formData.addresses.map((addr, index) => (
                                 <div key={addr.id} className="p-4 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative mb-4">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h4 className="font-bold text-secondary-900">ที่อยู่ #{index + 1}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-secondary-900">ที่อยู่ #{index + 1}</h4>
+                                            <button
+                                                onClick={() => {
+                                                    setActiveParserAddressId(addr.id)
+                                                    setIsParserOpen(true)
+                                                }}
+                                                className="p-1.5 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors flex items-center justify-center"
+                                                title="กรอกอัตโนมัติ"
+                                            >
+                                                <Sparkles size={16} />
+                                            </button>
+                                        </div>
                                         <button onClick={() => removeAddress(addr.id)} className="p-2 text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -553,7 +694,19 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                             {Array.isArray(formData.contacts) && formData.contacts.map((contact, index) => (
                                 <div key={contact.id} className="p-4 border-2 border-secondary-200 rounded-xl bg-secondary-50 relative">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h4 className="font-bold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-secondary-900">ผู้ติดต่อ {index + 1}</h4>
+                                            <button
+                                                onClick={() => {
+                                                    setActiveParserContactId(contact.id)
+                                                    setIsParserOpen(true)
+                                                }}
+                                                className="p-1.5 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-full transition-colors flex items-center justify-center"
+                                                title="กรอกอัตโนมัติ"
+                                            >
+                                                <Sparkles size={16} />
+                                            </button>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => removeContact(contact.id)}
@@ -661,6 +814,12 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, initi
                     </button>
                 </div>
             </div>
+
+            <TaxAddressParserModal
+                isOpen={isParserOpen}
+                onClose={() => setIsParserOpen(false)}
+                onParse={handleParserResult}
+            />
         </div>
     )
 }

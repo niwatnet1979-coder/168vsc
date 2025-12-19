@@ -42,6 +42,7 @@ export default function OrderForm() {
     const [productsData, setProductsData] = useState([])
     const [availableTeams, setAvailableTeams] = useState([])
     const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
+    const [orderNumber, setOrderNumber] = useState('')
 
     // --- Form States ---
     const [customer, setCustomer] = useState({
@@ -258,6 +259,7 @@ export default function OrderForm() {
                 const order = await DataManager.getOrderById(router.query.id)
 
                 if (order) {
+                    setOrderNumber(order.orderNumber || order.order_number || order.id)
                     // Use joined customer data directly (No need to re-fetch)
                     if (order.customer && order.customer.id) {
                         // Normalize relational data field names if needed (e.g. taxInvoices vs tax_invoice_info)
@@ -581,6 +583,36 @@ export default function OrderForm() {
             setShowAddCustomerModal(false)
         } else {
             alert('ไม่สามารถเพิ่มลูกค้าได้')
+        }
+    }
+
+    const handleDeleteCustomer = async (customerId) => {
+        try {
+            const success = await DataManager.deleteCustomer(customerId)
+            if (success) {
+                // Refresh list
+                const customers = await DataManager.getCustomers()
+                setCustomersData(customers)
+
+                // Clear selected customer if it was the deleted one
+                if (customer?.id === customerId) {
+                    setCustomer({
+                        id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
+                        contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
+                        mediaSource: '', mediaSourceOther: ''
+                    })
+                    setReceiverContact(null)
+                    setPurchaserContact(null)
+                    setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })
+                    setTaxInvoiceDeliveryAddress({ type: '', label: '', address: '' })
+                }
+                setShowEditCustomerModal(false)
+            } else {
+                alert('ไม่สามารถลบลูกค้าได้')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('เกิดข้อผิดพลาดในการลบลูกค้า')
         }
     }
 
@@ -997,7 +1029,7 @@ export default function OrderForm() {
                             <FileEdit className="text-primary-600 hidden sm:block" size={32} />
                             <div>
                                 <h1 className="text-2xl font-bold">
-                                    {order.id ? `แก้ไขออเดอร์ #${order.order_number || order.id}` : `สร้างออเดอร์ใหม่ #${order.order_number || ''}`}
+                                    {router.query.id ? `แก้ไขออเดอร์ #${orderNumber || router.query.id}` : `สร้างออเดอร์ใหม่ #${orderNumber || ''}`}
                                 </h1>
                                 <p className="text-xs sm:text-sm text-secondary-500 hidden sm:block">กรอกข้อมูลให้ครบถ้วนเพื่อสร้างใบเสนอราคา/ออเดอร์</p>
                             </div>
@@ -1956,6 +1988,7 @@ export default function OrderForm() {
                         customer={customer}
                         initialTab={customerModalTab}
                         onSave={handleUpdateCustomer}
+                        onDelete={handleDeleteCustomer}
                     />
 
                     {/* Customer Add Modal */}
