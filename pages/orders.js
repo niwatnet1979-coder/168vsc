@@ -310,6 +310,7 @@ export default function OrdersListPage() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">รายการ</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">จำนวน</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">จำนวนงาน</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดค้างชำระ</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ประเภทงาน</th>
@@ -338,6 +339,11 @@ export default function OrdersListPage() {
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600">
                                                 {Array.isArray(order.items)
                                                     ? order.items.reduce((sum, item) => sum + (parseInt(item.qty) || 0), 0)
+                                                    : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 font-bold text-primary-600">
+                                                {Array.isArray(order.items)
+                                                    ? order.items.reduce((sum, item) => sum + (item.jobs?.length || 0), 0)
                                                     : '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -375,7 +381,7 @@ export default function OrdersListPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="10" className="px-6 py-12 text-center text-secondary-500">
+                                        <td colSpan="11" className="px-6 py-12 text-center text-secondary-500">
                                             <div className="flex flex-col items-center justify-center">
                                                 <FileText size={48} className="text-secondary-300 mb-4" />
                                                 <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลคำสั่งซื้อ</p>
