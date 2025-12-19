@@ -6,13 +6,14 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling, Lightbulb, Video
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling, Lightbulb, Video, List, Copy
 } from 'lucide-react'
 import AppLayout from './AppLayout'
 import { DataManager } from '../lib/dataManager'
 
 import ProductModal from './ProductModal'
 import SubJobModal from './SubJobModal'
+import JobListModal from './JobListModal' // Embody 1:N Job List
 import AddressSelector from './AddressSelector' // Import AddressSelector
 import ContactSelector from './ContactSelector'
 import ContactDisplayCard from './ContactDisplayCard'
@@ -68,92 +69,63 @@ export default function OrderForm() {
     const [taxAddressSearchTerm, setTaxAddressSearchTerm] = useState('')
 
 
-    const [jobInfo, setJobInfo] = useState({
-        jobType: '',
-        orderDate: new Date().toISOString().split('T')[0],
-        appointmentDate: '',
-        completionDate: '',
-        installLocationName: '',
-        installAddress: '',
-        googleMapLink: '',
-        team: '',
-        inspector1: { name: '', phone: '' },
-        distance: '',
-        description: '' // Added for job details/notes
-    })
-
     const [items, setItems] = useState([])
+    const [selectedItemIndex, setSelectedItemIndex] = useState(0) // Default to first item
 
-    // Sync Job Info to Items (Real-time)
-    useEffect(() => {
-        setItems(prevItems => prevItems.map(item => ({
-            ...item,
-            subJob: {
-                ...item.subJob,
-                jobType: jobInfo.jobType,
-                appointmentDate: jobInfo.appointmentDate,
-                completionDate: jobInfo.completionDate,
-                installLocationName: jobInfo.installLocationName,
-                installAddress: jobInfo.installAddress,
-                googleMapLink: jobInfo.googleMapLink,
-                distance: jobInfo.distance,
-                inspector1: jobInfo.inspector1,
-                team: jobInfo.team,
-                description: jobInfo.description // Use jobInfo.description directly
+    // Derived Job Info Data from Selected Item
+    const currentJobInfo = useMemo(() => {
+        if (items.length > 0 && items[selectedItemIndex]) {
+            return items[selectedItemIndex].subJob || {}
+        }
+        return {}
+    }, [items, selectedItemIndex])
+
+    // --- 1:N Job Management State ---
+    const [showJobListModal, setShowJobListModal] = useState(false)
+    const [currentJobListItemIndex, setCurrentJobListItemIndex] = useState(null) // Index of item in 'items' whose jobs we are listing
+    const [editingJobIndex, setEditingJobIndex] = useState(null) // Index of job in 'item.jobs' we are editing (null = adding new)
+
+    // Handlers for Job Info
+    const handleJobInfoUpdate = (updates) => {
+        setItems(prev => {
+            const newItems = [...prev]
+            if (newItems[selectedItemIndex]) {
+                newItems[selectedItemIndex] = {
+                    ...newItems[selectedItemIndex],
+                    subJob: {
+                        ...newItems[selectedItemIndex].subJob,
+                        ...updates
+                    }
+                }
             }
-        })))
-    }, [jobInfo]) // Only jobInfo as dependency
+            return newItems
+        })
+    }
 
-    const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
-    const [vatRate, setVatRate] = useState(0.07) // Default 0.07
-    // Sync SubJobs with Main Job Info
-    useEffect(() => {
-        // If Main Job is 'installation' or 'delivery', force sync to all subjobs
-        if (jobInfo.jobType === 'installation' || jobInfo.jobType === 'delivery') {
-            setItems(prevItems => prevItems.map(item => ({
+    const handleShareJobInfo = () => {
+        if (!currentJobInfo) return
+        if (confirm('คุณต้องการใช้ข้อมูลงานนี้กับสินค้าทุกรายการในออเดอร์ทางใช่หรือไม่?')) {
+            setItems(prev => prev.map(item => ({
                 ...item,
                 subJob: {
                     ...item.subJob,
-                    jobType: jobInfo.jobType,
-                    appointmentDate: jobInfo.appointmentDate,
-                    completionDate: jobInfo.completionDate,
-                    installLocationName: jobInfo.installLocationName,
-                    installAddress: jobInfo.installAddress,
-                    googleMapLink: jobInfo.googleMapLink,
-                    distance: jobInfo.distance,
-                    inspector1: jobInfo.inspector1,
-                    team: jobInfo.team,
-                    // Description is NOT synced usually, but maybe for location? 
-                    // Let's keep description independent or maybe sync if empty? 
-                    // Requirement says: "take all values from main job info"
-                    // So we sync everything except maybe description if we want per-item notes.
-                    // "นำค่าทุกอย่างในข้อมูลงานหลักไปใช้" implies everything.
-                    // But description (note) might be specific? 
-                    // Let's assume description remains specific to the item unless we want to override it.
-                    // User said "all values". Let's stick to the main structure fields.
-                    // If description is "details", main job details might be "Whole project details".
-                    // Sub job details might be "Fix this item".
-                    // Let's NOT sync description for now as it's often item-specific.
-                    // OR if user meant *everything*, we should sync description too.
-                    // Given the prompt "นำค่าทุกอย่าง...ไปใช้", I will sync everything KEY to the job execution.
-                    // Description is tricky. I'll leave description independent for now as it's often item-specific.
-                    // Wait, Re-reading: "นำค่าทุกอย่างในข้อมูลงานหลักไปใช้ในข้อมูลงานย่อยทุกงาน"
-                    // "All values". Okay, I will sync description too if it's safe, but usually note is item specific.
-                    // Let's sync major fields: Dates, Team, Location, Type, Inspector.
+                    jobType: currentJobInfo.jobType,
+                    appointmentDate: currentJobInfo.appointmentDate,
+                    completionDate: currentJobInfo.completionDate,
+                    installLocationId: currentJobInfo.installLocationId,
+                    installLocationName: currentJobInfo.installLocationName,
+                    installAddress: currentJobInfo.installAddress,
+                    googleMapLink: currentJobInfo.googleMapLink,
+                    distance: currentJobInfo.distance,
+                    inspector1: currentJobInfo.inspector1,
+                    team: currentJobInfo.team,
+                    description: currentJobInfo.description
                 }
             })))
         }
-    }, [
-        jobInfo.jobType,
-        jobInfo.appointmentDate,
-        jobInfo.completionDate,
-        jobInfo.installLocationName,
-        jobInfo.installAddress,
-        jobInfo.googleMapLink,
-        jobInfo.distance,
-        jobInfo.inspector1,
-        jobInfo.team
-    ])
+    }
+    const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
+    const [vatRate, setVatRate] = useState(0.07) // Default 0.07
     const [vatIncluded, setVatIncluded] = useState(true) // Default INVAT
     const [shippingFee, setShippingFee] = useState(0)
 
@@ -274,45 +246,7 @@ export default function OrderForm() {
 
 
 
-    // Serialize jobInfo for proper change detection
-    const jobInfoSerialized = useMemo(() => JSON.stringify(jobInfo), [
-        jobInfo.jobType,
-        jobInfo.appointmentDate,
-        jobInfo.completionDate,
-        jobInfo.installLocationName,
-        jobInfo.installAddress,
-        jobInfo.googleMapLink,
-        jobInfo.distance,
-        jobInfo.team,
-        jobInfo.note
-    ])
 
-    // Sync Sub Jobs with Main Job Info
-    useEffect(() => {
-        console.log('[DEBUG] Sync SubJob useEffect triggered', { jobType: jobInfo.jobType, itemsCount: items.length })
-        // Logic: specific types inherit from Main Job
-        if (['installation', 'delivery'].includes(jobInfo.jobType) || !jobInfo.jobType) {
-            setItems(prevItems => {
-                const updated = prevItems.map(item => ({
-                    ...item,
-                    subJob: { // Ensure subJob object is included in payload
-                        ...(item.subJob || {}), // Ensure item.subJob exists before spreading
-                        jobType: jobInfo.jobType,
-                        appointmentDate: jobInfo.appointmentDate,
-                        completionDate: jobInfo.completionDate,
-                        installLocationName: jobInfo.installLocationName,
-                        installAddress: jobInfo.installAddress,
-                        googleMapLink: jobInfo.googleMapLink,
-                        distance: jobInfo.distance,
-                        team: jobInfo.team,
-                        description: jobInfo.note || item.subJob?.description // Sync note if available, else keep existing or empty
-                    }
-                }))
-                console.log('[DEBUG] Updated items with subJob:', updated)
-                return updated
-            })
-        }
-    }, [jobInfoSerialized])
 
     // Load Existing Order
     useEffect(() => {
@@ -339,12 +273,7 @@ export default function OrderForm() {
                         }
                     }
                     if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
-                    if (order.jobInfo) {
-                        setJobInfo({
-                            ...order.jobInfo,
-                            description: order.jobInfo.description || ''
-                        })
-                    }
+
 
                     // Infer vatIncluded mode
                     if (order.total && order.items && order.vatRate > 0) {
@@ -439,88 +368,9 @@ export default function OrderForm() {
         loadOrder()
     }, [router.isReady, router.query.id])
 
-    // Distance Calculation
-    useEffect(() => {
-        const calculate = async () => {
-            if (!jobInfo.googleMapLink) return;
 
-            let coords = extractCoordinates(jobInfo.googleMapLink)
 
-            // If direct extraction fails, try resolving short link
-            if (!coords && jobInfo.googleMapLink.includes('goo.gl') || jobInfo.googleMapLink.includes('maps.app.goo.gl')) {
-                try {
-                    const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(jobInfo.googleMapLink)}`)
-                    if (res.ok) {
-                        const data = await res.json()
-                        if (data.url) {
-                            coords = extractCoordinates(data.url)
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error resolving map link:', error)
-                }
-            }
 
-            if (coords) {
-                const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
-                setJobInfo(prev => ({ ...prev, distance: dist }))
-            }
-        }
-
-        calculate()
-    }, [jobInfo.googleMapLink])
-
-    // Auto-repair incomplete jobInfo address from Customer data
-    useEffect(() => {
-        if (!jobInfo.installLocationName || !customer.addresses) return
-
-        // If address seems incomplete (e.g. just a zipcode like "10210")
-        const currentAddr = jobInfo.installAddress || ''
-        const seemsIncomplete = currentAddr.length < 10 && /^\d+$/.test(currentAddr.replace(/\s/g, ''))
-
-        if (seemsIncomplete) {
-            // Find better address in customer data
-            let match = customer.addresses.find(a =>
-                a.label && a.label.trim().toLowerCase() === jobInfo.installLocationName.trim().toLowerCase()
-            )
-
-            // Fallback: match by zipcode if no label match
-            if (!match && /^\d{5}$/.test(currentAddr.trim())) {
-                match = customer.addresses.find(a => a.zipcode === currentAddr.trim())
-            }
-
-            if (match && match.address && match.address.length > currentAddr.length) {
-                console.log('Auto-repairing incomplete address:', currentAddr, '->', match.address)
-                setJobInfo(prev => ({
-                    ...prev,
-                    installAddress: match.address,
-                    // Ensure map link is also recovered if missing or different
-                    googleMapLink: match.googleMapsLink || prev.googleMapLink,
-                }))
-
-                // Also sync Tax Invoice Address if it matches the broken one or is linked
-                // Also sync Tax Invoice Address if it matches the broken one or is linked
-                setTaxInvoiceDeliveryAddress(prev => {
-                    // Check if it looks like the stale address (short) and has same label
-                    const isStale = (prev.address === currentAddr) ||
-                        (prev.label && prev.label.trim() === jobInfo.installLocationName.trim() && prev.address && prev.address.length < 15);
-
-                    const isLinked = prev.type === 'same' || isStale;
-
-                    if (isLinked) {
-                        return {
-                            ...prev,
-                            address: match.address,
-                            googleMapLink: match.googleMapsLink || prev.googleMapLink,
-                            // If we forced an update, it effectively becomes the same/linked
-                            type: 'same'
-                        }
-                    }
-                    return prev
-                })
-            }
-        }
-    }, [customer.addresses, jobInfo.installLocationName, jobInfo.installAddress])
 
     // --- Handlers ---
     const handleSelectCustomer = (c) => {
@@ -844,16 +694,110 @@ export default function OrderForm() {
     }
 
     const handleSaveSubJob = (subJobData) => {
+        // Updated for 1:N Jobs
         if (currentSubJobItemIndex !== null) {
             const newItems = [...items]
-            newItems[currentSubJobItemIndex] = {
-                ...newItems[currentSubJobItemIndex],
-                subJob: subJobData
+            const currentItem = newItems[currentSubJobItemIndex]
+
+            // Logic: Are we editing a specific job from the list?
+            if (editingJobIndex !== null && currentItem.jobs) {
+                // Updating existing job in the list
+                const updatedJobs = [...currentItem.jobs]
+                updatedJobs[editingJobIndex] = {
+                    ...updatedJobs[editingJobIndex],
+                    ...subJobData,
+                    // Map legacy fields back if needed, or just keep them synced
+                    jobType: subJobData.jobType,
+                    status: subJobData.status || updatedJobs[editingJobIndex].status || 'รอดำเนินการ',
+                    assigned_team: subJobData.team,
+                    appointment_date: subJobData.appointmentDate,
+                    completion_date: subJobData.completionDate,
+                    site_inspector_id: subJobData.inspector1?.id, // Assuming structure
+                    site_address_id: subJobData.installLocationId,
+                    notes: subJobData.description
+                }
+                newItems[currentSubJobItemIndex].jobs = updatedJobs
+
+                // Fallback compatibility: Update item.subJob to match LATEST job logic? 
+                // Or simple: Update subJob to THIS job if it's the latest?
+                // Let's rely on getOrders logic -> sorts by date. 
+                // If we sort here, we keep UI consistent.
+                // For now, let's just make 'item.subJob' reflect the one we just edited so the UI card updates (legacy view)
+                newItems[currentSubJobItemIndex].subJob = subJobData
+
             }
+            else if (editingJobIndex === null && currentSubJobItemIndex !== null && typeof currentJobListItemIndex === 'number') {
+                // Adding a NEW JOB (via list modal)
+                // Note: handleSaveSubJob is called by SubJobModal. 
+                // If we opened SubJobModal from JobListModal (Add mode), 'editingJobIndex' is null.
+                // But check if we are in "List Mode" (currentJobListItemIndex should be set)
+
+                const newJob = {
+                    sequence_number: (currentItem.jobs?.length || 0) + 1,
+                    ...subJobData,
+                    jobType: subJobData.jobType,
+                    status: 'รอดำเนินการ',
+                    assigned_team: subJobData.team,
+                    appointment_date: subJobData.appointmentDate,
+                    completion_date: subJobData.completionDate,
+                    notes: subJobData.description
+                }
+
+                newItems[currentSubJobItemIndex].jobs = [...(currentItem.jobs || []), newJob]
+
+                // Update legacy display to show this new job
+                newItems[currentSubJobItemIndex].subJob = subJobData
+            }
+            else {
+                // Legacy path (direct click on icon without list modal context?) 
+                // Or editing the "main" subJob directly (should be avoided now).
+                // Let's assume standard behavior: Update subJob property directly.
+                newItems[currentSubJobItemIndex] = {
+                    ...newItems[currentSubJobItemIndex],
+                    subJob: subJobData
+                }
+            }
+
             setItems(newItems)
             setShowSubJobModal(false)
-            setCurrentSubJobItemIndex(null)
+            // Do NOT clear currentSubJobItemIndex immediately if we want to return to List Modal?
+            // User flow: List -> Add -> Save -> Back to List.
+            // So we should keep List Modal open.
+            // We set currentSubJobItemIndex when opening SubJobModal.
+
+            // If we are in "Job List Mode", we don't clear currentSubJobItemIndex, 
+            // but we might close SubJobModal.
+            // Wait, we need to know if we are returning to List.
+            // Ideally: showSubJobModal=false. showJobListModal=true (it is already true).
+            // So we just close SubJobModal.
+            setShowSubJobModal(false)
         }
+    }
+
+    const deleteJobFromList = (jobIndex, job) => {
+        if (currentJobListItemIndex === null) return
+        if (!confirm('ยืนยันลบงานนี้?')) return
+
+        const newItems = [...items]
+        const currentItem = newItems[currentJobListItemIndex]
+
+        const updatedJobs = currentItem.jobs.filter((_, idx) => idx !== jobIndex)
+        // Re-sequence? Optional.
+
+        newItems[currentJobListItemIndex].jobs = updatedJobs
+
+        // Update display if we deleted the highlighted job
+        if (updatedJobs.length > 0) {
+            // grab the new latest (first one if sorted desc, or last one?)
+            // Assuming array order.
+            const latest = updatedJobs[updatedJobs.length - 1] // or 0? 
+            // Ideally we re-sort but for now:
+            newItems[currentJobListItemIndex].subJob = { ...latest, description: latest.notes, team: latest.assigned_team, appointmentDate: latest.appointment_date } // Approximation
+        } else {
+            newItems[currentJobListItemIndex].subJob = {}
+        }
+
+        setItems(newItems)
     }
 
     const handleSaveItem = (itemData) => {
@@ -1300,14 +1244,46 @@ export default function OrderForm() {
                         <div className="order-3 md:order-4 flex flex-col h-full">
                             <JobInfoCard
                                 className="h-full"
-                                data={jobInfo}
-                                onChange={setJobInfo}
+                                title="ข้อมูลงาน"
+                                data={currentJobInfo}
+                                onChange={handleJobInfoUpdate}
                                 customer={customer}
                                 availableTeams={availableTeams}
-                                note={jobInfo.description}
-                                onNoteChange={(value) => setJobInfo(prev => ({ ...prev, description: value }))}
+                                note={currentJobInfo.description}
+                                onNoteChange={(value) => handleJobInfoUpdate({ description: value })}
                                 onAddNewAddress={handleAddNewInstallAddress}
                                 onAddNewInspector={handleAddNewInspector}
+                                excludeJobTypes={['separate']}
+                                actions={
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative">
+                                            <select
+                                                value={selectedItemIndex}
+                                                onChange={(e) => setSelectedItemIndex(Number(e.target.value))}
+                                                className="pl-3 pr-8 py-1 text-xs border border-secondary-200 rounded-md bg-white focus:ring-primary-500 focus:border-primary-500 appearance-none cursor-pointer"
+                                                style={{ maxWidth: '160px' }}
+                                            >
+                                                {items.map((item, idx) => (
+                                                    <option key={idx} value={idx}>
+                                                        {item.variation_data?.selectedVariant?.code || item.code || `สินค้า #${idx + 1}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleShareJobInfo}
+                                            className="p-1 text-primary-600 hover:bg-primary-50 rounded border border-primary-100 transition-colors"
+                                            title="ใช้ข้อมูลงานนี้ร่วมกันกับสินค้าทุกรายการ"
+                                        >
+                                            <div className="flex items-center gap-1 px-1">
+                                                <Copy size={12} />
+                                                <span className="text-[10px] font-medium">ใช้ร่วมกัน</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                }
                             />
                         </div>
 
@@ -1475,11 +1451,11 @@ export default function OrderForm() {
                                             label="ที่อยู่จัดส่งใบกำกับภาษี"
                                             addresses={[
                                                 // Function to construct options including "Same as Install"
-                                                ...(jobInfo.installAddress ? [{
+                                                ...(currentJobInfo.installAddress ? [{
                                                     label: 'ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง',
-                                                    address: jobInfo.installAddress,
-                                                    googleMapLink: jobInfo.googleMapLink || '',
-                                                    distance: jobInfo.distance || '',
+                                                    address: currentJobInfo.installAddress,
+                                                    googleMapLink: currentJobInfo.googleMapLink || '',
+                                                    distance: currentJobInfo.distance || '',
                                                     isSpecial: true, // Marker for badging logic if we want to handle inside? Or just rely on label?
                                                     // Actually AddressSelector displays label/address.
                                                     // Value handling needs care.
@@ -1487,12 +1463,12 @@ export default function OrderForm() {
                                                 ...(customer.addresses || [])
                                             ]}
                                             value={(() => {
-                                                const isSame = taxInvoiceDeliveryAddress.type === 'same' || (jobInfo.installAddress && taxInvoiceDeliveryAddress.address === jobInfo.installAddress);
+                                                const isSame = taxInvoiceDeliveryAddress.type === 'same' || (currentJobInfo.installAddress && taxInvoiceDeliveryAddress.address === currentJobInfo.installAddress);
                                                 return {
-                                                    label: isSame ? (jobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
-                                                    address: isSame ? (jobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
-                                                    googleMapLink: isSame ? (jobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
-                                                    distance: isSame ? (jobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
+                                                    label: isSame ? (currentJobInfo.installLocationName || 'สถานที่ติดตั้ง/ขนส่ง') : taxInvoiceDeliveryAddress.label,
+                                                    address: isSame ? (currentJobInfo.installAddress || '') : taxInvoiceDeliveryAddress.address,
+                                                    googleMapLink: isSame ? (currentJobInfo.googleMapLink || '') : taxInvoiceDeliveryAddress.googleMapLink,
+                                                    distance: isSame ? (currentJobInfo.distance || '') : taxInvoiceDeliveryAddress.distance,
                                                     badge: isSame ? (
                                                         <span className="px-1.5 py-0.5 bg-success-50 text-success-700 text-[10px] font-medium rounded border border-success-200">
                                                             ที่อยู่เดียวกัน
@@ -1519,7 +1495,7 @@ export default function OrderForm() {
                                                     // Or just infer "same" type if address matches jobInfo?
                                                     // Simplest: Check if address === jobInfo.installAddress?
 
-                                                    const isSame = jobInfo.installAddress && newValue.address === jobInfo.installAddress;
+                                                    const isSame = currentJobInfo.installAddress && newValue.address === currentJobInfo.installAddress;
 
                                                     setTaxInvoiceDeliveryAddress({
                                                         type: isSame ? 'same' : 'custom',
@@ -1786,21 +1762,21 @@ export default function OrderForm() {
                                                     <div className="flex items-center gap-1">
                                                         <UserCheck size={12} />
                                                         <span>
-                                                            {(item.subJob?.inspector1?.name || jobInfo.inspector1?.name) || '-'}
-                                                            {(item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone || jobInfo.inspector1?.phone})`}
+                                                            {(item.subJob?.inspector1?.name) || '-'}
+                                                            {(item.subJob?.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone})`}
                                                         </span>
                                                     </div>
 
-                                                    {((item.subJob?.distance || jobInfo.distance) || (item.subJob?.installLocationName || jobInfo.installLocationName)) && (
+                                                    {(item.subJob?.distance || item.subJob?.installLocationName) && (
                                                         <div className="flex items-center gap-1 text-secondary-500">
-                                                            {(item.subJob?.distance || jobInfo.distance) && <span>{item.subJob?.distance || jobInfo.distance} Km</span>}
-                                                            {(item.subJob?.installLocationName || jobInfo.installLocationName) && <span>{item.subJob?.installLocationName || jobInfo.installLocationName}</span>}
+                                                            {item.subJob?.distance && <span>{item.subJob?.distance} Km</span>}
+                                                            {item.subJob?.installLocationName && <span>{item.subJob?.installLocationName}</span>}
                                                         </div>
                                                     )}
                                                     <div className="flex items-center gap-1">
                                                         <MapPin size={12} className="flex-shrink-0" />
                                                         <span>
-                                                            {item.subJob?.installAddress || jobInfo.installAddress || item.subJob?.installLocationName || jobInfo.installLocationName || '-'}
+                                                            {item.subJob?.installAddress || item.subJob?.installLocationName || '-'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1822,30 +1798,38 @@ export default function OrderForm() {
                                                         }}
                                                         title="แก้ไขข้อมูลงานย่อย"
                                                     >
-                                                        {(item.subJob?.jobType || jobInfo.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                                        {(item.subJob?.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
                                                     </div>
 
                                                     {/* Dates - Moved to 2nd position */}
                                                     <div className="flex items-center gap-3">
                                                         {/* Job Sequence Indicator */}
-                                                        <div className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-100 px-1.5 py-0.5 rounded">
-                                                            <Wrench size={10} />
+                                                        {/* Job Sequence Indicator (Click to Open List) */}
+                                                        <div
+                                                            className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-100 hover:bg-secondary-200 cursor-pointer px-1.5 py-0.5 rounded transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setCurrentJobListItemIndex(idx)
+                                                                setShowJobListModal(true)
+                                                            }}
+                                                        >
+                                                            <List size={10} />
                                                             <span>{item.latestJobIndex || item.jobs?.length || 1}</span>
                                                         </div>
 
                                                         <div className="flex items-center gap-1">
                                                             <Calendar size={12} />
                                                             <span>
-                                                                {(item.subJob?.appointmentDate || jobInfo.appointmentDate)
-                                                                    ? new Date(item.subJob?.appointmentDate || jobInfo.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                {(item.subJob?.appointmentDate)
+                                                                    ? new Date(item.subJob?.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                     : '-'}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1 text-green-700">
                                                             <CheckCircle size={12} />
                                                             <span>
-                                                                {(item.subJob?.completionDate || jobInfo.completionDate)
-                                                                    ? new Date(item.subJob?.completionDate || jobInfo.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                {(item.subJob?.completionDate)
+                                                                    ? new Date(item.subJob?.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
                                                                     : '-'}
                                                             </span>
                                                         </div>
@@ -1854,14 +1838,14 @@ export default function OrderForm() {
                                                     {/* Team */}
                                                     <div className="flex items-center gap-1">
                                                         <Users size={12} />
-                                                        <span>{item.subJob?.team || jobInfo.team || '-'}</span>
+                                                        <span>{item.subJob?.team || '-'}</span>
                                                     </div>
 
                                                     {/* Details/Note */}
                                                     <div className="flex items-center gap-1 text-secondary-400">
                                                         <FileText size={12} />
                                                         <span className="truncate max-w-[300px]">
-                                                            {item.subJob?.description || jobInfo.description || '-'}
+                                                            {item.subJob?.description || '-'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -2033,17 +2017,66 @@ export default function OrderForm() {
                         onSave={handleAddNewCustomer}
                     />
 
-                    {/* Sub Job Modal */}
-                    {showSubJobModal && (
+                    {/* Job List Modal */}
+                    <JobListModal
+                        isOpen={showJobListModal}
+                        onClose={() => {
+                            setShowJobListModal(false)
+                            setCurrentJobListItemIndex(null)
+                        }}
+                        item={currentJobListItemIndex !== null ? items[currentJobListItemIndex] : {}}
+                        jobs={currentJobListItemIndex !== null ? (items[currentJobListItemIndex]?.jobs || []) : []}
+                        onAddJob={() => {
+                            // Open SubJobModal for NEW job
+                            setEditingJobIndex(null)
+                            // Use the same index logic
+                            setCurrentSubJobItemIndex(currentJobListItemIndex)
+                            setShowSubJobModal(true)
+                        }}
+                        onEditJob={(jobIdx, job) => {
+                            // Open SubJobModal for EXISTING job
+                            setEditingJobIndex(jobIdx)
+                            setCurrentSubJobItemIndex(currentJobListItemIndex)
+                            // We need to prepopulate SubJobModal. 
+                            // It reads from item.subJob. We need to temporarily SWAP it or pass it?
+                            // Hack: relying on handleSaveSubJob logic to handle update, but 'SubJobModal' reads initial state from 'item'.
+                            // We might need to override 'item' in SubJobModal render below?
+                            setShowSubJobModal(true)
+                        }}
+                        onDeleteJob={(jobIdx, job) => deleteJobFromList(jobIdx, job)}
+                    />
+
+                    {/* Sub Job Modal (Enhanced for List Support) */}
+                    {showSubJobModal && currentSubJobItemIndex !== null && (
                         <SubJobModal
                             isOpen={true}
-                            onClose={() => setShowSubJobModal(false)}
-                            item={items[currentSubJobItemIndex]}
+                            onClose={() => {
+                                setShowSubJobModal(false)
+                                if (!showJobListModal) setCurrentSubJobItemIndex(null) // Only clear info if we aren't in list mode
+                                setEditingJobIndex(null) // Reset editing mode
+                            }}
+                            // Hack: If editing a specific job, construct a fake item with THAT job's data as subJob
+                            item={
+                                (editingJobIndex !== null && items[currentSubJobItemIndex]?.jobs?.[editingJobIndex])
+                                    ? {
+                                        ...items[currentSubJobItemIndex], subJob: {
+                                            ...items[currentSubJobItemIndex].jobs[editingJobIndex],
+                                            // Map DB columns to App props expected by SubJobModal
+                                            jobType: items[currentSubJobItemIndex].jobs[editingJobIndex].jobType,
+                                            appointmentDate: items[currentSubJobItemIndex].jobs[editingJobIndex].appointment_date,
+                                            completionDate: items[currentSubJobItemIndex].jobs[editingJobIndex].completion_date,
+                                            installLocationId: items[currentSubJobItemIndex].jobs[editingJobIndex].site_address_id,
+                                            inspector1: { id: items[currentSubJobItemIndex].jobs[editingJobIndex].site_inspector_id }, // Simple mock
+                                            description: items[currentSubJobItemIndex].jobs[editingJobIndex].notes,
+                                            team: items[currentSubJobItemIndex].jobs[editingJobIndex].assigned_team
+                                        }
+                                    }
+                                    : items[currentSubJobItemIndex]
+                            }
                             onSave={handleSaveSubJob}
                             customer={customer}
                             availableTeams={availableTeams}
-                            // Logic: Read-only if Installation or Delivery (Inherited)
-                            readOnly={jobInfo.jobType === 'installation' || jobInfo.jobType === 'delivery'}
+                            readOnly={false} // Allow editing from list
                         />
                     )}
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { X, Wrench } from 'lucide-react'
 import JobInfoCard from './JobInfoCard'
 import Card from './Card'
+import { calculateDistance, extractCoordinates } from '../lib/utils'
+import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
 
 export default function SubJobModal({ isOpen, onClose, item, onSave, customer = {}, availableTeams, readOnly = false, isInline = false }) {
     const [formData, setFormData] = useState({
@@ -19,19 +21,89 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
 
     useEffect(() => {
         if (item && item.subJob) {
+            // Helper: Format Date for Input (YYYY-MM-DDThh:mm)
+            const toLocalInput = (dateStr) => {
+                if (!dateStr) return ''
+                try {
+                    const d = new Date(dateStr)
+                    if (isNaN(d.getTime())) return ''
+                    // Adjust to local timezone
+                    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
+                } catch (e) { return '' }
+            }
+
+            // Helper: Hydrate Inspector from Customer Contacts
+            let inspectorData = item.subJob.inspector1 || { name: '', phone: '' }
+            if (inspectorData.id && !inspectorData.name && customer?.contacts) {
+                const found = customer.contacts.find(c => c.id === inspectorData.id)
+                if (found) {
+                    inspectorData = { ...found, id: inspectorData.id } // Restore full contact data
+                }
+            }
+
+            // Helper: Hydrate Address from Customer Addresses
+            let locationId = item.subJob.installLocationId || ''
+            let locationName = item.subJob.installLocationName || ''
+            let address = item.subJob.installAddress || ''
+            let mapLink = item.subJob.googleMapLink || ''
+            let dist = item.subJob.distance || ''
+
+            if (locationId && customer?.addresses) {
+                const foundAddr = customer.addresses.find(a => a.id === locationId)
+                if (foundAddr) {
+                    if (!locationName) locationName = foundAddr.label
+                    if (!address) address = typeof foundAddr.address === 'string' ? foundAddr.address : (foundAddr.address || '')
+                    if (!mapLink) mapLink = foundAddr.googleMapLink || foundAddr.googleMapsLink
+                    if (!dist) dist = foundAddr.distance
+                }
+            }
+
+            // Async Distance Calculation
+            const calcDistance = async () => {
+                if (!dist && mapLink) {
+                    let d = ''
+                    let coords = extractCoordinates(mapLink)
+                    if (coords) {
+                        d = `${calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)} km`
+                    } else {
+                        try {
+                            const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(mapLink)}`)
+                            if (res.ok) {
+                                const data = await res.json()
+                                if (data.url) {
+                                    coords = extractCoordinates(data.url)
+                                    if (coords) {
+                                        d = `${calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)} km`
+                                    }
+                                }
+                            }
+                        } catch (e) { console.error(e) }
+                    }
+
+                    if (d) {
+                        setFormData(prev => ({ ...prev, distance: d }))
+                    }
+                }
+            }
+
             setFormData({
                 jobType: item.subJob.jobType || 'installation',
-                appointmentDate: item.subJob.appointmentDate || '',
-                completionDate: item.subJob.completionDate || '',
-                installLocationId: item.subJob.installLocationId || '',
-                installLocationName: item.subJob.installLocationName || '',
-                installAddress: item.subJob.installAddress || '',
-                googleMapLink: item.subJob.googleMapLink || '',
-                distance: item.subJob.distance || '',
-                inspector1: item.subJob.inspector1 || { name: '', phone: '' },
+                appointmentDate: toLocalInput(item.subJob.appointmentDate),
+                completionDate: toLocalInput(item.subJob.completionDate),
+                installLocationId: locationId,
+                installLocationName: locationName,
+                installAddress: address,
+                googleMapLink: mapLink,
+                distance: dist,
+                inspector1: inspectorData,
                 description: item.subJob.description || '',
                 team: item.subJob.team || ''
             })
+
+            // Trigger calc if needed
+            if (!dist && mapLink) {
+                calcDistance()
+            }
         } else {
             // Reset or set default
             setFormData({
@@ -48,7 +120,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
                 team: ''
             })
         }
-    }, [item, isOpen])
+    }, [item, isOpen, customer])
 
     if (!isOpen && !isInline) return null
 
