@@ -9,10 +9,12 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
     const handleParse = () => {
         if (!text) return;
 
-        let workingText = text.replace(/\s+/g, ' ').trim();
+        // Sanitize invisible characters and normalize spaces
+        let workingText = text.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
 
         const result = {
             companyName: '',
+            contactName: '', // New field for extracted contact name
             taxId: '',
             branch: '',
             addrNumber: '',
@@ -46,11 +48,17 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         const phoneRegex = /(0\d{1,2}[-\s]?\d{3}[-\s]?\d{3,4})/;
         const phoneMatch = workingText.match(phoneRegex);
         if (phoneMatch) {
-            result.phone = phoneMatch[0].replace(/[-\s]/g, ''); // Store plain numbers or keep format? Keeping matched format for now is often safer, but removing spaces/dashes is cleaner for DB. Let's keep a bit of formatting or strip? Let's strip standard separators for consistency if desired, or keep raw. The user usually wants to see it formatted. Let's store raw match for now.
-            // Actually, let's keep it as is from the match to preserve user's format or normalize.
-            // Let's normalize dashes:
-            result.phone = phoneMatch[0];
+            result.phone = phoneMatch[0].replace(/[-\s]/g, '');
             workingText = workingText.replace(phoneMatch[0], ' ').trim();
+        }
+
+        // Extract Contact Person (K., คุณ, etc.)
+        // Matches K.Name, คุณName, etc.
+        const contactRegex = /(?:^|\s)((?:K\.|คุณ|Mr\.|Ms\.|Mrs\.|นาย|นาง|น\.ส\.|Miss)\s*[^\s]+(?:\s+[^\s]+)?)/i;
+        const contactMatch = workingText.match(contactRegex);
+        if (contactMatch) {
+            result.contactName = contactMatch[1].trim();
+            workingText = workingText.replace(contactMatch[0], ' ').trim();
         }
 
         // Extract Email
@@ -68,8 +76,6 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
             extract(/(สาขา|Branch)[\s:]*(\d+|[a-zA-Z0-9]+)/i, 'branch');
         }
 
-
-
         extract(/(\d{5})(?!\d)/, 'addrZipcode');
 
         if (!extract(/(จังหวัด|จ\.)\s*([^\s]+)/, 'addrProvince')) {
@@ -81,7 +87,6 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
 
         extract(/(อำเภอ|อ\.|เขต)\s*([^\s]+)/, 'addrAmphoe');
         extract(/(ตำบล|ต\.|แขวง)\s*([^\s]+)/, 'addrTambon');
-        // Moo extraction moved to Address Part Processing
 
         // 2. Identify Split Point
         let splitIndex = -1;
@@ -103,12 +108,14 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
             ];
 
             let earliestIndex = Infinity;
+            let bestMatchLength = 0;
 
             indicators.forEach(regex => {
                 const m = workingText.match(regex);
                 if (m) {
                     if (m.index < earliestIndex) {
                         earliestIndex = m.index;
+                        bestMatchLength = m[0].length;
                     }
                 }
             });
@@ -138,7 +145,9 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         // 3. Process Name
         result.companyName = namePart.replace(/^(ที่อยู่|Address|ชื่อ|Name|:)+/i, '').trim();
         let initialName = result.companyName; // Store original name part
-        result.fullLabel = initialName;
+
+        // Use initialName + Contact Name for fullLabel
+        result.fullLabel = [initialName, result.contactName].filter(Boolean).join(' ');
 
         // 4. Process Address Part
         let addrText = addressPart;
@@ -184,15 +193,29 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         // Capture remaining text as Village/Building OR Company Name if misplaced
         let leftovers = addrText.trim();
         if (leftovers && leftovers.length > 2 && !leftovers.match(/^[\d\-\s]+$/)) {
-            // Check if it looks like a Company Name
+            // Check if it looks like a Company Name (re-check)
             if (leftovers.match(/^(บริษัท|บ\.|หจก|ห้าง|ร้าน|โรง|คณะ|การ|The|Company)/i)) {
-                // Found Company at end: Overwrite companyName for Tax purposes
-                result.companyName = leftovers;
-                // Set fullLabel for Delivery purposes
-                result.fullLabel = (initialName + ' ' + leftovers).trim();
+                // If the "leftover" looks like a company name and our initial companyName was actually empty or short, swap?
+                // Or maybe just append/replace?
+                // But typically if we stripped everything else, this is likely Village.
+
+                // If result.companyName is suspicious (empty), use this.
+                if (!result.companyName) {
+                    result.companyName = leftovers;
+                } else {
+                    // If we already have a company name, this might be Village "อาคาร ABC"
+                    result.addrVillage = leftovers;
+                }
             } else {
                 result.addrVillage = leftovers;
             }
+        }
+
+        // Final fallback: If contactName is empty but result.addrVillage looks like a person?
+        // E.g. "K.เตี้ย"
+        if (result.addrVillage && !result.contactName && result.addrVillage.match(/^(K\.|คุณ|Mr|Ms|Mrs|นาย|นาง|น\.ส)/i)) {
+            result.contactName = result.addrVillage;
+            result.addrVillage = '';
         }
 
         onParse(result);

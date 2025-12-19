@@ -11,7 +11,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-        mediaSource: '', mediaSourceOther: '',
+        mediaSource: '',
         taxInvoices: [],
         addresses: [],
         contacts: []  // New contacts array
@@ -39,7 +39,8 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
             setFormData({
                 name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-                mediaSource: '', mediaSourceOther: '',
+                contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
+                mediaSource: '',
                 // Initialize with one empty item each
                 taxInvoices: [{ id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }],
                 addresses: [{
@@ -231,7 +232,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     if (c.id === activeParserContactId) {
                         return {
                             ...c,
-                            name: result.companyName || c.name, // Use extracted company/name
+                            name: result.contactName || result.companyName || c.name, // Prefer Contact Name
                             phone: result.phone || c.phone,
                             email: result.email || c.email
                         }
@@ -243,7 +244,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
         } else if (activeParserBasicInfo) {
             setFormData(prev => ({
                 ...prev,
-                name: result.fullLabel || result.companyName || prev.name,
+                name: result.companyName || result.fullLabel || prev.name, // For Basic Info, prefer Company Name if available
                 phone: result.phone || prev.phone,
                 email: result.email || prev.email
             }))
@@ -441,19 +442,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                             </select>
                                         </div>
                                     </div>
-                                    {formData.mediaSource === 'OTHER' && (
-                                        <div>
-                                            <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
-                                                <label className="block text-xs font-medium text-secondary-500 mb-1">ระบุอื่นๆ</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.mediaSourceOther}
-                                                    onChange={e => setFormData({ ...formData, mediaSourceOther: e.target.value })}
-                                                    className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>

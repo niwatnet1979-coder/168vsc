@@ -13,7 +13,6 @@ import { DataManager } from '../lib/dataManager'
 
 import ProductModal from './ProductModal'
 
-import JobListModal from './JobListModal' // Embody 1:N Job List
 import AddressSelector from './AddressSelector' // Import AddressSelector
 import ContactSelector from './ContactSelector'
 import ContactDisplayCard from './ContactDisplayCard'
@@ -48,7 +47,7 @@ export default function OrderForm() {
     const [customer, setCustomer] = useState({
         id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-        mediaSource: '', mediaSourceOther: ''
+        mediaSource: ''
     })
 
     const [taxInvoice, setTaxInvoice] = useState({
@@ -72,6 +71,7 @@ export default function OrderForm() {
 
     const [items, setItems] = useState([])
     const [selectedItemIndex, setSelectedItemIndex] = useState(0) // Default to first item
+    const [selectedJobIndex, setSelectedJobIndex] = useState(0) // Default to first job
 
     // Derived Job Info Data from Selected Item
     const currentJobInfo = useMemo(() => {
@@ -82,8 +82,6 @@ export default function OrderForm() {
     }, [items, selectedItemIndex])
 
     // --- 1:N Job Management State ---
-    const [showJobListModal, setShowJobListModal] = useState(false)
-    const [currentJobListItemIndex, setCurrentJobListItemIndex] = useState(null) // Index of item in 'items' whose jobs we are listing
     const [editingJobIndex, setEditingJobIndex] = useState(null) // Index of job in 'item.jobs' we are editing (null = adding new)
 
     // Handlers for Job Info
@@ -599,7 +597,7 @@ export default function OrderForm() {
                     setCustomer({
                         id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
                         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-                        mediaSource: '', mediaSourceOther: ''
+                        mediaSource: ''
                     })
                     setReceiverContact(null)
                     setPurchaserContact(null)
@@ -712,7 +710,9 @@ export default function OrderForm() {
             })
 
             // Trigger auto-select in OrderItemModal
-            setLastCreatedProduct(savedProduct)
+            // Use the full product object from refetched list to ensure variants are present
+            const fullSavedProduct = products.find(p => p.id === savedProduct.id || p.uuid === savedProduct.uuid || p.product_code === savedProduct.product_code)
+            setLastCreatedProduct(fullSavedProduct || savedProduct)
             if (editingItemIndex === null) {
                 // If we were adding a new item, ensure the modal is open
                 setShowOrderItemModal(true)
@@ -760,31 +760,6 @@ export default function OrderForm() {
 
 
 
-    const deleteJobFromList = (jobIndex, job) => {
-        if (currentJobListItemIndex === null) return
-        if (!confirm('ยืนยันลบงานนี้?')) return
-
-        const newItems = [...items]
-        const currentItem = newItems[currentJobListItemIndex]
-
-        const updatedJobs = currentItem.jobs.filter((_, idx) => idx !== jobIndex)
-        // Re-sequence? Optional.
-
-        newItems[currentJobListItemIndex].jobs = updatedJobs
-
-        // Update display if we deleted the highlighted job
-        if (updatedJobs.length > 0) {
-            // grab the new latest (first one if sorted desc, or last one?)
-            // Assuming array order.
-            const latest = updatedJobs[updatedJobs.length - 1] // or 0? 
-            // Ideally we re-sort but for now:
-            newItems[currentJobListItemIndex].subJob = { ...latest, description: latest.notes, team: latest.assigned_team, appointmentDate: latest.appointment_date } // Approximation
-        } else {
-            newItems[currentJobListItemIndex].subJob = {}
-        }
-
-        setItems(newItems)
-    }
 
     const handleSaveItem = (itemData) => {
         const newItems = [...items]
@@ -1242,21 +1217,50 @@ export default function OrderForm() {
                                 onAddNewInspector={handleAddNewInspector}
                                 excludeJobTypes={['separate']}
                                 actions={
-                                    <div className="flex items-center gap-2">
-                                        <div className="relative">
+                                    <div className="flex items-center gap-1.5">
+                                        {/* Item Selector */}
+                                        <div className="relative flex items-center bg-white border border-secondary-200 rounded-md px-1.5 py-1 focus-within:ring-1 focus-within:ring-primary-500">
+                                            <span className="text-[10px] font-bold text-secondary-500 mr-1.5">{selectedItemIndex + 1}</span>
+                                            <Package size={12} className="text-secondary-400 mr-1 flex-shrink-0" />
                                             <select
                                                 value={selectedItemIndex}
-                                                onChange={(e) => setSelectedItemIndex(Number(e.target.value))}
-                                                className="pl-3 pr-8 py-1 text-xs border border-secondary-200 rounded-md bg-white focus:ring-primary-500 focus:border-primary-500 appearance-none cursor-pointer"
-                                                style={{ maxWidth: '160px' }}
+                                                onChange={(e) => {
+                                                    setSelectedItemIndex(Number(e.target.value))
+                                                    setSelectedJobIndex(0) // Reset job index when item changes
+                                                }}
+                                                className="bg-white text-[10px] border-none p-0 outline-none cursor-pointer appearance-none pr-3"
+                                                style={{ maxWidth: '110px' }}
                                             >
                                                 {items.map((item, idx) => (
                                                     <option key={idx} value={idx}>
-                                                        {item.variation_data?.selectedVariant?.code || item.code || `สินค้า #${idx + 1}`}
+                                                        {item.id && typeof item.id === 'string' && item.id.length > 12 ? item.id.slice(-12) : `Item ${idx + 1}`}
                                                     </option>
                                                 ))}
                                             </select>
-                                            <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
+                                            <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
+                                        </div>
+
+                                        {/* Job Selector */}
+                                        <div className="relative flex items-center bg-white border border-secondary-200 rounded-md px-1.5 py-1 focus-within:ring-1 focus-within:ring-primary-500">
+                                            <span className="text-[10px] font-bold text-secondary-500 mr-1.5">{selectedJobIndex + 1}</span>
+                                            <Wrench size={12} className="text-secondary-400 mr-1 flex-shrink-0" />
+                                            <select
+                                                value={selectedJobIndex}
+                                                onChange={(e) => setSelectedJobIndex(Number(e.target.value))}
+                                                className="bg-white text-[10px] border-none p-0 outline-none cursor-pointer appearance-none pr-3"
+                                                style={{ maxWidth: '110px' }}
+                                            >
+                                                {(items[selectedItemIndex]?.jobs && items[selectedItemIndex]?.jobs.length > 0) ? (
+                                                    items[selectedItemIndex].jobs.map((job, idx) => (
+                                                        <option key={idx} value={idx}>
+                                                            {job.id && typeof job.id === 'string' && job.id.length > 12 ? job.id.slice(-12) : 'New'}
+                                                        </option>
+                                                    ))
+                                                ) : (
+                                                    <option value={0}>New</option>
+                                                )}
+                                            </select>
+                                            <ChevronDown size={10} className="absolute right-1 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
                                         </div>
                                         <button
                                             type="button"
@@ -1638,6 +1642,11 @@ export default function OrderForm() {
                                                         <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                             Stock: {item.stock || 0}
                                                         </span>
+                                                        {item.id && typeof item.id === 'string' && item.id.length > 12 && (
+                                                            <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500 ml-1">
+                                                                ID: {item.id.slice(-12)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -1795,12 +1804,7 @@ export default function OrderForm() {
                                                         {/* Job Sequence Indicator */}
                                                         {/* Job Sequence Indicator (Click to Open List) */}
                                                         <div
-                                                            className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-100 hover:bg-secondary-200 cursor-pointer px-1.5 py-0.5 rounded transition-colors"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setCurrentJobListItemIndex(idx)
-                                                                setShowJobListModal(true)
-                                                            }}
+                                                            className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100"
                                                         >
                                                             <List size={10} />
                                                             <span>{item.latestJobIndex || item.jobs?.length || 1}</span>
@@ -1975,6 +1979,7 @@ export default function OrderForm() {
                         onClose={() => setShowProductModal(false)}
                         product={newProduct}
                         onSave={handleSaveNewProduct}
+                        existingProducts={productsData}
                     />
 
                     {/* Customer Edit Modal */}
@@ -1999,18 +2004,6 @@ export default function OrderForm() {
                         onSave={handleAddNewCustomer}
                     />
 
-                    {/* Job List Modal */}
-                    <JobListModal
-                        isOpen={showJobListModal}
-                        onClose={() => {
-                            setShowJobListModal(false)
-                            setCurrentJobListItemIndex(null)
-                        }}
-                        item={currentJobListItemIndex !== null ? items[currentJobListItemIndex] : {}}
-                        jobs={currentJobListItemIndex !== null ? (items[currentJobListItemIndex]?.jobs || []) : []}
-
-                        onDeleteJob={(jobIdx, job) => deleteJobFromList(jobIdx, job)}
-                    />
 
                     {/* Sub Job Modal (Enhanced for List Support) */}
 

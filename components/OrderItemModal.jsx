@@ -169,6 +169,10 @@ const OrderItemModal = React.forwardRef(({
 
         // Calculate base price from first variant only (product.price is deprecated)
         const basePrice = (product.variants?.[0]?.price) || 0
+        const firstVariant = product.variants?.[0] || null
+
+        // Store variants locally directly from selected product
+        setProductVariants(product.variants || [])
 
         setFormData(prev => ({
             ...prev,
@@ -189,8 +193,11 @@ const OrderItemModal = React.forwardRef(({
             unitPrice: basePrice,
             qty: prev.qty || 1,
 
-            // Reset variant selection
-            selectedVariant: null,
+            // Auto-select first variant
+            selectedVariant: firstVariant,
+            selectedVariantIndex: firstVariant ? 0 : null,
+            image: firstVariant?.images?.[0] || prev.image,
+
             _searchTerm: product.name,
         }))
         setShowSearchPopup(false)

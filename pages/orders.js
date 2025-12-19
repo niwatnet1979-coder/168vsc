@@ -323,7 +323,7 @@ export default function OrdersListPage() {
                                         <tr key={order.id} className="hover:bg-secondary-50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link href={`/order?id=${order.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                    {order.id}
+                                                    {order.id?.slice(-12)}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
