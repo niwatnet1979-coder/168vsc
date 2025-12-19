@@ -12,7 +12,7 @@ import AppLayout from './AppLayout'
 import { DataManager } from '../lib/dataManager'
 
 import ProductModal from './ProductModal'
-import SubJobModal from './SubJobModal'
+
 import JobListModal from './JobListModal' // Embody 1:N Job List
 import AddressSelector from './AddressSelector' // Import AddressSelector
 import ContactSelector from './ContactSelector'
@@ -339,7 +339,11 @@ export default function OrderForm() {
                                     width: item.width || product.width,
                                     height: item.height || product.height,
                                     // Image fallback
-                                    image: item.image || product.variants?.[0]?.images?.[0] || null
+                                    image: item.image || product.variants?.[0]?.images?.[0] || null,
+                                    // Variant Mapping
+                                    selectedVariant: item.variant || null,
+                                    variant_id: item.product_variant_id || item.variant?.id || null,
+                                    variantId: item.product_variant_id || item.variant?.id || null
                                 }
                             }
 
@@ -369,7 +373,39 @@ export default function OrderForm() {
     }, [router.isReady, router.query.id])
 
 
+    // Auto-calculate Distance for Selected Job
+    useEffect(() => {
+        const calculate = async () => {
+            if (!currentJobInfo?.googleMapLink) return;
+            // Distinct check to avoid loop if distance is already set
+            if (currentJobInfo.distance) return;
 
+            let coords = extractCoordinates(currentJobInfo.googleMapLink)
+
+            // If direct extraction fails, try resolving short link
+            if (!coords && (currentJobInfo.googleMapLink.includes('goo.gl') || currentJobInfo.googleMapLink.includes('maps.app.goo.gl'))) {
+                try {
+                    const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(currentJobInfo.googleMapLink)}`)
+                    if (res.ok) {
+                        const data = await res.json()
+                        if (data.url) {
+                            coords = extractCoordinates(data.url)
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error resolving map link:', error)
+                }
+            }
+
+            if (coords) {
+                const dist = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
+                // Format as string with unit for consistency with modal
+                handleJobInfoUpdate({ distance: `${dist} km` })
+            }
+        }
+
+        calculate()
+    }, [currentJobInfo?.googleMapLink, currentJobInfo?.distance])
 
 
     // --- Handlers ---
@@ -463,13 +499,12 @@ export default function OrderForm() {
                         distance: ''
                     })
                 } else if (addingContactFor === 'installAddress') {
-                    setJobInfo(prev => ({
-                        ...prev,
+                    handleJobInfoUpdate({
                         installLocationName: newAddr.label,
                         installAddress: fullAddress,
                         googleMapLink: newAddr.googleMapsLink,
                         distance: ''
-                    }))
+                    })
                 }
             }
         }
@@ -481,8 +516,7 @@ export default function OrderForm() {
             const newContact = newContacts.find(n => !prevContacts.some(p => p.id === n.id))
             if (newContact) {
                 if (addingContactFor === 'inspector') {
-                    setJobInfo(prev => ({
-                        ...prev,
+                    handleJobInfoUpdate({
                         inspector1: {
                             id: newContact.id,
                             name: newContact.name,
@@ -492,7 +526,7 @@ export default function OrderForm() {
                             position: newContact.position || '',
                             note: newContact.note || ''
                         }
-                    }))
+                    })
                 } else if (addingContactFor === 'purchaserContact') {
                     setPurchaserContact({
                         id: newContact.id,
@@ -617,8 +651,7 @@ export default function OrderForm() {
 
     // Quick Add Product State
     const [showProductModal, setShowProductModal] = useState(false)
-    const [showSubJobModal, setShowSubJobModal] = useState(false)
-    const [currentSubJobItemIndex, setCurrentSubJobItemIndex] = useState(null)
+
     const [newProduct, setNewProduct] = useState({
         id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
         length: '', width: '', height: '', material: '', color: '',
@@ -693,86 +726,7 @@ export default function OrderForm() {
         setItems(newItems)
     }
 
-    const handleSaveSubJob = (subJobData) => {
-        // Updated for 1:N Jobs
-        if (currentSubJobItemIndex !== null) {
-            const newItems = [...items]
-            const currentItem = newItems[currentSubJobItemIndex]
 
-            // Logic: Are we editing a specific job from the list?
-            if (editingJobIndex !== null && currentItem.jobs) {
-                // Updating existing job in the list
-                const updatedJobs = [...currentItem.jobs]
-                updatedJobs[editingJobIndex] = {
-                    ...updatedJobs[editingJobIndex],
-                    ...subJobData,
-                    // Map legacy fields back if needed, or just keep them synced
-                    jobType: subJobData.jobType,
-                    status: subJobData.status || updatedJobs[editingJobIndex].status || 'รอดำเนินการ',
-                    assigned_team: subJobData.team,
-                    appointment_date: subJobData.appointmentDate,
-                    completion_date: subJobData.completionDate,
-                    site_inspector_id: subJobData.inspector1?.id, // Assuming structure
-                    site_address_id: subJobData.installLocationId,
-                    notes: subJobData.description
-                }
-                newItems[currentSubJobItemIndex].jobs = updatedJobs
-
-                // Fallback compatibility: Update item.subJob to match LATEST job logic? 
-                // Or simple: Update subJob to THIS job if it's the latest?
-                // Let's rely on getOrders logic -> sorts by date. 
-                // If we sort here, we keep UI consistent.
-                // For now, let's just make 'item.subJob' reflect the one we just edited so the UI card updates (legacy view)
-                newItems[currentSubJobItemIndex].subJob = subJobData
-
-            }
-            else if (editingJobIndex === null && currentSubJobItemIndex !== null && typeof currentJobListItemIndex === 'number') {
-                // Adding a NEW JOB (via list modal)
-                // Note: handleSaveSubJob is called by SubJobModal. 
-                // If we opened SubJobModal from JobListModal (Add mode), 'editingJobIndex' is null.
-                // But check if we are in "List Mode" (currentJobListItemIndex should be set)
-
-                const newJob = {
-                    sequence_number: (currentItem.jobs?.length || 0) + 1,
-                    ...subJobData,
-                    jobType: subJobData.jobType,
-                    status: 'รอดำเนินการ',
-                    assigned_team: subJobData.team,
-                    appointment_date: subJobData.appointmentDate,
-                    completion_date: subJobData.completionDate,
-                    notes: subJobData.description
-                }
-
-                newItems[currentSubJobItemIndex].jobs = [...(currentItem.jobs || []), newJob]
-
-                // Update legacy display to show this new job
-                newItems[currentSubJobItemIndex].subJob = subJobData
-            }
-            else {
-                // Legacy path (direct click on icon without list modal context?) 
-                // Or editing the "main" subJob directly (should be avoided now).
-                // Let's assume standard behavior: Update subJob property directly.
-                newItems[currentSubJobItemIndex] = {
-                    ...newItems[currentSubJobItemIndex],
-                    subJob: subJobData
-                }
-            }
-
-            setItems(newItems)
-            setShowSubJobModal(false)
-            // Do NOT clear currentSubJobItemIndex immediately if we want to return to List Modal?
-            // User flow: List -> Add -> Save -> Back to List.
-            // So we should keep List Modal open.
-            // We set currentSubJobItemIndex when opening SubJobModal.
-
-            // If we are in "Job List Mode", we don't clear currentSubJobItemIndex, 
-            // but we might close SubJobModal.
-            // Wait, we need to know if we are returning to List.
-            // Ideally: showSubJobModal=false. showJobListModal=true (it is already true).
-            // So we just close SubJobModal.
-            setShowSubJobModal(false)
-        }
-    }
 
     const deleteJobFromList = (jobIndex, job) => {
         if (currentJobListItemIndex === null) return
@@ -878,9 +832,10 @@ export default function OrderForm() {
         // If we need 3 IDs, we use Max+1, Max+2, Max+3.
         // So start counting from lastJobNum.
 
-        // Correction: DataManager.getNextJobId returns the *next* ID string.
-        // So lastJobNum should be that number - 1 ?? No, let's just use it as start.
         // Let's re-parse for safety.
+
+        // Define Main Job Info for Order Level Fallback (using first item's job info)
+        const mainJobInfo = items.length > 0 && items[0].subJob ? items[0].subJob : {};
 
         const itemsWithJobIds = items.map((item) => {
             // If item already has a jobId (e.g., when editing an existing order), keep it.
@@ -900,45 +855,45 @@ export default function OrderForm() {
                 subJob: {
                     ...subJob,
                     jobId: newJobId, // Assign permanent Job ID
-                    // Inherit from Main Job Info if subJob field is empty
-                    jobType: subJob.jobType || jobInfo.jobType || 'installation',
-                    appointmentDate: subJob.appointmentDate || jobInfo.appointmentDate || '',
-                    completionDate: subJob.completionDate || jobInfo.completionDate || null,
+                    // Inherit from Main Job Info if subJob field is empty (Use pure subJob now)
+                    jobType: subJob.jobType || 'installation',
+                    appointmentDate: subJob.appointmentDate || '',
+                    completionDate: subJob.completionDate || null,
                     // Add robust fallbacks
-                    team: subJob.team || jobInfo.team || '',
-                    description: subJob.description || jobInfo.description || '',
-                    // Check both inspector1 (object) and inspector (potential legacy string or object)
-                    inspector1: subJob.inspector1 || jobInfo.inspector1 || (jobInfo.inspector && typeof jobInfo.inspector === 'object' ? jobInfo.inspector : { name: jobInfo.inspector || '', phone: '' }) || null,
-                    installAddress: subJob.installAddress || jobInfo.installAddress || '',
-                    googleMapLink: subJob.googleMapLink || jobInfo.googleMapLink || '',
-                    distance: subJob.distance || jobInfo.distance || null
+                    team: subJob.team || '',
+                    description: subJob.description || '',
+                    // Check inspector1
+                    inspector1: subJob.inspector1 || null,
+                    installAddress: subJob.installAddress || '',
+                    googleMapLink: subJob.googleMapLink || '',
+                    distance: subJob.distance || null
                 }
             }
         })
 
         const newOrder = {
             id: orderId,
-            date: jobInfo.orderDate,
+            date: mainJobInfo.appointmentDate || new Date().toISOString(),
             customer: finalCustomer, // Object with ID and Name
             customerDetails: finalCustomer,
             items: itemsWithJobIds,
             total: total,
             status: 'Pending',
-            jobInfo: jobInfo, // jobInfo.description already contains the note
+            jobInfo: mainJobInfo, // Save main job info for backward compatibility
             taxInvoice: taxInvoice,
             taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
             purchaserContact: purchaserContact,
             receiverContact: receiverContact,
             discount: discount,
             shippingFee: shippingFee,
-            note: jobInfo.description, // Save description as note for backward compatibility
+            note: mainJobInfo.description,
             paymentSchedule: paymentSchedule || [], // Ensure it exists
             // Map Installation Location as Delivery Address
             deliveryAddress: {
-                id: jobInfo.installLocationId,
-                address: jobInfo.installAddress,
-                googleMapLink: jobInfo.googleMapLink,
-                distance: jobInfo.distance
+                id: mainJobInfo.installLocationId,
+                address: mainJobInfo.installAddress,
+                googleMapLink: mainJobInfo.googleMapLink,
+                distance: mainJobInfo.distance
             }
         }
 
@@ -1041,8 +996,8 @@ export default function OrderForm() {
                             </button>
                             <FileEdit className="text-primary-600 hidden sm:block" size={32} />
                             <div>
-                                <h1 className="text-xl sm:text-2xl font-bold text-secondary-900">
-                                    {router.query.id ? `แก้ไขออเดอร์ ${router.query.id}` : 'สร้างออเดอร์ใหม่'}
+                                <h1 className="text-2xl font-bold">
+                                    {order.id ? `แก้ไขออเดอร์ #${order.order_number || order.id}` : `สร้างออเดอร์ใหม่ #${order.order_number || ''}`}
                                 </h1>
                                 <p className="text-xs sm:text-sm text-secondary-500 hidden sm:block">กรอกข้อมูลให้ครบถ้วนเพื่อสร้างใบเสนอราคา/ออเดอร์</p>
                             </div>
@@ -1673,20 +1628,27 @@ export default function OrderForm() {
                                                     {(() => {
                                                         const getDims = (obj) => {
                                                             if (!obj) return null
-                                                            if (obj.width || obj.length || obj.height) {
-                                                                return { w: obj.width, l: obj.length, h: obj.height }
-                                                            }
+                                                            // 1. Try parsed dimensions object (from DataManager)
                                                             if (obj.dimensions) {
                                                                 return { w: obj.dimensions.width, l: obj.dimensions.length, h: obj.dimensions.height }
+                                                            }
+                                                            // 2. Try parsing 'size' string (Raw DB format)
+                                                            if (obj.size && typeof obj.size === 'string') {
+                                                                const parts = obj.size.split('x').map(p => parseInt(p) || 0)
+                                                                if (parts.length >= 3) return { l: parts[0], w: parts[1], h: parts[2] }
+                                                            }
+                                                            // 3. Try legacy individual fields
+                                                            if (obj.width || obj.length || obj.height) {
+                                                                return { w: obj.width, l: obj.length, h: obj.height }
                                                             }
                                                             return null
                                                         }
 
-                                                        // Priority: Item -> Selected Variant -> Product -> First Variant
-                                                        const dims = getDims(item) ||
-                                                            getDims(item.selectedVariant) ||
+                                                        // Priority: Selected Variant (Golden Source) -> Product -> Item (Fallback/Legacy)
+                                                        const dims = getDims(item.selectedVariant) ||
                                                             getDims(item.product) ||
-                                                            (item.product?.variants?.[0] ? getDims(item.product.variants[0]) : null)
+                                                            (item.product?.variants?.[0] ? getDims(item.product.variants[0]) : null) ||
+                                                            getDims(item)
 
                                                         if (dims && (dims.w || dims.l || dims.h)) {
                                                             return (
@@ -1790,13 +1752,8 @@ export default function OrderForm() {
                                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                                     {/* Job Type */}
                                                     <div
-                                                        className="flex items-center gap-1 cursor-pointer hover:text-primary-600 hover:bg-primary-50 p-1 -ml-1 rounded transition-colors"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            setCurrentSubJobItemIndex(idx)
-                                                            setShowSubJobModal(true)
-                                                        }}
-                                                        title="แก้ไขข้อมูลงานย่อย"
+                                                        className="flex items-center gap-1 p-1 -ml-1 rounded text-secondary-500"
+                                                        title="ประเภทงาน"
                                                     >
                                                         {(item.subJob?.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
                                                     </div>
@@ -1891,15 +1848,7 @@ export default function OrderForm() {
                                 item={editingItemIndex !== null ? items[editingItemIndex] : null}
                                 productsData={productsData}
                                 isEditing={editingItemIndex !== null}
-                                onOpenSubJob={() => {
-                                    if (editingItemIndex !== null) {
-                                        setShowOrderItemModal(false)
-                                        setCurrentSubJobItemIndex(editingItemIndex)
-                                        setShowSubJobModal(true)
-                                    } else {
-                                        alert('กรุณาบันทึกรายการก่อนกำหนดข้อมูลงาน')
-                                    }
-                                }}
+
                                 onAddNewProduct={() => setShowProductModal(true)}
                                 lastCreatedProduct={lastCreatedProduct}
                                 onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
@@ -2026,59 +1975,12 @@ export default function OrderForm() {
                         }}
                         item={currentJobListItemIndex !== null ? items[currentJobListItemIndex] : {}}
                         jobs={currentJobListItemIndex !== null ? (items[currentJobListItemIndex]?.jobs || []) : []}
-                        onAddJob={() => {
-                            // Open SubJobModal for NEW job
-                            setEditingJobIndex(null)
-                            // Use the same index logic
-                            setCurrentSubJobItemIndex(currentJobListItemIndex)
-                            setShowSubJobModal(true)
-                        }}
-                        onEditJob={(jobIdx, job) => {
-                            // Open SubJobModal for EXISTING job
-                            setEditingJobIndex(jobIdx)
-                            setCurrentSubJobItemIndex(currentJobListItemIndex)
-                            // We need to prepopulate SubJobModal. 
-                            // It reads from item.subJob. We need to temporarily SWAP it or pass it?
-                            // Hack: relying on handleSaveSubJob logic to handle update, but 'SubJobModal' reads initial state from 'item'.
-                            // We might need to override 'item' in SubJobModal render below?
-                            setShowSubJobModal(true)
-                        }}
+
                         onDeleteJob={(jobIdx, job) => deleteJobFromList(jobIdx, job)}
                     />
 
                     {/* Sub Job Modal (Enhanced for List Support) */}
-                    {showSubJobModal && currentSubJobItemIndex !== null && (
-                        <SubJobModal
-                            isOpen={true}
-                            onClose={() => {
-                                setShowSubJobModal(false)
-                                if (!showJobListModal) setCurrentSubJobItemIndex(null) // Only clear info if we aren't in list mode
-                                setEditingJobIndex(null) // Reset editing mode
-                            }}
-                            // Hack: If editing a specific job, construct a fake item with THAT job's data as subJob
-                            item={
-                                (editingJobIndex !== null && items[currentSubJobItemIndex]?.jobs?.[editingJobIndex])
-                                    ? {
-                                        ...items[currentSubJobItemIndex], subJob: {
-                                            ...items[currentSubJobItemIndex].jobs[editingJobIndex],
-                                            // Map DB columns to App props expected by SubJobModal
-                                            jobType: items[currentSubJobItemIndex].jobs[editingJobIndex].jobType,
-                                            appointmentDate: items[currentSubJobItemIndex].jobs[editingJobIndex].appointment_date,
-                                            completionDate: items[currentSubJobItemIndex].jobs[editingJobIndex].completion_date,
-                                            installLocationId: items[currentSubJobItemIndex].jobs[editingJobIndex].site_address_id,
-                                            inspector1: { id: items[currentSubJobItemIndex].jobs[editingJobIndex].site_inspector_id }, // Simple mock
-                                            description: items[currentSubJobItemIndex].jobs[editingJobIndex].notes,
-                                            team: items[currentSubJobItemIndex].jobs[editingJobIndex].assigned_team
-                                        }
-                                    }
-                                    : items[currentSubJobItemIndex]
-                            }
-                            onSave={handleSaveSubJob}
-                            customer={customer}
-                            availableTeams={availableTeams}
-                            readOnly={false} // Allow editing from list
-                        />
-                    )}
+
 
                     {/* Payment Entry Modal */}
                     {/* Payment Entry Modal */}
