@@ -28,6 +28,7 @@ import {
 export default function OrdersListPage() {
     const router = useRouter()
     const [orders, setOrders] = useState([])
+    const [loadError, setLoadError] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [currentPage, setCurrentPage] = useState(1)
@@ -48,6 +49,7 @@ export default function OrdersListPage() {
     // Load data from Supabase on mount
     const loadOrders = async () => {
         try {
+            setLoadError(null)
             // Use DataManager to get normalized orders with joined customer data
             const allOrders = await DataManager.getOrders()
 
@@ -92,6 +94,7 @@ export default function OrdersListPage() {
         } catch (error) {
             console.error('Error loading orders:', error)
             setOrders([])
+            setLoadError('เชื่อมต่อฐานข้อมูลไม่ได้ชั่วคราว (Supabase/เครือข่าย) กรุณาลองใหม่')
         }
     }
 
@@ -219,6 +222,19 @@ export default function OrdersListPage() {
                                 <p className="text-sm text-secondary-500 mt-1">จัดการคำสั่งซื้อทั้งหมด {orders.length} รายการ</p>
                             </div>
                         </div>
+                        {loadError && (
+                            <div className="flex items-center gap-3 bg-danger-50 border border-danger-200 text-danger-700 px-4 py-2 rounded-lg w-full sm:w-auto">
+                                <span className="text-sm">{loadError}</span>
+                                <button
+                                    className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-md bg-white border border-danger-200 hover:bg-danger-50"
+                                    onClick={loadOrders}
+                                    type="button"
+                                >
+                                    <RotateCcw size={16} />
+                                    ลองใหม่
+                                </button>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 w-full sm:w-auto">
 
                             <button

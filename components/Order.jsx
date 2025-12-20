@@ -19,7 +19,7 @@ import ContactDisplayCard from './ContactDisplayCard'
 import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
 import Card from './Card'
-import { currency, calculateDistance, deg2rad, extractCoordinates, SHOP_LAT, SHOP_LON } from '../lib/utils'
+import { currency, calculateDistance, deg2rad, extractCoordinates, SHOP_LAT, SHOP_LON, formatAddress } from '../lib/utils'
 
 import OrderItemModal from './OrderItemModal'
 import PaymentSummaryCard from './PaymentSummaryCard'
@@ -93,9 +93,24 @@ export default function OrderForm() {
     const currentJobInfo = useMemo(() => {
         if (items.length > 0 && items[selectedItemIndex]) {
             const item = items[selectedItemIndex]
-            // Priority: selected job from the jobs array
+            console.log('[Order] currentJobInfo - Selected item:', {
+                itemId: item.id,
+                itemName: item.name,
+                jobsCount: item.jobs?.length || 0,
+                jobs: item.jobs,
+                selectedJobIndex
+            })
+            
+            // Use selected job from the jobs array (source of truth)
             if (item.jobs && item.jobs[selectedJobIndex]) {
                 const job = item.jobs[selectedJobIndex]
+                console.log('[Order] currentJobInfo - Using job:', {
+                    jobId: job.id,
+                    jobType: job.job_type || job.jobType,
+                    team: job.assigned_team || job.team,
+                    appointmentDate: job.appointment_date || job.appointmentDate
+                })
+                
                 return {
                     ...job,
                     // Map snake_case from DB to camelCase for UI if needed
@@ -121,13 +136,17 @@ export default function OrderForm() {
                     googleMapLink: job.googleMapLink || job.site_google_map_link,
                     distance: job.distance || job.site_distance,
 
-                    inspector1: job.inspector1 || job.siteInspectorRecord
+                    // IMPORTANT: Respect an explicitly cleared inspector (inspector1: null).
+                    // If we fallback to siteInspectorRecord after clearing, it looks like the click did nothing.
+                    inspector1: ('inspector1' in job) ? job.inspector1 : job.siteInspectorRecord
                 }
             }
-            // Fallback: subJob (for new items or items without specific jobs loaded yet)
-            return item.subJob || {}
+            // If no jobs exist, return empty object (will use generalJobInfo as fallback in JobInfoCard)
+            console.log('[Order] currentJobInfo - No job found at index', selectedJobIndex, 'for item', item.id)
+            return {}
         }
         // Fallback: Return General Job Info if NO ITEMS exist
+        console.log('[Order] currentJobInfo - No items, using generalJobInfo')
         return generalJobInfo
     }, [items, selectedItemIndex, selectedJobIndex, generalJobInfo])
 
@@ -149,16 +168,22 @@ export default function OrderForm() {
             if (newItems[selectedItemIndex]) {
                 const updatedItem = { ...newItems[selectedItemIndex] }
 
-                // 1. Update the subJob buffer (used for saveOrder and general UI)
-                updatedItem.subJob = {
-                    ...(updatedItem.subJob || {}),
-                    ...updates
+                // Ensure jobs array exists
+                if (!updatedItem.jobs) {
+                    updatedItem.jobs = []
                 }
 
-                // 2. Update the specific job in the jobs array if selected
-                if (updatedItem.jobs && updatedItem.jobs[selectedJobIndex]) {
+                // Update the specific job in the jobs array
+                if (updatedItem.jobs[selectedJobIndex]) {
+                    // Update existing job
                     updatedItem.jobs[selectedJobIndex] = {
                         ...updatedItem.jobs[selectedJobIndex],
+                        ...updates
+                    }
+                } else {
+                    // Create new job if it doesn't exist
+                    updatedItem.jobs[selectedJobIndex] = {
+                        jobType: 'installation',
                         ...updates
                     }
                 }
@@ -195,8 +220,7 @@ export default function OrderForm() {
             const updatedJobs = [...existingJobs, newJob]
             newItems[selectedItemIndex] = {
                 ...currentItem,
-                jobs: updatedJobs,
-                subJob: newJob // Initialize subJob with the new job data
+                jobs: updatedJobs
             }
 
             // Side effect to update index (using a timeout for state batching safety)
@@ -233,19 +257,7 @@ export default function OrderForm() {
                 setSelectedJobIndex(nextIndex)
             }
 
-            // Sync subJob to the new active job (to prevent DataManager from resurrecting the deleted job from stale subJob)
-            if (updatedJobs.length > 0) {
-                const activeJob = updatedJobs[nextIndex]
-                updatedItem.subJob = {
-                    ...activeJob,
-                    jobId: activeJob.id || activeJob.jobId,
-                    jobType: activeJob.jobType || activeJob.job_type,
-                    // Preserve created_at if exists
-                    created_at: activeJob.created_at
-                }
-            } else {
-                updatedItem.subJob = {}
-            }
+            // No subJob sync needed - jobs array is the source of truth
 
             newItems[selectedItemIndex] = updatedItem
             return newItems
@@ -271,18 +283,25 @@ export default function OrderForm() {
             }
 
             setItems(prev => prev.map(item => {
-                // Update subJob
-                const newSubJob = { ...item.subJob, ...sharedData }
-
-                // Update jobs array (target only the first job since we restrict to single-job items)
+                // Update ALL jobs in the jobs array (not just jobs[0])
                 let newJobs = [...(item.jobs || [])]
+                
                 if (newJobs.length > 0) {
-                    newJobs[0] = { ...newJobs[0], ...sharedData }
+                    // Update every job in the array
+                    newJobs = newJobs.map(job => ({
+                        ...job,
+                        ...sharedData
+                    }))
+                } else {
+                    // If no jobs exist, create one with shared data
+                    newJobs = [{
+                        jobType: 'installation',
+                        ...sharedData
+                    }]
                 }
 
                 return {
                     ...item,
-                    subJob: newSubJob,
                     jobs: newJobs
                 }
             }))
@@ -478,6 +497,14 @@ export default function OrderForm() {
 
                     // Load items and fetch product images
                     if (order.items) {
+                        // Debug: Log items with jobs before mapping
+                        console.log('[Order] Loading items with jobs:', order.items.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            jobsCount: item.jobs?.length || 0,
+                            jobs: item.jobs
+                        })))
+                        
                         // Fetch all products to get images
                         const products = await DataManager.getProducts()
 
@@ -489,15 +516,19 @@ export default function OrderForm() {
                                 p.product_code === item.code
                             )
 
+                            // CRITICAL: Preserve jobs BEFORE any mapping to prevent override
+                            const preservedJobs = item.jobs || []
+                            
                             if (product) {
                                 // Sync missing fields from product to item (Normalization)
                                 // This ensures consistent display between "New Item" and "Loaded Item"
-                                return {
+                                const mappedItem = {
                                     ...item,
                                     product, // Attach full product object
-                                    // Initialize subJob from first job for UI compatibility
-                                    // Initialize subJob from DataManager or fallback
-                                    subJob: item.subJob || {},
+                                    // CRITICAL: Explicitly preserve jobs array from loaded order (AFTER spread to override any undefined)
+                                    jobs: preservedJobs,
+                                    // Use jobs array directly (no subJob needed)
+                                    // jobs array is already loaded from DataManager
                                     // Fallbacks if missing in order_item record
                                     material: item.material || product.material,
                                     category: item.category || product.category,
@@ -513,11 +544,41 @@ export default function OrderForm() {
                                     variant_id: item.product_variant_id || item.variant?.id || null,
                                     variantId: item.product_variant_id || item.variant?.id || null
                                 }
+                                
+                                console.log('[Order] Mapped item with jobs:', {
+                                    itemId: mappedItem.id,
+                                    itemName: mappedItem.name,
+                                    jobsCount: mappedItem.jobs?.length || 0,
+                                    jobs: mappedItem.jobs
+                                })
+                                
+                                return mappedItem
                             }
 
-                            return item
+                            // CRITICAL: Also preserve jobs for items without product match
+                            const mappedItemWithoutProduct = {
+                                ...item,
+                                jobs: preservedJobs
+                            }
+                            
+                            console.log('[Order] Mapped item (no product) with jobs:', {
+                                itemId: mappedItemWithoutProduct.id,
+                                itemName: mappedItemWithoutProduct.name,
+                                jobsCount: mappedItemWithoutProduct.jobs?.length || 0,
+                                jobs: mappedItemWithoutProduct.jobs
+                            })
+                            
+                            return mappedItemWithoutProduct
                         })
 
+                        // Debug: Log items after mapping to verify jobs are preserved
+                        console.log('[Order] Items after mapping:', itemsWithImages.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            jobsCount: item.jobs?.length || 0,
+                            jobs: item.jobs
+                        })))
+                        
                         setItems(itemsWithImages)
                     }
 
@@ -917,19 +978,40 @@ export default function OrderForm() {
             stock: product.variants?.[0]?.stock || 0,
             _searchTerm: undefined,
             showPopup: false,
-            // Sync main job info to sub job if not separate
-            subJob: currentJobInfo.jobType !== 'separate' ? {
-                ...(newItems[index].subJob || {}),
-                jobType: currentJobInfo.jobType,
-                appointmentDate: currentJobInfo.appointmentDate,
-                completionDate: currentJobInfo.completionDate,
-                installLocationName: currentJobInfo.installLocationName,
-                installAddress: currentJobInfo.installAddress,
-                googleMapLink: currentJobInfo.googleMapLink,
-                distance: currentJobInfo.distance,
-                team: currentJobInfo.team,
-                description: currentJobInfo.note || newItems[index].subJob?.description
-            } : (newItems[index].subJob || {})
+            // Sync main job info to jobs array if not separate
+            jobs: currentJobInfo.jobType !== 'separate' ? (() => {
+                const existingJobs = newItems[index].jobs || []
+                if (existingJobs.length > 0) {
+                    // Update first job with current job info
+                    return existingJobs.map((job, idx) => 
+                        idx === 0 ? {
+                            ...job,
+                            jobType: currentJobInfo.jobType,
+                            appointmentDate: currentJobInfo.appointmentDate,
+                            completionDate: currentJobInfo.completionDate,
+                            installLocationName: currentJobInfo.installLocationName,
+                            installAddress: currentJobInfo.installAddress,
+                            googleMapLink: currentJobInfo.googleMapLink,
+                            distance: currentJobInfo.distance,
+                            team: currentJobInfo.team,
+                            description: currentJobInfo.note || job.description
+                        } : job
+                    )
+                } else {
+                    // Create new job with current job info
+                    return [{
+                        jobType: currentJobInfo.jobType,
+                        appointmentDate: currentJobInfo.appointmentDate,
+                        completionDate: currentJobInfo.completionDate,
+                        installLocationName: currentJobInfo.installLocationName,
+                        installAddress: currentJobInfo.installAddress,
+                        googleMapLink: currentJobInfo.googleMapLink,
+                        distance: currentJobInfo.distance,
+                        team: currentJobInfo.team,
+                        description: currentJobInfo.note || ''
+                    }]
+                }
+            })() : (newItems[index].jobs || [])
         }
         setItems(newItems)
     }
@@ -950,18 +1032,15 @@ export default function OrderForm() {
             if (items.length === 0) {
                 console.log('Attaching General Job Info to First Item', generalJobInfo)
 
-                // Merge into subJob
-                newItem.subJob = { ...newItem.subJob, ...generalJobInfo }
-
                 // Merge into first job if exists
                 if (newItem.jobs && newItem.jobs.length > 0) {
                     newItem.jobs[0] = { ...newItem.jobs[0], ...generalJobInfo }
                 } else {
-                    // Create a default job if none exist? 
-                    // Usually newItem from modal comes with a subJob or jobs. 
-                    // If it has NO jobs, maybe we should create one? 
-                    // OrderItemModal usually handles creation. 
-                    // Let's rely on subJob being the carrier for now as per logic.
+                    // Create a default job with general job info
+                    newItem.jobs = [{
+                        jobType: 'installation',
+                        ...generalJobInfo
+                    }]
                 }
             }
 
@@ -1040,50 +1119,38 @@ export default function OrderForm() {
 
         // Let's re-parse for safety.
 
-        // Define Main Job Info for Order Level Fallback (using first item's job info)
-        const mainJobInfo = items.length > 0 && items[0].subJob ? items[0].subJob : generalJobInfo;
+        // Define Main Job Info for Order Level Fallback (using first item's first job)
+        const mainJobInfo = items.length > 0 && items[0].jobs && items[0].jobs[0] 
+            ? items[0].jobs[0] 
+            : generalJobInfo;
 
-        const itemsWithJobIds = items.map((item) => {
-            // Priority: Use existing jobId from subJob OR from the selected job in the jobs array
-            const existingJobId = item.subJob?.jobId || item.subJob?.id || (item.jobs?.[selectedJobIndex]?.id) || (item.jobs?.[0]?.id)
-
-            if (existingJobId && !String(existingJobId).startsWith('NEW')) {
-                // Ensure subJob has the right ID for matching in DataManager
+        // Prepare items with jobs array (no subJob needed)
+        const itemsWithJobs = items.map((item) => {
+            // Ensure jobs array exists
+            const itemJobs = item.jobs || []
+            
+            // If no jobs exist, create a default one
+            if (itemJobs.length === 0) {
                 return {
                     ...item,
-                    subJob: {
-                        ...(item.subJob || {}),
-                        jobId: existingJobId,
-                        jobId: existingJobId,
-                        jobType: item.subJob?.jobType || 'installation',
-                        // Preserve created_at for DataManager to use
-                        created_at: item.subJob?.created_at || item.jobs?.find(j => j.id === existingJobId)?.created_at
-                    }
-                };
-            }
-
-            // Generate new ID only if absolutely none found
-            const newJobId = `JB${(lastJobNum).toString().padStart(7, '0')}`
-            lastJobNum++
-
-            const subJob = item.subJob || {}
-
-            return {
-                ...item,
-                subJob: {
-                    ...subJob,
-                    jobId: newJobId,
-                    jobType: subJob.jobType || 'installation'
+                    jobs: [{
+                        jobType: 'installation',
+                        status: 'รอดำเนินการ',
+                        sequence_number: 1
+                    }]
                 }
             }
+
+            // Return item with jobs array as-is
+            return item
         })
 
         const newOrder = {
             id: orderId,
-            date: mainJobInfo.appointmentDate || new Date().toISOString(),
+            date: mainJobInfo.appointmentDate || mainJobInfo.appointment_date || new Date().toISOString(),
             customer: finalCustomer, // Object with ID and Name
             customerDetails: finalCustomer,
-            items: itemsWithJobIds,
+            items: itemsWithJobs, // Use items with jobs array directly
             total: total,
             status: 'Pending',
             jobInfo: mainJobInfo, // Save main job info for backward compatibility
@@ -1093,14 +1160,14 @@ export default function OrderForm() {
             receiverContact: receiverContact,
             discount: discount,
             shippingFee: shippingFee,
-            note: mainJobInfo.description,
+            note: mainJobInfo.description || mainJobInfo.notes || '',
             paymentSchedule: paymentSchedule || [], // Ensure it exists
             // Map Installation Location as Delivery Address
             deliveryAddress: {
-                id: mainJobInfo.installLocationId,
-                address: mainJobInfo.installAddress,
-                googleMapLink: mainJobInfo.googleMapLink,
-                distance: mainJobInfo.distance
+                id: mainJobInfo.installLocationId || mainJobInfo.site_address_id,
+                address: mainJobInfo.installAddress || mainJobInfo.site_address_content,
+                googleMapLink: mainJobInfo.googleMapLink || mainJobInfo.site_google_map_link,
+                distance: mainJobInfo.distance || mainJobInfo.site_distance
             }
         }
 
@@ -1447,7 +1514,8 @@ export default function OrderForm() {
                                                                     onClick={() => {
                                                                         setSelectedItemIndex(idx)
                                                                         const jobCount = items[idx]?.jobs?.length || 0
-                                                                        setSelectedJobIndex(Math.max(0, jobCount - 1))
+                                                                        // If jobs exist, select the last job (latest), otherwise select index 0
+                                                                        setSelectedJobIndex(jobCount > 0 ? jobCount - 1 : 0)
                                                                         setShowItemDropdown(false)
                                                                     }}
                                                                     className={`px-3 py-2 text-xs flex items-center gap-2 cursor-pointer transition-colors ${selectedItemIndex === idx ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-secondary-50 text-secondary-700'}`}
@@ -1471,9 +1539,33 @@ export default function OrderForm() {
                                                 <span className="text-[10px] font-bold text-secondary-500">{selectedJobIndex + 1}</span>
                                                 <Wrench size={12} className="text-secondary-400" />
                                                 <span className="text-[10px] text-secondary-700 flex-1 truncate">
-                                                    {(items[selectedItemIndex]?.jobs && items[selectedItemIndex]?.jobs[selectedJobIndex])
-                                                        ? (items[selectedItemIndex].jobs[selectedJobIndex].id?.slice(-12) || 'New')
-                                                        : 'New'}
+                                                    {(() => {
+                                                        const item = items[selectedItemIndex]
+                                                        if (!item) return 'New'
+                                                        
+                                                        const jobs = item.jobs || []
+                                                        
+                                                        // If jobs exist, try to get the selected job or the last job
+                                                        if (jobs.length > 0) {
+                                                            // Try selected index first
+                                                            const selectedJob = jobs[selectedJobIndex]
+                                                            if (selectedJob && selectedJob.id) {
+                                                                return selectedJob.id.slice(-12)
+                                                            }
+                                                            
+                                                            // If selected index is out of bounds, use the last job
+                                                            const lastJob = jobs[jobs.length - 1]
+                                                            if (lastJob && lastJob.id) {
+                                                                return lastJob.id.slice(-12)
+                                                            }
+                                                            
+                                                            // If jobs exist but no ID, show "New"
+                                                            return 'New'
+                                                        }
+                                                        
+                                                        // No jobs exist, show "New"
+                                                        return 'New'
+                                                    })()}
                                                 </span>
                                                 <ChevronDown size={10} className={`text-secondary-400 transition-transform ${showJobDropdown ? 'rotate-180' : ''}`} />
                                             </div>
@@ -1492,14 +1584,9 @@ export default function OrderForm() {
                                                                     className={`group px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${selectedJobIndex === idx ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-secondary-50 text-secondary-700'}`}
                                                                     onClick={() => {
                                                                         setSelectedJobIndex(idx)
-                                                                        // Sync subJob to ensure handleSaveOrder uses the active job
-                                                                        const targetJob = items[selectedItemIndex]?.jobs?.[idx]
-                                                                        if (targetJob) {
-                                                                            handleJobInfoUpdate({
-                                                                                ...targetJob,
-                                                                                jobId: targetJob.id || targetJob.jobId
-                                                                            })
-                                                                        }
+                                                                        // IMPORTANT: Do not call handleJobInfoUpdate() here.
+                                                                        // Selecting a job should only change selection; updating can accidentally
+                                                                        // overwrite another job due to async state updates (stale selectedJobIndex).
                                                                         setShowJobDropdown(false)
                                                                     }}
                                                                 >
@@ -1674,44 +1761,7 @@ export default function OrderForm() {
                                             <div>
                                                 <label className="block text-xs font-semibold text-secondary-500 mb-1">ที่อยู่บริษัท</label>
                                                 <div className="text-xs text-secondary-800 leading-relaxed">
-                                                    {(() => {
-                                                        const addr = taxInvoice.address;
-                                                        // Fallback logic for address display
-                                                        if (typeof addr === 'string' && addr) return addr;
-                                                        if (addr && typeof addr === 'object') {
-                                                            const p = [];
-                                                            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`);
-                                                            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`);
-                                                            if (addr.addrVillage) p.push(addr.addrVillage);
-                                                            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`);
-                                                            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`);
-                                                            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`);
-                                                            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`);
-                                                            const prov = addr.province || addr.addrProvince || taxInvoice.province || taxInvoice.addrProvince;
-                                                            if (prov) p.push(`จังหวัด ${prov}`);
-                                                            const zip = addr.zipcode || addr.addrZipcode || taxInvoice.zipcode || taxInvoice.addrZipcode;
-                                                            if (zip) p.push(zip);
-                                                            const result = p.join(' ');
-                                                            if (result) return result;
-                                                        }
-                                                        // Fallback: read from taxInvoice root level
-                                                        const p = [];
-                                                        if (taxInvoice.addrNumber) p.push(`เลขที่ ${taxInvoice.addrNumber}`);
-                                                        if (taxInvoice.addrMoo) p.push(`หมู่ ${taxInvoice.addrMoo}`);
-                                                        if (taxInvoice.addrVillage) p.push(taxInvoice.addrVillage);
-                                                        if (taxInvoice.addrSoi) p.push(`ซอย ${taxInvoice.addrSoi}`);
-                                                        if (taxInvoice.addrRoad) p.push(`ถนน ${taxInvoice.addrRoad}`);
-                                                        if (taxInvoice.addrTambon) p.push(`ตำบล ${taxInvoice.addrTambon}`);
-                                                        if (taxInvoice.addrAmphoe) p.push(`อำเภอ ${taxInvoice.addrAmphoe}`);
-
-                                                        const prov = taxInvoice.province || taxInvoice.addrProvince;
-                                                        if (prov) p.push(`จังหวัด ${prov}`);
-
-                                                        const zip = taxInvoice.zipcode || taxInvoice.addrZipcode;
-                                                        if (zip) p.push(zip);
-
-                                                        return p.join(' ') || '-';
-                                                    })()}
+                                                    {formatAddress(taxInvoice.address, taxInvoice)}
                                                 </div>
                                             </div>
                                         </div>
@@ -2040,89 +2090,109 @@ export default function OrderForm() {
 
                                             {/* Row 3: Job Info & Dates */}
                                             {/* Row 3: Job Info & Dates */}
-                                            <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
-                                                {/* LEFT: Job Info: Inspector, Location */}
-                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                    {/* Inspector (Swapped from Row 4) */}
-                                                    <div className="flex items-center gap-1">
-                                                        <UserCheck size={12} />
-                                                        <span>
-                                                            {(item.subJob?.inspector1?.name) || '-'}
-                                                            {(item.subJob?.inspector1?.phone) && ` (${item.subJob?.inspector1?.phone})`}
-                                                        </span>
-                                                    </div>
+                                            {(() => {
+                                                // Get latest job (last job in array, sorted by sequence_number)
+                                                const latestJob = item.jobs && item.jobs.length > 0 
+                                                    ? item.jobs[item.jobs.length - 1] 
+                                                    : item.latestJob || null
+                                                
+                                                return (
+                                                    <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
+                                                        {/* LEFT: Job Info: Inspector, Location */}
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                            {/* Inspector (Swapped from Row 4) */}
+                                                            <div className="flex items-center gap-1">
+                                                                <UserCheck size={12} />
+                                                                <span>
+                                                                    {(latestJob?.inspector1?.name) || '-'}
+                                                                    {(latestJob?.inspector1?.phone) && ` (${latestJob?.inspector1?.phone})`}
+                                                                </span>
+                                                            </div>
 
-                                                    {(item.subJob?.distance || item.subJob?.installLocationName) && (
-                                                        <div className="flex items-center gap-1 text-secondary-500">
-                                                            {item.subJob?.distance && <span>{item.subJob?.distance} Km</span>}
-                                                            {item.subJob?.installLocationName && <span>{item.subJob?.installLocationName}</span>}
+                                                            {(latestJob?.distance || latestJob?.installLocationName) && (
+                                                                <div className="flex items-center gap-1 text-secondary-500">
+                                                                    {latestJob?.distance && <span>{latestJob?.distance} Km</span>}
+                                                                    {latestJob?.installLocationName && <span>{latestJob?.installLocationName}</span>}
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center gap-1">
+                                                                <MapPin size={12} className="flex-shrink-0" />
+                                                                <span>
+                                                                    {latestJob?.installAddress || latestJob?.installLocationName || '-'}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                    <div className="flex items-center gap-1">
-                                                        <MapPin size={12} className="flex-shrink-0" />
-                                                        <span>
-                                                            {item.subJob?.installAddress || item.subJob?.installLocationName || '-'}
-                                                        </span>
-                                                    </div>
-                                                </div>
 
-                                                {/* RIGHT: Dates - Moved to Row 4 */}
-                                            </div>
+                                                        {/* RIGHT: Dates - Moved to Row 4 */}
+                                                    </div>
+                                                )
+                                            })()}
 
                                             {/* Row 4: Job Type, Team, Details & Dates */}
                                             <div className="flex justify-between items-center gap-4 text-xs text-secondary-500">
                                                 {/* LEFT Group: Job Type, Team, Details */}
                                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                    {/* Job Type */}
-                                                    <div
-                                                        className="flex items-center gap-1 p-1 -ml-1 rounded text-secondary-500"
-                                                        title="ประเภทงาน"
-                                                    >
-                                                        {(item.subJob?.jobType) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
-                                                    </div>
+                                                    {(() => {
+                                                        // Get latest job (last job in array, sorted by sequence_number)
+                                                        const latestJob = item.jobs && item.jobs.length > 0 
+                                                            ? item.jobs[item.jobs.length - 1] 
+                                                            : item.latestJob || null
+                                                        
+                                                        return (
+                                                            <>
+                                                                {/* Job Type */}
+                                                                <div
+                                                                    className="flex items-center gap-1 p-1 -ml-1 rounded text-secondary-500"
+                                                                    title="ประเภทงาน"
+                                                                >
+                                                                    {(latestJob?.jobType || latestJob?.job_type) === 'delivery' ? <Truck size={14} /> : <Wrench size={14} />}
+                                                                </div>
 
-                                                    {/* Dates - Moved to 2nd position */}
-                                                    <div className="flex items-center gap-3">
-                                                        {/* Job Sequence Indicator */}
-                                                        {/* Job Sequence Indicator (Click to Open List) */}
-                                                        <div
-                                                            className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100"
-                                                        >
-                                                            <List size={10} />
-                                                            <span>{item.latestJobIndex || item.jobs?.length || 1}</span>
-                                                        </div>
+                                                                {/* Dates - Moved to 2nd position */}
+                                                                <div className="flex items-center gap-3">
+                                                                    {/* Job Sequence Indicator */}
+                                                                    {/* Job Sequence Indicator (Click to Open List) */}
+                                                                    <div
+                                                                        className="flex items-center gap-1 text-secondary-500 font-medium text-[11px] bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100"
+                                                                    >
+                                                                        <List size={10} />
+                                                                        <span>{item.latestJobIndex || item.jobs?.length || 1}</span>
+                                                                    </div>
 
-                                                        <div className="flex items-center gap-1">
-                                                            <Calendar size={12} />
-                                                            <span>
-                                                                {(item.subJob?.appointmentDate)
-                                                                    ? new Date(item.subJob?.appointmentDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                    : '-'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 text-green-700">
-                                                            <CheckCircle size={12} />
-                                                            <span>
-                                                                {(item.subJob?.completionDate)
-                                                                    ? new Date(item.subJob?.completionDate).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
-                                                                    : '-'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Calendar size={12} />
+                                                                        <span>
+                                                                            {(latestJob?.appointmentDate || latestJob?.appointment_date)
+                                                                                ? new Date(latestJob?.appointmentDate || latestJob?.appointment_date).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                                : '-'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 text-green-700">
+                                                                        <CheckCircle size={12} />
+                                                                        <span>
+                                                                            {(latestJob?.completionDate || latestJob?.completion_date)
+                                                                                ? new Date(latestJob?.completionDate || latestJob?.completion_date).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+                                                                                : '-'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
 
-                                                    {/* Team */}
-                                                    <div className="flex items-center gap-1">
-                                                        <Users size={12} />
-                                                        <span>{item.subJob?.team || '-'}</span>
-                                                    </div>
+                                                                {/* Team */}
+                                                                <div className="flex items-center gap-1">
+                                                                    <Users size={12} />
+                                                                    <span>{latestJob?.team || latestJob?.assigned_team || '-'}</span>
+                                                                </div>
 
-                                                    {/* Details/Note */}
-                                                    <div className="flex items-center gap-1 text-secondary-400">
-                                                        <FileText size={12} />
-                                                        <span className="truncate max-w-[300px]">
-                                                            {item.subJob?.description || '-'}
-                                                        </span>
-                                                    </div>
+                                                                {/* Details/Note */}
+                                                                <div className="flex items-center gap-1 text-secondary-400">
+                                                                    <FileText size={12} />
+                                                                    <span className="truncate max-w-[300px]">
+                                                                        {latestJob?.description || latestJob?.notes || '-'}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        )
+                                                    })()}
                                                 </div>
 
                                                 {/* RIGHT: Dates (Moved from Row 3) */}

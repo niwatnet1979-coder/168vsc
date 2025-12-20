@@ -25,7 +25,7 @@ const OrderItemModal = React.forwardRef(({
 }, ref) => {
     const [formData, setFormData] = useState({
         code: '', name: '', description: '', qty: 1, unitPrice: 0, image: null,
-        category: '', subcategory: '', subJob: null, _searchTerm: '',
+        category: '', subcategory: '', jobs: [], _searchTerm: '',
         lightColor: '', remote: '', bulbType: '', crystalColor: '', remark: '',
         selectedVariant: null
     })
@@ -124,7 +124,7 @@ const OrderItemModal = React.forwardRef(({
                     image: null,
                     category: '',
                     subcategory: '',
-                    subJob: null,
+                    jobs: [],
                     _searchTerm: '',
                     lightColor: '',
                     remote: '',
@@ -273,8 +273,8 @@ const OrderItemModal = React.forwardRef(({
             light: formData.bulbType || '', // Map bulbType to 'light' column
             lightColor: formData.lightColor || '',
             remote: formData.remote || '',
-            // Ensure subJob is passed through if it exists in formData
-            subJob: formData.subJob || null,
+            // Ensure jobs array is passed through if it exists in formData
+            jobs: formData.jobs || [],
         }
 
         console.log('[OrderItemModal] Saving item:', itemData)

@@ -172,10 +172,14 @@ export default function JobInfoCard({
                                                 name: contact.name,
                                                 phone: contact.phone || '',
                                                 email: contact.email || '',
-                                                lineId: contact.lineId || '',
+                                                lineId: contact.lineId || contact.line_id || '',
                                                 position: contact.position || '',
                                                 note: contact.note || ''
-                                            } : null
+                                            } : null,
+                                            // Keep canonical DB field in sync so save/load remains consistent
+                                            site_inspector_id: contact ? contact.id : null,
+                                            // Clear any joined fallback when explicitly setting a new inspector
+                                            siteInspectorRecord: contact ? contact : null
                                         })
                                     }}
                                     readOnly={readOnly}
@@ -184,8 +188,13 @@ export default function JobInfoCard({
                             ) : (
                                 <ContactDisplayCard
                                     contact={data.inspector1}
-                                    onClick={() => handleUpdate({ inspector1: null })}
-                                    className="sm:mt-0" // Small adjustment if needed, but mt-1 in component is fine
+                                    onClick={() => handleUpdate({
+                                        // Explicitly clear inspector across all related fields to prevent re-hydration
+                                        inspector1: null,
+                                        siteInspectorRecord: null,
+                                        site_inspector_id: null
+                                    })}
+                                    className="sm:mt-0"
                                 />
                             )}
                         </div>

@@ -17,6 +17,9 @@ export default function PaymentEntryModal({
     promptpayQr = '', // Added prop
     paymentCount = 0
 }) {
+    const isDataUrlImage = (val) => typeof val === 'string' && val.startsWith('data:image')
+    const isHttpUrl = (val) => typeof val === 'string' && /^https?:\/\//i.test(val)
+
     const normalizeDateForInput = (val) => {
         if (!val) return ''
         try {
@@ -66,7 +69,9 @@ export default function PaymentEntryModal({
             // Normalize date to YYYY-MM-DD for date input
             const populated = {
                 ...payment,
-                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date)
+                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date),
+                // Normalize method key (some callers use `method`, UI uses `paymentMethod`)
+                paymentMethod: payment.paymentMethod || payment.method || payment.payment_method || 'โอน'
             }
             setFormData(populated)
 
@@ -75,10 +80,12 @@ export default function PaymentEntryModal({
                 try {
                     receiverSigRef.current?.clear()
                     payerSigRef.current?.clear()
-                    if (payment.receiverSignature && receiverSigRef.current?.fromDataURL) {
+                    // IMPORTANT: Only load base64 data URLs into canvas.
+                    // Loading remote URLs into a canvas can "taint" it (CORS), causing SecurityError on toDataURL().
+                    if (isDataUrlImage(payment.receiverSignature) && receiverSigRef.current?.fromDataURL) {
                         receiverSigRef.current.fromDataURL(payment.receiverSignature)
                     }
-                    if (payment.payerSignature && payerSigRef.current?.fromDataURL) {
+                    if (isDataUrlImage(payment.payerSignature) && payerSigRef.current?.fromDataURL) {
                         payerSigRef.current.fromDataURL(payment.payerSignature)
                     }
                 } catch (err) {
@@ -115,8 +122,19 @@ export default function PaymentEntryModal({
         }
 
         // Get signature data
-        const receiverSig = receiverSigRef.current?.toDataURL()
-        const payerSig = payerSigRef.current?.toDataURL()
+        // If user didn't draw a new signature, keep the existing URL/base64 from formData.
+        let receiverSig = formData.receiverSignature || null
+        let payerSig = formData.payerSignature || null
+        try {
+            const receiverEmpty = receiverSigRef.current?.isEmpty?.() ?? true
+            const payerEmpty = payerSigRef.current?.isEmpty?.() ?? true
+            if (!receiverEmpty) receiverSig = receiverSigRef.current?.toDataURL?.() || receiverSig
+            if (!payerEmpty) payerSig = payerSigRef.current?.toDataURL?.() || payerSig
+        } catch (e) {
+            // If canvas is tainted for any reason, don't crash; keep existing values.
+            // (Remote URL signatures are not loaded into canvas, so this should be rare.)
+            console.warn('[PaymentEntryModal] Signature export failed, keeping existing signature URLs', e)
+        }
 
         onSave({
             ...formData,
@@ -340,19 +358,33 @@ export default function PaymentEntryModal({
                             <div key={sig.key} className="flex flex-col">
                                 <label className="block text-xs font-bold text-secondary-600 mb-2 uppercase tracking-wider">{sig.label}</label>
                                 <div className="border border-secondary-300 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow transition-shadow">
-                                    <SignatureCanvas
-                                        ref={sig.ref}
-                                        canvasProps={{
-                                            className: 'w-full h-24 bg-white'
-                                        }}
-                                    />
+                                    {isHttpUrl(formData?.[sig.key]) ? (
+                                        <div className="w-full h-24 bg-white flex items-center justify-center">
+                                            <img
+                                                src={formData[sig.key]}
+                                                alt={sig.label}
+                                                className="w-full h-24 object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <SignatureCanvas
+                                            ref={sig.ref}
+                                            canvasProps={{
+                                                className: 'w-full h-24 bg-white'
+                                            }}
+                                        />
+                                    )}
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => sig.ref.current?.clear()}
+                                    onClick={() => {
+                                        // Clearing should also remove stored URL/base64 so save won't keep the old signature.
+                                        setFormData(prev => ({ ...prev, [sig.key]: null }))
+                                        sig.ref.current?.clear?.()
+                                    }}
                                     className="self-end mt-1 text-xs text-secondary-400 hover:text-danger-500 font-medium transition-colors"
                                 >
-                                    ล้างลายเซ็น
+                                    {isHttpUrl(formData?.[sig.key]) ? 'วาดใหม่' : 'ล้างลายเซ็น'}
                                 </button>
                             </div>
                         ))}

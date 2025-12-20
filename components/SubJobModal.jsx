@@ -20,7 +20,10 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
     })
 
     useEffect(() => {
-        if (item && item.subJob) {
+        // Use first job from jobs array (or fallback to empty)
+        const job = item?.jobs?.[0] || null
+        
+        if (item && job) {
             // Helper: Format Date for Input (YYYY-MM-DDThh:mm)
             const toLocalInput = (dateStr) => {
                 if (!dateStr) return ''
@@ -33,7 +36,7 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
             }
 
             // Helper: Hydrate Inspector from Customer Contacts
-            let inspectorData = item.subJob.inspector1 || { name: '', phone: '' }
+            let inspectorData = job.inspector1 || { name: '', phone: '' }
             if (inspectorData.id && !inspectorData.name && customer?.contacts) {
                 const found = customer.contacts.find(c => c.id === inspectorData.id)
                 if (found) {
@@ -42,11 +45,11 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
             }
 
             // Helper: Hydrate Address from Customer Addresses
-            let locationId = item.subJob.installLocationId || ''
-            let locationName = item.subJob.installLocationName || ''
-            let address = item.subJob.installAddress || ''
-            let mapLink = item.subJob.googleMapLink || ''
-            let dist = item.subJob.distance || ''
+            let locationId = job.installLocationId || job.site_address_id || ''
+            let locationName = job.installLocationName || job.site_address_name || ''
+            let address = job.installAddress || job.site_address_content || ''
+            let mapLink = job.googleMapLink || job.site_google_map_link || ''
+            let dist = job.distance || job.site_distance || ''
 
             if (locationId && customer?.addresses) {
                 const foundAddr = customer.addresses.find(a => a.id === locationId)
@@ -87,17 +90,17 @@ export default function SubJobModal({ isOpen, onClose, item, onSave, customer = 
             }
 
             setFormData({
-                jobType: item.subJob.jobType || 'installation',
-                appointmentDate: toLocalInput(item.subJob.appointmentDate),
-                completionDate: toLocalInput(item.subJob.completionDate),
+                jobType: job.jobType || job.job_type || 'installation',
+                appointmentDate: toLocalInput(job.appointmentDate || job.appointment_date),
+                completionDate: toLocalInput(job.completionDate || job.completion_date),
                 installLocationId: locationId,
                 installLocationName: locationName,
                 installAddress: address,
                 googleMapLink: mapLink,
                 distance: dist,
                 inspector1: inspectorData,
-                description: item.subJob.description || '',
-                team: item.subJob.team || ''
+                description: job.description || job.notes || '',
+                team: job.team || job.assigned_team || ''
             })
 
             // Trigger calc if needed
