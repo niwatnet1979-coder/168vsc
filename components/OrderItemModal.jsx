@@ -19,6 +19,7 @@ const OrderItemModal = React.forwardRef(({
 
     onOpenSubJob, // Callback to open the sub-job modal
     onAddNewProduct, // Callback to open new product modal
+    onEditProduct, // Callback to edit existing product
     lastCreatedProduct = null,
     onConsumeLastCreatedProduct
 }, ref) => {
@@ -30,6 +31,7 @@ const OrderItemModal = React.forwardRef(({
     })
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
+    const [showVariantPopup, setShowVariantPopup] = useState(false)
     const [searchResults, setSearchResults] = useState([])
     const [productVariants, setProductVariants] = useState([])
 
@@ -295,7 +297,7 @@ const OrderItemModal = React.forwardRef(({
 
     const Wrapper = isInline ? 'div' : 'div'
     const wrapperProps = isInline ? { className: "w-full h-full flex flex-col p-4" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] max-h-[90vh] flex flex-col overflow-hidden" }
+    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] h-[600px] max-h-[90vh] flex flex-col overflow-hidden" }
 
 
     return (
@@ -385,7 +387,7 @@ const OrderItemModal = React.forwardRef(({
 
                                 {/* Search Popup */}
                                 {showSearchPopup && (
-                                    <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[450px] overflow-y-auto">
+                                    <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[360px] overflow-y-auto">
                                         {searchResults.length > 0 ? (
                                             searchResults.map(p => (
                                                 <div
@@ -498,20 +500,74 @@ const OrderItemModal = React.forwardRef(({
                                     Variant
                                 </label>
                                 <div className="relative">
-                                    <select
-                                        value={formData.selectedVariantIndex ?? ''}
-                                        onChange={(e) => handleVariantSelect(e.target.value)}
-                                        disabled={!formData.code}
-                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
+                                    <div
+                                        onClick={() => {
+                                            if (formData.code) {
+                                                setShowVariantPopup(!showVariantPopup)
+                                            }
+                                        }}
+                                        className={`w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer pr-6 flex items-center justify-between ${!formData.code ? 'cursor-not-allowed' : ''}`}
                                     >
-                                        <option value="">-- เลือก Variant --</option>
-                                        {productVariants.map((variant, i) => (
-                                            <option key={i} value={i}>
-                                                {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • พร้อมส่ง {variant.available ?? variant.stock ?? 0}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                        <div className="truncate">
+                                            {formData.selectedVariantIndex !== null && formData.selectedVariantIndex !== undefined && productVariants[formData.selectedVariantIndex]
+                                                ? (() => {
+                                                    const v = productVariants[formData.selectedVariantIndex]
+                                                    return `${v.color} ${v.crystalColor ? `(${v.crystalColor})` : ''} • ${v.dimensions ? `${v.dimensions.length}×${v.dimensions.width}×${v.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿${v.price?.toLocaleString()} • พร้อมส่ง ${v.available ?? v.stock ?? 0}`
+                                                })()
+                                                : '-- เลือก Variant --'}
+                                        </div>
+                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    </div>
+
+                                    {/* Variant Popup */}
+                                    {showVariantPopup && (
+                                        <>
+                                            {/* Backdrop to close */}
+                                            <div className="fixed inset-0 z-10" onClick={() => setShowVariantPopup(false)} />
+
+                                            <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[300px] overflow-y-auto">
+                                                {productVariants.map((variant, i) => (
+                                                    <div
+                                                        key={i}
+                                                        onClick={() => {
+                                                            handleVariantSelect(i)
+                                                            setShowVariantPopup(false)
+                                                        }}
+                                                        className={`p-2.5 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 text-sm ${formData.selectedVariantIndex === i ? 'bg-primary-50 text-primary-700 font-medium' : 'text-secondary-700'}`}
+                                                    >
+                                                        {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • พร้อมส่ง {variant.available ?? variant.stock ?? 0}
+                                                    </div>
+                                                ))}
+
+                                                {/* Add Variant Button */}
+                                                <div
+                                                    onClick={() => {
+                                                        if (onEditProduct) {
+                                                            // Find the full product object to pass
+                                                            // We effectively want to edit the currently selected product
+                                                            // We used selectProduct to populate formData.
+                                                            // But we need the full object.
+                                                            // In selectProduct we have access to it.
+                                                            // But here we might not have it stored fully except variants.
+                                                            // Let's reconstruct or fetch.
+                                                            // Actually, onEditProduct expects a product object.
+                                                            // We have productsData available!
+                                                            const currentProduct = productsData.find(p => p.product_code === formData.product_code || p.id === formData.code);
+                                                            if (currentProduct) {
+                                                                onEditProduct(currentProduct)
+                                                                setShowVariantPopup(false)
+                                                            } else {
+                                                                alert('ไม่พบข้อมูลสินค้าต้นทาง')
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="p-2.5 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
+                                                >
+                                                    <Plus size={16} /> เพิ่ม Variant ใหม่
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}

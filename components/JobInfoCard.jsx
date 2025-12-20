@@ -4,8 +4,8 @@ import AddressCard from './AddressCard'
 import Card from './Card'
 import ContactSelector from './ContactSelector'
 import ContactDisplayCard from './ContactDisplayCard'
-import { calculateDistance, extractCoordinates } from '../lib/utils'
-import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import { calculateDistance, extractCoordinates, SHOP_LAT, SHOP_LON } from '../lib/utils'
+
 import AddressSelector from './AddressSelector'
 import DataSourceTooltip from './DataSourceTooltip'
 

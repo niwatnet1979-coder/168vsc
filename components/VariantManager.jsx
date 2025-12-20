@@ -72,8 +72,8 @@ export default function VariantManager({
         if (index < variants.length) {
             newVariants[index] = formattedVariant
         } else {
-            // New variant - only sync if color is present to avoid empty objects in list
-            if (updatedForm.color) {
+            // New variant - only sync if PRICE is present (used to be color)
+            if (updatedForm.price) {
                 newVariants[index] = formattedVariant
                 // If it was local only, we don't need to do anything special here as variants handles push automatically
             } else {
@@ -287,7 +287,7 @@ export default function VariantManager({
                                             <span className="text-secondary-300">•</span>
                                             <div className="flex items-center gap-1" title="Color">
                                                 <Palette size={12} className="text-secondary-400" />
-                                                <span>{variant.color}</span>
+                                                <span>{variant.color || 'ไม่ระบุสี'}</span>
                                             </div>
 
                                             {variant.crystalColor && (
@@ -388,13 +388,12 @@ export default function VariantManager({
                         {/* Color */}
                         <div>
                             <label className="block text-sm font-medium text-secondary-700 mb-1">
-                                สี <span className="text-red-500">*</span>
+                                สี
                             </label>
                             <select
                                 value={variantForm.color}
                                 onChange={(e) => handleFormChange({ color: e.target.value })}
                                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                                required
                             >
                                 <option value="">เลือกสี</option>
                                 {materialColors.map((color, i) => {
@@ -438,7 +437,7 @@ export default function VariantManager({
 
                         {/* Price */}
                         <div>
-                            <label className="block text-sm font-medium text-secondary-700 mb-1">ราคา (บาท)</label>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">ราคา (บาท) <span className="text-red-500">*</span></label>
                             <input
                                 type="number"
                                 value={variantForm.price}

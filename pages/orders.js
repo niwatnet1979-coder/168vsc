@@ -116,10 +116,10 @@ export default function OrdersListPage() {
 
     const filteredOrders = orders.filter(order => {
         const matchesSearch =
-            (order.id && order.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (order.customerName && order.customerName.toLowerCase().includes(searchTerm.toLowerCase()))
+            (order.id && String(order.id).toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (order.customerName && String(order.customerName).toLowerCase().includes(searchTerm.toLowerCase()))
 
-        const matchesStatus = statusFilter === 'all' || (order.status && order.status.toLowerCase() === statusFilter.toLowerCase())
+        const matchesStatus = statusFilter === 'all' || (order.status && String(order.status).toLowerCase() === statusFilter.toLowerCase())
 
         return matchesSearch && matchesStatus
     }).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt)) // Sort by date desc
@@ -338,7 +338,7 @@ export default function OrdersListPage() {
                                         <tr key={order.id} className="hover:bg-secondary-50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link href={`/order?id=${order.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                    {order.id?.slice(-12)}
+                                                    {String(order.id || '').slice(-12)}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
@@ -370,19 +370,31 @@ export default function OrdersListPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-secondary-600 font-bold text-primary-600">
                                                 {(() => {
-                                                    // Flatten all job types across all items
-                                                    const rawTypes = (order.items || []).flatMap(item => (item.jobs || []).map(j => j.job_type))
-                                                    const normalizedTypes = rawTypes.map(normalizeJobType).filter(Boolean)
-                                                    const uniqueTypes = [...new Set(normalizedTypes)]
+                                                    try {
+                                                        // Ensure items is an array
+                                                        const items = Array.isArray(order.items) ? order.items : []
 
-                                                    const displayType = uniqueTypes.length > 1 ? 'mixed' : (uniqueTypes[0] || null)
+                                                        // Flatten all job types across all items
+                                                        const rawTypes = items.flatMap(item => {
+                                                            if (!item || !Array.isArray(item.jobs)) return []
+                                                            return item.jobs.map(j => j?.job_type)
+                                                        })
 
-                                                    return (
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${getJobTypeColor(displayType)}`}>
-                                                            {getJobTypeIcon(displayType)}
-                                                            {getJobTypeLabel(displayType)}
-                                                        </span>
-                                                    )
+                                                        const normalizedTypes = rawTypes.map(normalizeJobType).filter(Boolean)
+                                                        const uniqueTypes = [...new Set(normalizedTypes)]
+
+                                                        const displayType = uniqueTypes.length > 1 ? 'mixed' : (uniqueTypes[0] || null)
+
+                                                        return (
+                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all ${getJobTypeColor(displayType)}`}>
+                                                                {getJobTypeIcon(displayType)}
+                                                                {getJobTypeLabel(displayType)}
+                                                            </span>
+                                                        )
+                                                    } catch (err) {
+                                                        console.error('Job Type Render Error:', err)
+                                                        return <span className="text-xs text-secondary-400">-</span>
+                                                    }
                                                 })()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

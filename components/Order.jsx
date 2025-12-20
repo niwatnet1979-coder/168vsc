@@ -19,8 +19,8 @@ import ContactDisplayCard from './ContactDisplayCard'
 import JobInfoCard from './JobInfoCard'
 import PaymentEntryModal from './PaymentEntryModal'
 import Card from './Card'
-import { currency, calculateDistance, deg2rad, extractCoordinates } from '../lib/utils'
-import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import { currency, calculateDistance, deg2rad, extractCoordinates, SHOP_LAT, SHOP_LON } from '../lib/utils'
+
 import OrderItemModal from './OrderItemModal'
 import PaymentSummaryCard from './PaymentSummaryCard'
 
@@ -73,13 +73,63 @@ export default function OrderForm() {
     const [selectedItemIndex, setSelectedItemIndex] = useState(0) // Default to first item
     const [selectedJobIndex, setSelectedJobIndex] = useState(0) // Default to first job
 
+    // General Job Info (Fallback when no items exist)
+    const [generalJobInfo, setGeneralJobInfo] = useState({
+        jobType: 'installation',
+        appointmentDate: null,
+        completionDate: null,
+        description: '',
+        team: '',
+        inspector1: null,
+        installLocationId: null,
+        installLocationName: '',
+        installAddress: '',
+        googleMapLink: '',
+        distance: ''
+    })
+
+
     // Derived Job Info Data from Selected Item
     const currentJobInfo = useMemo(() => {
         if (items.length > 0 && items[selectedItemIndex]) {
-            return items[selectedItemIndex].subJob || {}
+            const item = items[selectedItemIndex]
+            // Priority: selected job from the jobs array
+            if (item.jobs && item.jobs[selectedJobIndex]) {
+                const job = item.jobs[selectedJobIndex]
+                return {
+                    ...job,
+                    // Map snake_case from DB to camelCase for UI if needed
+                    // Robust mapping for JobInfoCard resilience
+                    jobType: job.jobType || job.job_type || 'installation',
+                    job_type: job.jobType || job.job_type || 'installation',
+
+                    team: job.team || job.assigned_team || '',
+                    assigned_team: job.team || job.assigned_team || '',
+
+                    appointmentDate: job.appointmentDate || job.appointment_date || null,
+                    appointment_date: job.appointmentDate || job.appointment_date || null,
+
+                    completionDate: job.completionDate || job.completion_date || null,
+                    completion_date: job.completionDate || job.completion_date || null,
+
+                    description: job.description || job.notes || '',
+                    notes: job.description || job.notes || '',
+
+                    installLocationId: job.installLocationId || job.site_address_id,
+                    installLocationName: job.installLocationName || job.site_address_name,
+                    installAddress: job.installAddress || job.site_address_content,
+                    googleMapLink: job.googleMapLink || job.site_google_map_link,
+                    distance: job.distance || job.site_distance,
+
+                    inspector1: job.inspector1 || job.siteInspectorRecord
+                }
+            }
+            // Fallback: subJob (for new items or items without specific jobs loaded yet)
+            return item.subJob || {}
         }
-        return {}
-    }, [items, selectedItemIndex])
+        // Fallback: Return General Job Info if NO ITEMS exist
+        return generalJobInfo
+    }, [items, selectedItemIndex, selectedJobIndex, generalJobInfo])
 
     // --- 1:N Job Management State ---
     const [editingJobIndex, setEditingJobIndex] = useState(null) // Index of job in 'item.jobs' we are editing (null = adding new)
@@ -88,16 +138,32 @@ export default function OrderForm() {
 
     // Handlers for Job Info
     const handleJobInfoUpdate = (updates) => {
+        if (items.length === 0) {
+            // Update General Job Info
+            setGeneralJobInfo(prev => ({ ...prev, ...updates }))
+            return
+        }
+
         setItems(prev => {
             const newItems = [...prev]
             if (newItems[selectedItemIndex]) {
-                newItems[selectedItemIndex] = {
-                    ...newItems[selectedItemIndex],
-                    subJob: {
-                        ...newItems[selectedItemIndex].subJob,
+                const updatedItem = { ...newItems[selectedItemIndex] }
+
+                // 1. Update the subJob buffer (used for saveOrder and general UI)
+                updatedItem.subJob = {
+                    ...(updatedItem.subJob || {}),
+                    ...updates
+                }
+
+                // 2. Update the specific job in the jobs array if selected
+                if (updatedItem.jobs && updatedItem.jobs[selectedJobIndex]) {
+                    updatedItem.jobs[selectedJobIndex] = {
+                        ...updatedItem.jobs[selectedJobIndex],
                         ...updates
                     }
                 }
+
+                newItems[selectedItemIndex] = updatedItem
             }
             return newItems
         })
@@ -114,7 +180,7 @@ export default function OrderForm() {
             const newJob = {
                 id: null, // New job
                 order_item_id: currentItem.id,
-                job_type: 'Installation',
+                jobType: 'installation',
                 assigned_team: null,
                 appointment_date: new Date().toISOString(),
                 completion_date: null,
@@ -129,7 +195,8 @@ export default function OrderForm() {
             const updatedJobs = [...existingJobs, newJob]
             newItems[selectedItemIndex] = {
                 ...currentItem,
-                jobs: updatedJobs
+                jobs: updatedJobs,
+                subJob: newJob // Initialize subJob with the new job data
             }
 
             // Side effect to update index (using a timeout for state batching safety)
@@ -154,13 +221,30 @@ export default function OrderForm() {
             const updatedJobs = (updatedItem.jobs || []).filter((_, idx) => idx !== jobIdx)
             updatedItem.jobs = updatedJobs
 
+            let nextIndex = selectedJobIndex
             // Fix: If we delete the currently selected job, or a job before it, adjust the index
             if (selectedJobIndex === jobIdx) {
                 // If we deleted the last job, move to the new last job, or 0
-                setSelectedJobIndex(Math.max(0, updatedJobs.length - 1))
+                nextIndex = Math.max(0, updatedJobs.length - 1)
+                setSelectedJobIndex(nextIndex)
             } else if (selectedJobIndex > jobIdx) {
                 // If we deleted a job before the current one, decrement index to keep pointing at same job
-                setSelectedJobIndex(prevIdx => prevIdx - 1)
+                nextIndex = selectedJobIndex - 1
+                setSelectedJobIndex(nextIndex)
+            }
+
+            // Sync subJob to the new active job (to prevent DataManager from resurrecting the deleted job from stale subJob)
+            if (updatedJobs.length > 0) {
+                const activeJob = updatedJobs[nextIndex]
+                updatedItem.subJob = {
+                    ...activeJob,
+                    jobId: activeJob.id || activeJob.jobId,
+                    jobType: activeJob.jobType || activeJob.job_type,
+                    // Preserve created_at if exists
+                    created_at: activeJob.created_at
+                }
+            } else {
+                updatedItem.subJob = {}
             }
 
             newItems[selectedItemIndex] = updatedItem
@@ -171,23 +255,37 @@ export default function OrderForm() {
     const handleShareJobInfo = () => {
         if (!currentJobInfo) return
         if (confirm('คุณต้องการใช้ข้อมูลงานนี้กับสินค้าทุกรายการในออเดอร์ทางใช่หรือไม่?')) {
-            setItems(prev => prev.map(item => ({
-                ...item,
-                subJob: {
-                    ...item.subJob,
-                    jobType: currentJobInfo.jobType,
-                    appointmentDate: currentJobInfo.appointmentDate,
-                    completionDate: currentJobInfo.completionDate,
-                    installLocationId: currentJobInfo.installLocationId,
-                    installLocationName: currentJobInfo.installLocationName,
-                    installAddress: currentJobInfo.installAddress,
-                    googleMapLink: currentJobInfo.googleMapLink,
-                    distance: currentJobInfo.distance,
-                    inspector1: currentJobInfo.inspector1,
-                    team: currentJobInfo.team,
-                    description: currentJobInfo.description
+            // Prepare shared data object
+            const sharedData = {
+                jobType: currentJobInfo.jobType,
+                appointmentDate: currentJobInfo.appointmentDate,
+                completionDate: currentJobInfo.completionDate,
+                installLocationId: currentJobInfo.installLocationId,
+                installLocationName: currentJobInfo.installLocationName,
+                installAddress: currentJobInfo.installAddress,
+                googleMapLink: currentJobInfo.googleMapLink,
+                distance: currentJobInfo.distance,
+                inspector1: currentJobInfo.inspector1,
+                team: currentJobInfo.team,
+                description: currentJobInfo.description
+            }
+
+            setItems(prev => prev.map(item => {
+                // Update subJob
+                const newSubJob = { ...item.subJob, ...sharedData }
+
+                // Update jobs array (target only the first job since we restrict to single-job items)
+                let newJobs = [...(item.jobs || [])]
+                if (newJobs.length > 0) {
+                    newJobs[0] = { ...newJobs[0], ...sharedData }
                 }
-            })))
+
+                return {
+                    ...item,
+                    subJob: newSubJob,
+                    jobs: newJobs
+                }
+            }))
         }
     }
     const [discount, setDiscount] = useState({ mode: 'percent', value: 0 })
@@ -397,6 +495,9 @@ export default function OrderForm() {
                                 return {
                                     ...item,
                                     product, // Attach full product object
+                                    // Initialize subJob from first job for UI compatibility
+                                    // Initialize subJob from DataManager or fallback
+                                    subJob: item.subJob || {},
                                     // Fallbacks if missing in order_item record
                                     material: item.material || product.material,
                                     category: item.category || product.category,
@@ -817,17 +918,17 @@ export default function OrderForm() {
             _searchTerm: undefined,
             showPopup: false,
             // Sync main job info to sub job if not separate
-            subJob: jobInfo.jobType !== 'separate' ? {
+            subJob: currentJobInfo.jobType !== 'separate' ? {
                 ...(newItems[index].subJob || {}),
-                jobType: jobInfo.jobType,
-                appointmentDate: jobInfo.appointmentDate,
-                completionDate: jobInfo.completionDate,
-                installLocationName: jobInfo.installLocationName,
-                installAddress: jobInfo.installAddress,
-                googleMapLink: jobInfo.googleMapLink,
-                distance: jobInfo.distance,
-                team: jobInfo.team,
-                description: jobInfo.note || newItems[index].subJob?.description
+                jobType: currentJobInfo.jobType,
+                appointmentDate: currentJobInfo.appointmentDate,
+                completionDate: currentJobInfo.completionDate,
+                installLocationName: currentJobInfo.installLocationName,
+                installAddress: currentJobInfo.installAddress,
+                googleMapLink: currentJobInfo.googleMapLink,
+                distance: currentJobInfo.distance,
+                team: currentJobInfo.team,
+                description: currentJobInfo.note || newItems[index].subJob?.description
             } : (newItems[index].subJob || {})
         }
         setItems(newItems)
@@ -837,13 +938,36 @@ export default function OrderForm() {
 
 
     const handleSaveItem = (itemData) => {
-        const newItems = [...items]
         if (editingItemIndex !== null) {
+            // Edit existing
+            const newItems = [...items]
             newItems[editingItemIndex] = itemData
+            setItems(newItems)
         } else {
-            newItems.push(itemData)
+            // Add new
+            // Check if this is the FIRST item. If so, inherit General Job Info
+            let newItem = { ...itemData }
+            if (items.length === 0) {
+                console.log('Attaching General Job Info to First Item', generalJobInfo)
+
+                // Merge into subJob
+                newItem.subJob = { ...newItem.subJob, ...generalJobInfo }
+
+                // Merge into first job if exists
+                if (newItem.jobs && newItem.jobs.length > 0) {
+                    newItem.jobs[0] = { ...newItem.jobs[0], ...generalJobInfo }
+                } else {
+                    // Create a default job if none exist? 
+                    // Usually newItem from modal comes with a subJob or jobs. 
+                    // If it has NO jobs, maybe we should create one? 
+                    // OrderItemModal usually handles creation. 
+                    // Let's rely on subJob being the carrier for now as per logic.
+                }
+            }
+
+            setItems([...items, newItem])
+            // setSelectedItemIndex(items.length) // Select the new item - this is not defined in the original context
         }
-        setItems(newItems)
         setShowOrderItemModal(false)
         setEditingItemIndex(null)
     }
@@ -917,38 +1041,39 @@ export default function OrderForm() {
         // Let's re-parse for safety.
 
         // Define Main Job Info for Order Level Fallback (using first item's job info)
-        const mainJobInfo = items.length > 0 && items[0].subJob ? items[0].subJob : {};
+        const mainJobInfo = items.length > 0 && items[0].subJob ? items[0].subJob : generalJobInfo;
 
         const itemsWithJobIds = items.map((item) => {
-            // If item already has a jobId (e.g., when editing an existing order), keep it.
-            if (item.subJob && item.subJob.jobId) {
-                return item;
+            // Priority: Use existing jobId from subJob OR from the selected job in the jobs array
+            const existingJobId = item.subJob?.jobId || item.subJob?.id || (item.jobs?.[selectedJobIndex]?.id) || (item.jobs?.[0]?.id)
+
+            if (existingJobId && !String(existingJobId).startsWith('NEW')) {
+                // Ensure subJob has the right ID for matching in DataManager
+                return {
+                    ...item,
+                    subJob: {
+                        ...(item.subJob || {}),
+                        jobId: existingJobId,
+                        jobId: existingJobId,
+                        jobType: item.subJob?.jobType || 'installation',
+                        // Preserve created_at for DataManager to use
+                        created_at: item.subJob?.created_at || item.jobs?.find(j => j.id === existingJobId)?.created_at
+                    }
+                };
             }
 
-            // Generate new ID
+            // Generate new ID only if absolutely none found
             const newJobId = `JB${(lastJobNum).toString().padStart(7, '0')}`
             lastJobNum++
 
-            // Ensure subJob object exists
             const subJob = item.subJob || {}
 
             return {
                 ...item,
                 subJob: {
                     ...subJob,
-                    jobId: newJobId, // Assign permanent Job ID
-                    // Inherit from Main Job Info if subJob field is empty (Use pure subJob now)
-                    jobType: subJob.jobType || 'installation',
-                    appointmentDate: subJob.appointmentDate || '',
-                    completionDate: subJob.completionDate || null,
-                    // Add robust fallbacks
-                    team: subJob.team || '',
-                    description: subJob.description || '',
-                    // Check inspector1
-                    inspector1: subJob.inspector1 || null,
-                    installAddress: subJob.installAddress || '',
-                    googleMapLink: subJob.googleMapLink || '',
-                    distance: subJob.distance || null
+                    jobId: newJobId,
+                    jobType: subJob.jobType || 'installation'
                 }
             }
         })
@@ -963,7 +1088,7 @@ export default function OrderForm() {
             status: 'Pending',
             jobInfo: mainJobInfo, // Save main job info for backward compatibility
             taxInvoice: taxInvoice,
-            taxInvoiceDeliveryAddress: taxInvoiceDeliveryAddress,
+            taxInvoiceDeliveryAddress: (taxInvoiceDeliveryAddress && taxInvoiceDeliveryAddress.address) ? taxInvoiceDeliveryAddress : null,
             purchaserContact: purchaserContact,
             receiverContact: receiverContact,
             discount: discount,
@@ -1367,6 +1492,14 @@ export default function OrderForm() {
                                                                     className={`group px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${selectedJobIndex === idx ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-secondary-50 text-secondary-700'}`}
                                                                     onClick={() => {
                                                                         setSelectedJobIndex(idx)
+                                                                        // Sync subJob to ensure handleSaveOrder uses the active job
+                                                                        const targetJob = items[selectedItemIndex]?.jobs?.[idx]
+                                                                        if (targetJob) {
+                                                                            handleJobInfoUpdate({
+                                                                                ...targetJob,
+                                                                                jobId: targetJob.id || targetJob.jobId
+                                                                            })
+                                                                        }
                                                                         setShowJobDropdown(false)
                                                                     }}
                                                                 >
@@ -1402,17 +1535,26 @@ export default function OrderForm() {
                                                 </>
                                             )}
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleShareJobInfo}
-                                            className="p-1 text-primary-600 hover:bg-primary-50 rounded border border-primary-100 transition-colors"
-                                            title="ใช้ข้อมูลงานนี้ร่วมกันกับสินค้าทุกรายการ"
-                                        >
-                                            <div className="flex items-center gap-1 px-1">
-                                                <Copy size={12} />
-                                                <span className="text-[10px] font-medium">ใช้ร่วมกัน</span>
-                                            </div>
-                                        </button>
+                                        {(() => {
+                                            const canShare = items.every(item => !item.jobs || item.jobs.length <= 1)
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    onClick={canShare ? handleShareJobInfo : null}
+                                                    disabled={!canShare}
+                                                    className={`p-1 rounded border transition-colors ${canShare
+                                                        ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-700 shadow-sm'
+                                                        : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
+                                                        }`}
+                                                    title={canShare ? "ใช้ข้อมูลงานนี้ร่วมกันกับสินค้าทุกรายการ" : "ไม่สามารถใช้ร่วมกันได้เนื่องจากบางรายการมีหลายงาน"}
+                                                >
+                                                    <div className="flex items-center gap-1 px-1">
+                                                        <Copy size={12} />
+                                                        <span className="text-[10px] font-medium">ใช้ร่วมกัน</span>
+                                                    </div>
+                                                </button>
+                                            )
+                                        })()}
                                     </div>
                                 }
                             />
@@ -1458,8 +1600,8 @@ export default function OrderForm() {
                                                         {customer.taxInvoices && customer.taxInvoices.length > 0 ? (
                                                             customer.taxInvoices
                                                                 .filter(inv =>
-                                                                    inv.companyName.toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
-                                                                    inv.taxId.includes(taxInvoiceSearchTerm)
+                                                                    (inv.companyName || '').toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
+                                                                    (inv.taxId || '').includes(taxInvoiceSearchTerm)
                                                                 )
                                                                 .map((inv, index) => (
                                                                     <div
@@ -1623,8 +1765,8 @@ export default function OrderForm() {
                                                     // It constructs a NEW object. It loses custom props like 'type' or 'isSpecial'.
 
                                                     // FIX: I should rely on value comparison or update AddressSelector to pass original object?
-                                                    // Or just infer "same" type if address matches jobInfo?
-                                                    // Simplest: Check if address === jobInfo.installAddress?
+                                                    // Or just infer "same" type if address matches currentJobInfo?
+                                                    // Simplest: Check if address === currentJobInfo.installAddress?
 
                                                     const isSame = currentJobInfo.installAddress && newValue.address === currentJobInfo.installAddress;
 
@@ -1991,7 +2133,7 @@ export default function OrderForm() {
                                             <div className="flex items-start gap-2 pt-1">
                                                 <QrCode size={16} className="text-secondary-400 mt-0.5 flex-shrink-0" />
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['SN000000000001', 'SN000000000002', 'SN000000000003', 'SN000000000004'].map((sn, i) => (
+                                                    {item.serialNumbers && item.serialNumbers.length > 0 && item.serialNumbers.map((sn, i) => (
                                                         <span key={i} className="text-[10px] font-mono bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
                                                             {sn}
                                                         </span>
@@ -2025,7 +2167,18 @@ export default function OrderForm() {
                                 productsData={productsData}
                                 isEditing={editingItemIndex !== null}
 
-                                onAddNewProduct={() => setShowProductModal(true)}
+                                onAddNewProduct={() => {
+                                    setNewProduct({
+                                        id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
+                                        length: '', width: '', height: '', material: '', color: '',
+                                        images: []
+                                    })
+                                    setShowProductModal(true)
+                                }}
+                                onEditProduct={(product) => {
+                                    setNewProduct(product)
+                                    setShowProductModal(true)
+                                }}
                                 lastCreatedProduct={lastCreatedProduct}
                                 onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
                             />
@@ -2076,10 +2229,10 @@ export default function OrderForm() {
                                                                 <span className="font-medium">Longitude:</span>
                                                                 <span className="font-mono">{coords.lon}</span>
                                                             </div>
-                                                            {jobInfo.distance && (
+                                                            {currentJobInfo.distance && (
                                                                 <div className="flex justify-between pt-2 border-t border-secondary-200">
-                                                                    <span className="font-medium">ระยะทางจากร้าน:</span>
-                                                                    <span className="font-semibold text-success-600">📍 {jobInfo.distance}</span>
+                                                                    <span className="font-medium">ระยะทาง:</span>
+                                                                    <span className="font-semibold text-success-600">📍 {currentJobInfo.distance}</span>
                                                                 </div>
                                                             )}
                                                         </div>

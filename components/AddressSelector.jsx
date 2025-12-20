@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Search, Plus } from 'lucide-react'
 import AddressCard from './AddressCard'
 import DataSourceTooltip from './DataSourceTooltip'
-import { calculateDistance, extractCoordinates } from '../lib/utils'
-import { SHOP_LAT, SHOP_LON } from '../lib/mockData'
+import { calculateDistance, extractCoordinates, SHOP_LAT, SHOP_LON } from '../lib/utils'
+
 
 export default function AddressSelector({
     label,
