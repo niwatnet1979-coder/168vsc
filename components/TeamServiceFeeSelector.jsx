@@ -9,7 +9,8 @@ export default function TeamServiceFeeSelector({
     teamName, // Needed for modal
     value, // current service_fee_id
     onChange, // (newId) => ...
-    readOnly = false
+    readOnly = false,
+    currentJobId = null
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const [batches, setBatches] = useState([])
@@ -76,6 +77,19 @@ export default function TeamServiceFeeSelector({
 
     const selectedBatch = batches.find(b => b.id === value)
 
+    // Helper for Optimistic Count
+    const getDisplayCount = (batch) => {
+        const jobs = batch.jobs || []
+        // Check if current job is already in the list
+        const isLinked = currentJobId && jobs.some(j => j.id === currentJobId || j.id === String(currentJobId))
+
+        // If this batch is selected, and job is NOT in list, add 1
+        if (value === batch.id && !isLinked && currentJobId) {
+            return jobs.length + 1
+        }
+        return jobs.length
+    }
+
     // Calculate Team Total Outstanding (Team Level)
     const teamOutstanding = batches.reduce((sum, b) => sum + (b.remaining || 0), 0)
 
@@ -101,7 +115,7 @@ export default function TeamServiceFeeSelector({
                         <div className="text-right text-gray-900 w-20">{Number(selectedBatch.totalDue || 0).toLocaleString()} บาท</div>
 
                         {/* Row 2 */}
-                        <div></div>
+                        <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(selectedBatch)} งาน</div>
                         <div className="text-gray-400">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                         <div className="text-right text-gray-500">ยอดค้าง</div>
                         <div className="text-right text-gray-500">{Number(selectedBatch.remaining).toLocaleString()} บาท</div>
@@ -140,7 +154,7 @@ export default function TeamServiceFeeSelector({
                                     <div className="text-right text-gray-900 w-20">{Number(batch.totalDue || 0).toLocaleString()} บาท</div>
 
                                     {/* Row 2 */}
-                                    <div></div>
+                                    <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(batch)} งาน</div>
                                     <div className="text-gray-400">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                                     <div className="text-right text-gray-500">ยอดค้าง</div>
                                     <div className="text-right text-gray-500">{Number(batch.remaining).toLocaleString()} บาท</div>

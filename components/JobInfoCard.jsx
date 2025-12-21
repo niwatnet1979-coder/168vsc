@@ -224,7 +224,7 @@ export default function JobInfoCard({
                 )}
 
                 {/* Team Service Fee Selector (New) */}
-                {data.jobType !== 'separate' && data.team && (
+                {data.jobType !== 'separate' && (
                     <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                         <TeamServiceFeeSelector
                             teamId={null} // We need teamId. 'data.team' is likely a NAME string in current app, not ID.
@@ -240,18 +240,24 @@ export default function JobInfoCard({
                             // Assuming Job ID is available in data.id
                             value={data.serviceFeeId} // Need this in prop
                             onChange={async (newId) => {
+                                // Update UI state first
                                 handleUpdate({ serviceFeeId: newId })
-                                // Link immediately if job exists (and newId is valid)
+
+                                // Sync with DB if we have a valid Job ID and Service Fee ID
                                 if (data.id && newId) {
                                     try {
+                                        console.log('[JobInfoCard] Linking Job', data.id, 'to Service Fee Batch', newId)
                                         await DataManager.linkServiceFeeJobs(newId, [data.id])
-                                        // Optional: Notify success?
+                                        // Optional: Trigger a refresh of the batches? 
+                                        // Ideally TeamServiceFeeSelector manages its own data, 
+                                        // but we can rely on optimistic UI updates in the selector.
                                     } catch (err) {
-                                        console.error('Failed to link service fee:', err)
+                                        console.error('[JobInfoCard] Failed to link service fee:', err)
                                     }
                                 }
                             }}
-                            readOnly={readOnly}
+                            currentJobId={data.id}
+                            readOnly={!data.team}
                         />
                     </div>
                 )}

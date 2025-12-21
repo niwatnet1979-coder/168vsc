@@ -1274,7 +1274,17 @@ export default function OrderForm() {
                             <FileEdit className="text-primary-600 hidden sm:block" size={32} />
                             <div>
                                 <h1 className="text-2xl font-bold">
-                                    {router.query.id ? `แก้ไขออเดอร์ #${orderNumber || router.query.id}` : `สร้างออเดอร์ใหม่ #${orderNumber || ''}`}
+                                    {(() => {
+                                        const idToDisplay = orderNumber || router.query.id
+                                        const formatId = (id) => {
+                                            if (!id) return ''
+                                            if (String(id).length > 20) return `OD${String(id).slice(-6)}`
+                                            return `#${id}`
+                                        }
+                                        return router.query.id
+                                            ? `แก้ไขออเดอร์ ${formatId(idToDisplay)}`
+                                            : `สร้างออเดอร์ใหม่ ${formatId(orderNumber)}`
+                                    })()}
                                 </h1>
                                 <p className="text-xs sm:text-sm text-secondary-500 hidden sm:block">กรอกข้อมูลให้ครบถ้วนเพื่อสร้างใบเสนอราคา/ออเดอร์</p>
                             </div>
@@ -1498,7 +1508,7 @@ export default function OrderForm() {
                                                 <span className="text-[10px] font-bold text-secondary-500">{selectedItemIndex + 1}</span>
                                                 <Package size={12} className="text-secondary-400" />
                                                 <span className="text-[10px] text-secondary-700 flex-1 truncate">
-                                                    {items[selectedItemIndex]?.id?.slice(-12) || 'New Item'}
+                                                    {items[selectedItemIndex]?.id && String(items[selectedItemIndex].id).length > 20 ? `IT${String(items[selectedItemIndex].id).slice(-6)}` : (items[selectedItemIndex]?.id || 'New Item')}
                                                 </span>
                                                 <ChevronDown size={10} className={`text-secondary-400 transition-transform ${showItemDropdown ? 'rotate-180' : ''}`} />
                                             </div>
@@ -1524,7 +1534,7 @@ export default function OrderForm() {
                                                                     className={`px-3 py-2 text-xs flex items-center gap-2 cursor-pointer transition-colors ${selectedItemIndex === idx ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-secondary-50 text-secondary-700'}`}
                                                                 >
                                                                     <span className="w-4 text-center text-[10px] font-bold text-secondary-400">{idx + 1}</span>
-                                                                    <span className="font-mono">{item.id?.slice(-12) || 'New Item'}</span>
+                                                                    <span className="font-mono">{item.id && String(item.id).length > 20 ? `IT${String(item.id).slice(-6)}` : (item.id || 'New Item')}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -1553,13 +1563,13 @@ export default function OrderForm() {
                                                             // Try selected index first
                                                             const selectedJob = jobs[selectedJobIndex]
                                                             if (selectedJob && selectedJob.id) {
-                                                                return selectedJob.id.slice(-12)
+                                                                return selectedJob.id.length > 20 ? `JB${selectedJob.id.slice(-6)}` : selectedJob.id
                                                             }
 
                                                             // If selected index is out of bounds, use the last job
                                                             const lastJob = jobs[jobs.length - 1]
                                                             if (lastJob && lastJob.id) {
-                                                                return lastJob.id.slice(-12)
+                                                                return lastJob.id.length > 20 ? `JB${lastJob.id.slice(-6)}` : lastJob.id
                                                             }
 
                                                             // If jobs exist but no ID, show "New"
@@ -1595,7 +1605,7 @@ export default function OrderForm() {
                                                                 >
                                                                     <div className="flex items-center gap-2 flex-1">
                                                                         <span className="w-4 text-center text-[10px] font-bold text-secondary-400">{idx + 1}</span>
-                                                                        <span className="font-mono">{job.id?.slice(-12) || 'New Job'}</span>
+                                                                        <span className="font-mono">{job.id && String(job.id).length > 20 ? `JB${String(job.id).slice(-6)}` : (job.id || 'New Job')}</span>
                                                                     </div>
                                                                     <button
                                                                         type="button"
@@ -1977,9 +1987,9 @@ export default function OrderForm() {
                                                         <span className={`px-1.5 rounded text-[10px] ${Number(item.stock) > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                             Stock: {item.stock || 0}
                                                         </span>
-                                                        {item.id && typeof item.id === 'string' && item.id.length > 12 && (
+                                                        {item.id && typeof item.id === 'string' && item.id.length > 20 && (
                                                             <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500 ml-1">
-                                                                ID: {item.id.slice(-12)}
+                                                                IT{item.id.slice(-6)}
                                                             </span>
                                                         )}
                                                     </div>
