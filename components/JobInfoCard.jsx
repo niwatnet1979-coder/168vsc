@@ -243,16 +243,23 @@ export default function JobInfoCard({
                                 // Update UI state first
                                 handleUpdate({ serviceFeeId: newId })
 
-                                // Sync with DB if we have a valid Job ID and Service Fee ID
-                                if (data.id && newId) {
-                                    try {
-                                        console.log('[JobInfoCard] Linking Job', data.id, 'to Service Fee Batch', newId)
-                                        await DataManager.linkServiceFeeJobs(newId, [data.id])
-                                        // Optional: Trigger a refresh of the batches? 
-                                        // Ideally TeamServiceFeeSelector manages its own data, 
-                                        // but we can rely on optimistic UI updates in the selector.
-                                    } catch (err) {
-                                        console.error('[JobInfoCard] Failed to link service fee:', err)
+                                // Sync with DB if we have a valid Job ID
+                                if (data.id) {
+                                    if (newId) {
+                                        try {
+                                            console.log('[JobInfoCard] Linking Job', data.id, 'to Service Fee Batch', newId)
+                                            await DataManager.linkServiceFeeJobs(newId, [data.id])
+                                        } catch (error) {
+                                            console.error('[JobInfoCard] Error linking service fee:', error)
+                                        }
+                                    } else {
+                                        // Unlink (Delete button clicked)
+                                        try {
+                                            console.log('[JobInfoCard] Unlinking Job', data.id, 'from Service Fee Batch')
+                                            await DataManager.unlinkServiceFeeJob(data.id)
+                                        } catch (error) {
+                                            console.error('[JobInfoCard] Error unlinking service fee:', error)
+                                        }
                                     }
                                 }
                             }}

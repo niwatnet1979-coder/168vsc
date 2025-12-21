@@ -201,7 +201,15 @@ export default function TeamServiceFeeSelector({
                                     <div className="text-right text-gray-500">{Number(batch.remaining).toLocaleString()} บาท</div>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    {value === batch.id && <Check size={16} className="text-blue-600 mr-2" />}
+                                    <div className="mr-2 w-4 h-4 flex items-center justify-center">
+                                        {value === batch.id ? (
+                                            <div className="bg-blue-600 rounded-full p-0.5">
+                                                <Check size={12} className="text-white" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-4 h-4 rounded-full border border-gray-300"></div>
+                                        )}
+                                    </div>
                                     <button
                                         onClick={(e) => handleEditClick(e, batch.id)}
                                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
