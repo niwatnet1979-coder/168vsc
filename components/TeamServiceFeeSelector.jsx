@@ -90,6 +90,13 @@ export default function TeamServiceFeeSelector({
         return jobs.length
     }
 
+    const getLastPaymentDate = (batch) => {
+        if (!batch?.payments || batch.payments.length === 0) return null
+        // Sort by created_at descending
+        const sorted = [...batch.payments].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        return sorted[0].created_at
+    }
+
     // Calculate Team Total Outstanding (Team Level)
     const teamOutstanding = batches.reduce((sum, b) => sum + (b.remaining || 0), 0)
 
@@ -116,7 +123,12 @@ export default function TeamServiceFeeSelector({
 
                         {/* Row 2 */}
                         <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(selectedBatch)}</div>
-                        <div className="text-gray-400">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="text-gray-400">
+                            {getLastPaymentDate(selectedBatch)
+                                ? new Date(getLastPaymentDate(selectedBatch)).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                : '-'
+                            }
+                        </div>
                         <div className="text-right text-gray-500">ยอดค้าง</div>
                         <div className="text-right text-gray-500">{Number(selectedBatch.remaining).toLocaleString()} บาท</div>
                     </div>
@@ -152,7 +164,7 @@ export default function TeamServiceFeeSelector({
 
             {/* Dropdown */}
             {isOpen && !readOnly && (
-                <div className="absolute z-20 w-[120%] -left-[10%] mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden max-h-80 flex flex-col">
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden max-h-80 flex flex-col">
                     {/* Header: Team Outstanding */}
                     <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 text-xs flex justify-between font-medium text-gray-600">
                         <span>ยอดค้างรวมทีม:</span>
@@ -179,7 +191,12 @@ export default function TeamServiceFeeSelector({
 
                                     {/* Row 2 */}
                                     <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(batch)}</div>
-                                    <div className="text-gray-400">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div className="text-gray-400">
+                                        {getLastPaymentDate(batch)
+                                            ? new Date(getLastPaymentDate(batch)).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                            : '-'
+                                        }
+                                    </div>
                                     <div className="text-right text-gray-500">ยอดค้าง</div>
                                     <div className="text-right text-gray-500">{Number(batch.remaining).toLocaleString()} บาท</div>
                                 </div>
