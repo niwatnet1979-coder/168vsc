@@ -10,7 +10,7 @@ export default function JobListModal({ isOpen, onClose, item, jobs = [], onAddJo
     // Let's display sorted by Sequence ASC for the list (1 -> N).
 
     // Sort logic safely
-    const sortedJobs = [...jobs].sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
+    const sortedJobs = [...jobs].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -63,7 +63,7 @@ export default function JobListModal({ isOpen, onClose, item, jobs = [], onAddJo
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-2">
                                         <span className="flex items-center justify-center w-6 h-6 bg-secondary-100 text-secondary-700 text-xs font-bold rounded-full">
-                                            {job.sequence_number || idx + 1}
+                                            {idx + 1}
                                         </span>
                                         <span className={`text-xs px-2 py-0.5 rounded border capitalize flex items-center gap-1 ${getStatusColor(job.status || 'รอดำเนินการ')}`}>
                                             {job.status || 'รอดำเนินการ'}

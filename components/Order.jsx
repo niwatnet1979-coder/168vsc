@@ -88,6 +88,29 @@ export default function OrderForm() {
         distance: ''
     })
 
+    // Flatten Jobs for Global Navigation
+    const flatJobs = useMemo(() => {
+        const allJobs = []
+        items.forEach((item, itemIdx) => {
+            if (item.jobs && item.jobs.length > 0) {
+                item.jobs.forEach((job, jobIdx) => {
+                    allJobs.push({
+                        ...job,
+                        _itemIndex: itemIdx,
+                        _jobIndex: jobIdx,
+                        _parentItemId: item.id || `Item ${itemIdx + 1}`
+                    })
+                })
+            }
+        })
+        // Sort by Created At (Oldest first)
+        return allJobs.sort((a, b) => {
+            const createdA = a.created_at ? new Date(a.created_at).getTime() : 0
+            const createdB = b.created_at ? new Date(b.created_at).getTime() : 0
+            return createdA - createdB
+        })
+    }, [items])
+
 
     // Derived Job Info Data from Selected Item
     const currentJobInfo = useMemo(() => {
@@ -1138,8 +1161,7 @@ export default function OrderForm() {
                     ...item,
                     jobs: [{
                         jobType: 'installation',
-                        status: 'รอดำเนินการ',
-                        sequence_number: 1
+                        status: 'รอดำเนินการ'
                     }]
                 }
             }
@@ -1486,7 +1508,102 @@ export default function OrderForm() {
                         <div className="order-3 md:order-4 flex flex-col h-full">
                             <JobInfoCard
                                 className="h-full"
-                                title="ข้อมูลงาน"
+                                title={
+                                    <div className="flex items-center gap-3">
+                                        <span>ข้อมูลงาน</span>
+                                        {/* Custom Job Selector (Moved from Actions) */}
+                                        <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                            <div
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    setShowJobDropdown(!showJobDropdown)
+                                                }}
+                                                className="flex items-center gap-1.5 bg-white border border-secondary-200 rounded-md px-2 py-1 cursor-pointer hover:border-primary-400 transition-colors focus-within:ring-1 focus-within:ring-primary-500 min-w-[120px] text-base font-normal leading-normal"
+                                            >
+                                                <span className="text-[10px] font-bold text-secondary-500">
+                                                    {(() => {
+                                                        const currentItem = items[selectedItemIndex]
+                                                        if (currentItem && currentItem.jobs && currentItem.jobs[selectedJobIndex]) {
+                                                            return selectedJobIndex + 1
+                                                        }
+                                                        return flatJobs.length > 0 ? (flatJobs.length + 1) : 1
+                                                    })()}
+                                                </span>
+                                                <Wrench size={12} className="text-secondary-400" />
+                                                <span className="text-[10px] text-secondary-700 flex-1 truncate">
+                                                    {(() => {
+                                                        const currentItem = items[selectedItemIndex]
+                                                        if (currentItem && currentItem.jobs && currentItem.jobs[selectedJobIndex]) {
+                                                            const job = currentItem.jobs[selectedJobIndex]
+                                                            return job.id && job.id.length > 20 ? `JB${job.id.slice(-6)}` : (job.id || 'New Job')
+                                                        }
+                                                        return 'New'
+                                                    })()}
+                                                </span>
+                                                <ChevronDown size={10} className={`text-secondary-400 transition-transform ${showJobDropdown ? 'rotate-180' : ''}`} />
+                                            </div>
+
+                                            {showJobDropdown && (
+                                                <>
+                                                    <div
+                                                        className="fixed inset-0 z-20"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setShowJobDropdown(false)
+                                                        }}
+                                                    ></div>
+                                                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-secondary-200 rounded-lg shadow-xl z-30 overflow-hidden py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                                                        <div className="max-h-48 overflow-y-auto">
+                                                            {flatJobs.map((job, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    className={`group px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${(selectedItemIndex === job._itemIndex && selectedJobIndex === job._jobIndex)
+                                                                        ? 'bg-primary-50 text-primary-700 font-medium'
+                                                                        : 'hover:bg-secondary-50 text-secondary-700'
+                                                                        }`}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setSelectedItemIndex(job._itemIndex)
+                                                                        setSelectedJobIndex(job._jobIndex)
+                                                                        setShowJobDropdown(false)
+                                                                    }}
+                                                                >
+                                                                    <div className="flex items-center gap-2 flex-1">
+                                                                        <span className="w-4 text-center text-[10px] font-bold text-secondary-400">{idx + 1}</span>
+                                                                        <span className="font-mono">{job.id && String(job.id).length > 20 ? `JB${String(job.id).slice(-6)}` : (job.id || 'New Job')}</span>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            setSelectedItemIndex(job._itemIndex)
+                                                                            handleDeleteJobFromItem(job._jobIndex)
+                                                                        }}
+                                                                        className="p-1 text-secondary-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                                        title="ลบงานนี้"
+                                                                    >
+                                                                        <Trash2 size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                handleAddJobToItem()
+                                                                setShowJobDropdown(false)
+                                                            }}
+                                                            className="px-3 py-2 bg-primary-50 text-primary-600 text-xs font-semibold flex items-center gap-2 cursor-pointer hover:bg-primary-100 border-t border-primary-100 transition-colors"
+                                                        >
+                                                            <Plus size={14} />
+                                                            เพิ่มงานใหม่
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                }
                                 data={currentJobInfo}
                                 onChange={handleJobInfoUpdate}
                                 customer={customer}
@@ -1543,98 +1660,7 @@ export default function OrderForm() {
                                             )}
                                         </div>
 
-                                        {/* Custom Job Selector */}
-                                        <div className="relative">
-                                            <div
-                                                onClick={() => setShowJobDropdown(!showJobDropdown)}
-                                                className="flex items-center gap-1.5 bg-white border border-secondary-200 rounded-md px-2 py-1 cursor-pointer hover:border-primary-400 transition-colors focus-within:ring-1 focus-within:ring-primary-500 min-w-[120px]"
-                                            >
-                                                <span className="text-[10px] font-bold text-secondary-500">{selectedJobIndex + 1}</span>
-                                                <Wrench size={12} className="text-secondary-400" />
-                                                <span className="text-[10px] text-secondary-700 flex-1 truncate">
-                                                    {(() => {
-                                                        const item = items[selectedItemIndex]
-                                                        if (!item) return 'New'
 
-                                                        const jobs = item.jobs || []
-
-                                                        // If jobs exist, try to get the selected job or the last job
-                                                        if (jobs.length > 0) {
-                                                            // Try selected index first
-                                                            const selectedJob = jobs[selectedJobIndex]
-                                                            if (selectedJob && selectedJob.id) {
-                                                                return selectedJob.id.length > 20 ? `JB${selectedJob.id.slice(-6)}` : selectedJob.id
-                                                            }
-
-                                                            // If selected index is out of bounds, use the last job
-                                                            const lastJob = jobs[jobs.length - 1]
-                                                            if (lastJob && lastJob.id) {
-                                                                return lastJob.id.length > 20 ? `JB${lastJob.id.slice(-6)}` : lastJob.id
-                                                            }
-
-                                                            // If jobs exist but no ID, show "New"
-                                                            return 'New'
-                                                        }
-
-                                                        // No jobs exist, show "New"
-                                                        return 'New'
-                                                    })()}
-                                                </span>
-                                                <ChevronDown size={10} className={`text-secondary-400 transition-transform ${showJobDropdown ? 'rotate-180' : ''}`} />
-                                            </div>
-
-                                            {showJobDropdown && (
-                                                <>
-                                                    <div
-                                                        className="fixed inset-0 z-10"
-                                                        onClick={() => setShowJobDropdown(false)}
-                                                    ></div>
-                                                    <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-secondary-200 rounded-lg shadow-xl z-20 overflow-hidden py-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                                        <div className="max-h-48 overflow-y-auto">
-                                                            {(items[selectedItemIndex]?.jobs || []).map((job, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    className={`group px-3 py-2 text-xs flex items-center justify-between cursor-pointer transition-colors ${selectedJobIndex === idx ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-secondary-50 text-secondary-700'}`}
-                                                                    onClick={() => {
-                                                                        setSelectedJobIndex(idx)
-                                                                        // IMPORTANT: Do not call handleJobInfoUpdate() here.
-                                                                        // Selecting a job should only change selection; updating can accidentally
-                                                                        // overwrite another job due to async state updates (stale selectedJobIndex).
-                                                                        setShowJobDropdown(false)
-                                                                    }}
-                                                                >
-                                                                    <div className="flex items-center gap-2 flex-1">
-                                                                        <span className="w-4 text-center text-[10px] font-bold text-secondary-400">{idx + 1}</span>
-                                                                        <span className="font-mono">{job.id && String(job.id).length > 20 ? `JB${String(job.id).slice(-6)}` : (job.id || 'New Job')}</span>
-                                                                    </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            handleDeleteJobFromItem(idx)
-                                                                        }}
-                                                                        className="p-1 text-secondary-400 hover:text-red-500 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
-                                                                        title="ลบงานนี้"
-                                                                    >
-                                                                        <Trash2 size={12} />
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div
-                                                            onClick={() => {
-                                                                handleAddJobToItem()
-                                                                setShowJobDropdown(false)
-                                                            }}
-                                                            className="px-3 py-2 bg-primary-50 text-primary-600 text-xs font-semibold flex items-center gap-2 cursor-pointer hover:bg-primary-100 border-t border-primary-100 transition-colors"
-                                                        >
-                                                            <Plus size={14} />
-                                                            เพิ่มงานใหม่
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
                                         {(() => {
                                             const canShare = items.every(item => !item.jobs || item.jobs.length <= 1)
                                             return (
@@ -1658,10 +1684,10 @@ export default function OrderForm() {
                                     </div>
                                 }
                             />
-                        </div>
+                        </div >
 
                         {/* Tax Invoice - Mobile: 3, Desktop: 2 */}
-                        <div className="order-4 md:order-2 flex flex-col h-full">
+                        < div className="order-4 md:order-2 flex flex-col h-full" >
 
 
                             {/* Tax Invoice */}
@@ -1880,10 +1906,10 @@ export default function OrderForm() {
                                 </div>
 
                             </Card>
-                        </div>
+                        </div >
 
                         {/* Payment Summary - Mobile: 4, Desktop: 4 */}
-                        <div className="order-5 md:order-5 flex flex-col h-full">
+                        < div className="order-5 md:order-5 flex flex-col h-full" >
                             <div className="h-full">
                                 <PaymentSummaryCard
                                     subtotal={subtotal}
@@ -1911,10 +1937,10 @@ export default function OrderForm() {
                                     className="h-full"
                                 />
                             </div>
-                        </div>
+                        </div >
 
                         {/* Product List Section */}
-                        <div className="order-2 md:order-3 col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200">
+                        < div className="order-2 md:order-3 col-span-1 md:col-span-2 bg-white rounded-xl shadow-sm border border-secondary-200 p-6 hover:shadow-md transition-shadow duration-200" >
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-lg font-bold text-secondary-900 flex items-center gap-2">
                                     <FileText className="text-primary-600" />
@@ -2266,7 +2292,7 @@ export default function OrderForm() {
                                 onConsumeLastCreatedProduct={() => setLastCreatedProduct(null)}
                             />
                         </div >
-                    </div>
+                    </div >
 
                     {/* Map Popup Modal */}
                     {
