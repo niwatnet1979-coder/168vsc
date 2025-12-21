@@ -1,5 +1,6 @@
 import React from 'react'
-import { CreditCard, Plus, QrCode, X } from 'lucide-react'
+import { useRouter } from 'next/router'
+import { CreditCard, Plus, QrCode, X, Printer } from 'lucide-react'
 import { currency } from '../lib/utils'
 import DataSourceTooltip from './DataSourceTooltip'
 
@@ -26,6 +27,8 @@ export default function PaymentSummaryCard({
     vatIncluded = true,
     onVatIncludedChange
 }) {
+    const router = useRouter()
+    const orderId = router.query.id
     const [localShipping, setLocalShipping] = React.useState(shippingFee)
     const [localDiscount, setLocalDiscount] = React.useState(discount)
     const [localVatRate, setLocalVatRate] = React.useState(vatRate)
@@ -269,14 +272,70 @@ export default function PaymentSummaryCard({
                                 <div
                                     key={index}
                                     onClick={() => !readOnly && onEditPayment && onEditPayment(index)}
-                                    className={`flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200 transition-colors shadow-sm ${!readOnly ? 'cursor-pointer hover:bg-secondary-100 hover:shadow-md' : ''}`}
+                                    className={`flex flex-col p-3 bg-secondary-50 rounded-lg border border-secondary-200 transition-colors shadow-sm ${!readOnly ? 'cursor-pointer hover:bg-secondary-100 hover:shadow-md' : ''}`}
                                 >
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <span className="font-medium">{payment.date ? new Date(payment.date).toLocaleDateString('th-TH') : '-'}</span>
-                                        <span className="text-secondary-500">•</span>
-                                        <span className="text-secondary-600">{payment.paymentMethod || '-'}</span>
+                                    {/* Line 1: Title & Amount */}
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-bold text-secondary-900 text-sm">
+                                            {payment.payment_type === 'deposit' ? 'เงินมัดจำ' : `งวดที่ ${index + 1}`}
+                                        </span>
+                                        <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
                                     </div>
-                                    <span className="text-primary-600 font-bold text-sm">{currency(payment.amount || 0)}</span>
+
+                                    {/* Line 2: Invoice Info */}
+                                    <div className="flex justify-between items-center text-xs text-secondary-500">
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-medium">ใบแจ้งหนี้/ใบกำกับภาษี</span>
+                                            {payment.invoiceNo && (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="bg-white border border-secondary-200 px-1 rounded text-[10px] text-secondary-600">{payment.invoiceNo}</span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            window.open(`/print/document?orderId=${orderId}&paymentId=${payment.id}&type=IV`, '_blank')
+                                                        }}
+                                                        className="p-0.5 text-secondary-400 hover:text-primary-600 hover:bg-white rounded transition-colors"
+                                                        title="พิมพ์ใบแจ้งหนี้"
+                                                    >
+                                                        <Printer size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span>{payment.invoiceDate ? new Date(payment.invoiceDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                                    </div>
+
+                                    {/* Line 3: Receipt Info */}
+                                    <div className="flex justify-between items-center text-xs text-secondary-500">
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-medium">ใบเสร็จรับเงิน</span>
+                                            {payment.receiptNo && (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="bg-success-50 border border-success-200 px-1 rounded text-[10px] text-success-700">{payment.receiptNo}</span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            window.open(`/print/document?orderId=${orderId}&paymentId=${payment.id}&type=RC`, '_blank')
+                                                        }}
+                                                        className="p-0.5 text-secondary-400 hover:text-primary-600 hover:bg-white rounded transition-colors"
+                                                        title="พิมพ์ใบเสร็จรับเงิน"
+                                                    >
+                                                        <Printer size={12} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span>{payment.receiptDate ? new Date(payment.receiptDate).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                                    </div>
+
+                                    {/* Line 4: Payment Date & Method */}
+                                    <div className="flex justify-between items-center text-xs text-secondary-600 mt-1 pt-1 border-t border-secondary-200 border-dashed">
+                                        <div className="flex items-center gap-1">
+                                            <span>วันที่ชำระเงิน</span>
+                                            <span className="px-1.5 py-0.5 bg-secondary-200 rounded text-[10px] font-bold">{payment.paymentMethod || '-'}</span>
+                                        </div>
+                                        <span>{payment.date ? new Date(payment.date).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -285,15 +344,17 @@ export default function PaymentSummaryCard({
                     )}
 
                     {/* Add Payment Button */}
-                    {((!readOnly) || showAddButton) && paymentSchedule.length < 5 && (
-                        <button
-                            onClick={onAddPayment}
-                            className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
-                        >
-                            <Plus size={16} />
-                            เพิ่มการชำระ
-                        </button>
-                    )}
+                    {
+                        ((!readOnly) || showAddButton) && paymentSchedule.length < 5 && (
+                            <button
+                                onClick={onAddPayment}
+                                className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center gap-1 border-2 border-dashed border-primary-300 rounded-lg hover:border-primary-400"
+                            >
+                                <Plus size={16} />
+                                เพิ่มการชำระ
+                            </button>
+                        )
+                    }
 
                     {/* QR Code Section */}
 
@@ -307,36 +368,38 @@ export default function PaymentSummaryCard({
                     </div>
 
                     {/* Actions */}
-                    {!hideControls && (
-                        <div className="mt-6 flex gap-2">
-                            {readOnly ? (
-                                <button
-                                    onClick={onEdit}
-                                    className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
-                                >
-                                    <span>✎</span>
-                                    แก้ไขข้อมูล
-                                </button>
-                            ) : (
-                                <>
+                    {
+                        !hideControls && (
+                            <div className="mt-6 flex gap-2">
+                                {readOnly ? (
                                     <button
-                                        onClick={onCancel}
-                                        className="flex-1 py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50"
+                                        onClick={onEdit}
+                                        className="w-full py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50 flex items-center justify-center gap-2"
                                     >
-                                        ยกเลิก
+                                        <span>✎</span>
+                                        แก้ไขข้อมูล
                                     </button>
-                                    <button
-                                        onClick={onSave}
-                                        className="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm"
-                                    >
-                                        บันทึก
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={onCancel}
+                                            className="flex-1 py-2.5 bg-white border border-secondary-300 text-secondary-700 font-medium rounded-lg hover:bg-secondary-50"
+                                        >
+                                            ยกเลิก
+                                        </button>
+                                        <button
+                                            onClick={onSave}
+                                            className="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 shadow-sm"
+                                        >
+                                            บันทึก
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )
+                    }
+                </div >
+            </div >
 
             {/* QR Code Popup */}
             {

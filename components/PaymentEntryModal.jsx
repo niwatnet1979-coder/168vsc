@@ -42,7 +42,14 @@ export default function PaymentEntryModal({
         paymentMethod: 'โอน',
         slip: null,
         receiverSignature: null,
-        payerSignature: null
+        payerSignature: null,
+        // Document Tracking
+        issueInvoice: false,
+        invoiceNo: '',
+        invoiceDate: '',
+        issueReceipt: false,
+        receiptNo: '',
+        receiptDate: ''
     }
 
     const [formData, setFormData] = useState(initialForm)
@@ -70,8 +77,16 @@ export default function PaymentEntryModal({
             const populated = {
                 ...payment,
                 date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date),
+                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date),
                 // Normalize method key (some callers use `method`, UI uses `paymentMethod`)
-                paymentMethod: payment.paymentMethod || payment.method || payment.payment_method || 'โอน'
+                paymentMethod: payment.paymentMethod || payment.method || payment.payment_method || 'โอน',
+                // Map new fields
+                invoiceNo: payment.invoiceNo || '',
+                invoiceDate: normalizeDateForInput(payment.invoiceDate),
+                issueInvoice: !!payment.invoiceNo, // If exists, show as checked
+                receiptNo: payment.receiptNo || '',
+                receiptDate: normalizeDateForInput(payment.receiptDate),
+                issueReceipt: !!payment.receiptNo
             }
             setFormData(populated)
 
@@ -116,8 +131,8 @@ export default function PaymentEntryModal({
     }, [payment, isOpen])
 
     const handleSave = () => {
-        if (!formData.date || (!formData.amount && formData.amountMode === 'amount')) {
-            alert('กรุณากรอกวันที่และยอดชำระ')
+        if ((!formData.amount && formData.amountMode === 'amount')) {
+            alert('กรุณากรอกยอดชำระ')
             return
         }
 
@@ -178,7 +193,7 @@ export default function PaymentEntryModal({
                     {/* Date */}
                     <div>
                         <label className="block text-sm font-medium text-secondary-700 mb-2">
-                            วันที่ชำระ <span className="text-danger-500">*</span>
+                            วันที่ชำระ
                         </label>
                         <input
                             type="datetime-local"
@@ -186,6 +201,99 @@ export default function PaymentEntryModal({
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                             className="w-full px-3 py-2 border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white transition-all font-medium text-secondary-900"
                         />
+                    </div>
+
+                    {/* Document Options */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Invoice Section */}
+                        <div className={`p-4 rounded-xl border transition-all ${formData.issueInvoice ? 'bg-primary-50 border-primary-200' : 'bg-white border-secondary-200'}`}>
+                            <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.issueInvoice}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            issueInvoice: checked,
+                                            // Auto-set date if checking
+                                            invoiceDate: checked && !prev.invoiceDate ? prev.date : prev.invoiceDate
+                                        }))
+                                    }}
+                                    className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500 border-gray-300"
+                                />
+                                <span className="font-bold text-sm text-secondary-900">ออกใบแจ้งหนี้/ใบกำกับ</span>
+                            </label>
+
+                            {formData.issueInvoice && (
+                                <div className="space-y-3 pl-6 animate-in slide-in-from-top-2 duration-200">
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-600 mb-1">วันที่เอกสาร</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formData.invoiceDate}
+                                            onChange={(e) => setFormData({ ...formData, invoiceDate: e.target.value })}
+                                            className="w-full px-2 py-1.5 text-sm border border-secondary-300 rounded-lg focus:ring-1 focus:ring-primary-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-600 mb-1">เลขที่เอกสาร</label>
+                                        <input
+                                            type="text"
+                                            value={formData.invoiceNo}
+                                            placeholder={formData.invoiceNo ? '' : "(สร้างอัตโนมัติเมื่อบันทึก)"}
+                                            onChange={(e) => setFormData({ ...formData, invoiceNo: e.target.value })}
+                                            className="w-full px-2 py-1.5 text-sm border border-secondary-300 rounded-lg bg-white placeholder:text-secondary-400"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Receipt Section */}
+                        <div className={`p-4 rounded-xl border transition-all ${formData.issueReceipt ? 'bg-success-50 border-success-200' : 'bg-white border-secondary-200'}`}>
+                            <label className="flex items-center gap-2 mb-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.issueReceipt}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            issueReceipt: checked,
+                                            // Auto-set date if checking
+                                            receiptDate: checked && !prev.receiptDate ? prev.date : prev.receiptDate
+                                        }))
+                                    }}
+                                    className="w-4 h-4 text-success-600 rounded focus:ring-success-500 border-gray-300"
+                                />
+                                <span className="font-bold text-sm text-secondary-900">ออกใบเสร็จรับเงิน</span>
+                            </label>
+
+                            {formData.issueReceipt && (
+                                <div className="space-y-3 pl-6 animate-in slide-in-from-top-2 duration-200">
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-600 mb-1">วันที่เอกสาร</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formData.receiptDate}
+                                            onChange={(e) => setFormData({ ...formData, receiptDate: e.target.value })}
+                                            className="w-full px-2 py-1.5 text-sm border border-secondary-300 rounded-lg focus:ring-1 focus:ring-success-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-secondary-600 mb-1">เลขที่เอกสาร</label>
+                                        <input
+                                            type="text"
+                                            value={formData.receiptNo}
+                                            placeholder={formData.receiptNo ? '' : "(สร้างอัตโนมัติเมื่อบันทึก)"}
+                                            onChange={(e) => setFormData({ ...formData, receiptNo: e.target.value })}
+                                            className="w-full px-2 py-1.5 text-sm border border-secondary-300 rounded-lg bg-white placeholder:text-secondary-400"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Amount Section */}

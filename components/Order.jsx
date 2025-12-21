@@ -60,6 +60,14 @@ export default function OrderForm() {
         address: ''
     })
 
+    // --- Dirty Check State ---
+    const [initialOrderData, setInitialOrderData] = useState(null)
+
+    // Helper to deeply compare objects
+    const isDeepEqual = (obj1, obj2) => {
+        return JSON.stringify(obj1) === JSON.stringify(obj2)
+    }
+
     const [receiverContact, setReceiverContact] = useState(null)
     const [purchaserContact, setPurchaserContact] = useState(null)
 
@@ -458,174 +466,191 @@ export default function OrderForm() {
 
 
     // Load Existing Order
-    useEffect(() => {
-        const loadOrder = async () => {
-            if (!router.isReady || !router.query.id) return
+    const fetchOrderData = React.useCallback(async (targetId) => {
+        const idToLoad = targetId || router.query.id
+        if (!router.isReady || !idToLoad) return
 
-            try {
-                // Fetch from Supabase
-                const order = await DataManager.getOrderById(router.query.id)
+        try {
+            // Fetch from Supabase
+            const order = await DataManager.getOrderById(idToLoad)
 
-                if (order) {
-                    setOrderNumber(order.orderNumber || order.order_number || order.id)
-                    // Use joined customer data directly (No need to re-fetch)
-                    if (order.customer && order.customer.id) {
-                        // Normalize relational data field names if needed (e.g. taxInvoices vs tax_invoice_info)
-                        // But getOrderById now maps them to: addresses, contacts, taxInvoices
-                        setCustomer(order.customer)
-                    } else if (order.customerDetails) {
-                        // Legacy Fallback
-                        if (order.customerDetails.id) {
-                            const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
-                            setCustomer(fullCustomer || order.customerDetails)
-                        } else {
-                            setCustomer(order.customerDetails)
+            if (order) {
+                setOrderNumber(order.orderNumber || order.order_number || order.id)
+                // Use joined customer data directly (No need to re-fetch)
+                if (order.customer && order.customer.id) {
+                    // Normalize relational data field names if needed (e.g. taxInvoices vs tax_invoice_info)
+                    // But getOrderById now maps them to: addresses, contacts, taxInvoices
+                    setCustomer(order.customer)
+                } else if (order.customerDetails) {
+                    // Legacy Fallback
+                    if (order.customerDetails.id) {
+                        const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
+                        setCustomer(fullCustomer || order.customerDetails)
+                    } else {
+                        setCustomer(order.customerDetails)
+                    }
+                }
+                if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
+
+
+                // Infer vatIncluded mode
+                if (order.total && order.items && order.vatRate > 0) {
+                    try {
+                        const rawSub = order.items.reduce((s, i) => s + (Number(i.qty || 0) * Number(item_price_fix(i) || 0)), 0)
+                        // Helper for price (handle old/new structure if needed, but assuming unitPrice)
+                        // actually simpler:
+                        const rSub = order.items.reduce((s, i) => s + ((Number(i.qty) || 0) * (Number(i.unitPrice) || Number(i.price) || 0)), 0)
+
+                        const ship = Number(order.shippingFee || 0)
+
+                        let discAmt = 0
+                        if (order.discount) {
+                            discAmt = order.discount.mode === 'percent'
+                                ? (rSub + ship) * (Number(order.discount.value) / 100)
+                                : Number(order.discount.value)
                         }
-                    }
-                    if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
+                        const afterDisc = Math.max(0, rSub + ship - discAmt)
 
+                        // Compare total
+                        // If Total approx AfterDiscount => INVAT
+                        // If Total approx AfterDiscount * (1+vat) => EXVAT
 
-                    // Infer vatIncluded mode
-                    if (order.total && order.items && order.vatRate > 0) {
-                        try {
-                            const rawSub = order.items.reduce((s, i) => s + (Number(i.qty || 0) * Number(item_price_fix(i) || 0)), 0)
-                            // Helper for price (handle old/new structure if needed, but assuming unitPrice)
-                            // actually simpler:
-                            const rSub = order.items.reduce((s, i) => s + ((Number(i.qty) || 0) * (Number(i.unitPrice) || Number(i.price) || 0)), 0)
+                        const diffInvat = Math.abs(Number(order.total) - afterDisc)
+                        const diffExvat = Math.abs(Number(order.total) - (afterDisc * (1 + Number(order.vatRate))))
 
-                            const ship = Number(order.shippingFee || 0)
+                        if (diffExvat < diffInvat && diffExvat < 5) { // 5 baht tolerance
+                            setVatIncluded(false)
+                        } else {
+                            setVatIncluded(true)
+                        }
+                    } catch (e) { console.warn('Error inferring vat mode', e) }
+                } else if (order.vatRate > 0) {
+                    // If no items or calc fail, default true?
+                    setVatIncluded(true)
+                }
 
-                            let discAmt = 0
-                            if (order.discount) {
-                                discAmt = order.discount.mode === 'percent'
-                                    ? (rSub + ship) * (Number(order.discount.value) / 100)
-                                    : Number(order.discount.value)
-                            }
-                            const afterDisc = Math.max(0, rSub + ship - discAmt)
+                // Load items and fetch product images
+                if (order.items) {
+                    // Debug: Log items with jobs before mapping
+                    console.log('[Order] Loading items with jobs:', order.items.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        jobsCount: item.jobs?.length || 0,
+                        jobs: item.jobs
+                    })))
 
-                            // Compare total
-                            // If Total approx AfterDiscount => INVAT
-                            // If Total approx AfterDiscount * (1+vat) => EXVAT
+                    // Fetch all products to get images
+                    const products = await DataManager.getProducts()
 
-                            const diffInvat = Math.abs(Number(order.total) - afterDisc)
-                            const diffExvat = Math.abs(Number(order.total) - (afterDisc * (1 + Number(order.vatRate))))
+                    const itemsWithImages = order.items.map(item => {
+                        // Try to find product and get image from variants
+                        const product = products.find(p =>
+                            p.uuid === item.product_id ||
+                            p.product_code === item.product_code ||
+                            p.product_code === item.code
+                        )
 
-                            if (diffExvat < diffInvat && diffExvat < 5) { // 5 baht tolerance
-                                setVatIncluded(false)
-                            } else {
-                                setVatIncluded(true)
-                            }
-                        } catch (e) { console.warn('Error inferring vat mode', e) }
-                    } else if (order.vatRate > 0) {
-                        // If no items or calc fail, default true?
-                        setVatIncluded(true)
-                    }
+                        // CRITICAL: Preserve jobs BEFORE any mapping to prevent override
+                        const preservedJobs = item.jobs || []
 
-                    // Load items and fetch product images
-                    if (order.items) {
-                        // Debug: Log items with jobs before mapping
-                        console.log('[Order] Loading items with jobs:', order.items.map(item => ({
-                            id: item.id,
-                            name: item.name,
-                            jobsCount: item.jobs?.length || 0,
-                            jobs: item.jobs
-                        })))
-
-                        // Fetch all products to get images
-                        const products = await DataManager.getProducts()
-
-                        const itemsWithImages = order.items.map(item => {
-                            // Try to find product and get image from variants
-                            const product = products.find(p =>
-                                p.uuid === item.product_id ||
-                                p.product_code === item.product_code ||
-                                p.product_code === item.code
-                            )
-
-                            // CRITICAL: Preserve jobs BEFORE any mapping to prevent override
-                            const preservedJobs = item.jobs || []
-
-                            if (product) {
-                                // Sync missing fields from product to item (Normalization)
-                                // This ensures consistent display between "New Item" and "Loaded Item"
-                                const mappedItem = {
-                                    ...item,
-                                    product, // Attach full product object
-                                    // CRITICAL: Explicitly preserve jobs array from loaded order (AFTER spread to override any undefined)
-                                    jobs: preservedJobs,
-                                    // Use jobs array directly (no subJob needed)
-                                    // jobs array is already loaded from DataManager
-                                    // Fallbacks if missing in order_item record
-                                    material: item.material || product.material,
-                                    category: item.category || product.category,
-                                    subcategory: item.subcategory || product.subcategory,
-                                    // Dimensions fallback (if not in item)
-                                    length: item.length || product.length,
-                                    width: item.width || product.width,
-                                    height: item.height || product.height,
-                                    // Image fallback
-                                    image: item.image || product.variants?.[0]?.images?.[0] || null,
-                                    // Variant Mapping
-                                    selectedVariant: item.variant || null,
-                                    variant_id: item.product_variant_id || item.variant?.id || null,
-                                    variantId: item.product_variant_id || item.variant?.id || null
-                                }
-
-                                console.log('[Order] Mapped item with jobs:', {
-                                    itemId: mappedItem.id,
-                                    itemName: mappedItem.name,
-                                    jobsCount: mappedItem.jobs?.length || 0,
-                                    jobs: mappedItem.jobs
-                                })
-
-                                return mappedItem
-                            }
-
-                            // CRITICAL: Also preserve jobs for items without product match
-                            const mappedItemWithoutProduct = {
+                        if (product) {
+                            // Sync missing fields from product to item (Normalization)
+                            // This ensures consistent display between "New Item" and "Loaded Item"
+                            const mappedItem = {
                                 ...item,
-                                jobs: preservedJobs
+                                product, // Attach full product object
+                                // CRITICAL: Explicitly preserve jobs array from loaded order (AFTER spread to override any undefined)
+                                jobs: preservedJobs,
+                                // Use jobs array directly (no subJob needed)
+                                // jobs array is already loaded from DataManager
+                                // Fallbacks if missing in order_item record
+                                material: item.material || product.material,
+                                category: item.category || product.category,
+                                subcategory: item.subcategory || product.subcategory,
+                                // Dimensions fallback (if not in item)
+                                length: item.length || product.length,
+                                width: item.width || product.width,
+                                height: item.height || product.height,
+                                // Image fallback
+                                image: item.image || product.variants?.[0]?.images?.[0] || null,
+                                // Variant Mapping
+                                selectedVariant: item.variant || null,
+                                variant_id: item.product_variant_id || item.variant?.id || null,
+                                variantId: item.product_variant_id || item.variant?.id || null
                             }
 
-                            console.log('[Order] Mapped item (no product) with jobs:', {
-                                itemId: mappedItemWithoutProduct.id,
-                                itemName: mappedItemWithoutProduct.name,
-                                jobsCount: mappedItemWithoutProduct.jobs?.length || 0,
-                                jobs: mappedItemWithoutProduct.jobs
+                            console.log('[Order] Mapped item with jobs:', {
+                                itemId: mappedItem.id,
+                                itemName: mappedItem.name,
+                                jobsCount: mappedItem.jobs?.length || 0,
+                                jobs: mappedItem.jobs
                             })
 
-                            return mappedItemWithoutProduct
+                            return mappedItem
+                        }
+
+                        // CRITICAL: Also preserve jobs for items without product match
+                        const mappedItemWithoutProduct = {
+                            ...item,
+                            jobs: preservedJobs
+                        }
+
+                        console.log('[Order] Mapped item (no product) with jobs:', {
+                            itemId: mappedItemWithoutProduct.id,
+                            itemName: mappedItemWithoutProduct.name,
+                            jobsCount: mappedItemWithoutProduct.jobs?.length || 0,
+                            jobs: mappedItemWithoutProduct.jobs
                         })
 
-                        // Debug: Log items after mapping to verify jobs are preserved
-                        console.log('[Order] Items after mapping:', itemsWithImages.map(item => ({
-                            id: item.id,
-                            name: item.name,
-                            jobsCount: item.jobs?.length || 0,
-                            jobs: item.jobs
-                        })))
+                        return mappedItemWithoutProduct
+                    })
 
-                        setItems(itemsWithImages)
-                    }
+                    // Debug: Log items after mapping to verify jobs are preserved
+                    console.log('[Order] Items after mapping:', itemsWithImages.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        jobsCount: item.jobs?.length || 0,
+                        jobs: item.jobs
+                    })))
 
-                    if (order.discount) setDiscount(order.discount)
-                    if (order.shippingFee) setShippingFee(order.shippingFee)
-                    setPurchaserContact(order.purchaserContact || order.activeCustomerContact || null)
-                    setReceiverContact(order.receiverContact || order.selectedContact || null)
-                    if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
-                    // Load payment schedule
-                    if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
-                } else {
-                    console.warn(`Order ${router.query.id} not found in database.`)
-                    // Optional: Redirect or show error, but preventing crash is priority
+                    setItems(itemsWithImages)
                 }
-            } catch (error) {
-                console.error("Error loading order:", error)
-            }
-        }
 
-        loadOrder()
+                if (order.discount) setDiscount(order.discount)
+                if (order.shippingFee) setShippingFee(order.shippingFee)
+                setPurchaserContact(order.purchaserContact || order.activeCustomerContact || null)
+                setReceiverContact(order.receiverContact || order.selectedContact || null)
+                if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
+                // Load payment schedule
+                if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
+
+                // Capture Initial State for Dirty Check
+                setInitialOrderData({
+                    customer: order.customer || order.customerDetails || { id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '', contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' }, mediaSource: '' },
+                    items: itemsWithImages || [],
+                    taxInvoice: order.taxInvoice || { companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' },
+                    purchaserContact: order.purchaserContact || order.activeCustomerContact || null,
+                    receiverContact: order.receiverContact || order.selectedContact || null,
+                    taxInvoiceDeliveryAddress: (order.taxInvoiceDeliveryAddress && order.taxInvoiceDeliveryAddress.address) ? order.taxInvoiceDeliveryAddress : { type: '', label: '', address: '' },
+                    discount: order.discount || { mode: 'percent', value: 0 },
+                    shippingFee: order.shippingFee || 0,
+                    paymentSchedule: order.paymentSchedule || [],
+                    vatIncluded: order.items && order.total ? (Math.abs(Number(order.total) - (Number(order.total) / (1 + Number(order.vatRate || 0.07)))) < 5 ? false : true) : true // Approximate, or better use the logic above if possible. 
+                    // Actually, capturing the derived vatIncluded state is tricky inside useEffect. 
+                    // Let's rely on the inputs.
+                })
+            } else {
+                console.warn(`Order ${idToLoad} not found in database.`)
+                // Optional: Redirect or show error, but preventing crash is priority
+            }
+        } catch (error) {
+            console.error("Error loading order:", error)
+        }
     }, [router.isReady, router.query.id])
+
+    useEffect(() => {
+        fetchOrderData()
+    }, [fetchOrderData])
 
     // Initial load effect: Default to latest job of the selected item
     useEffect(() => {
@@ -1086,8 +1111,41 @@ export default function OrderForm() {
     }
 
     const handleSaveOrder = async () => {
-        // Show confirmation dialog
-        const confirmed = window.confirm('ต้องการบันทึกออเดอร์นี้หรือไม่?')
+        // --- DIRTY CHECK ---
+        let isDirty = true
+        let currentDataForCompare = null
+
+        if (initialOrderData) {
+            currentDataForCompare = {
+                customer,
+                items,
+                taxInvoice,
+                purchaserContact,
+                receiverContact,
+                taxInvoiceDeliveryAddress,
+                discount,
+                shippingFee,
+                paymentSchedule,
+                vatIncluded
+            }
+
+            const cleanForCompare = (data) => JSON.stringify(data, (key, value) => {
+                if (key === '_searchTerm' || key === 'showPopup') return undefined
+                return value
+            })
+
+            if (cleanForCompare(currentDataForCompare) === cleanForCompare(initialOrderData)) {
+                isDirty = false
+            }
+        }
+
+        if (!isDirty) {
+            console.log('No changes detected, skipping save.')
+            return
+        }
+
+        // Show confirmation dialog only if dirty
+        const confirmed = window.confirm('ข้อมูลมีการเปลี่ยนแปลง ยืนยันการบันทึก?')
         if (!confirmed) return
 
         if (!customer.name) return alert('กรุณากรอกชื่อลูกค้า')
@@ -1199,7 +1257,15 @@ export default function OrderForm() {
         const result = await DataManager.saveOrder(newOrder)
 
         if (result === true) {
-            window.location.href = '/orders'
+            alert('บันทึกข้อมูลสำเร็จ')
+
+            if (!router.query.id) {
+                // If creating new, redirect to edit mode to ensure stable IDs on next save
+                window.location.href = `/order?id=${newOrder.id}`
+            } else {
+                // If editing, fast reload data to get updated IDs/State
+                fetchOrderData(newOrder.id)
+            }
         } else {
             console.error('Save failed result:', result)
             alert('บันทึกออเดอร์ไม่สำเร็จ: ' + (result?.message || 'ไม่ทราบสาเหตุ'))
