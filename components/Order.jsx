@@ -100,7 +100,7 @@ export default function OrderForm() {
                 jobs: item.jobs,
                 selectedJobIndex
             })
-            
+
             // Use selected job from the jobs array (source of truth)
             if (item.jobs && item.jobs[selectedJobIndex]) {
                 const job = item.jobs[selectedJobIndex]
@@ -110,7 +110,7 @@ export default function OrderForm() {
                     team: job.assigned_team || job.team,
                     appointmentDate: job.appointment_date || job.appointmentDate
                 })
-                
+
                 return {
                     ...job,
                     // Map snake_case from DB to camelCase for UI if needed
@@ -138,7 +138,10 @@ export default function OrderForm() {
 
                     // IMPORTANT: Respect an explicitly cleared inspector (inspector1: null).
                     // If we fallback to siteInspectorRecord after clearing, it looks like the click did nothing.
-                    inspector1: ('inspector1' in job) ? job.inspector1 : job.siteInspectorRecord
+                    inspector1: ('inspector1' in job) ? job.inspector1 : job.siteInspectorRecord,
+
+                    // Map Service Fee ID for UI
+                    serviceFeeId: job.serviceFeeId || job.team_payment_batch_id || null
                 }
             }
             // If no jobs exist, return empty object (will use generalJobInfo as fallback in JobInfoCard)
@@ -285,7 +288,7 @@ export default function OrderForm() {
             setItems(prev => prev.map(item => {
                 // Update ALL jobs in the jobs array (not just jobs[0])
                 let newJobs = [...(item.jobs || [])]
-                
+
                 if (newJobs.length > 0) {
                     // Update every job in the array
                     newJobs = newJobs.map(job => ({
@@ -504,7 +507,7 @@ export default function OrderForm() {
                             jobsCount: item.jobs?.length || 0,
                             jobs: item.jobs
                         })))
-                        
+
                         // Fetch all products to get images
                         const products = await DataManager.getProducts()
 
@@ -518,7 +521,7 @@ export default function OrderForm() {
 
                             // CRITICAL: Preserve jobs BEFORE any mapping to prevent override
                             const preservedJobs = item.jobs || []
-                            
+
                             if (product) {
                                 // Sync missing fields from product to item (Normalization)
                                 // This ensures consistent display between "New Item" and "Loaded Item"
@@ -544,14 +547,14 @@ export default function OrderForm() {
                                     variant_id: item.product_variant_id || item.variant?.id || null,
                                     variantId: item.product_variant_id || item.variant?.id || null
                                 }
-                                
+
                                 console.log('[Order] Mapped item with jobs:', {
                                     itemId: mappedItem.id,
                                     itemName: mappedItem.name,
                                     jobsCount: mappedItem.jobs?.length || 0,
                                     jobs: mappedItem.jobs
                                 })
-                                
+
                                 return mappedItem
                             }
 
@@ -560,14 +563,14 @@ export default function OrderForm() {
                                 ...item,
                                 jobs: preservedJobs
                             }
-                            
+
                             console.log('[Order] Mapped item (no product) with jobs:', {
                                 itemId: mappedItemWithoutProduct.id,
                                 itemName: mappedItemWithoutProduct.name,
                                 jobsCount: mappedItemWithoutProduct.jobs?.length || 0,
                                 jobs: mappedItemWithoutProduct.jobs
                             })
-                            
+
                             return mappedItemWithoutProduct
                         })
 
@@ -578,7 +581,7 @@ export default function OrderForm() {
                             jobsCount: item.jobs?.length || 0,
                             jobs: item.jobs
                         })))
-                        
+
                         setItems(itemsWithImages)
                     }
 
@@ -983,7 +986,7 @@ export default function OrderForm() {
                 const existingJobs = newItems[index].jobs || []
                 if (existingJobs.length > 0) {
                     // Update first job with current job info
-                    return existingJobs.map((job, idx) => 
+                    return existingJobs.map((job, idx) =>
                         idx === 0 ? {
                             ...job,
                             jobType: currentJobInfo.jobType,
@@ -1120,15 +1123,15 @@ export default function OrderForm() {
         // Let's re-parse for safety.
 
         // Define Main Job Info for Order Level Fallback (using first item's first job)
-        const mainJobInfo = items.length > 0 && items[0].jobs && items[0].jobs[0] 
-            ? items[0].jobs[0] 
+        const mainJobInfo = items.length > 0 && items[0].jobs && items[0].jobs[0]
+            ? items[0].jobs[0]
             : generalJobInfo;
 
         // Prepare items with jobs array (no subJob needed)
         const itemsWithJobs = items.map((item) => {
             // Ensure jobs array exists
             const itemJobs = item.jobs || []
-            
+
             // If no jobs exist, create a default one
             if (itemJobs.length === 0) {
                 return {
@@ -1542,9 +1545,9 @@ export default function OrderForm() {
                                                     {(() => {
                                                         const item = items[selectedItemIndex]
                                                         if (!item) return 'New'
-                                                        
+
                                                         const jobs = item.jobs || []
-                                                        
+
                                                         // If jobs exist, try to get the selected job or the last job
                                                         if (jobs.length > 0) {
                                                             // Try selected index first
@@ -1552,17 +1555,17 @@ export default function OrderForm() {
                                                             if (selectedJob && selectedJob.id) {
                                                                 return selectedJob.id.slice(-12)
                                                             }
-                                                            
+
                                                             // If selected index is out of bounds, use the last job
                                                             const lastJob = jobs[jobs.length - 1]
                                                             if (lastJob && lastJob.id) {
                                                                 return lastJob.id.slice(-12)
                                                             }
-                                                            
+
                                                             // If jobs exist but no ID, show "New"
                                                             return 'New'
                                                         }
-                                                        
+
                                                         // No jobs exist, show "New"
                                                         return 'New'
                                                     })()}
@@ -2092,10 +2095,10 @@ export default function OrderForm() {
                                             {/* Row 3: Job Info & Dates */}
                                             {(() => {
                                                 // Get latest job (last job in array, sorted by sequence_number)
-                                                const latestJob = item.jobs && item.jobs.length > 0 
-                                                    ? item.jobs[item.jobs.length - 1] 
+                                                const latestJob = item.jobs && item.jobs.length > 0
+                                                    ? item.jobs[item.jobs.length - 1]
                                                     : item.latestJob || null
-                                                
+
                                                 return (
                                                     <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
                                                         {/* LEFT: Job Info: Inspector, Location */}
@@ -2134,10 +2137,10 @@ export default function OrderForm() {
                                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                                     {(() => {
                                                         // Get latest job (last job in array, sorted by sequence_number)
-                                                        const latestJob = item.jobs && item.jobs.length > 0 
-                                                            ? item.jobs[item.jobs.length - 1] 
+                                                        const latestJob = item.jobs && item.jobs.length > 0
+                                                            ? item.jobs[item.jobs.length - 1]
                                                             : item.latestJob || null
-                                                        
+
                                                         return (
                                                             <>
                                                                 {/* Job Type */}

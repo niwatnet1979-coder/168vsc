@@ -4,6 +4,8 @@ import AddressCard from './AddressCard'
 import Card from './Card'
 import ContactSelector from './ContactSelector'
 import ContactDisplayCard from './ContactDisplayCard'
+import TeamServiceFeeSelector from './TeamServiceFeeSelector'
+import { DataManager } from '../lib/dataManager'
 import { calculateDistance, extractCoordinates, SHOP_LAT, SHOP_LON } from '../lib/utils'
 
 import AddressSelector from './AddressSelector'
@@ -51,25 +53,26 @@ export default function JobInfoCard({
             contentClassName="flex-1"
         >
             <div className="space-y-3">
-                {/* Job Type */}
-                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
-                    <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทงาน</label>
-                    <select
-                        value={data.jobType}
-                        onChange={e => handleUpdate({ jobType: e.target.value })}
-                        disabled={readOnly}
-                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer"
-                    >
-                        <option value="">-- เลือกประเภทงาน --</option>
-                        {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
-                        {!excludeJobTypes.includes('delivery') && <option value="delivery">ขนส่ง (Delivery)</option>}
-                        {!excludeJobTypes.includes('separate') && <option value="separate">งานแยก (Separate)</option>}
-                    </select>
-                </div>
+                {/* Job Type + Team (same row to save space) */}
+                <div className={`grid gap-3 ${data.jobType !== 'separate' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    {/* Job Type */}
+                    <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
+                        <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทงาน</label>
+                        <select
+                            value={data.jobType}
+                            onChange={e => handleUpdate({ jobType: e.target.value })}
+                            disabled={readOnly}
+                            className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer"
+                        >
+                            <option value="">-- เลือกประเภทงาน --</option>
+                            {!excludeJobTypes.includes('installation') && <option value="installation">งานติดตั้ง (Installation)</option>}
+                            {!excludeJobTypes.includes('delivery') && <option value="delivery">ขนส่ง (Delivery)</option>}
+                            {!excludeJobTypes.includes('separate') && <option value="separate">งานแยก (Separate)</option>}
+                        </select>
+                    </div>
 
-                {data.jobType !== 'separate' && (
-                    <>
-                        {/* Team */}
+                    {/* Team */}
+                    {data.jobType !== 'separate' && (
                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                             <label className="block text-xs font-medium text-secondary-500 mb-1">ทีม</label>
                             <div className="relative">
@@ -89,7 +92,11 @@ export default function JobInfoCard({
                                 <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                             </div>
                         </div>
+                    )}
+                </div>
 
+                {data.jobType !== 'separate' && (
+                    <>
                         {/* Dates Grid */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
@@ -212,6 +219,39 @@ export default function JobInfoCard({
                             disabled={readOnly}
                             className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 placeholder:font-normal resize-none"
                             placeholder="รายละเอียดเพิ่มเติม..."
+                        />
+                    </div>
+                )}
+
+                {/* Team Service Fee Selector (New) */}
+                {data.jobType !== 'separate' && data.team && (
+                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <TeamServiceFeeSelector
+                            teamId={null} // We need teamId. 'data.team' is likely a NAME string in current app, not ID.
+                            // We need to resolve Name -> ID for the selector to work completely.
+                            // Or the selector can search by Name?
+                            // My implementation uses teamId.
+                            // Let's pass teamName and let Selector find ID or use Name?
+                            // Modified Selector to accept teamName? NO, Selector uses DataManager.getTeamServiceFees(teamId).
+                            // I should probably try to resolve ID if possible, or pass teamName to Selector to resolve.
+                            // In JobInfoCard, 'data.team' is string. 
+                            // I'll update Selector to handle teamName prop and lookup ID internally if needed.
+                            teamName={data.team}
+                            // Assuming Job ID is available in data.id
+                            value={data.serviceFeeId} // Need this in prop
+                            onChange={async (newId) => {
+                                handleUpdate({ serviceFeeId: newId })
+                                // Link immediately if job exists (and newId is valid)
+                                if (data.id && newId) {
+                                    try {
+                                        await DataManager.linkServiceFeeJobs(newId, [data.id])
+                                        // Optional: Notify success?
+                                    } catch (err) {
+                                        console.error('Failed to link service fee:', err)
+                                    }
+                                }
+                            }}
+                            readOnly={readOnly}
                         />
                     </div>
                 )}

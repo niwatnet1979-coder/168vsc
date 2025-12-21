@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
+import TeamManagementModal from '../components/TeamManagementModal'
 import { DataManager } from '../lib/dataManager'
 
 export default function TeamPage() {
@@ -33,6 +34,7 @@ export default function TeamPage() {
     const [teamMembers, setTeamMembers] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
     const [showModal, setShowModal] = useState(false)
+    const [showTeamModal, setShowTeamModal] = useState(false)
     const [editingMember, setEditingMember] = useState(null)
 
     // Initial Form State
@@ -150,6 +152,13 @@ export default function TeamPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={() => setShowTeamModal(true)}
+                                className="flex-1 sm:flex-none justify-center px-4 py-2 bg-white text-secondary-700 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors flex items-center gap-2 font-medium"
+                            >
+                                <Briefcase size={18} />
+                                ข้อมูลทีม
+                            </button>
 
                             <button
                                 onClick={handleAdd}
@@ -288,6 +297,12 @@ export default function TeamPage() {
                 onClose={() => setShowModal(false)}
                 member={formData}
                 onSave={handleSave}
+            />
+
+            {/* Team Management Modal */}
+            <TeamManagementModal
+                isOpen={showTeamModal}
+                onClose={() => setShowTeamModal(false)}
             />
         </AppLayout>
     )

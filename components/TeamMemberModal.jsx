@@ -48,7 +48,7 @@ export default function TeamMemberModal({
     const [formData, setFormData] = useState(member || initialFormState)
 
     // Option States
-    const [teamNames, setTeamNames] = useState([])
+    const [teams, setTeams] = useState([])
     const [teamTypes, setTeamTypes] = useState([])
     const [jobPositions, setJobPositions] = useState([])
     const [jobLevels, setJobLevels] = useState([])
@@ -58,7 +58,8 @@ export default function TeamMemberModal({
     const [commissionRates, setCommissionRates] = useState([])
 
     // Defaults
-    const defaultTeamNames = ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร']
+    // const defaultTeamNames = ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร'] // Removed
+
     const defaultTeamTypes = ['QC', 'SALE', 'บริหาร']
     const defaultJobPositions = ['พนักงาน', 'บริหาร']
     const defaultJobLevels = ['Executive', 'Director', 'Manager', 'Leader', 'Senior', 'Staff']
@@ -69,30 +70,36 @@ export default function TeamMemberModal({
 
     useEffect(() => {
         const loadOptions = async () => {
-            const options = await DataManager.getProductOptions()
-            if (options) {
-                setTeamNames(options.teamNames && options.teamNames.length > 0 ? options.teamNames : defaultTeamNames)
-                setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
-                setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
-                setJobLevels(options.jobLevels && options.jobLevels.length > 0 ? options.jobLevels : defaultJobLevels)
-                setEmploymentTypes(options.employmentTypes && options.employmentTypes.length > 0 ? options.employmentTypes : defaultEmploymentTypes)
-                setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
-                setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
-                setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
-            } else {
-                // Fallback to defaults
-                setTeamNames(defaultTeamNames)
-                setTeamTypes(defaultTeamTypes)
-                setJobPositions(defaultJobPositions)
-                setJobLevels(defaultJobLevels)
-                setEmploymentTypes(defaultEmploymentTypes)
-                setPaymentTypes(defaultPaymentTypes)
-                setWageRates(defaultWageRates)
-                setCommissionRates(defaultCommissionRates)
+            if (isOpen) {
+                const teamsDb = await DataManager.getTeams()
+                setTeams(teamsDb || [])
+            }
+
+            // Load other static options only once if not loaded
+            if (jobPositions.length === 0) {
+                const options = await DataManager.getProductOptions()
+                if (options) {
+                    setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
+                    setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
+                    setJobLevels(options.jobLevels && options.jobLevels.length > 0 ? options.jobLevels : defaultJobLevels)
+                    setEmploymentTypes(options.employmentTypes && options.employmentTypes.length > 0 ? options.employmentTypes : defaultEmploymentTypes)
+                    setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
+                    setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
+                    setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
+                } else {
+                    // Fallback to defaults
+                    setTeamTypes(defaultTeamTypes)
+                    setJobPositions(defaultJobPositions)
+                    setJobLevels(defaultJobLevels)
+                    setEmploymentTypes(defaultEmploymentTypes)
+                    setPaymentTypes(defaultPaymentTypes)
+                    setWageRates(defaultWageRates)
+                    setCommissionRates(defaultCommissionRates)
+                }
             }
         }
         loadOptions()
-    }, [])
+    }, [isOpen])
 
     // Update form data when member prop changes or modal opens
     useEffect(() => {
@@ -199,28 +206,38 @@ export default function TeamMemberModal({
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ชื่อทีม</label>
                                 <select
-                                    value={formData.team}
-                                    onChange={e => setFormData({ ...formData, team: e.target.value })}
+                                    value={formData.teamId || ''}
+                                    onChange={e => {
+                                        const tId = e.target.value
+                                        const selectedTeam = teams.find(t => t.id === tId)
+                                        if (selectedTeam) {
+                                            setFormData({
+                                                ...formData,
+                                                teamId: selectedTeam.id,
+                                                team: selectedTeam.name,
+                                                teamType: selectedTeam.team_type || formData.teamType
+                                            })
+                                        } else {
+                                            setFormData({ ...formData, teamId: '', team: '' })
+                                        }
+                                    }}
                                     className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                 >
                                     <option value="">เลือกชื่อทีม</option>
-                                    {teamNames.map((opt, i) => (
-                                        <option key={i} value={opt}>{opt}</option>
+                                    {teams.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name} {t.team_type ? `(${t.team_type})` : ''}</option>
                                     ))}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ประเภททีม</label>
-                                <select
-                                    value={formData.teamType}
-                                    onChange={e => setFormData({ ...formData, teamType: e.target.value })}
-                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                                >
-                                    <option value="">เลือกประเภททีม</option>
-                                    {teamTypes.map((opt, i) => (
-                                        <option key={i} value={opt}>{opt}</option>
-                                    ))}
-                                </select>
+                                <input
+                                    type="text"
+                                    value={formData.teamType || ''}
+                                    disabled
+                                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg bg-secondary-100 text-secondary-500 cursor-not-allowed"
+                                    placeholder="จะแสดงตามทีมที่เลือก"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ตำแหน่ง (Job)</label>
