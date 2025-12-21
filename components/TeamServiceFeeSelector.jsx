@@ -94,17 +94,17 @@ export default function TeamServiceFeeSelector({
                 `}
             >
                 {selectedBatch ? (
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                            <span className="bg-primary-50 text-primary-700 px-1.5 py-0.5 rounded text-xs font-mono">
-                                #{selectedBatch.id.slice(-6)}
-                            </span>
-                            <span>{new Date(selectedBatch.created_at).toLocaleDateString('th-TH')}</span>
-                        </div>
-                        <div className="text-xs text-gray-500 flex gap-2">
-                            <span>คงเหลือ: {selectedBatch.remaining.toLocaleString()}</span>
-                            {selectedBatch.status === 'closed' && <span className="text-red-500">(ปิดแล้ว)</span>}
-                        </div>
+                    <div className="flex-1 font-mono text-xs leading-relaxed grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center">
+                        <div className="text-gray-900 font-medium truncate">TP{selectedBatch.id.slice(-6)}-{teamName}</div>
+                        <div className="text-gray-600">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="text-right text-gray-900 w-16">ยอดเบิก</div>
+                        <div className="text-right text-gray-900 w-20">{Number(selectedBatch.totalDue || 0).toLocaleString()} บาท</div>
+
+                        {/* Row 2 */}
+                        <div></div>
+                        <div className="text-gray-400">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="text-right text-gray-500">ยอดค้าง</div>
+                        <div className="text-right text-gray-500">{Number(selectedBatch.remaining).toLocaleString()} บาท</div>
                     </div>
                 ) : (
                     <span className="text-sm text-gray-400">-- เลือกชุดเบิกค่าบริการ --</span>
@@ -133,18 +133,17 @@ export default function TeamServiceFeeSelector({
                                     ${value === batch.id ? 'bg-blue-50 border-blue-200' : ''}
                                 `}
                             >
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                        <span>{new Date(batch.created_at).toLocaleDateString('th-TH')}</span>
-                                        <span className="font-mono text-xs text-gray-400">#{batch.id.slice(-6)}</span>
-                                    </div>
-                                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                        <span>จ่ายล่าสุด: {batch.last_payment ? new Date(batch.last_payment).toLocaleDateString() : '-'}</span>
-                                        <span className="text-gray-300">|</span>
-                                        <span className={batch.remaining > 0 ? 'text-red-500' : 'text-green-500'}>
-                                            ค้าง {batch.remaining.toLocaleString()}
-                                        </span>
-                                    </div>
+                                <div className="flex-1 font-mono text-xs leading-relaxed grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center">
+                                    <div className="text-gray-900 font-medium truncate">TP{batch.id.slice(-6)}-{teamName}</div>
+                                    <div className="text-gray-600">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div className="text-right text-gray-900 w-16">ยอดเบิก</div>
+                                    <div className="text-right text-gray-900 w-20">{Number(batch.totalDue || 0).toLocaleString()} บาท</div>
+
+                                    {/* Row 2 */}
+                                    <div></div>
+                                    <div className="text-gray-400">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div className="text-right text-gray-500">ยอดค้าง</div>
+                                    <div className="text-right text-gray-500">{Number(batch.remaining).toLocaleString()} บาท</div>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {value === batch.id && <Check size={16} className="text-blue-600 mr-2" />}
@@ -168,7 +167,8 @@ export default function TeamServiceFeeSelector({
                         <Plus size={16} /> สร้างชุดเบิกใหม่
                     </button>
                 </div>
-            )}
+            )
+            }
 
             {/* Modal */}
             <TeamServiceFeeModal
@@ -182,6 +182,6 @@ export default function TeamServiceFeeSelector({
                     if (!editingBatchId) onChange(savedBatch.id) // Auto select new
                 }}
             />
-        </div>
+        </div >
     )
 }

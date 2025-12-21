@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash2, Save, CreditCard, FileText, QrCode, ExternalLink, Calendar, DollarSign, Tooltip } from 'lucide-react'
+import { X, Plus, Trash2, Save, CreditCard, FileText, QrCode, ExternalLink, Calendar, DollarSign, Tooltip, Edit2 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import { formatDate } from '../lib/utils' // Assuming utils exists
 
@@ -77,6 +77,8 @@ export default function TeamServiceFeeModal({
     const remaining = totalDue - totalPaid
 
     const handleSaveBatch = async () => {
+        if (!confirm('ยืนยันการบันทึกข้อมูล?')) return
+
         setLoading(true)
         const payload = {
             id: batchId,
@@ -97,6 +99,7 @@ export default function TeamServiceFeeModal({
 
         const res = await DataManager.saveTeamServiceFee(payload)
         if (res.success) {
+            alert('บันทึกข้อมูลสำเร็จ!')
             if (onSaveSuccess) onSaveSuccess(res.data)
             if (!batchId) {
                 // If created new, reload as existing
@@ -135,14 +138,26 @@ export default function TeamServiceFeeModal({
         // Upload slip if needed (skipped for brevity, assuming URL or basic flow)
         // If file input logic needed, similar to TeamManagementModal
 
-        await DataManager.addServiceFeePayment({
-            service_fee_id: batchId,
-            amount: paymentForm.amount,
-            payment_method: paymentForm.method,
-            slip_url: slipUrl, // Todo: Handle file upload if required
-            note: paymentForm.note,
-            paid_at: paymentForm.date || new Date().toISOString()
-        })
+        if (paymentForm.id) {
+            // Update mode
+            await DataManager.updateServiceFeePayment(paymentForm.id, {
+                amount: paymentForm.amount,
+                payment_method: paymentForm.method,
+                slip_url: slipUrl,
+                note: paymentForm.note,
+                paid_at: paymentForm.date || new Date().toISOString()
+            })
+        } else {
+            // Create mode
+            await DataManager.addServiceFeePayment({
+                service_fee_id: batchId,
+                amount: paymentForm.amount,
+                payment_method: paymentForm.method,
+                slip_url: slipUrl, // Todo: Handle file upload if required
+                note: paymentForm.note,
+                paid_at: paymentForm.date || new Date().toISOString()
+            })
+        }
 
         setShowPaymentForm(false)
         setPaymentForm({ amount: '', method: 'Transfer', slip: null, note: '', date: '' })
@@ -178,7 +193,19 @@ export default function TeamServiceFeeModal({
                 {/* Body */}
                 <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
 
-                    {/* 1. Main Costs */}
+                    {/* 1. Job List (Moved to Top) */}
+                    <div>
+                        <h4 className="font-semibold text-secondary-800 text-sm mb-2">งานที่ผูกกับชุดนี้</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {jobs.length > 0 ? jobs.map((job, i) => (
+                                <span key={i} className="bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono text-xs border border-gray-200">
+                                    JB{job.id ? job.id.slice(-6) : 'Unknown'}-{teamName}
+                                </span>
+                            )) : <span className="text-gray-400 text-xs">- ไม่ได้รับระบุงาน -</span>}
+                        </div>
+                    </div>
+
+                    {/* 2. Main Costs */}
                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
                         <h4 className="font-semibold text-secondary-800 text-sm mb-2">ค่าบริการ / ค่าเดินทาง / ค่าของ</h4>
                         <div className="grid grid-cols-3 gap-3">
@@ -269,17 +296,6 @@ export default function TeamServiceFeeModal({
                         </div>
                     </div>
 
-                    {/* 3. Job List */}
-                    <div>
-                        <h4 className="font-semibold text-secondary-800 text-sm mb-2">งานที่ผูกกับชุดนี้</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {jobs.length > 0 ? jobs.map((job, i) => (
-                                <span key={i} className="bg-gray-100 text-gray-600 px-2 py-1 rounded font-mono text-xs border border-gray-200">
-                                    JOB #{job.id ? job.id.slice(-12) : 'Unknown'}
-                                </span>
-                            )) : <span className="text-gray-400 text-xs">- ไม่ได้รับระบุงาน -</span>}
-                        </div>
-                    </div>
 
                     {/* 4. Totals and Payments */}
                     <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-4">
@@ -297,7 +313,27 @@ export default function TeamServiceFeeModal({
                                         <div className="font-medium text-gray-700">{p.payment_method}</div>
                                         {p.slip_url && <a href={p.slip_url} target="_blank" className="text-blue-500 text-xs hover:underline">ดูสลิป</a>}
                                     </div>
-                                    <div className="text-green-600 font-medium">{Number(p.amount).toLocaleString()}</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-green-600 font-medium">{Number(p.amount).toLocaleString()}</div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setPaymentForm({
+                                                    id: p.id,
+                                                    amount: p.amount,
+                                                    method: p.payment_method || 'Transfer',
+                                                    slip: p.slip_url,
+                                                    note: p.note || '',
+                                                    date: p.paid_at ? new Date(p.paid_at).toISOString().slice(0, 16) : ''
+                                                })
+                                                setShowPaymentForm(true)
+                                            }}
+                                            className="text-gray-400 hover:text-blue-500 transition-colors"
+                                            title="แก้ไข"
+                                        >
+                                            <Edit2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
 
@@ -311,7 +347,14 @@ export default function TeamServiceFeeModal({
 
                             {remaining > 0 && (
                                 <button
-                                    onClick={() => setShowPaymentForm(true)}
+                                    onClick={() => {
+                                        setPaymentForm(prev => ({
+                                            ...prev,
+                                            amount: remaining > 0 ? remaining : '',
+                                            date: new Date().toLocaleString('sv').slice(0, 16)
+                                        }))
+                                        setShowPaymentForm(true)
+                                    }}
                                     className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
                                 >
                                     <CreditCard size={18} /> เพิ่มรายการชำระเงิน
@@ -372,9 +415,36 @@ export default function TeamServiceFeeModal({
                                 </div>
                             )}
 
-                            <button onClick={handleAddPayment} className="w-full py-2 bg-primary-600 text-white rounded hover:bg-primary-700 text-sm">
-                                ยืนยันการชำระ
-                            </button>
+                            <div className="flex justify-between items-center pt-2">
+                                {/* Left: Delete Button (Only in Edit Mode) */}
+                                <div>
+                                    {paymentForm.id && (
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation()
+                                                if (confirm('ลบรายการชำระเงินนี้?')) {
+                                                    setLoading(true)
+                                                    await DataManager.deleteServiceFeePayment(paymentForm.id)
+                                                    setShowPaymentForm(false)
+                                                    loadBatch(batchId)
+                                                }
+                                            }}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            title="ลบรายการชำระเงิน"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Right: Confirm Button */}
+                                <button
+                                    onClick={handleAddPayment}
+                                    className="px-6 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 text-sm font-medium"
+                                >
+                                    ยืนยันการชำระ
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -382,7 +452,27 @@ export default function TeamServiceFeeModal({
                 {/* Footer Actions */}
                 <div className="p-4 border-t bg-gray-50 rounded-b-xl flex justify-between items-center">
                     <div className="text-sm font-medium text-gray-600">
-                        {/* Team Outstanding can be shown here if passed prop or calculated */}
+                        {batchId && (
+                            <button
+                                onClick={async () => {
+                                    if (confirm('คุณต้องการลบชุดเบิกนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+                                        setLoading(true)
+                                        const res = await DataManager.deleteTeamServiceFee(batchId)
+                                        if (res.success) {
+                                            if (onSaveSuccess) onSaveSuccess(null) // Pass null or indicator to refresh
+                                            onClose()
+                                        } else {
+                                            alert('เกิดข้อผิดพลาดในการลบ')
+                                        }
+                                        setLoading(false)
+                                    }
+                                }}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                title="ลบชุดเบิกนี้"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
                     </div>
                     <button
                         onClick={handleSaveBatch}
