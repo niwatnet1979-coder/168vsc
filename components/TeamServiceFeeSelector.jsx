@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronDown, Plus, Edit2, FileText, Check } from 'lucide-react'
+import { ChevronDown, Plus, Edit2, FileText, Check, Trash2 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import TeamServiceFeeModal from './TeamServiceFeeModal'
 import { formatDate } from '../lib/utils'
@@ -109,13 +109,13 @@ export default function TeamServiceFeeSelector({
             >
                 {selectedBatch ? (
                     <div className="flex-1 font-mono text-xs leading-relaxed grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center">
-                        <div className="text-gray-900 font-medium truncate">TP{selectedBatch.id.slice(-6)}-{teamName}</div>
+                        <div className="text-gray-900 font-medium truncate">TP{selectedBatch.id.slice(-6)}</div>
                         <div className="text-gray-600">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                         <div className="text-right text-gray-900 w-16">ยอดเบิก</div>
                         <div className="text-right text-gray-900 w-20">{Number(selectedBatch.totalDue || 0).toLocaleString()} บาท</div>
 
                         {/* Row 2 */}
-                        <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(selectedBatch)} งาน</div>
+                        <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(selectedBatch)}</div>
                         <div className="text-gray-400">{new Date(selectedBatch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                         <div className="text-right text-gray-500">ยอดค้าง</div>
                         <div className="text-right text-gray-500">{Number(selectedBatch.remaining).toLocaleString()} บาท</div>
@@ -123,7 +123,31 @@ export default function TeamServiceFeeSelector({
                 ) : (
                     <span className="text-sm text-gray-400">-- เลือกชุดเบิกค่าบริการ --</span>
                 )}
-                {!readOnly && <ChevronDown size={16} className="text-gray-400" />}
+                {!readOnly && (
+                    selectedBatch ? (
+                        <div className="flex items-center gap-1 ml-2">
+                            <button
+                                onClick={(e) => handleEditClick(e, selectedBatch.id)}
+                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                                title="แก้ไขรายละเอียด"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onChange(null)
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                                title="ลบการเลือก (ไม่ลบข้อมูลจริง)"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <ChevronDown size={16} className="text-gray-400" />
+                    )
+                )}
             </div>
 
             {/* Dropdown */}
@@ -148,13 +172,13 @@ export default function TeamServiceFeeSelector({
                                 `}
                             >
                                 <div className="flex-1 font-mono text-xs leading-relaxed grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center">
-                                    <div className="text-gray-900 font-medium truncate">TP{batch.id.slice(-6)}-{teamName}</div>
+                                    <div className="text-gray-900 font-medium truncate">TP{batch.id.slice(-6)}</div>
                                     <div className="text-gray-600">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                                     <div className="text-right text-gray-900 w-16">ยอดเบิก</div>
                                     <div className="text-right text-gray-900 w-20">{Number(batch.totalDue || 0).toLocaleString()} บาท</div>
 
                                     {/* Row 2 */}
-                                    <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(batch)} งาน</div>
+                                    <div className="text-secondary-500">จำนวนงาน : {getDisplayCount(batch)}</div>
                                     <div className="text-gray-400">{new Date(batch.created_at).toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
                                     <div className="text-right text-gray-500">ยอดค้าง</div>
                                     <div className="text-right text-gray-500">{Number(batch.remaining).toLocaleString()} บาท</div>
