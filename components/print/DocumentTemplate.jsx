@@ -21,7 +21,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
     // type: 'IV' (Invoice/Tax Invoice) or 'RC' (Receipt)
 
     const isInvoice = type === 'IV'
-    const docTitle = isInvoice ? 'ใบเสร็จรับเงิน / ใบกำกับภาษี' : 'ใบเสร็จรับเงิน'
+    const docTitle = isInvoice ? 'ใบแจ้งหนี้ / ใบกำกับภาษี' : 'ใบเสร็จรับเงิน'
     const docNo = isInvoice ? payment.invoiceNo : payment.receiptNo
     const docDate = isInvoice ? payment.invoiceDate : payment.receiptDate
 

@@ -49,9 +49,19 @@ function currency(n) {
 export default function Quotation({ data }) {
   const subtotal = data.items.reduce((s, i) => s + i.qty * i.unitPrice, 0)
   const vatRate = data.company.vatRegistered ? 0.07 : 0
-  // discount state: can enter as percent or amount
-  const [discountMode, setDiscountMode] = useState('percent') // 'percent' or 'amount'
-  const [discountValue, setDiscountValue] = useState(0)
+  // Initialize state from savedData if available
+  const saved = data.savedData || {}
+
+  const [discountMode, setDiscountMode] = useState(saved.discount_type || 'percent')
+  const [discountValue, setDiscountValue] = useState(saved.discount_value || 0)
+  const [depositPercent, setDepositPercent] = useState(saved.deposit_percent !== undefined ? saved.deposit_percent : 50)
+
+  // Terms and Notes state
+  const [terms, setTerms] = useState(saved.terms || data.terms) // Fallback to prop default
+  const [notes, setNotes] = useState(saved.notes || '')
+
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState(null) // 'success', 'error', null
 
   // calculate discount (apply on subtotal before VAT)
   let discountPercent = 0
@@ -67,14 +77,56 @@ export default function Quotation({ data }) {
 
   const vatAmount = Math.round((subtotal - discountAmount) * vatRate * 100) / 100
   const total = Math.round((subtotal - discountAmount + vatAmount) * 100) / 100
-
-  const [depositPercent, setDepositPercent] = useState(50)
   const depositAmount = Math.round((total * (depositPercent / 100)) * 100) / 100
   const outstanding = Math.round((total - depositAmount) * 100) / 100
 
+  const handleSave = async () => {
+    setIsSaving(true)
+    setSaveStatus(null)
+    try {
+      // Import dynamically or pass as prop if DataManager is not available here?
+      // Assuming DataManager is imported or window.DataManager
+      // Ideally we should import it at top.
+      const { DataManager } = require('../lib/dataManager')
+
+      const payload = {
+        order_id: data.id,
+        quotation_number: data.quotationNumber,
+        discount_value: discountValue,
+        discount_type: discountMode,
+        deposit_percent: depositPercent,
+        valid_until: data.validUntil, // Could be editable too
+        terms: terms,
+        notes: notes
+      }
+
+      const res = await DataManager.saveQuotation(payload)
+      if (res.success) {
+        setSaveStatus('success')
+        setTimeout(() => setSaveStatus(null), 3000)
+      } else {
+        setSaveStatus('error')
+      }
+    } catch (e) {
+      console.error(e)
+      setSaveStatus('error')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="quotation">
-      <div className="print-controls">
+      <div className="print-controls flex items-center justify-end gap-2">
+        {saveStatus === 'success' && <span className="text-green-600 text-sm font-medium">บันทึกเรียบร้อย</span>}
+        {saveStatus === 'error' && <span className="text-red-600 text-sm font-medium">บันทึกไม่สำเร็จ</span>}
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium disabled:opacity-50"
+        >
+          {isSaving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+        </button>
         <button onClick={() => window.print()} className="btn-primary">พิมพ์ / บันทึกเป็น PDF</button>
       </div>
       <header className="q-header">
@@ -106,6 +158,7 @@ export default function Quotation({ data }) {
         <thead>
           <tr>
             <th>ลำดับ</th>
+            <th style={{ width: '80px' }}>รูปภาพ</th>
             <th>รายละเอียด</th>
             <th>จำนวน</th>
             <th>ราคาต่อหน่วย</th>
@@ -116,6 +169,11 @@ export default function Quotation({ data }) {
           {data.items.map((it, idx) => (
             <tr key={idx}>
               <td>{idx + 1}</td>
+              <td style={{ textAlign: 'center' }}>
+                {it.image ? (
+                  <img src={it.image} alt={it.description} style={{ maxWidth: '60px', maxHeight: '60px', objectFit: 'contain' }} />
+                ) : '-'}
+              </td>
               <td>{it.description}</td>
               <td style={{ textAlign: 'right' }}>{it.qty}</td>
               <td style={{ textAlign: 'right' }}>{currency(it.unitPrice)}</td>
@@ -125,11 +183,11 @@ export default function Quotation({ data }) {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={4} style={{ textAlign: 'right' }}>รวมเป็นเงิน</td>
+            <td colSpan={5} style={{ textAlign: 'right' }}>รวมเป็นเงิน</td>
             <td style={{ textAlign: 'right' }}>{currency(subtotal)}</td>
           </tr>
           <tr>
-            <td colSpan={4} style={{ textAlign: 'right' }}>
+            <td colSpan={5} style={{ textAlign: 'right' }}>
               <div className="table-footer-label-group">
                 <span>ส่วนลด</span>
                 <div className="table-discount-controls">
@@ -152,19 +210,19 @@ export default function Quotation({ data }) {
             </td>
           </tr>
           <tr>
-            <td colSpan={4} style={{ textAlign: 'right' }}>จำนวนเงินก่อนภาษี</td>
+            <td colSpan={5} style={{ textAlign: 'right' }}>จำนวนเงินก่อนภาษี</td>
             <td style={{ textAlign: 'right' }}>{currency(Math.round((subtotal - discountAmount) * 100) / 100)}</td>
           </tr>
           <tr>
-            <td colSpan={4} style={{ textAlign: 'right' }}>ภาษีมูลค่าเพิ่ม (VAT) {(vatRate * 100).toFixed(0)}%</td>
+            <td colSpan={5} style={{ textAlign: 'right' }}>ภาษีมูลค่าเพิ่ม (VAT) {(vatRate * 100).toFixed(0)}%</td>
             <td style={{ textAlign: 'right' }}>{currency(vatAmount)}</td>
           </tr>
           <tr className="row-total">
-            <td colSpan={4} style={{ textAlign: 'right' }}><strong>ยอดรวมทั้งสิ้น</strong></td>
+            <td colSpan={5} style={{ textAlign: 'right' }}><strong>ยอดรวมทั้งสิ้น</strong></td>
             <td style={{ textAlign: 'right' }}><strong>{currency(total)}</strong></td>
           </tr>
           <tr>
-            <td colSpan={4} style={{ textAlign: 'right' }}>
+            <td colSpan={5} style={{ textAlign: 'right' }}>
               <div className="table-footer-label-group">
                 <span>มัดจำ ({depositPercent}%)</span>
                 <input
@@ -180,7 +238,7 @@ export default function Quotation({ data }) {
             <td style={{ textAlign: 'right' }}>{currency(depositAmount)}</td>
           </tr>
           <tr className="row-outstanding">
-            <td colSpan={4} style={{ textAlign: 'right' }}>
+            <td colSpan={5} style={{ textAlign: 'right' }}>
               <strong>{data.jobType === 'installation' ? 'ยอดคงค้างที่ชำระหน้างาน' : 'ยอดที่ต้องชำระก่อนวันจัดส่ง'}</strong>
             </td>
             <td style={{ textAlign: 'right' }}><strong>{currency(outstanding)}</strong></td>
@@ -220,13 +278,23 @@ export default function Quotation({ data }) {
       </div>
 
       <section className="q-terms">
-        <h4>เงื่อนไข</h4>
-        <p>{data.terms}</p>
+        <h4>เงื่อนไข (แก้ไขได้)</h4>
+        <textarea
+          className="w-full border border-gray-200 rounded p-2 text-xs"
+          rows={4}
+          value={terms}
+          onChange={(e) => setTerms(e.target.value)}
+        />
       </section>
 
       <section className="q-note">
         <h4>หมายเหตุ / Note</h4>
-        <textarea placeholder="พิมพ์หมายเหตุเพิ่มเติมที่นี่..." rows={4} />
+        <textarea
+          placeholder="พิมพ์หมายเหตุเพิ่มเติมที่นี่..."
+          rows={4}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
       </section>
 
       <section className="q-signature">

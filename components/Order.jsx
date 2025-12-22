@@ -6,7 +6,7 @@ import {
     Save, Plus, Trash2, Calendar, MapPin, FileText, User, Search,
     ChevronDown, ChevronUp, X, Check, Truck, Wrench, Edit2, UserPlus,
     CreditCard, DollarSign, Percent, AlertCircle, Home, ArrowLeft, Phone, Mail, MessageCircle, Facebook, Instagram,
-    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling, Lightbulb, Video, List, Copy
+    MoreHorizontal, CheckCircle, FileEdit, Camera, HelpCircle, Map, Globe, Users, Box, Palette, Package, UserCheck, Menu, Layers, Gem, Zap, Power, QrCode, Scaling, Lightbulb, Video, List, Copy, Printer
 } from 'lucide-react'
 import AppLayout from './AppLayout'
 import { DataManager } from '../lib/dataManager'
@@ -144,6 +144,7 @@ export default function OrderForm() {
 
                 return {
                     ...job,
+                    orderId: router.query?.id || orderNumber, // Inject Order ID for printing
                     // Map snake_case from DB to camelCase for UI if needed
                     // Robust mapping for JobInfoCard resilience
                     jobType: job.jobType || job.job_type || 'installation',
@@ -1378,6 +1379,16 @@ export default function OrderForm() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-3">
+                            {router.query.id && (
+                                <button
+                                    onClick={() => window.open(`/print/envelope?orderId=${router.query.id}`, '_blank')}
+                                    className="p-2 sm:px-3 sm:py-2 text-secondary-600 hover:bg-secondary-50 hover:text-primary-600 rounded-lg font-medium transition-colors flex items-center gap-2"
+                                    title="พิมพ์ซองจดหมาย"
+                                >
+                                    <Printer size={20} className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    <span className="hidden sm:inline text-sm">พิมพ์ซอง</span>
+                                </button>
+                            )}
                             <button onClick={() => router.push('/orders')} className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base text-secondary-600 hover:bg-secondary-50 rounded-lg font-medium transition-colors">
                                 ยกเลิก
                             </button>

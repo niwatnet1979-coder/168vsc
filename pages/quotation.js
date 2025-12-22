@@ -63,6 +63,7 @@ export default function QuotationPage() {
             },
             items: Array.isArray(order.items) ? order.items.map(item => ({
               description: item.name,
+              image: item.image,
               qty: item.qty || 1,
               unitPrice: item.price || 0
             })) : [],
@@ -97,9 +98,25 @@ export default function QuotationPage() {
     q.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleViewQuotation = (quotation) => {
-    setSelectedQuotation(quotation)
-    setShowModal(true)
+  const handleViewQuotation = async (quotation) => {
+    try {
+      // Fetch saved quotation details (terms, discount, etc.)
+      const savedData = await DataManager.getQuotation(quotation.id)
+
+      // Merge saved data into the quotation object
+      const mergedQuotation = {
+        ...quotation,
+        savedData: savedData || null // Pass null if no saved data
+      }
+
+      setSelectedQuotation(mergedQuotation)
+      setShowModal(true)
+    } catch (error) {
+      console.error("Error fetching saved quotation:", error)
+      // Fallback to showing just the order data
+      setSelectedQuotation(quotation)
+      setShowModal(true)
+    }
   }
 
   return (

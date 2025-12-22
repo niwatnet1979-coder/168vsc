@@ -21,7 +21,8 @@ import {
 
     Box,
     CheckCircle,
-    Globe
+    Globe,
+    ScrollText
 } from 'lucide-react';
 import packageJson from '../package.json';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -61,6 +62,7 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { name: 'Order Entry', icon: ShoppingCart, path: '/order' },
         { name: 'Orders List', icon: FileText, path: '/orders' },
+        { name: 'Quotations', icon: ScrollText, path: '/quotation' },
         { name: 'Products', icon: Package, path: '/products' },
         { name: 'Inventory', icon: Box, path: '/inventory' },
         { name: 'Purchasing', icon: ShoppingBag, path: '/purchasing' },
