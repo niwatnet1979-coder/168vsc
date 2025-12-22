@@ -11,7 +11,9 @@ import {
     Wrench,
     Camera,
     ClipboardCheck,
-    Edit
+    Edit,
+    Users,
+    AlertCircle
 } from 'lucide-react'
 
 import JobInfoCard from '../components/JobInfoCard'
@@ -21,14 +23,8 @@ import PaymentSummaryCard from '../components/PaymentSummaryCard'
 import PaymentEntryModal from '../components/PaymentEntryModal'
 import JobInspectorView from '../components/JobInspectorView'
 import JobCompletionView from '../components/JobCompletionView'
-
-const formatDateForInput = (isoString) => {
-    if (!isoString) return ''
-    const date = new Date(isoString)
-    if (isNaN(date.getTime())) return ''
-    const pad = (n) => n < 10 ? '0' + n : n
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
+import CustomerModal from '../components/CustomerModal'
+import { calculateDistance, extractCoordinates, formatDateForInput, formatDateForSave, SHOP_LAT, SHOP_LON } from '../lib/utils' // Import utils
 
 export default function JobDetailPage() {
     const router = useRouter()
@@ -37,7 +33,8 @@ export default function JobDetailPage() {
     const [customer, setCustomer] = useState(null)
     const [product, setProduct] = useState(null)
     const [otherOutstandingOrders, setOtherOutstandingOrders] = useState([])
-    const [promptpayQr, setPromptpayQr] = useState('')
+    const [promptpayQr, setPromptpayQr] = useState(null)
+    const [shopCoords, setShopCoords] = useState({ lat: SHOP_LAT, lon: SHOP_LON })
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('customer')
     const [availableTeams, setAvailableTeams] = useState([])
@@ -55,10 +52,161 @@ export default function JobDetailPage() {
     const jobInspectorRef = useRef(null)
     const orderItemModalRef = useRef(null)
 
+    // Customer Modal State
+    const [showEditCustomerModal, setShowEditCustomerModal] = useState(false)
+    const [customerModalTab, setCustomerModalTab] = useState('info')
+    const [addingContactFor, setAddingContactFor] = useState(null)
+
+    // Job Info Edit State
+    const [jobInfo, setJobInfo] = useState(null) // Local state for editing
+    const [isJobInfoDirty, setIsJobInfoDirty] = useState(false)
+
+    // Sync job info to local state when loaded
+    useEffect(() => {
+        if (job) {
+            setJobInfo({
+                id: job.id,
+                orderId: job.orderId,
+                jobType: job.jobType || 'installation',
+                appointmentDate: formatDateForInput(job.appointmentDate), // Format for input
+                completionDate: formatDateForInput(job.completionDate),   // Format for input
+                installLocationName: job.installLocationName || '',
+                installAddress: job.installAddress || job.address || '',
+                installLocationId: job.siteAddressRecord?.id, // Ensure ID is mapped if available
+                googleMapLink: job.googleMapLink || '',
+                distance: job.distance || '',
+                inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
+                siteInspectorRecord: job.siteInspectorRecord,
+                site_inspector_id: job.site_inspector_id,
+                team: job.team || '',
+                note: job.note || '',
+                serviceFeeId: job.serviceFeeId || job.teamPaymentBatchId
+            })
+        }
+    }, [job])
+
+    // Load Settings for Shop Coordinates on mount
+    useEffect(() => {
+        DataManager.getSettings().then(settings => {
+            if (settings?.systemOptions?.shopLat && settings?.systemOptions?.shopLon) {
+                setShopCoords({
+                    lat: parseFloat(settings.systemOptions.shopLat),
+                    lon: parseFloat(settings.systemOptions.shopLon)
+                })
+            }
+        })
+    }, []) // Run once on mount
+
+    // Auto-calculate Distance (Parity with Order.jsx)
+    useEffect(() => {
+        const calculate = async () => {
+            if (!jobInfo?.googleMapLink) return;
+            // Only calculate if distance is missing
+            if (jobInfo.distance) return;
+
+            let coords = extractCoordinates(jobInfo.googleMapLink)
+
+            // If direct extraction fails, try resolving short link
+            if (!coords && (jobInfo.googleMapLink.includes('goo.gl') || jobInfo.googleMapLink.includes('maps.app.goo.gl'))) {
+                try {
+                    const res = await fetch(`/api/resolve-map-link?url=${encodeURIComponent(jobInfo.googleMapLink)}`)
+                    if (res.ok) {
+                        const data = await res.json()
+                        if (data.url) {
+                            coords = extractCoordinates(data.url)
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error resolving map link:', error)
+                }
+            }
+
+            if (coords) {
+                const dist = calculateDistance(shopCoords.lat, shopCoords.lon, coords.lat, coords.lon)
+                // Update local state WITH formatted distance
+                handleJobInfoUpdate({ distance: `${dist} km` })
+            }
+        }
+
+        calculate()
+    }, [jobInfo?.googleMapLink, jobInfo?.distance, shopCoords])
+
+    const handleJobInfoUpdate = (updates) => {
+        setJobInfo(prev => ({ ...prev, ...updates }))
+        setIsJobInfoDirty(true)
+    }
+
+    const handleSaveJobInfo = async () => {
+        if (!jobInfo || !job) return
+
+        try {
+            setLoading(true)
+            const payload = {
+                job_type: jobInfo.jobType,
+                appointment_date: formatDateForSave(jobInfo.appointmentDate), // Convert to ISO/UTC
+                completion_date: formatDateForSave(jobInfo.completionDate),   // Convert to ISO/UTC
+                // install_location_name: jobInfo.installLocationName, // Removed: Relies on site_address_id (SSOT)
+                // install_address: jobInfo.installAddress, // Removed: Relies on site_address_id (SSOT)
+                // google_map_link: jobInfo.googleMapLink, // Removed: Stored in customer_addresses now
+                // distance: jobInfo.distance ? parseFloat(jobInfo.distance.toString().replace(' km', '')) : null, // (Pending DB Migration)
+                // Team
+                assigned_team: jobInfo.team,
+                // Inspector (link by ID if available)
+                site_inspector_id: jobInfo.site_inspector_id || null, // Ensure explicit null if empty
+                // site_inspector_name: jobInfo.inspector1?.name || '', // Removed: Relies on site_inspector_id relation
+                // Address (link by ID if available)
+                site_address_id: jobInfo.installLocationId || null, // Ensure explicit null if empty
+                notes: jobInfo.note
+            }
+
+            console.log('Saving Job Info Payload:', payload) // Debug log
+            console.log('Appointment Date (Raw):', jobInfo.appointmentDate)
+            console.log('Appointment Date (Formatted):', payload.appointment_date)
+
+            await DataManager.updateJob(job.id, payload)
+
+            // Special Logic: If Job has a Linked Address, Update its Distance/Map Link in Master Data
+            if (jobInfo.installLocationId && jobInfo.distance) {
+                // Parse distance from string "XX.XX km" -> XX.XX
+                const distVal = parseFloat(jobInfo.distance.toString().replace(' km', ''))
+
+                await DataManager.updateCustomerAddress(jobInfo.installLocationId, {
+                    distance: distVal,
+                    google_maps_link: jobInfo.googleMapLink
+                })
+            }
+
+            // Reload to refresh data and reset dirty state
+            await loadJobDetails()
+            setIsJobInfoDirty(false)
+            setLoading(false)
+            alert('บันทึกข้อมูลเรียบร้อย')
+        } catch (error) {
+            console.error('Error saving job info:', error)
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล')
+            setLoading(false)
+        }
+    }
+
+    const handleAddNewInstallAddress = () => {
+        if (!customer?.id) return alert('ไม่พบข้อมูลลูกค้า')
+        setCustomerModalTab('address')
+        setAddingContactFor('installAddress')
+        setShowEditCustomerModal(true)
+    }
+
+    const handleAddNewInspector = () => {
+        if (!customer?.id) return alert('ไม่พบข้อมูลลูกค้า')
+        setCustomerModalTab('contacts')
+        setAddingContactFor('inspector')
+        setShowEditCustomerModal(true)
+    }
+
     const tabs = [
-        { id: 'customer', label: 'ข้อมูลงานย่อย', icon: Wrench },
+        { id: 'customer', label: 'ข้อมูลงาน', icon: Wrench },
         { id: 'product', label: 'ข้อมูลสินค้า', icon: Package },
         { id: 'payment', label: 'การชำระเงิน', icon: CreditCard },
+        { id: 'team_payment', label: 'ค่าแรงช่าง', icon: Users },
         { id: 'inspection', label: 'รูปภาพและวีดีโอ', icon: Camera },
         { id: 'completion', label: 'ตรวจสอบงาน', icon: ClipboardCheck }
     ]
@@ -286,8 +434,20 @@ export default function JobDetailPage() {
                             </div>
                         )}
 
+                        {/* Job Info: Save */}
+                        {activeTab === 'customer' && (
+                            <button
+                                type="button"
+                                onClick={handleSaveJobInfo}
+                                disabled={!isJobInfoDirty}
+                                className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${isJobInfoDirty ? 'opacity-100' : 'opacity-50 cursor-not-allowed'}`}
+                            >
+                                บันทึก
+                            </button>
+                        )}
+
                         {/* Edit Order Button (always visible) */}
-                        {activeTab !== 'product' && activeTab !== 'completion' && activeTab !== 'inspection' && (
+                        {activeTab !== 'product' && activeTab !== 'completion' && activeTab !== 'inspection' && activeTab !== 'customer' && (
                             <Link
                                 href={`/order?id=${job.orderId}`}
                                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
@@ -343,24 +503,18 @@ export default function JobDetailPage() {
 
             {/* Content Area */}
             <main className="max-w-4xl mx-auto pb-24 pt-4 px-4">
-                {activeTab === 'customer' && (
+                {activeTab === 'customer' && jobInfo && (
                     <JobInfoCard
-                        title="ข้อมูลงานย่อย"
-                        data={{
-                            jobType: job.jobType || 'installation',
-                            appointmentDate: formatDateForInput(job.appointmentDate),
-                            completionDate: formatDateForInput(job.completionDate),
-                            installLocationName: job.installLocationName || '',
-                            installAddress: job.installAddress || job.address || '',
-                            googleMapLink: job.googleMapLink || '',
-                            distance: job.distance || '',
-                            inspector1: job.inspector1 || { name: job.inspector || '', phone: '' },
-                            team: job.team || ''
-                        }}
+                        title="ข้อมูลงาน"
+                        data={jobInfo}
+                        onChange={handleJobInfoUpdate}
                         customer={customer}
                         availableTeams={availableTeams}
-                        readOnly={true}
-                        note={job.note || ''}
+                        readOnly={false}
+                        note={jobInfo.note || ''}
+                        onNoteChange={(val) => handleJobInfoUpdate({ note: val })}
+                        onAddNewAddress={handleAddNewInstallAddress}
+                        onAddNewInspector={handleAddNewInspector}
                     />
                 )}
 
@@ -428,6 +582,57 @@ export default function JobDetailPage() {
                     </div>
                 )}
 
+                {activeTab === 'team_payment' && (
+                    <div className="bg-white rounded-xl border border-secondary-200 p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-secondary-900">ข้อมูลการจ่ายค่าแรงช่าง</h2>
+                        </div>
+
+                        {job.teamPaymentBatch ? (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-secondary-50 rounded-lg">
+                                        <div className="text-sm text-secondary-500 mb-1">Batch ID</div>
+                                        <div className="font-mono font-medium text-secondary-900">{job.teamPaymentBatchId}</div>
+                                    </div>
+                                    <div className="p-4 bg-secondary-50 rounded-lg">
+                                        <div className="text-sm text-secondary-500 mb-1">สถานะ</div>
+                                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${job.teamPaymentBatch.status === 'paid' ? 'bg-success-100 text-success-700' : 'bg-warning-100 text-warning-700'
+                                            }`}>
+                                            {job.teamPaymentBatch.status === 'paid' ? 'จ่ายแล้ว' : 'รอจ่าย'}
+                                        </span>
+                                    </div>
+                                    <div className="p-4 bg-secondary-50 rounded-lg">
+                                        <div className="text-sm text-secondary-500 mb-1">ยอดรวม (Batch)</div>
+                                        <div className="font-bold text-primary-600">฿{job.teamPaymentBatch.total?.toLocaleString() || '-'}</div>
+                                    </div>
+                                    <div className="p-4 bg-secondary-50 rounded-lg">
+                                        <div className="text-sm text-secondary-500 mb-1">วันที่สร้าง</div>
+                                        <div className="text-secondary-900">{formatDateForInput(job.teamPaymentBatch.created_at)}</div>
+                                    </div>
+                                </div>
+
+                                {job.teamPaymentBatch.slip_image && (
+                                    <div className="mt-4">
+                                        <div className="text-sm text-secondary-500 mb-2">สลิปการโอน</div>
+                                        <div className="rounded-lg border border-secondary-200 overflow-hidden max-w-sm">
+                                            <img src={job.teamPaymentBatch.slip_image} alt="Payment Slip" className="w-full h-auto" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 text-secondary-500 bg-secondary-50 rounded-lg border-2 border-dashed border-secondary-200">
+                                <AlertCircle size={48} className="mx-auto text-secondary-300 mb-4" />
+                                <div className="flex flex-col items-center gap-2">
+                                    <p className="font-medium text-secondary-900">ยังไม่มีข้อมูลการจ่ายค่าแรง</p>
+                                    <p className="text-sm">งานนี้ยังไม่ได้ถูกรวมในรอบการจ่ายเงิน (Batch)</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {activeTab === 'completion' && (
                     <JobCompletionView
                         ref={jobCompletionRef}
@@ -444,6 +649,61 @@ export default function JobDetailPage() {
                     />
                 )}
             </main>
+
+            {/* Customer Modal for Adding Address/Inspector */}
+            {showEditCustomerModal && customer && (
+                <CustomerModal
+                    isOpen={showEditCustomerModal}
+                    customer={customer}
+                    initialTab={customerModalTab}
+                    onClose={() => setShowEditCustomerModal(false)}
+                    onSave={async (updatedCustomer) => {
+                        console.log('Saving updated customer...', updatedCustomer)
+                        // CRITICAL: Must save to DB to get real UUIDs for new addresses/contacts
+                        const savedCustomer = await DataManager.saveCustomer(updatedCustomer)
+
+                        if (!savedCustomer) {
+                            alert('ไม่สามารถบันทึกข้อมูลลูกค้าได้')
+                            return
+                        }
+
+                        console.log('Customer saved:', savedCustomer)
+
+                        // Update local state with REAL data (UUIDs)
+                        setCustomer(savedCustomer)
+                        setShowEditCustomerModal(false)
+
+                        // Handle auto-selection after adding
+                        if (addingContactFor === 'installAddress') {
+                            // Find the newly added address (naive: last one, or match by label/fields?)
+                            // Using last one is decent for "Just Added" flow
+                            const newAddr = savedCustomer.addresses?.[savedCustomer.addresses.length - 1]
+                            if (newAddr) {
+                                handleJobInfoUpdate({
+                                    installLocationId: newAddr.id, // Now a valid UUID
+                                    installLocationName: newAddr.label,
+                                    installAddress: newAddr.address,
+                                    googleMapLink: newAddr.googleMapsLink,
+                                    distance: newAddr.distance,
+                                    siteAddressRecord: newAddr // Store full record
+                                })
+                            }
+                        } else if (addingContactFor === 'inspector') {
+                            const newContact = savedCustomer.contacts?.[savedCustomer.contacts.length - 1]
+                            if (newContact) {
+                                handleJobInfoUpdate({
+                                    inspector1: newContact,
+                                    site_inspector_id: newContact.id, // Now a valid UUID
+                                    siteInspectorRecord: newContact
+                                })
+                            }
+                        }
+
+                        // Reload job details to ensure fresh data -> REMOVED because it overwrites the local state update (auto-selection)
+                        // await loadJobDetails()
+                    }}
+                />
+            )}
 
         </AppLayout>
     )

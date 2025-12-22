@@ -531,6 +531,7 @@ export default function OrderForm() {
                 }
 
                 // Load items and fetch product images
+                let processedItems = []
                 if (order.items) {
                     // Debug: Log items with jobs before mapping
                     console.log('[Order] Loading items with jobs:', order.items.map(item => ({
@@ -543,7 +544,7 @@ export default function OrderForm() {
                     // Fetch all products to get images
                     const products = await DataManager.getProducts()
 
-                    const itemsWithImages = order.items.map(item => {
+                    processedItems = order.items.map(item => {
                         // Try to find product and get image from variants
                         const product = products.find(p =>
                             p.uuid === item.product_id ||
@@ -607,14 +608,14 @@ export default function OrderForm() {
                     })
 
                     // Debug: Log items after mapping to verify jobs are preserved
-                    console.log('[Order] Items after mapping:', itemsWithImages.map(item => ({
+                    console.log('[Order] Items after mapping:', processedItems.map(item => ({
                         id: item.id,
                         name: item.name,
                         jobsCount: item.jobs?.length || 0,
                         jobs: item.jobs
                     })))
 
-                    setItems(itemsWithImages)
+                    setItems(processedItems)
                 }
 
                 if (order.discount) setDiscount(order.discount)
@@ -628,7 +629,7 @@ export default function OrderForm() {
                 // Capture Initial State for Dirty Check
                 setInitialOrderData({
                     customer: order.customer || order.customerDetails || { id: '', name: '', phone: '', email: '', line: '', facebook: '', instagram: '', contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' }, mediaSource: '' },
-                    items: itemsWithImages || [],
+                    items: processedItems || [],
                     taxInvoice: order.taxInvoice || { companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' },
                     purchaserContact: order.purchaserContact || order.activeCustomerContact || null,
                     receiverContact: order.receiverContact || order.selectedContact || null,
