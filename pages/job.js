@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -24,6 +24,7 @@ import PaymentEntryModal from '../components/PaymentEntryModal'
 import JobInspectorView from '../components/JobInspectorView'
 import JobCompletionView from '../components/JobCompletionView'
 import CustomerModal from '../components/CustomerModal'
+import ProductModal from '../components/ProductModal'
 import { calculateDistance, extractCoordinates, formatDateForInput, formatDateForSave, SHOP_LAT, SHOP_LON } from '../lib/utils' // Import utils
 
 export default function JobDetailPage() {
@@ -60,6 +61,23 @@ export default function JobDetailPage() {
     // Job Info Edit State
     const [jobInfo, setJobInfo] = useState(null) // Local state for editing
     const [isJobInfoDirty, setIsJobInfoDirty] = useState(false)
+
+    // Product Modal State
+    const [showProductModal, setShowProductModal] = useState(false)
+    const [editingProduct, setEditingProduct] = useState(null)
+
+    // Memoize product item to prevent infinite re-renders in OrderItemModal
+    const memoizedProductItem = useMemo(() => {
+        if (!product || !job) return null
+        return {
+            ...product,
+            product_id: product?.id || job.productId,
+            code: product?.product_code || job.productId,
+            name: product?.name || job.productName,
+            unitPrice: product?.unitPrice || 0,
+            qty: product?.qty || 1,
+        }
+    }, [product?.id, product?.unitPrice, product?.qty, job?.productId, job?.productName])
 
     // Sync job info to local state when loaded
     useEffect(() => {
@@ -244,7 +262,21 @@ export default function JobDetailPage() {
 
             setJob(foundJob)
             setCustomer(foundJob.customer)
-            setProduct(foundJob.product)
+
+            // Construct product with selectedVariant pre-populated
+            const productWithVariant = foundJob.product ? {
+                ...foundJob.product,
+                selectedVariant: foundJob.product.variant_id ? {
+                    id: foundJob.product.variant_id,
+                    sku: foundJob.product.sku,
+                    color: foundJob.product.color,
+                    crystal_color: foundJob.product.crystalColor,
+                    price: foundJob.product.unitPrice,
+                    images: foundJob.product.images || []
+                } : null
+            } : null
+
+            setProduct(productWithVariant)
 
             // Fetch Available Teams
             const teams = await DataManager.getAvailableTeams()
@@ -343,6 +375,38 @@ export default function JobDetailPage() {
             await DataManager.updateOrder(job.order.id, { items: [itemData] })
             setIsEditingProduct(false)
             loadJobDetails()
+        } catch (e) {
+            console.error(e)
+            alert('เกิดข้อผิดพลาดในการบันทึกสินค้า')
+        }
+    }
+
+    const handleEditProduct = (productData) => {
+        setEditingProduct(productData)
+        setShowProductModal(true)
+    }
+
+    const handleAddNewProduct = () => {
+        setEditingProduct({
+            id: '', category: '', name: '', subcategory: '', price: 0, stock: 0, description: '',
+            length: '', width: '', height: '', material: '', color: '',
+            images: []
+        })
+        setShowProductModal(true)
+    }
+
+    const handleSaveProduct = async (productData) => {
+        try {
+            console.log('[JobPage] Saving product:', productData)
+            const result = await DataManager.saveProduct(productData)
+            if (result.success) {
+                setShowProductModal(false)
+                setEditingProduct(null)
+                // Reload job to get updated product/variants
+                loadJobDetails()
+            } else {
+                alert(result.error || 'ไม่สามารถบันทึกสินค้าได้')
+            }
         } catch (e) {
             console.error(e)
             alert('เกิดข้อผิดพลาดในการบันทึกสินค้า')
@@ -518,24 +582,19 @@ export default function JobDetailPage() {
                     />
                 )}
 
-                {activeTab === 'product' && (
+                {activeTab === 'product' && memoizedProductItem && (
                     <div className="pb-8">
                         <OrderItemModal
-                            ref={orderItemModalRef} // Attach ref!
+                            ref={orderItemModalRef}
                             isOpen={true}
                             onClose={() => { }}
                             onSave={handleSaveProductItem}
-                            item={{
-                                ...product,
-                                product_id: product?.id || job.productId,
-                                code: product?.product_code || job.productId,
-                                name: product?.name || job.productName,
-                                unitPrice: product?.price || 0,
-                                qty: product?.qty || 1,
-                            }}
+                            item={memoizedProductItem}
                             isEditing={true}
                             isInline={true}
-                            hideControls={true} // Hide footer buttons
+                            hideControls={true}
+                            onEditProduct={handleEditProduct}
+                            onAddNewProduct={handleAddNewProduct}
                         />
                     </div>
                 )}

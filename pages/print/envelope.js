@@ -26,10 +26,14 @@ export default function EnvelopePage() {
             setLoading(true)
 
             // 1. Load Global Settings (Company Info)
+            // 1. Load Global Settings (Company Info)
             const settings = await DataManager.getSettings()
-            if (settings['company.primary_address']) {
-                // Simplified parsing if stored as string
-                setSender(prev => ({ ...prev, address: settings['company.primary_address'].replace(/"/g, '') }))
+            if (settings) {
+                setSender({
+                    name: settings.shopName || sender.name,
+                    address: settings.shopAddress || sender.address,
+                    phone: settings.shopPhone || sender.phone
+                })
             }
 
             // 2. Load Order Data

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import ProductCard from './ProductCard'
 
+const EMPTY_ARRAY = []
 
 const OrderItemModal = React.forwardRef(({
     isOpen,
@@ -11,7 +12,7 @@ const OrderItemModal = React.forwardRef(({
     onSave,
     onDelete,
     item = null,
-    productsData = [],
+    productsData = EMPTY_ARRAY,
 
     isEditing = false,
     isInline = false, // New prop for inline display
@@ -34,6 +35,7 @@ const OrderItemModal = React.forwardRef(({
     const [showVariantPopup, setShowVariantPopup] = useState(false)
     const [searchResults, setSearchResults] = useState([])
     const [productVariants, setProductVariants] = useState([])
+    const [internalProductsData, setInternalProductsData] = useState([])
 
     const [productOptions, setProductOptions] = useState({
         lightColors: [],
@@ -42,9 +44,18 @@ const OrderItemModal = React.forwardRef(({
         crystalColors: []
     })
 
+    const activeProductsData = useMemo(() => {
+        return productsData.length > 0 ? productsData : internalProductsData
+    }, [productsData, internalProductsData])
+
+    const lastItemIdRef = useRef(null)
+    const lastProductIdRef = useRef(null)
+    const hasLoadedOptionsRef = useRef(false)
+
+    // Effect 1: Load product options once when modal opens
     useEffect(() => {
-        if (isOpen) {
-            // Load Product Options from Supabase
+        if (isOpen && !hasLoadedOptionsRef.current) {
+            hasLoadedOptionsRef.current = true
             const loadOptions = async () => {
                 const options = await DataManager.getProductOptions()
                 if (options) {
@@ -55,7 +66,6 @@ const OrderItemModal = React.forwardRef(({
                         crystalColors: options.crystalColors || ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
                     })
                 } else {
-                    // Fallback to defaults
                     setProductOptions({
                         lightColors: ['warm', 'cool', 'white', '3แสง'],
                         remotes: ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
@@ -65,76 +75,128 @@ const OrderItemModal = React.forwardRef(({
                 }
             }
             loadOptions()
+        }
+    }, [isOpen])
 
-            if (item) {
-                setFormData({
+    // Effect 2: Initialize formData when item changes
+    useEffect(() => {
+        if (!isOpen) return
+
+        if (item) {
+            const itemId = item.id || item.uuid || item.product_id
+            // Only process if this is a different item
+            if (itemId !== lastItemIdRef.current) {
+                lastItemIdRef.current = itemId
+                console.log('[OrderItemModal] Loading item:', itemId)
+
+                setFormData(prev => ({
                     ...item,
                     _searchTerm: item.name || '',
-                    lightColor: item.lightColor || '',
-                    remote: item.remote || '',
-                    bulbType: item.bulbType || '',
-                    crystalColor: item.crystalColor || '',
-                    remark: item.remark || ''
-                })
-
-                // Fetch fresh product data from database for real-time updates
-                const fetchProductData = async () => {
-                    if (item.product_id || item.product_code || item.code) {
-                        try {
-                            // Try to get product by UUID first, then by product_code
-                            const products = await DataManager.getProducts()
-                            const product = products.find(p =>
-                                p.uuid === item.product_id ||
-                                p.product_code === item.product_code ||
-                                p.product_code === item.code ||
-                                p.id === item.code
-                            )
-
-                            if (product && product.variants) {
-                                console.log('[OrderItemModal] Loaded product variants:', product.variants)
-                                setProductVariants(product.variants)
-
-                                // Update image if available
-                                if (product.variants.length > 0 && product.variants[0].images?.[0]) {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        image: product.variants[0].images[0]
-                                    }))
-                                }
-                            } else {
-                                console.warn('[OrderItemModal] Product not found or has no variants')
-                                setProductVariants([])
-                            }
-                        } catch (error) {
-                            console.error('[OrderItemModal] Error fetching product:', error)
-                            setProductVariants([])
-                        }
-                    }
-                }
-
-                fetchProductData()
-            } else {
-                // Reset for new item
+                    lightColor: item.lightColor || prev.lightColor || '',
+                    remote: item.remote || prev.remote || '',
+                    bulbType: item.bulbType || prev.bulbType || '',
+                    crystalColor: item.crystalColor || prev.crystalColor || '',
+                    remark: item.remark || prev.remark || '',
+                    // Ensure selectedVariant is set from item data
+                    selectedVariant: item.selectedVariant || item.variant || null,
+                    selectedVariantIndex: item.selectedVariantIndex !== undefined ? item.selectedVariantIndex : null
+                }))
+            }
+        } else {
+            // Reset for new item - ONLY if we weren't already in reset state
+            if (lastItemIdRef.current !== '__NEW__') {
+                lastItemIdRef.current = '__NEW__'
+                console.log('[OrderItemModal] Resetting for new item')
                 setFormData({
-                    code: '',
-                    name: '',
-                    description: '',
-                    qty: 1,
-                    unitPrice: 0,
-                    image: null,
-                    category: '',
-                    subcategory: '',
-                    jobs: [],
-                    _searchTerm: '',
-                    lightColor: '',
-                    remote: '',
-                    bulbType: '',
-                    crystalColor: '',
-                    remark: ''
+                    code: '', name: '', description: '', qty: 1, unitPrice: 0, image: null,
+                    category: '', subcategory: '', jobs: [], _searchTerm: '',
+                    lightColor: '', remote: '', bulbType: '', crystalColor: '', remark: '',
+                    selectedVariant: null
                 })
             }
         }
-    }, [item, isOpen])
+    }, [item?.id, item?.uuid, item?.product_id, isOpen]) // Only depend on item object reference and isOpen
+
+    // Effect 3: Fetch product variants separately
+    useEffect(() => {
+        if (!isOpen || !item) {
+            // Reset ref when modal closes or item is cleared
+            if (!isOpen || !item) {
+                lastProductIdRef.current = null
+            }
+            return
+        }
+
+        const productId = item.product_id || item.product_code || item.code
+        // Only fetch if product ID actually changed
+        if (productId && productId !== lastProductIdRef.current) {
+            lastProductIdRef.current = productId
+            console.log('[OrderItemModal] Fetching variants for product:', productId)
+
+            const fetchProductData = async () => {
+                try {
+                    const products = await DataManager.getProducts()
+                    const product = products.find(p =>
+                        p.uuid === item.product_id ||
+                        p.product_code === item.product_code ||
+                        p.product_code === item.code ||
+                        p.id === item.code
+                    )
+
+                    if (product && product.variants) {
+                        console.log('[OrderItemModal] Loaded product variants:', product.variants)
+                        const variants = product.variants
+                        setProductVariants(variants)
+
+                        // Try to match existing variant from item data
+                        const variantToMatch = item.selectedVariant || item.variant
+                        if (variantToMatch) {
+                            const index = variants.findIndex(v =>
+                                v.id === variantToMatch.id ||
+                                v.uuid === variantToMatch.uuid ||
+                                (v.color === variantToMatch.color && v.price === variantToMatch.price)
+                            )
+                            if (index !== -1) {
+                                console.log('[OrderItemModal] Auto-matched variant index:', index)
+                                setFormData(prev => ({
+                                    ...prev,
+                                    selectedVariant: variants[index],
+                                    selectedVariantIndex: index
+                                }))
+                            } else {
+                                console.warn('[OrderItemModal] Could not match variant:', variantToMatch)
+                            }
+                        }
+                    } else {
+                        console.warn('[OrderItemModal] Product not found or has no variants')
+                        setProductVariants([])
+                    }
+                } catch (error) {
+                    console.error('[OrderItemModal] Error fetching product:', error)
+                    setProductVariants([])
+                }
+            }
+
+            fetchProductData()
+        }
+    }, [isOpen, item]) // Only depend on item reference, not individual properties
+
+    // Fetch search data if not provided via props
+    useEffect(() => {
+        if (isOpen && productsData.length === 0) {
+            const fetchProducts = async () => {
+                try {
+                    const products = await DataManager.getProducts()
+                    if (products) {
+                        setInternalProductsData(products)
+                    }
+                } catch (error) {
+                    console.error('[OrderItemModal] Error fetching search products:', error)
+                }
+            }
+            fetchProducts()
+        }
+    }, [isOpen, productsData.length])
 
     // Search Logic
     useEffect(() => {
@@ -148,22 +210,35 @@ const OrderItemModal = React.forwardRef(({
     }, [lastCreatedProduct])
 
     useEffect(() => {
+        const data = activeProductsData
         if (showSearchPopup && formData._searchTerm !== undefined) {
             const term = formData._searchTerm
             if (term.trim()) {
                 const lowerTerm = term.toLowerCase()
-                const results = productsData.filter(p =>
+                const results = data.filter(p =>
                     JSON.stringify(p).toLowerCase().includes(lowerTerm)
                 )
-                setSearchResults(results)
+                // Only update if results actually changed to prevent loops
+                setSearchResults(prev => {
+                    if (prev.length === results.length && results.every((v, i) => v.id === prev[i]?.id)) {
+                        return prev
+                    }
+                    return results
+                })
             } else {
                 // Show all (or first 50) if no search term
-                setSearchResults(productsData.slice(0, 50))
+                const slice = data.slice(0, 50)
+                setSearchResults(prev => {
+                    if (prev.length === slice.length && slice.every((v, i) => v.id === prev[i]?.id)) {
+                        return prev
+                    }
+                    return slice
+                })
             }
         } else {
-            setSearchResults([])
+            setSearchResults(prev => prev.length === 0 ? prev : EMPTY_ARRAY)
         }
-    }, [formData._searchTerm, showSearchPopup, productsData])
+    }, [formData._searchTerm, showSearchPopup, productsData, internalProductsData])
 
     const selectProduct = (product) => {
         // Set product variants if available
@@ -283,13 +358,6 @@ const OrderItemModal = React.forwardRef(({
         onClose()
     }
 
-    // Expose triggerSave to parent via ref
-    React.useImperativeHandle(ref, () => ({
-        triggerSave: () => {
-            // Validate and Save
-            handleSave()
-        }
-    }));
 
     if (!isOpen && !isInline) return null
 
@@ -373,7 +441,8 @@ const OrderItemModal = React.forwardRef(({
                                         type="text"
                                         value={formData._searchTerm}
                                         onChange={(e) => {
-                                            setFormData({ ...formData, _searchTerm: e.target.value })
+                                            const val = e.target.value
+                                            setFormData(prev => ({ ...prev, _searchTerm: val }))
                                             setShowSearchPopup(true)
                                         }}
                                         onFocus={() => setShowSearchPopup(true)}
@@ -543,16 +612,21 @@ const OrderItemModal = React.forwardRef(({
                                                 <div
                                                     onClick={() => {
                                                         if (onEditProduct) {
-                                                            // Find the full product object to pass
-                                                            // We effectively want to edit the currently selected product
-                                                            // We used selectProduct to populate formData.
-                                                            // But we need the full object.
-                                                            // In selectProduct we have access to it.
-                                                            // But here we might not have it stored fully except variants.
-                                                            // Let's reconstruct or fetch.
-                                                            // Actually, onEditProduct expects a product object.
-                                                            // We have productsData available!
-                                                            const currentProduct = productsData.find(p => p.product_code === formData.product_code || p.id === formData.code);
+                                                            let currentProduct = activeProductsData.find(p => p.product_code === formData.product_code || p.id === formData.code);
+
+                                                            if (!currentProduct && (formData.product_id || formData.code)) {
+                                                                // Reconstruct minimal product object for the modal if not in prop data
+                                                                currentProduct = {
+                                                                    uuid: formData.product_id,
+                                                                    product_code: formData.product_code || formData.code,
+                                                                    id: formData.code,
+                                                                    name: formData.name,
+                                                                    description: formData.description,
+                                                                    category: formData.category,
+                                                                    variants: productVariants || []
+                                                                }
+                                                            }
+
                                                             if (currentProduct) {
                                                                 onEditProduct(currentProduct)
                                                                 setShowVariantPopup(false)
@@ -581,7 +655,10 @@ const OrderItemModal = React.forwardRef(({
                                 <div className="relative">
                                     <select
                                         value={formData.lightColor}
-                                        onChange={(e) => setFormData({ ...formData, lightColor: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            setFormData(prev => ({ ...prev, lightColor: val }))
+                                        }}
                                         disabled={!formData.code}
                                         className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
                                     >
@@ -602,7 +679,10 @@ const OrderItemModal = React.forwardRef(({
                                 <div className="relative">
                                     <select
                                         value={formData.bulbType}
-                                        onChange={(e) => setFormData({ ...formData, bulbType: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            setFormData(prev => ({ ...prev, bulbType: val }))
+                                        }}
                                         disabled={!formData.code}
                                         className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
                                     >
@@ -621,7 +701,10 @@ const OrderItemModal = React.forwardRef(({
                                 <div className="relative">
                                     <select
                                         value={formData.remote}
-                                        onChange={(e) => setFormData({ ...formData, remote: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            setFormData(prev => ({ ...prev, remote: val }))
+                                        }}
                                         disabled={!formData.code}
                                         className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
                                     >
@@ -640,7 +723,10 @@ const OrderItemModal = React.forwardRef(({
                             <textarea
                                 rows={1}
                                 value={formData.remark}
-                                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+                                onChange={(e) => {
+                                    const val = e.target.value
+                                    setFormData(prev => ({ ...prev, remark: val }))
+                                }}
                                 disabled={!formData.code}
                                 className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400 resize-none disabled:cursor-not-allowed"
                                 placeholder="ระบุรายละเอียดเพิ่มเติม..."
@@ -656,7 +742,10 @@ const OrderItemModal = React.forwardRef(({
                                 <input
                                     type="number"
                                     value={formData.qty}
-                                    onChange={(e) => setFormData({ ...formData, qty: e.target.value })}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        setFormData(prev => ({ ...prev, qty: val }))
+                                    }}
                                     disabled={!formData.code}
                                     className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right disabled:cursor-not-allowed"
                                     min="1"
@@ -669,7 +758,10 @@ const OrderItemModal = React.forwardRef(({
                                 <input
                                     type="number"
                                     value={formData.unitPrice}
-                                    onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
+                                    onChange={(e) => {
+                                        const val = e.target.value
+                                        setFormData(prev => ({ ...prev, unitPrice: val }))
+                                    }}
                                     disabled={!formData.code}
                                     className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 text-right disabled:cursor-not-allowed"
                                 />

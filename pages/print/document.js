@@ -43,7 +43,9 @@ export default function DocumentPrintPage() {
                 // Actually, let's try to fetch settings if the method exists, otherwise null.
 
                 // Mock or Fetch settings if available
-                // const settings = await DataManager.getSettings?.() 
+                // Fetch settings if available
+                const systemSettings = await DataManager.getSettings()
+                setSettings(systemSettings)
 
                 setData({ order, payment, customer: order.customer })
             } catch (err) {

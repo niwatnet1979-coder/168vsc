@@ -32,6 +32,11 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const { data: session } = useSession();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { t, toggleLanguage, language } = useLanguage();
+    const [version, setVersion] = useState('');
+
+    useEffect(() => {
+        setVersion(packageJson.version);
+    }, []);
 
     // Check if user is disabled
     useEffect(() => {
@@ -110,7 +115,7 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                                 className="w-8 h-8 rounded-lg shadow-lg shadow-primary-500/30"
                             />
                             <span className="font-bold text-xl text-secondary-900 tracking-tight">VSC System</span>
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">v{packageJson.version}</span>
+                            {version && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary-100 text-primary-700">v{version}</span>}
                             <button
                                 onClick={toggleLanguage}
                                 className="ml-1 p-1.5 rounded-md hover:bg-secondary-100 text-secondary-500 hover:text-primary-600 transition-colors"

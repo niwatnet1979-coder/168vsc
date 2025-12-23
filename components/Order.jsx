@@ -578,7 +578,11 @@ export default function OrderForm() {
                                 // Variant Mapping
                                 selectedVariant: item.variant || null,
                                 variant_id: item.product_variant_id || item.variant?.id || null,
-                                variantId: item.product_variant_id || item.variant?.id || null
+                                variantId: item.product_variant_id || item.variant?.id || null,
+                                // Light/Bulb Type Mapping (Preserve from DB)
+                                light: item.light || item.bulbType || null,
+                                lightColor: item.light_color || item.lightColor || null,
+                                bulbType: item.light || item.bulbType || null
                             }
 
                             console.log('[Order] Mapped item with jobs:', {

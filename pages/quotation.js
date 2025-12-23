@@ -22,6 +22,14 @@ export default function QuotationPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedQuotation, setSelectedQuotation] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [companySettings, setCompanySettings] = useState(null) // New state
+
+  // Load settings first
+  useEffect(() => {
+    DataManager.getSettings().then(settings => {
+      if (settings) setCompanySettings(settings)
+    })
+  }, [])
 
   // Load data from Supabase
   useEffect(() => {
@@ -45,14 +53,15 @@ export default function QuotationPage() {
             total: order.total || 0,
 
             // Data structure for Quotation Component
+            // Data structure for Quotation Component
             company: {
-              name: 'บริษัท 168 ไลท์ติ้ง แอนด์ เบดดิ้ง จำกัด',
-              address: 'เลขที่ 168/166 หมู่ 1 หมู่บ้านเซนโทร พหล-วิภาวดี2 ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
-              taxId: '0135566027619',
-              phone: '084-282-9465',
-              email: 'LINE@: @interior-lighting',
+              name: companySettings?.shopName || 'บริษัท 168 ไลท์ติ้ง แอนด์ เบดดิ้ง จำกัด',
+              address: companySettings?.shopAddress || 'เลขที่ 168/166 หมู่ 1 หมู่บ้านเซนโทร พหล-วิภาวดี2 ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
+              taxId: companySettings?.shopTaxId || '0135566027619',
+              phone: companySettings?.shopPhone || '084-282-9465',
+              email: companySettings?.shopEmail ? `Email: ${companySettings.shopEmail}` : 'LINE@: @interior-lighting',
               branch: 'สำนักงานใหญ่',
-              vatRegistered: true
+              vatRegistered: companySettings?.vatRegistered ?? true
             },
             customer: {
               name: order.customer || 'ลูกค้าทั่วไป',
@@ -90,8 +99,10 @@ export default function QuotationPage() {
       }
     }
 
-    loadQuotations()
-  }, [])
+    if (companySettings) {
+      loadQuotations()
+    }
+  }, [companySettings]) // Re-run when settings load
 
   const filteredQuotations = quotations.filter(q =>
     q.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

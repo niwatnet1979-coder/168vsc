@@ -2,118 +2,64 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
-import { DataManager } from '../lib/dataManager'
 import { useJobs } from '../hooks/useJobs'
+import LeaveBookingModal from '../components/LeaveBookingModal'
+import LeaveApprovalModal from '../components/LeaveApprovalModal'
 import {
     Calendar,
     CheckCircle,
-    Clock,
-    MapPin,
-    Package,
+    Truck,
+    Wrench,
     Filter,
     ChevronLeft,
     ChevronRight,
     Briefcase,
-    Wrench,
-    Truck,
     Search,
-    User,
-    Menu
+    Menu,
+    MapPin,
+    Package,
+    CalendarX,
+    ClipboardCheck,
+    AlertCircle
 } from 'lucide-react'
 
 export default function JobQueuePage() {
-    const { jobs: allJobs, loading } = useJobs() // Hook
+    const { jobs: allJobs, loading } = useJobs()
     const [jobs, setJobs] = useState([])
     const [filter, setFilter] = useState('all') // all, pending-install, pending-delivery, completed
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
+    const [isLeaveApprovalOpen, setIsLeaveApprovalOpen] = useState(false)
+
     const itemsPerPage = 15
 
-    // Sync allJobs to local formatted state and apply filters
+    // Sync and Filter Jobs
     useEffect(() => {
-        // 1. Map Data
-        const formattedJobs = allJobs.map(job => {
-            // Address Formatting Logic
-            let shortAddress = job.address || '-'
-            try {
-                // Try to get structured data from order delivery info
-                let deliveryInfo = job.order?.delivery_address_info
-                if (typeof deliveryInfo === 'string') {
-                    deliveryInfo = JSON.parse(deliveryInfo)
-                }
+        if (!allJobs) return
 
-                if (deliveryInfo && typeof deliveryInfo === 'object') {
-                    const parts = []
-                    if (deliveryInfo.label) parts.push(deliveryInfo.label)
+        let processed = [...allJobs]
 
-                    // Simple District/Province
-                    const district = deliveryInfo.addrAmphoe || deliveryInfo.amphoe
-                    const province = deliveryInfo.province || deliveryInfo.addrProvince
-
-                    if (district) parts.push(`อ.${district}`)
-                    if (province) parts.push(`จ.${province}`)
-
-                    if (parts.length > 0) {
-                        shortAddress = parts.join(' ')
-                    }
-                }
-            } catch (e) {
-                console.error('Address parsing error', e)
-            }
-
-            // Date Formatting Logic
-            let aptDate = '-'
-            if (job.jobDate) {
-                // Check if it's already a full ISO string (e.g. from Supabase timestamptz)
-                if (job.jobDate.includes('T')) {
-                    aptDate = job.jobDate
-                } else {
-                    aptDate = `${job.jobDate}T${job.jobTime || '09:00'}`
-                }
-            }
-
-            return {
-                uniqueId: job.id,
-                orderId: job.orderId,
-                customer: job.customerName,
-                product: {
-                    id: job.productId,
-                    name: job.productName || 'สินค้าไม่ระบุ',
-                    image: job.productImage || null
-                },
-                jobType: job.jobType,
-                rawJobType: job.rawJobType || (job.jobType === 'ติดตั้ง' ? 'installation' : 'delivery'),
-                assignedTeam: job.assignedTeam, // Needed for filtering
-                appointmentDate: aptDate,
-                team: job.assignedTeam === 'ทีม A' ? '-' : (job.assignedTeam || '-'),
-                inspector: job.inspectorName || '-',
-                address: shortAddress, // Updated to use short address
-                fullAddress: job.address, // Keep full address for tooltip if needed
-                status: job.status === 'Completed' ? 'เสร็จสิ้น' :
-                    job.status === 'Processing' ? 'กำลังดำเนินการ' : 'รอดำเนินการ',
-                priority: job.priority || 'Medium'
-            }
+        // 1. Sort by appointment date
+        processed.sort((a, b) => {
+            const dateA = a.appointmentDate ? new Date(a.appointmentDate) : new Date('9999-12-31')
+            const dateB = b.appointmentDate ? new Date(b.appointmentDate) : new Date('9999-12-31')
+            return dateA - dateB
         })
 
-        // 2. Sort by appointment date
-        formattedJobs.sort((a, b) => {
-            if (a.appointmentDate === '-') return 1
-            if (b.appointmentDate === '-') return -1
-            return new Date(a.appointmentDate) - new Date(b.appointmentDate)
-        })
-
-        // 3. Filter Logic
-        const filteredDocs = formattedJobs.filter(job => {
+        // 2. Filter Logic
+        processed = processed.filter(job => {
             // Search filter
             const searchLower = searchTerm.toLowerCase()
             const matchesSearch =
-                (job.uniqueId && job.uniqueId.toLowerCase().includes(searchLower)) ||
+                (job.id && job.id.toLowerCase().includes(searchLower)) ||
                 (job.orderId && job.orderId.toLowerCase().includes(searchLower)) ||
-                (job.customer && job.customer.toLowerCase().includes(searchLower)) ||
-                (job.product.name && job.product.name.toLowerCase().includes(searchLower)) ||
+                (job.orderNumber && job.orderNumber.toLowerCase().includes(searchLower)) ||
+                (job.customerName && job.customerName.toLowerCase().includes(searchLower)) ||
+                (job.productName && job.productName.toLowerCase().includes(searchLower)) ||
                 (job.assignedTeam && job.assignedTeam.toLowerCase().includes(searchLower)) ||
                 (job.address && job.address.toLowerCase().includes(searchLower)) ||
-                (job.inspector && job.inspector.toLowerCase().includes(searchLower))
+                (job.inspectorName && job.inspectorName.toLowerCase().includes(searchLower))
 
             if (!matchesSearch) return false
 
@@ -131,41 +77,30 @@ export default function JobQueuePage() {
             }
         })
 
-        setJobs(filteredDocs)
-    }, [allJobs, filter, searchTerm]) // Re-run when realtime data, filter, or search changes
-
-    // No need for separate filteredJobs logic since we set it to 'jobs' state above
-    // But pagination below relies on 'filteredJobs' variable name from previous code.
-    // Let's alias state 'jobs' as 'filteredJobs' for compatibility with pagination code below
-    const filteredJobs = jobs
+        setJobs(processed)
+        setCurrentPage(1) // Reset page on filter change
+    }, [allJobs, filter, searchTerm])
 
     // Pagination
-    const totalPages = Math.ceil(filteredJobs.length / itemsPerPage)
-    const paginatedJobs = filteredJobs.slice(
+    const totalPages = Math.ceil(jobs.length / itemsPerPage)
+    const paginatedJobs = jobs.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     )
 
-    // Count statistics
+    // Statistics
     const stats = {
-        pendingInstall: jobs.filter(j => j.rawJobType === 'installation' && j.status !== 'เสร็จสิ้น').length,
-        pendingDelivery: jobs.filter(j => j.rawJobType === 'delivery' && j.status !== 'เสร็จสิ้น').length,
-        completed: jobs.filter(j => j.status === 'เสร็จสิ้น').length,
-        total: jobs.length
-    }
-
-    const getJobTypeColor = (type) => {
-        switch (type) {
-            case 'installation': return 'bg-danger-50 text-danger-700 border-danger-100'
-            case 'delivery': return 'bg-warning-50 text-warning-700 border-warning-100'
-            default: return 'bg-secondary-50 text-secondary-700 border-secondary-100'
-        }
+        pendingInstall: allJobs ? allJobs.filter(j => j.rawJobType === 'installation' && j.status !== 'เสร็จสิ้น').length : 0,
+        pendingDelivery: allJobs ? allJobs.filter(j => j.rawJobType === 'delivery' && j.status !== 'เสร็จสิ้น').length : 0,
+        completed: allJobs ? allJobs.filter(j => j.status === 'เสร็จสิ้น').length : 0,
+        total: allJobs ? allJobs.length : 0
     }
 
     const getStatusColor = (status) => {
         switch (status) {
             case 'เสร็จสิ้น': return 'bg-success-100 text-success-700'
             case 'กำลังดำเนินการ': return 'bg-primary-100 text-primary-700'
+            case 'ยกเลิก': return 'bg-gray-100 text-gray-500' // If cancelled showed up
             default: return 'bg-secondary-100 text-secondary-700'
         }
     }
@@ -174,7 +109,6 @@ export default function JobQueuePage() {
         if (!dateStr || dateStr === '-') return '-'
         const date = new Date(dateStr)
         if (isNaN(date.getTime())) return '-'
-        // DD/MM/YYYY HH:MM (Gregorian Year)
         return date.toLocaleString('en-GB', {
             year: 'numeric',
             month: '2-digit',
@@ -202,8 +136,26 @@ export default function JobQueuePage() {
                                     <Briefcase className="text-primary-600" size={28} />
                                     คิวงานติดตั้งและจัดส่ง
                                 </h1>
-                                <p className="text-sm text-secondary-500 mt-1">จัดการคิวงานทั้งหมด {jobs.length} รายการ</p>
+                                <p className="text-sm text-secondary-500 mt-1">จัดการคิวงานทั้งหมด {stats.total} รายการ</p>
                             </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsLeaveModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors shadow-sm text-sm font-medium"
+                            >
+                                <CalendarX size={18} />
+                                <span className="hidden sm:inline">จองวันหยุด</span>
+                            </button>
+                            <button
+                                onClick={() => setIsLeaveApprovalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 transition-colors shadow-sm text-sm font-medium"
+                            >
+                                <ClipboardCheck size={18} />
+                                <span className="hidden sm:inline">อนุมัติการลา</span>
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -213,9 +165,9 @@ export default function JobQueuePage() {
                 <title>คิวงานติดตั้งและจัดส่ง - 168VSC System</title>
             </Head>
 
-            <div className="space-y-6 pt-6">
+            <div className="space-y-6 pt-6 pb-20">
 
-                {/* Stats Cards - Compact Horizontal Layout */}
+                {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div
                         onClick={() => setFilter('pending-install')}
@@ -276,14 +228,14 @@ export default function JobQueuePage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
                         <input
                             type="text"
-                            placeholder="ค้นหา Job ID, Order ID, ลูกค้า, สินค้า, ทีม..."
+                            placeholder="ค้นหา Order ID, ชื่อลูกค้า, สินค้า, ทีม..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                             className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
                         />
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-secondary-50 rounded-lg border border-secondary-200 text-secondary-600 text-sm font-medium">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-secondary-50 rounded-lg border border-secondary-200 text-secondary-600 text-sm font-medium whitespace-nowrap">
                             <Filter size={16} />
                             <span>ตัวกรอง: {
                                 filter === 'all' ? 'ทั้งหมด' :
@@ -304,16 +256,22 @@ export default function JobQueuePage() {
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สินค้า</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">ทีม/ประเภทงาน</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานที่ติดตั้ง / ขนส่ง</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานที่</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">รหัสงาน</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-100">
-                                {paginatedJobs.length > 0 ? (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
+                                            กำลังโหลดข้อมูล...
+                                        </td>
+                                    </tr>
+                                ) : paginatedJobs.length > 0 ? (
                                     paginatedJobs.map((job, i) => (
-                                        <tr key={i} className="hover:bg-secondary-50 transition-colors">
-                                            {/* Date - Moved to First */}
+                                        <tr key={job.uniqueId || i} className="hover:bg-secondary-50 transition-colors">
+                                            {/* Date */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link href={`/job?id=${job.uniqueId}`} className="group flex items-center gap-2 text-sm text-secondary-600 font-mono hover:text-primary-600">
                                                     <Calendar size={14} className="text-secondary-400 group-hover:text-primary-500 transition-colors" />
@@ -321,26 +279,30 @@ export default function JobQueuePage() {
                                                 </Link>
                                             </td>
 
+                                            {/* Customer */}
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-secondary-900">{job.customer}</div>
+                                                <div className="text-sm font-medium text-secondary-900">{job.customerName}</div>
+                                                <div className="text-xs text-secondary-500">{job.customerPhone}</div>
                                             </td>
+
+                                            {/* Product */}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-lg border border-secondary-200 overflow-hidden bg-secondary-50 flex-shrink-0 flex items-center justify-center">
-                                                        {job.product.image ? (
-                                                            <img src={job.product.image} alt={job.product.name} className="w-full h-full object-cover" />
+                                                        {job.productImage ? (
+                                                            <img src={job.productImage} alt={job.productName} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <Package size={16} className="text-secondary-300" />
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-medium text-secondary-900 line-clamp-1">{job.product.name}</div>
-                                                        <div className="text-xs text-secondary-500 font-mono">{job.product.id}</div>
+                                                        <div className="text-sm font-medium text-secondary-900 line-clamp-1">{job.productName}</div>
+                                                        <div className="text-xs text-secondary-500 font-mono">{job.productId}</div>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            {/* Job Type (Team) - Updated */}
+                                            {/* Team */}
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <div className="flex items-center justify-center gap-2 text-sm">
                                                     {job.rawJobType === 'installation' ? (
@@ -357,26 +319,38 @@ export default function JobQueuePage() {
                                                 </div>
                                             </td>
 
+                                            {/* Address */}
                                             <td className="px-6 py-4">
                                                 <div className="flex items-start gap-2">
                                                     <MapPin size={14} className="text-secondary-400 mt-1 flex-shrink-0" />
                                                     <div className="text-sm text-secondary-600 leading-relaxed max-w-xs line-clamp-2">
-                                                        {job.address || '-'}
+                                                        {job.address}
+                                                        {job.installLocationName && job.installLocationName !== '-' && (
+                                                            <div className="text-xs text-secondary-400 mt-0.5">{job.installLocationName}</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
 
+                                            {/* Status */}
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
                                                     {job.status}
                                                 </span>
                                             </td>
 
-                                            {/* Job ID - Moved to Last */}
+                                            {/* Job ID / Order ID */}
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <Link href={`/job?id=${job.uniqueId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                    {job.uniqueId}
-                                                </Link>
+                                                <div className="flex flex-col items-end">
+                                                    <Link href={`/job?id=${job.uniqueId}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
+                                                        {job.uniqueId.slice(0, 8)}...
+                                                    </Link>
+                                                    {job.orderNumber && (
+                                                        <span className="text-xs text-secondary-400 font-mono">
+                                                            #{job.orderNumber}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -399,7 +373,7 @@ export default function JobQueuePage() {
                     {totalPages > 1 && (
                         <div className="px-6 py-4 border-t border-secondary-200 flex items-center justify-between bg-secondary-50">
                             <div className="text-sm text-secondary-600">
-                                แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredJobs.length)} จาก {filteredJobs.length} รายการ
+                                แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, jobs.length)} จาก {jobs.length} รายการ
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -423,6 +397,18 @@ export default function JobQueuePage() {
                         </div>
                     )}
                 </div>
+
+                {/* Modals */}
+                <LeaveBookingModal
+                    isOpen={isLeaveModalOpen}
+                    onClose={() => setIsLeaveModalOpen(false)}
+                />
+
+                <LeaveApprovalModal
+                    isOpen={isLeaveApprovalOpen}
+                    onClose={() => setIsLeaveApprovalOpen(false)}
+                />
+
             </div>
         </AppLayout>
     )

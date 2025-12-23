@@ -90,19 +90,17 @@ export default function CustomersPage() {
     // Load data from Supabase
     const loadCustomers = async () => {
         setIsLoading(true)
-        const data = await DataManager.getCustomers()
-        // Note: DataManager.getCustomers returns simplified object. 
-        // But for editing we need full details. 
-        // DataManager needs to return full object!
-        // Wait, I updated DataManager earlier to return simplified list?
-        // Let's check DataManager again. 
-        // Ah, typically getCustomers should return everything if we edit it here.
-        // The previous DataManager implementation returned: id, name, phone, line_id, address.
-        // It missed taxInvoices, addresses, contacts etc.
-        // I need to update DataManager.getCustomers to return ALL fields first!
-        // But assuming I fix DataManager, here is the code:
-        setCustomers(data)
-        setIsLoading(false)
+        try {
+            console.log('Fetching customers...')
+            const data = await DataManager.getCustomers()
+            console.log('Customers fetched:', data?.length)
+            setCustomers(Array.isArray(data) ? data : [])
+        } catch (error) {
+            console.error('Error loading customers:', error)
+            setCustomers([])
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     useEffect(() => {

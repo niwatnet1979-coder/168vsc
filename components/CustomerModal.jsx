@@ -31,7 +31,12 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 contact1: customer.contact1 || { name: '', phone: '' },
                 contact2: customer.contact2 || { name: '', phone: '' },
                 taxInvoices: (Array.isArray(customer.taxInvoices) ? customer.taxInvoices : []).filter(Boolean),
-                addresses: (Array.isArray(customer.addresses) ? customer.addresses : []).filter(Boolean),
+                addresses: (Array.isArray(customer.addresses) ? customer.addresses : []).filter(Boolean).map(addr => ({
+                    ...addr,
+                    // Map DB snake_case to camelCase for UI
+                    googleMapsLink: addr.google_maps_link || addr.googleMapsLink || '',
+                    label: addr.label || addr.location_name || '', // Cover potential DB column naming variations
+                })),
                 contacts: (Array.isArray(customer.contacts) ? customer.contacts : []).filter(Boolean)
             })
         } else {

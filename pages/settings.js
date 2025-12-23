@@ -23,12 +23,14 @@ import {
     Package,
     Briefcase,
     CreditCard,
-    Bug
+    Bug,
+    Monitor
 } from 'lucide-react'
 
 import TeamMemberModal from '../components/TeamMemberModal'
 import { DataManager } from '../lib/dataManager'
 import { useDebug } from '../contexts/DebugContext'
+import { SHOP_LAT, SHOP_LON } from '../lib/utils' // Import defaults
 
 export default function SettingsPage() {
     const { data: session } = useSession()
@@ -38,12 +40,16 @@ export default function SettingsPage() {
     const [shopSettings, setShopSettings] = useState({
         name: '168 อินทีเรีย ไลท์ติ้ง',
         address: '168/166 หมู่ 1 หมู่บ้านเซนโทร พหล-วิภาวดี2 ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
+        shopLat: SHOP_LAT.toString(),
+        shopLon: SHOP_LON.toString(),
         phone: '084-282-9465',
         email: 'contact@168lighting.com',
         taxId: '0135566027619',
         vatRegistered: true,
         vatRate: 7,
-        promptpayQr: ''
+        promptpayQr: '',
+        quotationDefaultTerms: '',
+        quotationWarrantyPolicy: ''
     })
     const [isSaved, setIsSaved] = useState(false)
 
@@ -115,6 +121,11 @@ export default function SettingsPage() {
             // Load from Supabase
             const settings = await DataManager.getSettings()
 
+            if (!settings) {
+                console.error('Failed to load settings from DB. Check console for DataManager error.')
+                // Optional: alert('ไม่สามารถโหลดการตั้งค่าจากฐานข้อมูลได้ ระบบจะใช้ค่าเริ่มต้น')
+            }
+
             if (settings) {
                 // Use Supabase data
                 setShopSettings({
@@ -125,22 +136,34 @@ export default function SettingsPage() {
                     taxId: settings.shopTaxId,
                     vatRegistered: settings.vatRegistered,
                     vatRate: settings.vatRate,
-                    promptpayQr: settings.promptpayQr || ''
+                    vatRegistered: settings.vatRegistered,
+                    vatRate: settings.vatRate,
+                    promptpayQr: settings.promptpayQr || '',
+                    shopLat: settings.systemOptions?.shopLat || SHOP_LAT.toString(),
+                    shopLon: settings.systemOptions?.shopLon || SHOP_LON.toString(),
+                    quotationDefaultTerms: settings.quotationDefaultTerms || '',
+                    quotationWarrantyPolicy: settings.quotationWarrantyPolicy || ''
                 })
 
+                setShowModal(false) // Init modal state
+
                 // Merge product options with defaults
+                // Also extract shopLat/Lon if they exist in systemOptions
+                const loadedOptions = settings.systemOptions || {}
+
                 setProductOptions(prev => ({
                     ...prev,
-                    ...settings.systemOptions,
-                    productTypes: (settings.systemOptions.productTypes && settings.systemOptions.productTypes.length > 0)
-                        ? settings.systemOptions.productTypes
+                    ...loadedOptions,
+                    productTypes: (loadedOptions.productTypes && loadedOptions.productTypes.length > 0)
+                        ? loadedOptions.productTypes
                         : defaultProductTypes
                 }))
             } else {
                 // Fallback to localStorage for migration
                 const savedSettings = localStorage.getItem('shop_settings')
                 if (savedSettings) {
-                    setShopSettings(JSON.parse(savedSettings))
+                    const parsed = JSON.parse(savedSettings)
+                    setShopSettings(prev => ({ ...prev, ...parsed }))
                 }
 
                 const savedOptions = localStorage.getItem('product_options_data')
@@ -182,6 +205,13 @@ export default function SettingsPage() {
     }, [])
 
     const handleSave = async () => {
+        // Merge shopLat/shopLon into systemOptions for storage
+        const systemOptionsToSave = {
+            ...productOptions,
+            shopLat: shopSettings.shopLat,
+            shopLon: shopSettings.shopLon
+        }
+
         const success = await DataManager.saveSettings({
             shopName: shopSettings.name,
             shopAddress: shopSettings.address,
@@ -191,12 +221,17 @@ export default function SettingsPage() {
             vatRegistered: shopSettings.vatRegistered,
             vatRate: shopSettings.vatRate,
             promptpayQr: shopSettings.promptpayQr,
-            systemOptions: productOptions
+            systemOptions: systemOptionsToSave,
+            quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+            quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
         })
+
+        console.log('Save Settings Result:', success)
 
         if (success) {
             setIsSaved(true)
             setTimeout(() => setIsSaved(false), 3000)
+            alert('บันทึกข้อมูลเรียบร้อย')
         } else {
             alert('เกิดข้อผิดพลาดในการบันทึก')
         }
@@ -271,8 +306,8 @@ export default function SettingsPage() {
                         <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
                             <nav className="flex flex-col p-2 gap-1">
                                 {[
-                                    { id: 'general', label: 'ข้อมูลร้านค้า', icon: Store },
-                                    { id: 'system', label: 'การตั้งค่าระบบ', icon: Globe },
+                                    { id: 'general', label: 'ข้อมูลร้านค้า (Shop Info)', icon: Store },
+                                    { id: 'system', label: 'การตั้งค่าระบบ (App)', icon: Globe },
                                     { id: 'options', label: 'ประเภทข้อมูล', icon: List },
                                     { id: 'notifications', label: 'การแจ้งเตือน', icon: Bell },
                                     { id: 'debug', label: 'Debug Mode', icon: Bug }
@@ -324,6 +359,36 @@ export default function SettingsPage() {
                                                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             />
                                         </div>
+                                        <div className="grid grid-cols-2 gap-4 md:col-span-2">
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">พิกัดละติจูด (Latitude)</label>
+                                                <input
+                                                    type="text"
+                                                    value={shopSettings.shopLat}
+                                                    onChange={e => setShopSettings({ ...shopSettings, shopLat: e.target.value })}
+                                                    placeholder="เช่น 13.9647757"
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">พิกัดลองจิจูด (Longitude)</label>
+                                                <input
+                                                    type="text"
+                                                    value={shopSettings.shopLon}
+                                                    onChange={e => setShopSettings({ ...shopSettings, shopLon: e.target.value })}
+                                                    placeholder="เช่น 100.6203268"
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                                />
+                                                <a
+                                                    href="https://www.google.com/maps"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-primary-600 hover:underline mt-1 inline-block"
+                                                >
+                                                    เปิด Google Maps เพื่อหาพิกัด
+                                                </a>
+                                            </div>
+                                        </div>
                                         <div>
                                             <label className="block text-sm font-medium text-secondary-700 mb-1">เบอร์โทรศัพท์</label>
                                             <input
@@ -342,7 +407,9 @@ export default function SettingsPage() {
                                                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             />
                                         </div>
-                                        <div>
+
+                                        {/* Financial & Tax Settings - Moved from System */}
+                                        <div className="col-span-1">
                                             <label className="block text-sm font-medium text-secondary-700 mb-1">เลขประจำตัวผู้เสียภาษี</label>
                                             <input
                                                 type="text"
@@ -351,6 +418,40 @@ export default function SettingsPage() {
                                                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                             />
                                         </div>
+                                        <div className="col-span-1">
+                                            <label className="block text-sm font-medium text-secondary-700 mb-1">อัตราภาษีมูลค่าเพิ่ม (%)</label>
+                                            <input
+                                                type="number"
+                                                value={shopSettings.vatRate}
+                                                onChange={e => setShopSettings({ ...shopSettings, vatRate: parseFloat(e.target.value) })}
+                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                            />
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <div className="flex items-center justify-between p-4 border border-secondary-200 rounded-lg bg-secondary-50">
+                                                <div>
+                                                    <h3 className="font-medium text-secondary-900">จดทะเบียนภาษีมูลค่าเพิ่ม (VAT)</h3>
+                                                    <p className="text-sm text-secondary-500">เปิดใช้งานหากร้านค้าของคุณจดทะเบียน VAT</p>
+                                                </div>
+                                                <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="vatRegistered"
+                                                        id="vatRegistered"
+                                                        checked={shopSettings.vatRegistered}
+                                                        onChange={e => setShopSettings({ ...shopSettings, vatRegistered: e.target.checked })}
+                                                        className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                                        style={{ right: shopSettings.vatRegistered ? '0' : 'auto', left: shopSettings.vatRegistered ? 'auto' : '0' }}
+                                                    />
+                                                    <label
+                                                        htmlFor="vatRegistered"
+                                                        className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${shopSettings.vatRegistered ? 'bg-primary-500' : 'bg-secondary-300'}`}
+                                                    ></label>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-secondary-700 mb-1">QR Code รับเงิน (PromptPay)</label>
                                             <div className="flex items-center gap-6 p-4 border border-secondary-200 rounded-lg bg-secondary-50">
@@ -398,6 +499,33 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div className="border-t border-secondary-200 pt-6 mt-6">
+                                        <h3 className="text-lg font-bold text-secondary-900 mb-4">เอกสารและใบเสนอราคา</h3>
+
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">เงื่อนไขการเสนอราคา (Default Terms)</label>
+                                                <textarea
+                                                    rows="4"
+                                                    value={shopSettings.quotationDefaultTerms}
+                                                    onChange={e => setShopSettings({ ...shopSettings, quotationDefaultTerms: e.target.value })}
+                                                    placeholder="ระบุเงื่อนไขการมัดจำ การส่งสินค้า ฯลฯ"
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-secondary-700 mb-1">การรับประกัน (Warranty Policy)</label>
+                                                <textarea
+                                                    rows="4"
+                                                    value={shopSettings.quotationWarrantyPolicy}
+                                                    onChange={e => setShopSettings({ ...shopSettings, quotationWarrantyPolicy: e.target.value })}
+                                                    placeholder="ระบุรายละเอียดการรับประกันสินค้า"
+                                                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -405,42 +533,13 @@ export default function SettingsPage() {
                                 <div className="space-y-6">
                                     <div className="border-b border-secondary-200 pb-4">
                                         <h2 className="text-xl font-bold text-secondary-900">การตั้งค่าระบบ</h2>
-                                        <p className="text-secondary-500 text-sm mt-1">ตั้งค่าภาษี สกุลเงิน และอื่นๆ</p>
+                                        <p className="text-secondary-500 text-sm mt-1">ตั้งค่าการแสดงผลและธีมของระบบ (ในอนาคต)</p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="md:col-span-2">
-                                            <div className="flex items-center justify-between p-4 border border-secondary-200 rounded-lg">
-                                                <div>
-                                                    <h3 className="font-medium text-secondary-900">จดทะเบียนภาษีมูลค่าเพิ่ม (VAT)</h3>
-                                                    <p className="text-sm text-secondary-500">เปิดใช้งานหากร้านค้าของคุณจดทะเบียน VAT</p>
-                                                </div>
-                                                <div className="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="vatRegistered"
-                                                        id="vatRegistered"
-                                                        checked={shopSettings.vatRegistered}
-                                                        onChange={e => setShopSettings({ ...shopSettings, vatRegistered: e.target.checked })}
-                                                        className="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                                                        style={{ right: shopSettings.vatRegistered ? '0' : 'auto', left: shopSettings.vatRegistered ? 'auto' : '0' }}
-                                                    />
-                                                    <label
-                                                        htmlFor="vatRegistered"
-                                                        className={`toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${shopSettings.vatRegistered ? 'bg-primary-500' : 'bg-secondary-300'}`}
-                                                    ></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-secondary-700 mb-1">อัตราภาษีมูลค่าเพิ่ม (%)</label>
-                                            <input
-                                                type="number"
-                                                value={shopSettings.vatRate}
-                                                onChange={e => setShopSettings({ ...shopSettings, vatRate: parseFloat(e.target.value) })}
-                                                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                            />
-                                        </div>
+                                    <div className="flex flex-col items-center justify-center py-12 text-secondary-400">
+                                        <Monitor size={48} className="mb-4 opacity-20" />
+                                        <h3 className="text-lg font-medium mb-1">ส่วนนี้สำหรับการตั้งค่า App</h3>
+                                        <p className="text-sm">เช่น ธีม, ขนาดตัวอักษร ฯลฯ (Coming Soon)</p>
                                     </div>
                                 </div>
                             )}
@@ -545,4 +644,3 @@ export default function SettingsPage() {
         </AppLayout >
     )
 }
-
