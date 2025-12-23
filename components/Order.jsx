@@ -2173,14 +2173,10 @@ export default function OrderForm() {
                                                             <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
                                                         </div>
                                                     )}
-                                                    {(item.light || item.lightColor) && (
+                                                    {item.lightColor && (
                                                         <div className="flex items-center gap-1" title="แสงไฟ">
                                                             <Zap size={12} />
-                                                            <span>
-                                                                {item.light}
-                                                                {item.light && item.lightColor && ' '}
-                                                                {item.lightColor}
-                                                            </span>
+                                                            <span>{item.lightColor}</span>
                                                         </div>
                                                     )}
                                                     {item.remote && (
@@ -2189,12 +2185,7 @@ export default function OrderForm() {
                                                             <span>{item.remote}</span>
                                                         </div>
                                                     )}
-                                                    {item.bulbType && (
-                                                        <div className="flex items-center gap-1" title="ขั้วหลอด">
-                                                            <Lightbulb size={12} />
-                                                            <span>{item.bulbType}</span>
-                                                        </div>
-                                                    )}
+
                                                     {/* Description / Remark - Moved to follow Bulb Type */}
                                                     {(item.remark || item.description) && (
                                                         <div className="flex items-center gap-1 text-secondary-500" title="หมายเหตุ">

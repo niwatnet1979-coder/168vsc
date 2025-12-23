@@ -35,7 +35,17 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     ...addr,
                     // Map DB snake_case to camelCase for UI
                     googleMapsLink: addr.google_maps_link || addr.googleMapsLink || '',
-                    label: addr.label || addr.location_name || '', // Cover potential DB column naming variations
+                    label: addr.label || addr.location_name || '',
+                    // Map all address fields from snake_case to camelCase
+                    addrNumber: addr.addr_number || addr.addrNumber || '',
+                    addrMoo: addr.addr_moo || addr.addrMoo || '',
+                    addrVillage: addr.addr_village || addr.addrVillage || '',
+                    addrSoi: addr.addr_soi || addr.addrSoi || '',
+                    addrRoad: addr.addr_road || addr.addrRoad || '',
+                    addrTambon: addr.addr_tambon || addr.addrTambon || '',
+                    addrAmphoe: addr.addr_amphoe || addr.addrAmphoe || '',
+                    province: addr.addr_province || addr.province || '',
+                    zipcode: addr.addr_zipcode || addr.zipcode || ''
                 })),
                 contacts: (Array.isArray(customer.contacts) ? customer.contacts : []).filter(Boolean)
             })
