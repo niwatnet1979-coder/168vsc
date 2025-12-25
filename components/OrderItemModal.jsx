@@ -3,6 +3,7 @@ import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Pl
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import ProductCard from './ProductCard'
+import ConfirmDialog from './ConfirmDialog'
 
 const EMPTY_ARRAY = []
 
@@ -33,6 +34,8 @@ const OrderItemModal = React.forwardRef(({
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
     const [showVariantPopup, setShowVariantPopup] = useState(false)
+    const [showChangeProductConfirm, setShowChangeProductConfirm] = useState(false)
+    const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false)
     const [searchResults, setSearchResults] = useState([])
     const [productVariants, setProductVariants] = useState([])
     const [internalProductsData, setInternalProductsData] = useState([])
@@ -408,18 +411,7 @@ const OrderItemModal = React.forwardRef(({
                     <div className="relative">
                         {formData.code ? (
                             <div
-                                onClick={() => {
-                                    if (confirm('ต้องการเปลี่ยนสินค้า?')) {
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
-                                            image: null, length: '', width: '', height: '',
-                                            material: '', color: '', crystalColor: '',
-                                            bulbType: '', light: '', remote: '', category: '', subcategory: '',
-                                            selectedVariant: null
-                                        }))
-                                    }
-                                }}
+                                onClick={() => setShowChangeProductConfirm(true)}
                                 className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
                             >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">
@@ -799,12 +791,7 @@ const OrderItemModal = React.forwardRef(({
                         <div className="flex items-center justify-end gap-3 px-3 pt-2 pb-3 border-t border-secondary-200 bg-white flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 sticky bottom-0 rounded-b-2xl">
                             {isEditing && onDelete && (
                                 <button
-                                    onClick={() => {
-                                        if (confirm('ต้องการลบรายการนี้?')) {
-                                            onDelete()
-                                            onClose()
-                                        }
-                                    }}
+                                    onClick={() => setShowDeleteItemConfirm(true)}
                                     className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1 mr-auto"
                                 >
                                     <Trash2 size={16} />
@@ -827,6 +814,38 @@ const OrderItemModal = React.forwardRef(({
                     )
                 }
             </div >
+
+            {/* Change Product Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showChangeProductConfirm}
+                title="ยืนยันการเปลี่ยนสินค้า"
+                message="คุณต้องการเปลี่ยนสินค้าใช่หรือไม่?"
+                onConfirm={() => {
+                    setShowChangeProductConfirm(false)
+                    setFormData(prev => ({
+                        ...prev,
+                        code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
+                        image: null, length: '', width: '', height: '',
+                        material: '', color: '', crystalColor: '',
+                        bulbType: '', light: '', remote: '', category: '', subcategory: '',
+                        selectedVariant: null
+                    }))
+                }}
+                onCancel={() => setShowChangeProductConfirm(false)}
+            />
+
+            {/* Delete Item Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteItemConfirm}
+                title="ยืนยันการลบรายการ"
+                message="คุณต้องการลบรายการนี้ใช่หรือไม่?"
+                onConfirm={() => {
+                    setShowDeleteItemConfirm(false)
+                    onDelete()
+                    onClose()
+                }}
+                onCancel={() => setShowDeleteItemConfirm(false)}
+            />
         </Wrapper >
     )
 })
