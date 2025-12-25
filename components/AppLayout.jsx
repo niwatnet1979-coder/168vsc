@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import packageJson from '../package.json';
 import { useLanguage } from '../contexts/LanguageContext';
+import ConfirmDialog from './ConfirmDialog';
 
 const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const router = useRouter();
@@ -33,6 +34,8 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const { t, toggleLanguage, language } = useLanguage();
     const [version, setVersion] = useState('');
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showSwitchAccountConfirm, setShowSwitchAccountConfirm] = useState(false);
 
     useEffect(() => {
         setVersion(packageJson.version);
@@ -51,16 +54,12 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         }
     }, [session])
 
-    const handleLogout = async () => {
-        if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-            await signOut({ callbackUrl: '/auth/signin' });
-        }
+    const handleLogout = () => {
+        setShowLogoutConfirm(true);
     };
 
-    const handleSwitchAccount = async () => {
-        if (confirm('คุณต้องการสลับบัญชีหรือไม่?')) {
-            await signOut({ callbackUrl: '/auth/signin?autoTrigger=true' });
-        }
+    const handleSwitchAccount = () => {
+        setShowSwitchAccountConfirm(true);
     };
 
     const menuItems = [
@@ -261,6 +260,30 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
                 {renderBottomNav && renderBottomNav()}
 
             </div>
+
+            {/* Logout Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                title="ยืนยันการออกจากระบบ"
+                message="คุณต้องการออกจากระบบใช่หรือไม่?"
+                onConfirm={async () => {
+                    setShowLogoutConfirm(false);
+                    await signOut({ callbackUrl: '/auth/signin' });
+                }}
+                onCancel={() => setShowLogoutConfirm(false)}
+            />
+
+            {/* Switch Account Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showSwitchAccountConfirm}
+                title="ยืนยันการสลับบัญชี"
+                message="คุณต้องการสลับบัญชีใช่หรือไม่?"
+                onConfirm={async () => {
+                    setShowSwitchAccountConfirm(false);
+                    await signOut({ callbackUrl: '/auth/signin?autoTrigger=true' });
+                }}
+                onCancel={() => setShowSwitchAccountConfirm(false)}
+            />
         </div>
     );
 };
