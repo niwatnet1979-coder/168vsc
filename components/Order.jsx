@@ -375,7 +375,7 @@ export default function OrderForm() {
         deleteJobFromItem: handlersDeleteJobFromItem
     })
 
-    const handleSaveItem = itemHandlers.saveItem
+    const handleSaveItem = (itemData) => itemHandlers.saveItem(itemData, setEditingItemIndex)
     const handleDeleteItem = itemHandlers.deleteItem
     const handleAddJobToItem = itemHandlers.addJobToItem
     const handleDeleteJobFromItem = itemHandlers.deleteJobFromItem

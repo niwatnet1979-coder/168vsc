@@ -244,7 +244,28 @@ export default function SettingsPage() {
             [type]: [...productOptions[type], newOption.trim()]
         }
         setProductOptions(updatedOptions)
-        await DataManager.saveProductOptions(updatedOptions)
+
+        // CRITICAL FIX: Save using saveSettings with systemOptions
+        const systemOptionsToSave = {
+            ...updatedOptions,
+            shopLat: shopSettings.shopLat,
+            shopLon: shopSettings.shopLon
+        }
+
+        await DataManager.saveSettings({
+            shopName: shopSettings.name,
+            shopAddress: shopSettings.address,
+            shopPhone: shopSettings.phone,
+            shopEmail: shopSettings.email,
+            shopTaxId: shopSettings.taxId,
+            vatRegistered: shopSettings.vatRegistered,
+            vatRate: shopSettings.vatRate,
+            promptpayQr: shopSettings.promptpayQr,
+            systemOptions: systemOptionsToSave,
+            quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+            quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+        })
+
         setNewOption('')
         setActiveOptionType(null)
     }
@@ -254,7 +275,27 @@ export default function SettingsPage() {
             const updatedList = productOptions[type].filter((_, i) => i !== index)
             const updatedOptions = { ...productOptions, [type]: updatedList }
             setProductOptions(updatedOptions)
-            await DataManager.saveProductOptions(updatedOptions)
+
+            // CRITICAL FIX: Save using saveSettings with systemOptions
+            const systemOptionsToSave = {
+                ...updatedOptions,
+                shopLat: shopSettings.shopLat,
+                shopLon: shopSettings.shopLon
+            }
+
+            await DataManager.saveSettings({
+                shopName: shopSettings.name,
+                shopAddress: shopSettings.address,
+                shopPhone: shopSettings.phone,
+                shopEmail: shopSettings.email,
+                shopTaxId: shopSettings.taxId,
+                vatRegistered: shopSettings.vatRegistered,
+                vatRate: shopSettings.vatRate,
+                promptpayQr: shopSettings.promptpayQr,
+                systemOptions: systemOptionsToSave,
+                quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+                quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+            })
         }
     }
 
