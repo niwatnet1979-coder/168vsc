@@ -13,7 +13,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-        mediaSource: '',
+        media: '',
         taxInvoices: [],
         addresses: [],
         contacts: []  // New contacts array
@@ -36,29 +36,29 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 // Ensure taxInvoices is never empty - always show at least one form
                 taxInvoices: (Array.isArray(customer.taxInvoices) && customer.taxInvoices.length > 0)
                     ? customer.taxInvoices.filter(Boolean)
-                    : [{ id: Date.now(), companyName: '', taxId: '', branch: '' }],
+                    : [{ id: Date.now(), company: '', taxid: '', branch: '' }],
                 // Ensure addresses is never empty - always show at least one form
                 addresses: (Array.isArray(customer.addresses) && customer.addresses.length > 0)
                     ? customer.addresses.filter(Boolean).map(addr => ({
                         ...addr,
                         // Map DB snake_case to camelCase for UI
-                        googleMapsLink: addr.google_maps_link || addr.googleMapsLink || '',
+                        maps: addr.google_maps_link || addr.maps || '',
                         label: addr.label || addr.location_name || '',
                         // Map all address fields from snake_case to camelCase
-                        addrNumber: addr.addr_number || addr.addrNumber || '',
-                        addrMoo: addr.addr_moo || addr.addrMoo || '',
-                        addrVillage: addr.addr_village || addr.addrVillage || '',
-                        addrSoi: addr.addr_soi || addr.addrSoi || '',
-                        addrRoad: addr.addr_road || addr.addrRoad || '',
-                        addrTambon: addr.addr_tambon || addr.addrTambon || '',
-                        addrAmphoe: addr.addr_amphoe || addr.addrAmphoe || '',
+                        number: addr.addr_number || addr.number || '',
+                        villageno: addr.addr_moo || addr.villageno || '',
+                        village: addr.addr_village || addr.village || '',
+                        lane: addr.addr_soi || addr.lane || '',
+                        road: addr.addr_road || addr.road || '',
+                        subdistrict: addr.addr_tambon || addr.subdistrict || '',
+                        district: addr.addr_amphoe || addr.district || '',
                         province: addr.addr_province || addr.province || '',
                         zipcode: addr.addr_zipcode || addr.zipcode || ''
                     }))
                     : [{
                         id: Date.now() + 1,
                         label: '',
-                        googleMapsLink: ''
+                        maps: ''
                     }],
                 // Ensure contacts is never empty - always show at least one form
                 contacts: (Array.isArray(customer.contacts) && customer.contacts.length > 0)
@@ -75,16 +75,16 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
         } else {
             // Reset for new customer
             setFormData({
-                name: '', phone: '', email: '', lineId: '', facebook: '', instagram: '',
+                name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
-                mediaSource: '',
+                media: '',
                 // Initialize with one empty item each
-                taxInvoices: [{ id: Date.now(), companyName: '', taxId: '', branch: '' }],
+                taxInvoices: [{ id: Date.now(), company: '', taxid: '', branch: '' }],
                 addresses: [{
                     id: Date.now() + 1,
                     label: '',
-                    googleMapsLink: '',
+                    maps: '',
                     inspector1: { name: '', phone: '' }
                 }],
                 contacts: [{
@@ -133,7 +133,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
     const addTaxInvoice = () => {
         setFormData(prev => ({
             ...prev,
-            taxInvoices: [...prev.taxInvoices, { id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }]
+            taxInvoices: [...prev.taxInvoices, { id: Date.now(), company: '', taxid: '', branch: '' }]
         }))
     }
 
@@ -157,7 +157,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
             addresses: [...prev.addresses, {
                 id: Date.now(),
                 label: '',
-                googleMapsLink: '',
+                maps: '',
                 inspector1: { name: '', phone: '' }
             }]
         }))
@@ -216,19 +216,19 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     if (t.id === activeParserTaxId) {
                         return {
                             ...t,
-                            companyName: result.companyName || t.companyName,
-                            taxId: result.taxId || t.taxId,
+                            company: result.company || t.company,
+                            taxid: result.taxid || t.taxid,
                             branch: result.branch || t.branch,
                             // Address fields
-                            addrNumber: result.addrNumber || t.addrNumber,
-                            addrMoo: result.addrMoo || t.addrMoo,
-                            addrVillage: result.addrVillage || t.addrVillage,
-                            addrSoi: result.addrSoi || t.addrSoi,
-                            addrRoad: result.addrRoad || t.addrRoad,
-                            addrTambon: result.addrTambon || t.addrTambon,
-                            addrAmphoe: result.addrAmphoe || t.addrAmphoe,
-                            addrProvince: result.addrProvince || t.addrProvince,
-                            addrZipcode: result.addrZipcode || t.addrZipcode
+                            number: result.number || t.number,
+                            villageno: result.villageno || t.villageno,
+                            village: result.village || t.village,
+                            lane: result.lane || t.lane,
+                            road: result.road || t.road,
+                            subdistrict: result.subdistrict || t.subdistrict,
+                            district: result.district || t.district,
+                            province: result.province || t.province,
+                            zipcode: result.zipcode || t.zipcode
                         }
                     }
                     return t
@@ -245,16 +245,16 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     if (a.id === activeParserAddressId) {
                         return {
                             ...a,
-                            label: result.fullLabel || result.companyName || a.label, // Use Full Label (Person + Company) if available
-                            addrNumber: result.addrNumber || a.addrNumber,
-                            addrMoo: result.addrMoo || a.addrMoo,
-                            addrVillage: result.addrVillage || a.addrVillage,
-                            addrSoi: result.addrSoi || a.addrSoi,
-                            addrRoad: result.addrRoad || a.addrRoad,
-                            addrTambon: result.addrTambon || a.addrTambon,
-                            addrAmphoe: result.addrAmphoe || a.addrAmphoe,
-                            province: result.addrProvince || a.province, // Map addrProvince -> province
-                            zipcode: result.addrZipcode || a.zipcode // Map addrZipcode -> zipcode
+                            label: result.fullLabel || result.company || a.label, // Use Full Label (Person + Company) if available
+                            number: result.number || a.number,
+                            villageno: result.villageno || a.villageno,
+                            village: result.village || a.village,
+                            lane: result.lane || a.lane,
+                            road: result.road || a.road,
+                            subdistrict: result.subdistrict || a.subdistrict,
+                            district: result.district || a.district,
+                            province: result.province || a.province, // Map province -> province
+                            zipcode: result.zipcode || a.zipcode // Map zipcode -> zipcode
                         }
                     }
                     return a
@@ -268,7 +268,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     if (c.id === activeParserContactId) {
                         return {
                             ...c,
-                            name: result.contactName || result.companyName || c.name, // Prefer Contact Name
+                            name: result.contactName || result.company || c.name, // Prefer Contact Name
                             phone: result.phone || c.phone,
                             email: result.email || c.email
                         }
@@ -280,7 +280,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
         } else if (activeParserBasicInfo) {
             setFormData(prev => ({
                 ...prev,
-                name: result.companyName || result.fullLabel || prev.name, // For Basic Info, prefer Company Name if available
+                name: result.company || result.fullLabel || prev.name, // For Basic Info, prefer Company Name if available
                 phone: result.phone || prev.phone,
                 email: result.email || prev.email
             }))
@@ -411,8 +411,8 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                 <MessageCircle className="absolute left-0 top-1/2 -translate-y-1/2 text-[#06c755]" size={16} />
                                                 <input
                                                     type="text"
-                                                    value={formData.lineId || ''}
-                                                    onChange={e => setFormData({ ...formData, lineId: e.target.value })}
+                                                    value={formData.line || ''}
+                                                    onChange={e => setFormData({ ...formData, line: e.target.value })}
                                                     className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
                                                     placeholder="ไอดีไลน์..."
                                                 />
@@ -460,8 +460,8 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                         <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                             <label className="block text-xs font-medium text-secondary-500 mb-1">สื่อที่ลูกค้าเห็น</label>
                                             <select
-                                                value={formData.mediaSource}
-                                                onChange={e => setFormData({ ...formData, mediaSource: e.target.value })}
+                                                value={formData.media}
+                                                onChange={e => setFormData({ ...formData, media: e.target.value })}
                                                 className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0"
                                             >
                                                 <option value="">ระบุสื่อที่ลูกค้าเห็น</option>
@@ -506,13 +506,13 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                         <div className="md:col-span-2">
                                             <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ชื่อบริษัท / นิติบุคคล</label>
-                                                <input type="text" value={tax.companyName} onChange={e => updateTaxInvoice(tax.id, 'companyName', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                <input type="text" value={tax.company} onChange={e => updateTaxInvoice(tax.id, 'company', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                             </div>
                                         </div>
                                         <div>
                                             <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                 <label className="block text-xs font-medium text-secondary-500 mb-1">เลขประจำตัวผู้เสียภาษี</label>
-                                                <input type="text" value={tax.taxId} onChange={e => updateTaxInvoice(tax.id, 'taxId', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                <input type="text" value={tax.taxid} onChange={e => updateTaxInvoice(tax.id, 'taxid', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                             </div>
                                         </div>
                                         <div>
@@ -529,55 +529,55 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                 <div className="col-span-1">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">เลขที่</label>
-                                                        <input type="text" value={tax.addrNumber || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrNumber', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.number || ''} onChange={(e) => updateTaxInvoice(tax.id, 'number', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-1">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">หมู่</label>
-                                                        <input type="text" value={tax.addrMoo || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrMoo', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.villageno || ''} onChange={(e) => updateTaxInvoice(tax.id, 'villageno', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">อาคาร/หมู่บ้าน</label>
-                                                        <input type="text" value={tax.addrVillage || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrVillage', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.village || ''} onChange={(e) => updateTaxInvoice(tax.id, 'village', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">ซอย</label>
-                                                        <input type="text" value={tax.addrSoi || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrSoi', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.lane || ''} onChange={(e) => updateTaxInvoice(tax.id, 'lane', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">ถนน</label>
-                                                        <input type="text" value={tax.addrRoad || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrRoad', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.road || ''} onChange={(e) => updateTaxInvoice(tax.id, 'road', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">แขวง/ตำบล</label>
-                                                        <input type="text" value={tax.addrTambon || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrTambon', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.subdistrict || ''} onChange={(e) => updateTaxInvoice(tax.id, 'subdistrict', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">เขต/อำเภอ</label>
-                                                        <input type="text" value={tax.addrAmphoe || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrAmphoe', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.district || ''} onChange={(e) => updateTaxInvoice(tax.id, 'district', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">จังหวัด</label>
-                                                        <input type="text" value={tax.addrProvince || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrProvince', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.province || ''} onChange={(e) => updateTaxInvoice(tax.id, 'province', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">รหัสไปรษณีย์</label>
-                                                        <input type="text" value={tax.addrZipcode || ''} onChange={(e) => updateTaxInvoice(tax.id, 'addrZipcode', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={tax.zipcode || ''} onChange={(e) => updateTaxInvoice(tax.id, 'zipcode', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -634,43 +634,43 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                 <div className="col-span-1">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">เลขที่</label>
-                                                        <input type="text" value={addr.addrNumber || ''} onChange={(e) => updateAddress(addr.id, 'addrNumber', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.number || ''} onChange={(e) => updateAddress(addr.id, 'number', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-1">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">หมู่</label>
-                                                        <input type="text" value={addr.addrMoo || ''} onChange={(e) => updateAddress(addr.id, 'addrMoo', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.villageno || ''} onChange={(e) => updateAddress(addr.id, 'villageno', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">อาคาร/หมู่บ้าน</label>
-                                                        <input type="text" value={addr.addrVillage || ''} onChange={(e) => updateAddress(addr.id, 'addrVillage', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.village || ''} onChange={(e) => updateAddress(addr.id, 'village', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">ซอย</label>
-                                                        <input type="text" value={addr.addrSoi || ''} onChange={(e) => updateAddress(addr.id, 'addrSoi', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.lane || ''} onChange={(e) => updateAddress(addr.id, 'lane', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">ถนน</label>
-                                                        <input type="text" value={addr.addrRoad || ''} onChange={(e) => updateAddress(addr.id, 'addrRoad', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.road || ''} onChange={(e) => updateAddress(addr.id, 'road', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">แขวง/ตำบล</label>
-                                                        <input type="text" value={addr.addrTambon || ''} onChange={(e) => updateAddress(addr.id, 'addrTambon', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.subdistrict || ''} onChange={(e) => updateAddress(addr.id, 'subdistrict', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
                                                     <div className="bg-white p-2 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                         <label className="block text-[10px] font-medium text-secondary-500 mb-0.5">เขต/อำเภอ</label>
-                                                        <input type="text" value={addr.addrAmphoe || ''} onChange={(e) => updateAddress(addr.id, 'addrAmphoe', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                        <input type="text" value={addr.district || ''} onChange={(e) => updateAddress(addr.id, 'district', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                                     </div>
                                                 </div>
                                                 <div className="col-span-2">
@@ -690,7 +690,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                         <div className="md:col-span-2">
                                             <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                 <label className="block text-xs font-medium text-secondary-500 mb-1">Google Maps Link</label>
-                                                <input type="text" value={addr.googleMapsLink} onChange={e => updateAddress(addr.id, 'googleMapsLink', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                <input type="text" value={addr.maps} onChange={e => updateAddress(addr.id, 'maps', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                             </div>
                                         </div>
                                     </div>
@@ -790,8 +790,8 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                     <label className="block text-xs font-medium text-secondary-500 mb-1">Line ID</label>
                                                     <input
                                                         type="text"
-                                                        value={contact.lineId}
-                                                        onChange={e => updateContact(contact.id, 'lineId', e.target.value)}
+                                                        value={contact.line}
+                                                        onChange={e => updateContact(contact.id, 'line', e.target.value)}
                                                         className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
                                                         placeholder="ไอดีไลน์..."
                                                     />
