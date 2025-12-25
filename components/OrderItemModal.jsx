@@ -346,6 +346,10 @@ const OrderItemModal = React.forwardRef(({
         // Flatten variant data into item for compatibility
         const itemData = {
             ...formData,
+            // CRITICAL FIX: Generate tempId for new items
+            // If item doesn't have tempId (new item), generate one
+            // If item has tempId (editing existing), keep it
+            tempId: formData.tempId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             // If variant selected, use its data
             color: formData.selectedVariant?.color || '',
             stock: formData.selectedVariant?.stock || 0,
