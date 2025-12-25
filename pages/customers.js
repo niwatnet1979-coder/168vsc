@@ -107,15 +107,36 @@ export default function CustomersPage() {
     useEffect(() => {
         loadCustomers()
 
-        // Subscribe to Realtime changes
-        const channel = DataManager.supabase
-            .channel('customers-changes')
-            .on(
-                'postgres_changes',
+        // Realtime subscription for automatic data sync across all customer tables
+        const { supabase } = require('../lib/supabaseClient')
+
+        const channel = supabase
+            .channel('customers-realtime')
+            .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'customers' },
                 (payload) => {
-                    console.log('Realtime update:', payload)
-                    // Reload customers when any change occurs
+                    console.log('🔄 Customer changed:', payload.eventType)
+                    loadCustomers()
+                }
+            )
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'customer_addresses' },
+                (payload) => {
+                    console.log('🔄 Address changed:', payload.eventType)
+                    loadCustomers()
+                }
+            )
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'customer_contacts' },
+                (payload) => {
+                    console.log('🔄 Contact changed:', payload.eventType)
+                    loadCustomers()
+                }
+            )
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'customer_tax_invoices' },
+                (payload) => {
+                    console.log('🔄 Tax invoice changed:', payload.eventType)
                     loadCustomers()
                 }
             )
@@ -123,7 +144,7 @@ export default function CustomersPage() {
 
         // Cleanup subscription on unmount
         return () => {
-            DataManager.supabase.removeChannel(channel)
+            supabase.removeChannel(channel)
         }
     }, [])
 
