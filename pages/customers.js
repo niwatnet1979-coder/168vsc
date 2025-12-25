@@ -4,6 +4,7 @@ import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import CustomerModal from '../components/CustomerModal'
 import { DataManager } from '../lib/dataManager'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 import {
     Search,
@@ -37,9 +38,9 @@ export default function CustomersPage() {
     const [currentPage, setCurrentPage] = useState(1)
     const [activeTab, setActiveTab] = useState('customer')
     const itemsPerPage = 10
-
-    // Loading state
     const [isLoading, setIsLoading] = useState(true)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [customerToDelete, setCustomerToDelete] = useState(null)
 
     // Helper function to extract coordinates from Google Maps link
     const extractCoordinatesFromLink = (link) => {
@@ -138,15 +139,22 @@ export default function CustomersPage() {
         setShowModal(true)
     }
 
-    const handleDelete = async (id) => {
-        if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) {
-            const success = await DataManager.deleteCustomer(id)
-            if (success) {
-                setCustomers(customers.filter(c => c.id !== id))
-            } else {
-                alert('ไม่สามารถลบข้อมูลได้')
-            }
+    const handleDelete = (id) => {
+        setCustomerToDelete(id)
+        setShowDeleteConfirm(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        setShowDeleteConfirm(false)
+        if (!customerToDelete) return
+
+        const success = await DataManager.deleteCustomer(customerToDelete)
+        if (success) {
+            setCustomers(customers.filter(c => c.id !== customerToDelete))
+        } else {
+            alert('ไม่สามารถลบข้อมูลได้')
         }
+        setCustomerToDelete(null)
     }
 
     // handleSave is now handled in CustomerModal's onSave prop which calls this implicitly?
@@ -389,6 +397,17 @@ export default function CustomersPage() {
                     } else {
                         alert('บันทึกไม่สำเร็จ กรุณาลองใหม่')
                     }
+                }}
+            />
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบลูกค้า"
+                message="คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setCustomerToDelete(null)
                 }}
             />
         </AppLayout>

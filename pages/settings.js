@@ -30,7 +30,8 @@ import {
 import TeamMemberModal from '../components/TeamMemberModal'
 import { DataManager } from '../lib/dataManager'
 import { useDebug } from '../contexts/DebugContext'
-import { SHOP_LAT, SHOP_LON } from '../lib/utils' // Import defaults
+import { SHOP_LAT, SHOP_LON } from '../lib/utils'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function SettingsPage() {
     const { data: session } = useSession()
@@ -78,7 +79,9 @@ export default function SettingsPage() {
         commissionRates: ['0%', '0.3%']
     })
     const [newOption, setNewOption] = useState('')
-    const [activeOptionType, setActiveOptionType] = useState(null) // 'lightColors', 'remotes', 'bulbTypes'
+    const [activeOptionType, setActiveOptionType] = useState(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState({ type: null, index: null })
 
     const defaultProductTypes = [
         'XX ไม่ระบุ',
@@ -270,33 +273,40 @@ export default function SettingsPage() {
         setActiveOptionType(null)
     }
 
-    const handleDeleteOption = async (type, index) => {
-        if (confirm('ต้องการลบตัวเลือกนี้ใช่หรือไม่?')) {
-            const updatedList = productOptions[type].filter((_, i) => i !== index)
-            const updatedOptions = { ...productOptions, [type]: updatedList }
-            setProductOptions(updatedOptions)
+    const handleDeleteOption = (type, index) => {
+        setDeleteTarget({ type, index })
+        setShowDeleteConfirm(true)
+    }
 
-            // CRITICAL FIX: Save using saveSettings with systemOptions
-            const systemOptionsToSave = {
-                ...updatedOptions,
-                shopLat: shopSettings.shopLat,
-                shopLon: shopSettings.shopLon
-            }
+    const handleConfirmDelete = async () => {
+        setShowDeleteConfirm(false)
+        const { type, index } = deleteTarget
 
-            await DataManager.saveSettings({
-                shopName: shopSettings.name,
-                shopAddress: shopSettings.address,
-                shopPhone: shopSettings.phone,
-                shopEmail: shopSettings.email,
-                shopTaxId: shopSettings.taxId,
-                vatRegistered: shopSettings.vatRegistered,
-                vatRate: shopSettings.vatRate,
-                promptpayQr: shopSettings.promptpayQr,
-                systemOptions: systemOptionsToSave,
-                quotationDefaultTerms: shopSettings.quotationDefaultTerms,
-                quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
-            })
+        const updatedList = productOptions[type].filter((_, i) => i !== index)
+        const updatedOptions = { ...productOptions, [type]: updatedList }
+        setProductOptions(updatedOptions)
+
+        const systemOptionsToSave = {
+            ...updatedOptions,
+            shopLat: shopSettings.shopLat,
+            shopLon: shopSettings.shopLon
         }
+
+        await DataManager.saveSettings({
+            shopName: shopSettings.name,
+            shopAddress: shopSettings.address,
+            shopPhone: shopSettings.phone,
+            shopEmail: shopSettings.email,
+            shopTaxId: shopSettings.taxId,
+            vatRegistered: shopSettings.vatRegistered,
+            vatRate: shopSettings.vatRate,
+            promptpayQr: shopSettings.promptpayQr,
+            systemOptions: systemOptionsToSave,
+            quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+            quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+        })
+
+        setDeleteTarget({ type: null, index: null })
     }
 
     const handleUploadQR = async (e) => {
@@ -682,6 +692,17 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
-        </AppLayout >
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบตัวเลือก"
+                message="คุณต้องการลบตัวเลือกนี้ใช่หรือไม่?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setDeleteTarget({ type: null, index: null })
+                }}
+            />
+        </AppLayout>
     )
 }

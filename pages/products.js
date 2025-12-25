@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx'
 import { Search, Plus, Filter, MoreVertical, Edit2, Trash2, ChevronDown, ChevronUp, Package, Tag, Layers, Scaling, Palette, Gem, ImageIcon, List, LayoutGrid, Download, X, Menu } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import ProductModal from '../components/ProductModal'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function ProductManagement() {
     const [products, setProducts] = useState([])
@@ -17,8 +18,9 @@ export default function ProductManagement() {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 20
     const [expandedProducts, setExpandedProducts] = useState(new Set())
-
     const [isLoading, setIsLoading] = useState(true)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [productToDelete, setProductToDelete] = useState(null)
 
     const loadProducts = async () => {
         setIsLoading(true)
@@ -127,15 +129,22 @@ export default function ProductManagement() {
         return { colorCount, minPrice, maxPrice, totalStock, totalMinStock, totalPending: 0 }
     }
 
-    const handleDelete = async (id) => {
-        if (confirm('ยืนยันการลบสินค้า?')) {
-            const result = await DataManager.deleteProduct(id)
-            if (result.success) {
-                setProducts(products.filter(p => p.id !== id))
-            } else {
-                alert(result.error || 'ไม่สามารถลบสินค้าได้')
-            }
+    const handleDelete = (id) => {
+        setProductToDelete(id)
+        setShowDeleteConfirm(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        setShowDeleteConfirm(false)
+        if (!productToDelete) return
+
+        const result = await DataManager.deleteProduct(productToDelete)
+        if (result.success) {
+            setProducts(products.filter(p => p.id !== productToDelete))
+        } else {
+            alert(result.error || 'ไม่สามารถลบสินค้าได้')
         }
+        setProductToDelete(null)
     }
 
     const handleEdit = (product) => {
@@ -802,6 +811,17 @@ export default function ProductManagement() {
                 product={currentProduct}
                 onSave={handleSave}
                 existingProducts={products}
+            />
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบสินค้า"
+                message="คุณต้องการลบสินค้านี้ใช่หรือไม่?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setProductToDelete(null)
+                }}
             />
         </AppLayout>
     )

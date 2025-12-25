@@ -28,6 +28,7 @@ import {
 import TeamMemberModal from '../components/TeamMemberModal'
 import TeamManagementModal from '../components/TeamManagementModal'
 import { DataManager } from '../lib/dataManager'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function TeamPage() {
     const [activeTab, setActiveTab] = useState('current') // current, resigned
@@ -66,6 +67,8 @@ export default function TeamPage() {
     }
 
     const [formData, setFormData] = useState(initialFormState)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [memberToDelete, setMemberToDelete] = useState(null)
 
     // Load data
     const loadTeams = async () => {
@@ -92,15 +95,22 @@ export default function TeamPage() {
         setShowModal(true)
     }
 
-    const handleDelete = async (id) => {
-        if (confirm('คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?')) {
-            const success = await DataManager.deleteEmployee(id)
-            if (success) {
-                await loadTeams()
-            } else {
-                alert('ลบข้อมูลไม่สำเร็จ')
-            }
+    const handleDelete = (id) => {
+        setMemberToDelete(id)
+        setShowDeleteConfirm(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        setShowDeleteConfirm(false)
+        if (!memberToDelete) return
+
+        const success = await DataManager.deleteEmployee(memberToDelete)
+        if (success) {
+            await loadTeams()
+        } else {
+            alert('ลบข้อมูลไม่สำเร็จ')
         }
+        setMemberToDelete(null)
     }
 
     const handleSave = async (data) => {
@@ -299,10 +309,20 @@ export default function TeamPage() {
                 onSave={handleSave}
             />
 
-            {/* Team Management Modal */}
             <TeamManagementModal
                 isOpen={showTeamModal}
                 onClose={() => setShowTeamModal(false)}
+            />
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบทีมงาน"
+                message="คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setMemberToDelete(null)
+                }}
             />
         </AppLayout>
     )
