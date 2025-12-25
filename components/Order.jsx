@@ -31,7 +31,6 @@ import OrderSummaryEdit from './order/OrderSummaryEdit'
 import OrderPaymentSection from './order/OrderPaymentSection'
 import OrderJobSection from './order/OrderJobSection'
 import OrderItemsList from './order/OrderItemsList'
-import OrderSummary from './order/OrderSummary'
 import ConfirmDialog from './ConfirmDialog'
 
 import ProductModal from './ProductModal'
