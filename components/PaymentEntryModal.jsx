@@ -5,6 +5,7 @@ import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import Card from './Card'
 import DataSourceTooltip from './DataSourceTooltip'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function PaymentEntryModal({
     isOpen,
@@ -56,6 +57,7 @@ export default function PaymentEntryModal({
     const [qrUrl, setQrUrl] = useState(promptpayQr)
     const [showQrPopup, setShowQrPopup] = useState(false)
     const [showSlipPreview, setShowSlipPreview] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
     const receiverSigRef = useRef(null)
     const payerSigRef = useRef(null)
@@ -504,12 +506,7 @@ export default function PaymentEntryModal({
                     <div>
                         {isEditing && onDelete && (
                             <button
-                                onClick={() => {
-                                    if (confirm('ต้องการลบรายการนี้?')) {
-                                        onDelete()
-                                        onClose()
-                                    }
-                                }}
+                                onClick={() => setShowDeleteConfirm(true)}
                                 className="p-2 text-secondary-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors flex items-center gap-1"
                                 title="ลบรายการ"
                             >
@@ -615,6 +612,19 @@ export default function PaymentEntryModal({
                     />
                 </div>
             )}
+
+            {/* Delete Payment Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบรายการชำระเงิน"
+                message="คุณต้องการลบรายการชำระเงินนี้ใช่หรือไม่?"
+                onConfirm={() => {
+                    setShowDeleteConfirm(false)
+                    onDelete()
+                    onClose()
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
         </div>
     )
 }

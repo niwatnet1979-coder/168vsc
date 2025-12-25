@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Camera, Trash2 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import VariantManager from './VariantManager'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
@@ -19,6 +20,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
     const [materials, setMaterials] = useState([])
     const [materialColors, setMaterialColors] = useState([])
     const [crystalColors, setCrystalColors] = useState([])
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
     const defaultProductTypes = [
         'XX ไม่ระบุ',
@@ -354,6 +356,24 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                     </div>
                 </div>
             </div>
+
+            {/* Delete Product Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบสินค้า"
+                message="คุณต้องการลบสินค้านี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                onConfirm={async () => {
+                    setShowDeleteConfirm(false)
+                    const result = await DataManager.deleteProduct(product.uuid)
+                    if (result.success) {
+                        onClose()
+                        window.location.reload()
+                    } else {
+                        alert(result.error || 'ไม่สามารถลบสินค้าได้')
+                    }
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
         </div>
     )
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Plus, Edit2, Trash2, Camera, X, Save, Scaling, Palette, Gem } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import ConfirmDialog from './ConfirmDialog'
 
 export default function VariantManager({
     baseProductId,
@@ -14,6 +15,8 @@ export default function VariantManager({
     material = ''
 }) {
     const [editingIndex, setEditingIndex] = useState(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [variantToDelete, setVariantToDelete] = useState(null)
     const [variantForm, setVariantForm] = useState({
         color: '',
         crystalColor: '',
@@ -99,10 +102,8 @@ export default function VariantManager({
     }
 
     const handleDeleteVariant = (index) => {
-        if (confirm('ลบ variant นี้?')) {
-            const newVariants = variants.filter((_, i) => i !== index)
-            onChange(newVariants)
-        }
+        setVariantToDelete(index)
+        setShowDeleteConfirm(true)
     }
 
     const handleImageUpload = async (e, imageIndex) => {
@@ -506,5 +507,24 @@ export default function VariantManager({
                 </div>
             )}
         </div>
+
+{        /* Delete Variant Confirmation Dialog */}
+    <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="ยืนยันการลบ Variant"
+        message="คุณต้องการลบ Variant นี้ใช่หรือไม่?"
+        onConfirm={() => {
+            setShowDeleteConfirm(false)
+            if (variantToDelete !== null) {
+                const newVariants = variants.filter((_, i) => i !== variantToDelete)
+                onChange(newVariants)
+                setVariantToDelete(null)
+            }
+        }}
+        onCancel={() => {
+            setShowDeleteConfirm(false)
+            setVariantToDelete(null)
+        }}
+    />
     )
 }
