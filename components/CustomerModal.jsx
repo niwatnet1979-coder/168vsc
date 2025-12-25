@@ -76,7 +76,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
         } else {
             // Reset for new customer
             setFormData({
-                name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
+                name: '', phone: '', email: '', lineId: '', facebook: '', instagram: '',
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
                 mediaSource: '',
@@ -414,8 +414,8 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                 <MessageCircle className="absolute left-0 top-1/2 -translate-y-1/2 text-[#06c755]" size={16} />
                                                 <input
                                                     type="text"
-                                                    value={formData.line}
-                                                    onChange={e => setFormData({ ...formData, line: e.target.value })}
+                                                    value={formData.lineId || ''}
+                                                    onChange={e => setFormData({ ...formData, lineId: e.target.value })}
                                                     className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
                                                     placeholder="ไอดีไลน์..."
                                                 />
