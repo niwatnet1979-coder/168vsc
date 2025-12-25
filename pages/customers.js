@@ -382,16 +382,9 @@ export default function CustomersPage() {
 
                     const result = await DataManager.saveCustomer(customerPayload)
 
-                    if (result) {
-                        if (editingCustomer) {
-                            // Update existing
-                            setCustomers(customers.map(c =>
-                                c.id === editingCustomer.id ? result : c
-                            ))
-                        } else {
-                            // Add new
-                            setCustomers([...customers, result])
-                        }
+                    if (result.success) {
+                        // Reload customers to get complete data with relations
+                        await loadCustomers()
                         setShowModal(false)
                         setEditingCustomer(null)
                     } else {
