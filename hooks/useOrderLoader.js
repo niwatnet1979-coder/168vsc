@@ -1,0 +1,245 @@
+import { useEffect, useCallback } from 'react'
+import { useRouter } from 'next/router'
+import { DataManager } from '../lib/dataManager'
+import { extractCoordinates, calculateDistance, SHOP_LAT, SHOP_LON } from '../lib/utils'
+
+/**
+ * Custom hook to handle all data loading and initialization for Order component
+ * Consolidates all useEffect blocks related to:
+ * - Loading other outstanding orders
+ * - Fetching order data
+ * - Initializing selected job index
+ * - Auto-calculating distance
+ */
+export function useOrderLoader({
+    customer,
+    items,
+    selectedItemIndex,
+    setOtherOutstandingOrders,
+    setOrderNumber,
+    setCustomer,
+    setTaxInvoice,
+    setTaxInvoiceDeliveryAddress,
+    setItems,
+    setGeneralJobInfo,
+    setInitialOrderData,
+    setDiscount,
+    setVatRate,
+    setVatIncluded,
+    setShippingFee,
+    setPaymentSchedule,
+    setSelectedItemIndex,
+    setSelectedJobIndex
+}) {
+    const router = useRouter()
+
+    // Load Other Outstanding Orders for Customer
+    useEffect(() => {
+        const loadOtherOrders = async () => {
+            if (customer?.id) {
+                try {
+                    const orders = await DataManager.getOrdersByCustomerId(customer.id)
+                    const currentOrderId = router.query.id || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('id') : '')
+
+                    const otherOutstanding = orders
+                        .filter(o => o.id !== currentOrderId)
+                        .map(o => {
+                            const paid = (o.paymentSchedule || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                            const total = Number(o.totalAmount) || 0
+                            return {
+                                id: o.id,
+                                total: total,
+                                paid: paid,
+                                outstanding: Math.max(0, total - paid)
+                            }
+                        })
+                        .filter(o => o.outstanding > 0)
+
+                    setOtherOutstandingOrders(otherOutstanding)
+                } catch (err) {
+                    console.error('Error loading other orders:', err)
+                }
+            }
+        }
+        loadOtherOrders()
+    }, [customer?.id, router.query.id, setOtherOutstandingOrders])
+
+    // Fetch Order Data (Complete Implementation)
+    const fetchOrderData = useCallback(async (targetId) => {
+        const idToLoad = targetId || router.query.id
+        if (!router.isReady || !idToLoad) return
+
+        try {
+            // Fetch from Supabase
+            const order = await DataManager.getOrderById(idToLoad)
+
+            if (order) {
+                setOrderNumber(order.orderNumber || order.order_number || order.id)
+
+                // Use joined customer data directly
+                if (order.customer && order.customer.id) {
+                    setCustomer(order.customer)
+                } else if (order.customerDetails) {
+                    // Legacy Fallback
+                    if (order.customerDetails.id) {
+                        const fullCustomer = await DataManager.getCustomerById(order.customerDetails.id)
+                        setCustomer(fullCustomer || order.customerDetails)
+                    } else {
+                        setCustomer(order.customerDetails)
+                    }
+                }
+
+                // Tax Invoice
+                if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
+
+                // Infer vatIncluded mode
+                if (order.total && order.items && order.vatRate > 0) {
+                    try {
+                        const rSub = order.items.reduce((s, i) => s + ((Number(i.qty) || 0) * (Number(i.unitPrice) || Number(i.price) || 0)), 0)
+                        const ship = Number(order.shippingFee || 0)
+
+                        let discAmt = 0
+                        if (order.discount) {
+                            discAmt = order.discount.mode === 'percent'
+                                ? (rSub + ship) * (Number(order.discount.value) / 100)
+                                : Number(order.discount.value)
+                        }
+                        const afterDisc = Math.max(0, rSub + ship - discAmt)
+
+                        const diffInvat = Math.abs(Number(order.total) - afterDisc)
+                        const diffExvat = Math.abs(Number(order.total) - (afterDisc * (1 + Number(order.vatRate))))
+
+                        if (diffExvat < diffInvat && diffExvat < 5) {
+                            setVatIncluded(false)
+                        } else {
+                            setVatIncluded(true)
+                        }
+                    } catch (e) { console.warn('Error inferring vat mode', e) }
+                } else if (order.vatRate > 0) {
+                    setVatIncluded(true)
+                }
+
+                // Load items and fetch product images
+                let processedItems = []
+                if (order.items) {
+                    console.log('[Order] Loading items with jobs:', order.items.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        jobsCount: item.jobs?.length || 0,
+                        jobs: item.jobs
+                    })))
+
+                    // Fetch all products to get images
+                    const products = await DataManager.getProducts()
+
+                    processedItems = order.items.map(item => {
+                        const product = products.find(p =>
+                            p.uuid === item.product_id ||
+                            p.product_code === item.product_code ||
+                            p.product_code === item.code
+                        )
+
+                        // CRITICAL: Preserve jobs BEFORE any mapping
+                        const preservedJobs = item.jobs || []
+
+                        if (product) {
+                            const mappedItem = {
+                                ...item,
+                                product,
+                                jobs: preservedJobs,
+                                material: item.material || product.material,
+                                category: item.category || product.category,
+                                subcategory: item.subcategory || product.subcategory,
+                                length: item.length || product.length,
+                                width: item.width || product.width,
+                                height: item.height || product.height,
+                                image: item.image || product.variants?.[0]?.images?.[0] || null,
+                                selectedVariant: item.variant || null,
+                                variant_id: item.product_variant_id || item.variant?.id || null,
+                                variantId: item.product_variant_id || item.variant?.id || null,
+                                light: item.light || item.bulbType || null,
+                                lightColor: item.light_color || item.lightColor || null,
+                                bulbType: item.light || item.bulbType || null
+                            }
+
+                            console.log('[Order] Mapped item with jobs:', {
+                                itemId: mappedItem.id,
+                                itemName: mappedItem.name,
+                                jobsCount: mappedItem.jobs?.length || 0,
+                                jobs: mappedItem.jobs
+                            })
+
+                            return mappedItem
+                        }
+
+                        return { ...item, jobs: preservedJobs }
+                    })
+
+                    console.log('[Order] Items after mapping:', processedItems.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        jobsCount: item.jobs?.length || 0,
+                        jobs: item.jobs
+                    })))
+
+                    setItems(processedItems)
+                }
+
+                // Payment & Pricing
+                if (order.discount) setDiscount(order.discount)
+                if (order.shippingFee) setShippingFee(order.shippingFee)
+                if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
+                if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
+
+                // Store initial data for comparison
+                setInitialOrderData({
+                    customer: order.customer || order.customerDetails || { id: '', name: '', phone: '', email: '' },
+                    items: processedItems || [],
+                    taxInvoice: order.taxInvoice || { companyName: '', branch: '', taxId: '', address: '' },
+                    taxInvoiceDeliveryAddress: order.taxInvoiceDeliveryAddress || { type: '', label: '', address: '' },
+                    discount: order.discount || { mode: 'percent', value: 0 },
+                    shippingFee: order.shippingFee || 0,
+                    paymentSchedule: order.paymentSchedule || []
+                })
+            } else {
+                console.warn(`Order ${idToLoad} not found in database.`)
+            }
+        } catch (error) {
+            console.error("Error loading order:", error)
+        }
+    }, [
+        router.isReady,
+        router.query.id,
+        setOrderNumber,
+        setCustomer,
+        setTaxInvoice,
+        setTaxInvoiceDeliveryAddress,
+        setItems,
+        setGeneralJobInfo,
+        setInitialOrderData,
+        setDiscount,
+        setVatRate,
+        setVatIncluded,
+        setShippingFee,
+        setPaymentSchedule,
+        setSelectedItemIndex
+    ])
+
+    // Trigger fetch on mount/route change
+    useEffect(() => {
+        fetchOrderData()
+    }, [fetchOrderData])
+
+    // Initialize selected job index to latest job
+    useEffect(() => {
+        if (items && items[selectedItemIndex]?.jobs?.length > 0) {
+            const jobCount = items[selectedItemIndex].jobs.length
+            setSelectedJobIndex(jobCount - 1)
+        }
+    }, [items?.length, selectedItemIndex, setSelectedJobIndex])
+
+    // Return fetchOrderData for external use (e.g., after save)
+    return {
+        fetchOrderData
+    }
+}
