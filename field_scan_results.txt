@@ -1,0 +1,24 @@
+# Project-Wide Field Name Scan Results
+
+## Files with Old Field Names
+
+### Production Files (MUST FIX):
+1. **components/order/OrderTaxInvoiceSection.jsx**
+   - ❌ `companyName` → should be `company`
+   - ❌ `taxId` → should be `taxid`
+
+2. **components/order/OrderCustomerSection.jsx**
+   - ❌ `mediaSource` → should be `media`
+
+### Debug/Test Files (CAN IGNORE):
+- `BIN/debug_load_order.js`
+- `BIN/test_optimized_save.js`
+- `BIN20251220/scripts/*`
+
+---
+
+## Action Plan
+
+1. ✅ Fix OrderTaxInvoiceSection.jsx
+2. ✅ Fix OrderCustomerSection.jsx
+3. ⚠️ Ignore BIN folders (debug scripts)

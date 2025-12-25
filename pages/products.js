@@ -129,8 +129,8 @@ export default function ProductManagement() {
         return { colorCount, minPrice, maxPrice, totalStock, totalMinStock, totalPending: 0 }
     }
 
-    const handleDelete = (id) => {
-        setProductToDelete(id)
+    const handleDelete = (uuid) => {
+        setProductToDelete(uuid)
         setShowDeleteConfirm(true)
     }
 
@@ -140,9 +140,26 @@ export default function ProductManagement() {
 
         const result = await DataManager.deleteProduct(productToDelete)
         if (result.success) {
-            setProducts(products.filter(p => p.id !== productToDelete))
+            setProducts(products.filter(p => p.uuid !== productToDelete))
+            // Optional: Success toast
+            const Swal = (await import('sweetalert2')).default
+            Swal.fire({
+                icon: 'success',
+                title: 'ลบสินค้าสำเร็จ',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            })
         } else {
-            alert(result.error || 'ไม่สามารถลบสินค้าได้')
+            const Swal = (await import('sweetalert2')).default
+            Swal.fire({
+                icon: 'error',
+                title: 'ไม่สามารถลบสินค้าได้',
+                text: result.error || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ',
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#d33',
+            })
         }
         setProductToDelete(null)
     }
@@ -471,7 +488,7 @@ export default function ProductManagement() {
                                                                 <button onClick={() => handleEdit(product)} className="p-2 text-secondary-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="แก้ไข">
                                                                     <Edit2 size={16} />
                                                                 </button>
-                                                                <button onClick={() => handleDelete(product.id)} className="p-2 text-secondary-600 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors" title="ลบ">
+                                                                <button onClick={() => handleDelete(product.uuid)} className="p-2 text-secondary-600 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors" title="ลบ">
                                                                     <Trash2 size={16} />
                                                                 </button>
                                                             </div>
@@ -768,7 +785,7 @@ export default function ProductManagement() {
                                                         <Edit2 size={14} />
                                                         แก้ไข
                                                     </button>
-                                                    <button onClick={() => handleDelete(product.id)} className="px-3 py-2 bg-danger-50 text-danger-700 rounded-lg hover:bg-danger-100 transition-colors" title="ลบ">
+                                                    <button onClick={() => handleDelete(product.uuid)} className="px-3 py-2 bg-danger-50 text-danger-700 rounded-lg hover:bg-danger-100 transition-colors" title="ลบ">
                                                         <Trash2 size={14} />
                                                     </button>
                                                 </div>

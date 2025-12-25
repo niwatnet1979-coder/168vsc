@@ -1,6 +1,6 @@
 {
   "name": "168vsc",
-  "version": "6.2.3",
+  "version": "6.2.4",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -19,6 +19,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-signature-canvas": "^1.1.0-alpha.2",
+    "sweetalert2": "^11.26.17",
     "tailwind-merge": "^2.3.0",
     "xlsx": "^0.18.5"
   },

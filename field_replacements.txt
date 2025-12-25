@@ -1,0 +1,24 @@
+# Field Name Replacements for CustomerModal.jsx
+
+## Customer fields
+lineId → line
+mediaSource → media
+
+## Tax Invoice fields
+companyName → company
+taxId → taxid
+
+## Address fields (both addresses and tax invoices)
+addrNumber → number
+addrMoo → villageno
+addrVillage → village
+addrSoi → lane
+addrRoad → road
+addrTambon → subdistrict
+addrAmphoe → district
+addrProvince → province
+addrZipcode → zipcode
+googleMapsLink → maps
+
+## Contact fields
+lineId → line
