@@ -36,7 +36,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 // Ensure taxInvoices is never empty - always show at least one form
                 taxInvoices: (Array.isArray(customer.taxInvoices) && customer.taxInvoices.length > 0)
                     ? customer.taxInvoices.filter(Boolean)
-                    : [{ id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }],
+                    : [{ id: Date.now(), companyName: '', taxId: '', branch: '' }],
                 // Ensure addresses is never empty - always show at least one form
                 addresses: (Array.isArray(customer.addresses) && customer.addresses.length > 0)
                     ? customer.addresses.filter(Boolean).map(addr => ({
@@ -58,7 +58,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     : [{
                         id: Date.now() + 1,
                         label: '',
-                        address: '',
                         googleMapsLink: ''
                     }],
                 // Ensure contacts is never empty - always show at least one form
@@ -81,11 +80,10 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
                 mediaSource: '',
                 // Initialize with one empty item each
-                taxInvoices: [{ id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }],
+                taxInvoices: [{ id: Date.now(), companyName: '', taxId: '', branch: '' }],
                 addresses: [{
                     id: Date.now() + 1,
                     label: '',
-                    address: '',
                     googleMapsLink: '',
                     inspector1: { name: '', phone: '' }
                 }],
@@ -159,7 +157,6 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
             addresses: [...prev.addresses, {
                 id: Date.now(),
                 label: '',
-                address: '',
                 googleMapsLink: '',
                 inspector1: { name: '', phone: '' }
             }]
