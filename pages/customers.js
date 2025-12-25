@@ -5,6 +5,7 @@ import AppLayout from '../components/AppLayout'
 import CustomerModal from '../components/CustomerModal'
 import { DataManager } from '../lib/dataManager'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { supabase } from '../lib/supabaseClient'
 
 import {
     Search,
@@ -108,8 +109,6 @@ export default function CustomersPage() {
         loadCustomers()
 
         // Realtime subscription for automatic data sync across all customer tables
-        const { supabase } = require('../lib/supabaseClient')
-
         const channel = supabase
             .channel('customers-realtime')
             .on('postgres_changes',
