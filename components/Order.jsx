@@ -31,6 +31,8 @@ import OrderSummaryEdit from './order/OrderSummaryEdit'
 import OrderPaymentSection from './order/OrderPaymentSection'
 import OrderJobSection from './order/OrderJobSection'
 import OrderItemsList from './order/OrderItemsList'
+import OrderSummary from './order/OrderSummary'
+import ConfirmDialog from './ConfirmDialog'
 
 import ProductModal from './ProductModal'
 
@@ -299,7 +301,15 @@ export default function OrderForm() {
     )
 
     // Use handler from createOrderHandlers
-    const handleSaveOrder = () => handlersSaveOrder(fetchOrderData)
+    const handleSaveOrder = () => {
+        // Show custom confirm dialog instead of window.confirm()
+        setShowConfirmSaveModal(true)
+    }
+
+    const handleConfirmSave = () => {
+        setShowConfirmSaveModal(false)
+        handlersSaveOrder(fetchOrderData)
+    }
 
 
     // === USE CALCULATIONS HOOK ===
@@ -785,6 +795,15 @@ export default function OrderForm() {
                         })()}
                         isEditing={editingPaymentIndex !== null}
                         paymentCount={paymentSchedule.length}
+                    />
+
+                    {/* Confirm Save Dialog */}
+                    <ConfirmDialog
+                        isOpen={showConfirmSaveModal}
+                        title="ยืนยันการบันทึก"
+                        message="คุณต้องการบันทึกออเดอร์นี้ใช่หรือไม่?"
+                        onConfirm={handleConfirmSave}
+                        onCancel={() => setShowConfirmSaveModal(false)}
                     />
                 </div >
             </div >
