@@ -117,6 +117,16 @@ const OrderItemModal = React.forwardRef(({
         }
     }, [item?.id, item?.uuid, item?.product_id, isOpen]) // Only depend on item object reference and isOpen
 
+    // Effect 2.5: CRITICAL CLEANUP - Reset refs when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            // Reset all refs when modal closes
+            lastItemIdRef.current = null
+            lastProductIdRef.current = null
+            console.log('[OrderItemModal] Modal closed - refs reset')
+        }
+    }, [isOpen])
+
     // Effect 3: Fetch product variants separately
     useEffect(() => {
         if (!isOpen || !item) {
