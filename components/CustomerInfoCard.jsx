@@ -31,14 +31,14 @@ export default function CustomerInfoCard({ customer = {}, onEdit, className = ''
             { id: 'referral', label: 'บอกต่อ', icon: <Users size={10} /> },
             { id: 'other', label: 'อื่นๆ', icon: <Globe size={10} /> }
         ]
-        const source = options.find(o => o.id === (customer.mediaSource || customer.source))
-        if (!source && !customer.mediaSource) return null
+        const source = options.find(o => o.id === (customer.media || customer.source))
+        if (!source && !customer.media) return null
 
         return (
             <span className="px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-medium rounded border border-primary-200">
                 <span className="flex items-center gap-1">
                     {source?.icon}
-                    {source?.label || customer.mediaSource || customer.source}
+                    {source?.label || customer.media || customer.source}
                 </span>
             </span>
         )

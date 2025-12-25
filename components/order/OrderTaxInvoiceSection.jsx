@@ -45,7 +45,7 @@ export default function OrderTaxInvoiceSection({
 
                 <div className="flex-1 space-y-3">
                     {/* Tax Invoice Section - Always Visible Search if not selected */}
-                    {!taxInvoice.companyName ? (
+                    {!taxInvoice.company ? (
                         <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                             <div className="relative">
                                 <div className="mb-2">
@@ -71,8 +71,8 @@ export default function OrderTaxInvoiceSection({
                                         {customer.taxInvoices && customer.taxInvoices.length > 0 ? (
                                             customer.taxInvoices
                                                 .filter(inv =>
-                                                    (inv.companyName || '').toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
-                                                    (inv.taxId || '').includes(taxInvoiceSearchTerm)
+                                                    (inv.company || '').toLowerCase().includes(taxInvoiceSearchTerm.toLowerCase()) ||
+                                                    (inv.taxid || '').includes(taxInvoiceSearchTerm)
                                                 )
                                                 .map((inv, index) => (
                                                     <div
@@ -89,9 +89,9 @@ export default function OrderTaxInvoiceSection({
                                                         }}
                                                         className="px-3 py-2 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0"
                                                     >
-                                                        <div className="font-medium text-secondary-900 text-sm">{inv.companyName}</div>
+                                                        <div className="font-medium text-secondary-900 text-sm">{inv.company}</div>
                                                         <div className="text-xs text-secondary-500">
-                                                            {inv.taxId} {inv.branch ? `| ${inv.branch}` : ''}
+                                                            {inv.taxid} {inv.branch ? `| ${inv.branch}` : ''}
                                                         </div>
                                                     </div>
                                                 ))
@@ -116,9 +116,9 @@ export default function OrderTaxInvoiceSection({
                     ) : null}
 
                     {/* Selected Details Card - Click to re-select */}
-                    {taxInvoice.companyName && (
+                    {taxInvoice.company && (
                         <div
-                            onClick={() => setTaxInvoice({ companyName: '', branch: '', taxId: '', address: '', phone: '', email: '', deliveryAddress: '' })}
+                            onClick={() => setTaxInvoice({ company: '', branch: '', taxid: '', address: '', phone: '', email: '', deliveryAddress: '' })}
                             className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
                             title="คลิกเพื่อเปลี่ยนใบกำกับภาษี"
                         >
@@ -127,7 +127,7 @@ export default function OrderTaxInvoiceSection({
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h4 className="font-bold text-secondary-900 text-sm leading-tight group-hover:text-primary-600 transition-colors">
-                                            {taxInvoice.companyName}
+                                            {taxInvoice.company}
                                         </h4>
                                         <span className="px-1.5 py-0.5 bg-secondary-100 text-secondary-700 text-[10px] font-medium rounded border border-secondary-200">
                                             {taxInvoice.branch || 'สำนักงานใหญ่'}
@@ -135,7 +135,7 @@ export default function OrderTaxInvoiceSection({
                                     </div>
                                     <div className="text-xs text-secondary-500 mt-1 flex items-center gap-2">
                                         <span className="font-medium">เลขผู้เสียภาษี:</span>
-                                        <span className="px-1.5 py-0.5 bg-white text-secondary-700 text-[10px] font-mono font-medium rounded border border-secondary-200">{taxInvoice.taxId}</span>
+                                        <span className="px-1.5 py-0.5 bg-white text-secondary-700 text-[10px] font-mono font-medium rounded border border-secondary-200">{taxInvoice.taxid}</span>
                                     </div>
                                 </div>
                             </div>

@@ -13,9 +13,9 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         let workingText = text.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
 
         const result = {
-            companyName: '',
+            company: '',
             contactName: '', // New field for extracted contact name
-            taxId: '',
+            taxid: '',
             branch: '',
             addrNumber: '',
             addrMoo: '',
@@ -41,7 +41,7 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
             return false;
         };
 
-        extract(/(\d{13})/, 'taxId');
+        extract(/(\d{13})/, 'taxid');
 
         // Extract/Remove Phone Number
         // Matches 0xx-xxx-xxxx, 0xx xxx xxxx, or 0xxxxxxxxx
@@ -143,8 +143,8 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         }
 
         // 3. Process Name
-        result.companyName = namePart.replace(/^(ที่อยู่|Address|ชื่อ|Name|:)+/i, '').trim();
-        let initialName = result.companyName; // Store original name part
+        result.company = namePart.replace(/^(ที่อยู่|Address|ชื่อ|Name|:)+/i, '').trim();
+        let initialName = result.company; // Store original name part
 
         // Use initialName + Contact Name for fullLabel
         result.fullLabel = [initialName, result.contactName].filter(Boolean).join(' ');
@@ -195,13 +195,13 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         if (leftovers && leftovers.length > 2 && !leftovers.match(/^[\d\-\s]+$/)) {
             // Check if it looks like a Company Name (re-check)
             if (leftovers.match(/^(บริษัท|บ\.|หจก|ห้าง|ร้าน|โรง|คณะ|การ|The|Company)/i)) {
-                // If the "leftover" looks like a company name and our initial companyName was actually empty or short, swap?
+                // If the "leftover" looks like a company name and our initial company was actually empty or short, swap?
                 // Or maybe just append/replace?
                 // But typically if we stripped everything else, this is likely Village.
 
-                // If result.companyName is suspicious (empty), use this.
-                if (!result.companyName) {
-                    result.companyName = leftovers;
+                // If result.company is suspicious (empty), use this.
+                if (!result.company) {
+                    result.company = leftovers;
                 } else {
                     // If we already have a company name, this might be Village "อาคาร ABC"
                     result.addrVillage = leftovers;

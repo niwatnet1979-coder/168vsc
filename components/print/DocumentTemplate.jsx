@@ -29,7 +29,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
     const company = {
         name: settings?.shopName || 'บริษัท 168 ไลท์ติ้ง แอนด์ เบดดิ้ง จำกัด',
         address: settings?.shopAddress || 'เลขที่ 168/166 หมู่ 1 หมู่บ้านเซนโทร พหล-วิภาวดี2 ตำบลคลองหนึ่ง อำเภอคลองหลวง จังหวัดปทุมธานี 12120',
-        taxId: settings?.shopTaxId || '0135566027619',
+        taxid: settings?.shopTaxId || '0135566027619',
         phone: settings?.shopPhone || '084-282-9465',
         email: settings?.shopEmail || 'LINE@: @interior-lighting',
         branch: 'สำนักงานใหญ่' // Hardcoded for now or add to settings
@@ -52,7 +52,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
                     <div className="company-details">
                         <p>{company.address}</p>
                         <p>
-                            <strong>เลขประจำตัวผู้เสียภาษี:</strong> {company.taxId} &nbsp;
+                            <strong>เลขประจำตัวผู้เสียภาษี:</strong> {company.taxid} &nbsp;
                             <strong>({company.branch})</strong>
                         </p>
                         <p><strong>โทร:</strong> {company.phone} &nbsp; <strong>Email/Line:</strong> {company.email}</p>
@@ -81,7 +81,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
                 <div className="customer-details">
                     <p><strong>ชื่อ:</strong> {customer.name}</p>
                     <p><strong>ที่อยู่:</strong> {customer.address || '-'}</p>
-                    <p><strong>เลขประจำตัวผู้เสียภาษี:</strong> {customer.taxId || '-'}</p>
+                    <p><strong>เลขประจำตัวผู้เสียภาษี:</strong> {customer.taxid || '-'}</p>
                     <p><strong>โทร:</strong> {customer.phone || '-'}</p>
                 </div>
             </section>
