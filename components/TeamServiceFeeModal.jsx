@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, Plus, Trash2, Save, CreditCard, FileText, QrCode, ExternalLink, Calendar, DollarSign, Tooltip, Edit2 } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import { formatDate } from '../lib/utils' // Assuming utils exists
+import ConfirmDialog from './ConfirmDialog'
 
 export default function TeamServiceFeeModal({
     isOpen,
@@ -24,6 +25,13 @@ export default function TeamServiceFeeModal({
     // Sub-modals
     const [showPaymentForm, setShowPaymentForm] = useState(false)
     const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'Transfer', slip: null, note: '', date: '' })
+
+    // Confirm Dialog States
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false)
+    const [showDeleteEntryConfirm, setShowDeleteEntryConfirm] = useState(false)
+    const [entryToDelete, setEntryToDelete] = useState(null)
+    const [showDeletePaymentConfirm, setShowDeletePaymentConfirm] = useState(false)
+    const [showDeleteBatchConfirm, setShowDeleteBatchConfirm] = useState(false)
 
     useEffect(() => {
         if (isOpen && batchId) {
@@ -76,8 +84,12 @@ export default function TeamServiceFeeModal({
     const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0)
     const remaining = totalDue - totalPaid
 
-    const handleSaveBatch = async () => {
-        if (!confirm('ยืนยันการบันทึกข้อมูล?')) return
+    const handleSaveBatch = () => {
+        setShowSaveConfirm(true)
+    }
+
+    const handleConfirmSave = async () => {
+        setShowSaveConfirm(false)
 
         setLoading(true)
         const payload = {
@@ -123,10 +135,17 @@ export default function TeamServiceFeeModal({
         loadBatch(batchId)
     }
 
-    const handleDeleteAdjustment = async (id) => {
-        if (!confirm('ลบรายการนี้?')) return
+    const handleDeleteAdjustment = (id) => {
+        setEntryToDelete(id)
+        setShowDeleteEntryConfirm(true)
+    }
+
+    const handleConfirmDeleteEntry = async () => {
+        setShowDeleteEntryConfirm(false)
+        if (!entryToDelete) return
         setLoading(true)
-        await DataManager.deleteServiceFeeAdjustment(id)
+        await DataManager.deleteServiceFeeAdjustment(entryToDelete)
+        setEntryToDelete(null)
         loadBatch(batchId)
     }
 
@@ -420,14 +439,9 @@ export default function TeamServiceFeeModal({
                                 <div>
                                     {paymentForm.id && (
                                         <button
-                                            onClick={async (e) => {
+                                            onClick={(e) => {
                                                 e.stopPropagation()
-                                                if (confirm('ลบรายการชำระเงินนี้?')) {
-                                                    setLoading(true)
-                                                    await DataManager.deleteServiceFeePayment(paymentForm.id)
-                                                    setShowPaymentForm(false)
-                                                    loadBatch(batchId)
-                                                }
+                                                setShowDeletePaymentConfirm(true)
                                             }}
                                             className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors"
                                             title="ลบรายการชำระเงิน"
@@ -454,19 +468,7 @@ export default function TeamServiceFeeModal({
                     <div className="text-sm font-medium text-gray-600">
                         {batchId && (
                             <button
-                                onClick={async () => {
-                                    if (confirm('คุณต้องการลบชุดเบิกนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
-                                        setLoading(true)
-                                        const res = await DataManager.deleteTeamServiceFee(batchId)
-                                        if (res.success) {
-                                            if (onSaveSuccess) onSaveSuccess(null) // Pass null or indicator to refresh
-                                            onClose()
-                                        } else {
-                                            alert('เกิดข้อผิดพลาดในการลบ')
-                                        }
-                                        setLoading(false)
-                                    }
-                                }}
+                                onClick={() => setShowDeleteBatchConfirm(true)}
                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
                                 title="ลบชุดเบิกนี้"
                             >
@@ -484,6 +486,62 @@ export default function TeamServiceFeeModal({
                     </button>
                 </div>
             </div>
+
+            {/* Save Batch Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showSaveConfirm}
+                title="ยืนยันการบันทึกข้อมูล"
+                message="คุณต้องการบันทึกข้อมูลชุดเบิกนี้ใช่หรือไม่?"
+                onConfirm={handleConfirmSave}
+                onCancel={() => setShowSaveConfirm(false)}
+            />
+
+            {/* Delete Entry Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteEntryConfirm}
+                title="ยืนยันการลบรายการ"
+                message="คุณต้องการลบรายการปรับยอดนี้ใช่หรือไม่?"
+                onConfirm={handleConfirmDeleteEntry}
+                onCancel={() => {
+                    setShowDeleteEntryConfirm(false)
+                    setEntryToDelete(null)
+                }}
+            />
+
+            {/* Delete Payment Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeletePaymentConfirm}
+                title="ยืนยันการลบรายการชำระเงิน"
+                message="คุณต้องการลบรายการชำระเงินนี้ใช่หรือไม่?"
+                onConfirm={async () => {
+                    setShowDeletePaymentConfirm(false)
+                    setLoading(true)
+                    await DataManager.deleteServiceFeePayment(paymentForm.id)
+                    setShowPaymentForm(false)
+                    loadBatch(batchId)
+                }}
+                onCancel={() => setShowDeletePaymentConfirm(false)}
+            />
+
+            {/* Delete Batch Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteBatchConfirm}
+                title="ยืนยันการลบชุดเบิก"
+                message="คุณต้องการลบชุดเบิกนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                onConfirm={async () => {
+                    setShowDeleteBatchConfirm(false)
+                    setLoading(true)
+                    const res = await DataManager.deleteTeamServiceFee(batchId)
+                    if (res.success) {
+                        if (onSaveSuccess) onSaveSuccess(null)
+                        onClose()
+                    } else {
+                        alert('เกิดข้อผิดพลาดในการลบ')
+                    }
+                    setLoading(false)
+                }}
+                onCancel={() => setShowDeleteBatchConfirm(false)}
+            />
         </div>
     )
 }
