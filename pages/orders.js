@@ -3,6 +3,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import AppLayout from '../components/AppLayout'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { DataManager } from '../lib/dataManager'
 import {
     Search,
@@ -33,6 +34,8 @@ export default function OrdersListPage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [currentPage, setCurrentPage] = useState(1)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [orderToDelete, setOrderToDelete] = useState(null)
     const itemsPerPage = 15
 
     const formatDate = (dateString) => {
@@ -142,16 +145,22 @@ export default function OrdersListPage() {
         completed: orders.filter(o => o.status === 'Completed').length
     }
 
-    const handleDeleteOrder = async (orderId) => {
-        if (confirm('คุณต้องการลบคำสั่งซื้อนี้ใช่หรือไม่?')) {
-            const success = await DataManager.deleteOrder(orderId)
-            if (success) {
-                // Reload
-                loadOrders()
-            } else {
-                alert('เกิดข้อผิดพลาดในการลบ')
-            }
+    const handleDeleteOrder = (orderId) => {
+        setOrderToDelete(orderId)
+        setShowDeleteConfirm(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!orderToDelete) return
+
+        setShowDeleteConfirm(false)
+        const success = await DataManager.deleteOrder(orderToDelete)
+        if (success) {
+            loadOrders()
+        } else {
+            alert('เกิดข้อผิดพลาดในการลบ')
         }
+        setOrderToDelete(null)
     }
 
     const getStatusColor = (status) => {
@@ -472,6 +481,16 @@ export default function OrdersListPage() {
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบ"
+                message="คุณต้องการลบคำสั่งซื้อนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
         </AppLayout>
     )
 }
+```
