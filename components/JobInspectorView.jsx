@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Star, Image, X } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import { DataManager } from '../lib/dataManager'
+import ConfirmDialog from './ConfirmDialog'
 
 const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
     const [mediaItems, setMediaItems] = useState([]) // Keep media state to preserve it on save
@@ -10,9 +11,10 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [existingSignature, setExistingSignature] = useState(null)
     const sigCanvas = useRef({})
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false)
 
     React.useImperativeHandle(ref, () => ({
-        triggerSave: () => handleSave()
+        triggerSave: () => setShowSaveConfirm(true)
     }))
 
     // Load existing completion data
@@ -49,8 +51,7 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
     }, [job])
 
     const handleSave = async () => {
-        if (!confirm('ยืนยันการบันทึกการตรวจรับงาน?')) return
-
+        setShowSaveConfirm(false)
         setIsSubmitting(true)
         try {
             // 1. Upload Signature if drawn
@@ -174,6 +175,14 @@ const JobInspectorView = React.forwardRef(({ job, onSave }, ref) => {
             <div className="text-center text-xs text-gray-400">
                 * รูปภาพและวิดีโอถูกจัดการในแท็บ "บันทึกงาน"
             </div>
+
+            <ConfirmDialog
+                isOpen={showSaveConfirm}
+                title="ยืนยันการบันทึก"
+                message="ยืนยันการบันทึกการตรวจรับงาน?"
+                onConfirm={handleSave}
+                onCancel={() => setShowSaveConfirm(false)}
+            />
         </div>
     )
 })

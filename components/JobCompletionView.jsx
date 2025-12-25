@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Camera, MapPin, X, Star, Save, Upload, Video, Calendar, Smartphone, FileText, Image } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
 import VideoRecorderModal from './VideoRecorderModal'
+import ConfirmDialog from './ConfirmDialog'
 
 const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
     const [mediaItems, setMediaItems] = useState([])
@@ -9,11 +10,11 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
     const [comment, setComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [showVideoRecorder, setShowVideoRecorder] = useState(false)
-
     const [existingSignature, setExistingSignature] = useState(null)
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false)
 
     React.useImperativeHandle(ref, () => ({
-        triggerSave: () => handleSave()
+        triggerSave: () => setShowSaveConfirm(true)
     }))
 
     // Load existing completion data from job_completions table
@@ -188,8 +189,7 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
     }
 
     const handleSave = async () => {
-        if (!confirm('ยืนยันการบันทึกงาน? ข้อมูลจะถูกส่งเข้าระบบ')) return
-
+        setShowSaveConfirm(false)
         setIsSubmitting(true)
         try {
             // 1. Upload Media Items with Progress
@@ -404,6 +404,14 @@ const JobCompletionView = React.forwardRef(({ job, onSave }, ref) => {
                     ))}
                 </div >
             </div >
+
+            <ConfirmDialog
+                isOpen={showSaveConfirm}
+                title="ยืนยันการบันทึกงาน"
+                message="ยืนยันการบันทึกงาน? ข้อมูลจะถูกส่งเข้าระบบ"
+                onConfirm={handleSave}
+                onCancel={() => setShowSaveConfirm(false)}
+            />
         </div >
     )
 })

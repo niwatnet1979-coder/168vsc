@@ -18,6 +18,7 @@ import {
     Gem,
     Trash2
 } from 'lucide-react'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function PurchasingPage() {
     const { t } = useLanguage()
@@ -26,9 +27,11 @@ export default function PurchasingPage() {
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
     const [showCreateModal, setShowCreateModal] = useState(false)
-    const [viewMode, setViewMode] = useState('orders') // 'orders' | 'suggestions'
+    const [viewMode, setViewMode] = useState('orders')
     const [suggestions, setSuggestions] = useState([])
     const [selectedSuggestion, setSelectedSuggestion] = useState(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [poToDelete, setPoToDelete] = useState(null)
 
     useEffect(() => {
         if (viewMode === 'orders') {
@@ -310,12 +313,10 @@ export default function PurchasingPage() {
                                                         View
                                                     </button>
                                                     <button
-                                                        onClick={async (e) => {
+                                                        onClick={(e) => {
                                                             e.stopPropagation()
-                                                            if (confirm('Are you sure you want to delete this PO?')) {
-                                                                await DataManager.deletePurchaseOrder(po.id)
-                                                                loadOrders()
-                                                            }
+                                                            setPoToDelete(po.id)
+                                                            setShowDeleteConfirm(true)
                                                         }}
                                                         className="text-danger-500 hover:text-danger-700 p-1 rounded hover:bg-danger-50"
                                                         title="Delete PO"
@@ -346,6 +347,23 @@ export default function PurchasingPage() {
                     loadOrders()
                 }}
             />
-        </AppLayout >
+
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="Confirm Delete PO"
+                message="Are you sure you want to delete this Purchase Order?"
+                onConfirm={async () => {
+                    setShowDeleteConfirm(false)
+                    if (!poToDelete) return
+                    await DataManager.deletePurchaseOrder(poToDelete)
+                    setPoToDelete(null)
+                    loadOrders()
+                }}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setPoToDelete(null)
+                }}
+            />
+        </AppLayout>
     )
 }

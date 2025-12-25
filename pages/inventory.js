@@ -24,6 +24,7 @@ import {
     AlertTriangle,
     ClipboardCheck
 } from 'lucide-react'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 
 export default function InventoryPage() {
@@ -37,9 +38,11 @@ export default function InventoryPage() {
     const [showQRModal, setShowQRModal] = useState(false)
     const [showTrackingModal, setShowTrackingModal] = useState(false)
     const [showStockCheckModal, setShowStockCheckModal] = useState(false)
-    const [showScanner, setShowScanner] = useState(false) // Added state
+    const [showScanner, setShowScanner] = useState(false)
     const [selectedItem, setSelectedItem] = useState(null)
     const [trackingEvents, setTrackingEvents] = useState([])
+    const [showMarkLostConfirm, setShowMarkLostConfirm] = useState(false)
+    const [itemToMarkLost, setItemToMarkLost] = useState(null)
 
     const handleScan = (code) => {
         setSearchTerm(code)
@@ -72,18 +75,23 @@ export default function InventoryPage() {
         setShowQRModal(true)
     }
 
-    const handleMarkLost = async (item) => {
-        if (!confirm(t('Confirm Mark Lost').replace('{qr}', item.qr_code))) {
-            return
-        }
+    const handleMarkLost = (item) => {
+        setItemToMarkLost(item)
+        setShowMarkLostConfirm(true)
+    }
 
-        const success = await DataManager.markItemLost(item.id)
+    const handleConfirmMarkLost = async () => {
+        setShowMarkLostConfirm(false)
+        if (!itemToMarkLost) return
+
+        const success = await DataManager.markItemLost(itemToMarkLost.id)
         if (success) {
             alert(t('Item marked as lost'))
             loadInventory()
         } else {
             alert(t('Failed to mark item as lost'))
         }
+        setItemToMarkLost(null)
     }
 
     const filteredItems = items.filter(item => {
@@ -331,6 +339,17 @@ export default function InventoryPage() {
                     onClose={() => setShowScanner(false)}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={showMarkLostConfirm}
+                title={t('Confirm Mark Lost')}
+                message={itemToMarkLost ? t('Confirm Mark Lost').replace('{qr}', itemToMarkLost.qr_code) : ''}
+                onConfirm={handleConfirmMarkLost}
+                onCancel={() => {
+                    setShowMarkLostConfirm(false)
+                    setItemToMarkLost(null)
+                }}
+            />
         </AppLayout>
     )
 }

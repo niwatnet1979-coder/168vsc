@@ -31,6 +31,7 @@ import AppLayout from '../../components/AppLayout'
 import { useJobs } from '../../hooks/useJobs'
 import LeaveBookingModal from '../../components/LeaveBookingModal'
 import LeaveApprovalModal from '../../components/LeaveApprovalModal'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 // Helper to format date
 // Helper to format date
@@ -116,6 +117,8 @@ export default function MobilePage() {
     const [showLeaveApprovalModal, setShowLeaveApprovalModal] = useState(false)
     const [selectedLeaveRequest, setSelectedLeaveRequest] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [showCancelLeaveConfirm, setShowCancelLeaveConfirm] = useState(false)
+    const [leaveToCancel, setLeaveToCancel] = useState(null)
 
     // Get user role and team
     const userRole = session?.user?.role
@@ -294,10 +297,17 @@ export default function MobilePage() {
         }
     }
 
-    const handleCancelLeave = async (leaveId) => {
-        if (!confirm('คุณต้องการยกเลิกคำขอลานี้ใช่หรือไม่?')) return
+    const handleCancelLeave = (leaveId) => {
+        setLeaveToCancel(leaveId)
+        setShowCancelLeaveConfirm(true)
+    }
+
+    const handleConfirmCancelLeave = async () => {
+        setShowCancelLeaveConfirm(false)
+        if (!leaveToCancel) return
+
         try {
-            const { error } = await supabase.from('leave_requests').delete().eq('id', leaveId)
+            const { error } = await supabase.from('leave_requests').delete().eq('id', leaveToCancel)
             if (error) throw error
             await loadLeaveRequests()
             alert('ยกเลิกคำขอลาเรียบร้อย')
@@ -307,6 +317,7 @@ export default function MobilePage() {
             console.error('Error cancelling leave:', error)
             alert('เกิดข้อผิดพลาดในการยกเลิก')
         }
+        setLeaveToCancel(null)
     }
 
     const filterJobs = () => {
