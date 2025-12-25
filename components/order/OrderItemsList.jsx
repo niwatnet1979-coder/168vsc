@@ -354,8 +354,15 @@ export default function OrderItemsList({
             {/* Order Item Modal */}
             <OrderItemModal
                 isOpen={showOrderItemModal}
-                onClose={() => setShowOrderItemModal(false)}
-                onSave={onSaveItem}
+                onClose={() => {
+                    setShowOrderItemModal(false)
+                    setEditingItemIndex(null)  // Reset when closing
+                }}
+                onSave={(itemData) => {
+                    onSaveItem(itemData)
+                    setEditingItemIndex(null)  // CRITICAL FIX: Reset after save
+                    setShowOrderItemModal(false)  // Close modal
+                }}
                 onDelete={onDeleteItem}
                 item={editingItemIndex !== null ? items[editingItemIndex] : null}
                 productsData={productsData}
