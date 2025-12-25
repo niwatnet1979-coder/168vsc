@@ -32,7 +32,10 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 ...customer,
                 contact1: customer.contact1 || { name: '', phone: '' },
                 contact2: customer.contact2 || { name: '', phone: '' },
-                taxInvoices: (Array.isArray(customer.taxInvoices) ? customer.taxInvoices : []).filter(Boolean),
+                // Ensure taxInvoices is never empty - always show at least one form
+                taxInvoices: (Array.isArray(customer.taxInvoices) && customer.taxInvoices.length > 0)
+                    ? customer.taxInvoices.filter(Boolean)
+                    : [{ id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }],
                 addresses: (Array.isArray(customer.addresses) ? customer.addresses : []).filter(Boolean).map(addr => ({
                     ...addr,
                     // Map DB snake_case to camelCase for UI
