@@ -521,7 +521,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                         <div>
                                             <div className="bg-white p-2.5 rounded-lg border border-secondary-200 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all shadow-sm">
                                                 <label className="block text-xs font-medium text-secondary-500 mb-1">สาขา</label>
-                                                <input type="text" value={tax.branch} onChange={e => updateTaxInvoice(tax.id, 'branch', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
+                                                <input type="text" value={tax.branchNumber || tax.branch || ''} onChange={e => updateTaxInvoice(tax.id, 'branchNumber', e.target.value)} className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400" />
                                             </div>
                                         </div>
 
