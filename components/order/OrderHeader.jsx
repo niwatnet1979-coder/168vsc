@@ -69,7 +69,12 @@ export default function OrderHeader({
 
                     {/* Save Button */}
                     <button
-                        onClick={onSave}
+                        onClick={() => {
+                            // CRITICAL FIX: Prevent rapid clicks
+                            // Disable button immediately on first click
+                            if (isSaving) return
+                            onSave()
+                        }}
                         disabled={isSaving}
                         className="px-4 py-1.5 sm:px-6 sm:py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30 flex items-center gap-2 transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     >
