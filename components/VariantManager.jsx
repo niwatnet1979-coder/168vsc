@@ -35,6 +35,57 @@ export default function VariantManager({
     // Note: Variant ID is NOT stored, it's computed dynamically as: {product_code}-{colorCode}
     // This ensures variant IDs always reflect the current product_code
 
+    const calculateSKU = (vData) => {
+        // AA009-D20x20x50-GD-CL
+        let sku = baseProductId || 'XXXXX'
+
+        // Dimensions
+        if (vData.dimensions && (vData.dimensions.length || vData.dimensions.width || vData.dimensions.height)) {
+            const l = vData.dimensions.length || '0'
+            const w = vData.dimensions.width || '0'
+            const h = vData.dimensions.height || '0'
+            sku += `-D${l}x${w}x${h}`
+        }
+
+        // Color Helper
+        const getColorCode = (colorName) => {
+            if (!colorName) return 'XX'
+            if (colorName.includes('Gold') || colorName.includes('GD')) return 'GD'
+            if (colorName.includes('ทองเหลือง')) return 'BS'
+            if (colorName.includes('ทอง')) return 'GD'
+            if (colorName.includes('โรสโกลด์') || colorName.includes('พิงค์โกลด์') || colorName.includes('PG')) return 'PG'
+            if (colorName.includes('เงิน') || colorName.includes('SL')) return 'SL'
+            if (colorName.includes('ดำ') || colorName.includes('BK')) return 'BK'
+            if (colorName.includes('ขาว') || colorName.includes('WH')) return 'WH'
+            if (colorName.includes('ใส') || colorName.includes('CL')) return 'CL'
+            if (colorName.includes('โครเมียม')) return 'CH'
+            if (colorName.includes('สนิม')) return 'RZ'
+            if (colorName.includes('ไม้')) return 'WD'
+            return 'XX'
+        }
+
+        // Crystal Helper
+        const getCrystalCode = (colorName) => {
+            if (!colorName) return null
+            if (colorName.includes('ใส')) return 'CL'
+            if (colorName.includes('ทอง')) return 'GD'
+            if (colorName.includes('ชา')) return 'TEA'
+            if (colorName.includes('ควันบุหรี่')) return 'SM'
+            return 'XX'
+        }
+
+        // Color
+        sku += `-${getColorCode(vData.color)}`
+
+        // Crystal
+        if (vData.crystalColor) {
+            const cCode = getCrystalCode(vData.crystalColor)
+            if (cCode) sku += `-${cCode}`
+        }
+
+        return sku
+    }
+
     const handleAddVariant = () => {
         setEditingIndex(variants.length)
         setVariantForm({
@@ -62,6 +113,7 @@ export default function VariantManager({
         const newVariants = [...variants]
         const formattedVariant = {
             ...updatedForm,
+            sku: calculateSKU(updatedForm),
             price: parseFloat(updatedForm.price) || 0,
             stock: parseInt(updatedForm.stock) || 0,
             minStock: parseInt(updatedForm.minStock) || 0,
@@ -157,64 +209,7 @@ export default function VariantManager({
             {editingIndex === null && variants.length > 0 && (
                 <div className="space-y-3">
                     {variants.map((variant, index) => {
-                        // Helper to generate SKU
-                        const getColorCode = (colorName) => {
-                            if (!colorName) return 'XX'
-
-                            // Check for direct English matches or known codes in string
-                            if (colorName.includes('Gold') || colorName.includes('GD')) return 'GD'
-
-                            // Map Thai names to codes
-                            if (colorName.includes('ทองเหลือง')) return 'BS' // Brass
-                            if (colorName.includes('ทอง')) return 'GD'
-                            if (colorName.includes('โรสโกลด์') || colorName.includes('พิงค์โกลด์') || colorName.includes('PG')) return 'PG' // Pink Gold/Rose Gold
-                            if (colorName.includes('เงิน')) return 'SL'
-                            if (colorName.includes('ดำ')) return 'BK'
-                            if (colorName.includes('ขาว')) return 'WH'
-                            if (colorName.includes('ใส')) return 'CL'
-                            if (colorName.includes('โครเมียม')) return 'CH'
-                            if (colorName.includes('สนิม')) return 'RZ'
-                            if (colorName.includes('ไม้')) return 'WD'
-
-                            // Default fallback - take first 2 chars upper 
-                            // (But for unknown colors better to have a generic code or stick to XX?)
-                            return 'XX'
-                        }
-
-                        const getCrystalCode = (colorName) => {
-                            if (!colorName) return null
-                            if (colorName.includes('ใส')) return 'CL'
-                            if (colorName.includes('ทอง')) return 'GD'
-                            if (colorName.includes('ชา')) return 'TEA'
-                            if (colorName.includes('ควันบุหรี่')) return 'SM' // Smoke
-                            return 'XX'
-                        }
-
-                        const generateSKU = () => {
-                            // AA009-D20x20x50-GD-CL
-                            let sku = baseProductId || 'XXXXX'
-
-                            // Dimensions
-                            if (variant.dimensions && (variant.dimensions.length || variant.dimensions.width || variant.dimensions.height)) {
-                                const l = variant.dimensions.length || '0'
-                                const w = variant.dimensions.width || '0'
-                                const h = variant.dimensions.height || '0'
-                                sku += `-D${l}x${w}x${h}`
-                            }
-
-                            // Color
-                            sku += `-${getColorCode(variant.color)}`
-
-                            // Crystal
-                            if (variant.crystalColor) {
-                                const cCode = getCrystalCode(variant.crystalColor)
-                                if (cCode) sku += `-${cCode}`
-                            }
-
-                            return sku
-                        }
-
-                        const generatedSKU = generateSKU()
+                        const generatedSKU = calculateSKU(variant)
 
                         return (
                             <div key={index} className="flex bg-white rounded-xl border border-secondary-200 overflow-hidden shadow-sm hover:shadow-md transition-all">

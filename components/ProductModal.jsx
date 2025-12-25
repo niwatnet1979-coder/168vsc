@@ -6,7 +6,7 @@ import ConfirmDialog from './ConfirmDialog'
 
 export default function ProductModal({ isOpen, onClose, product, onSave, existingProducts = [] }) {
     const [formData, setFormData] = useState({
-        id: '',
+        product_code: '',
         category: '',
         name: '',
         description: '',
@@ -65,13 +65,13 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         if (product) {
             setFormData({
                 ...product,
-                variants: product.variants || [],
+                product_code: product.product_code || '',
                 variants: product.variants || [],
                 images: product.images || []
             })
         } else {
             setFormData({
-                id: '',
+                product_code: '',
                 category: '',
                 name: '',
                 description: '',
@@ -138,7 +138,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 // Dimensions are managed at variant level
                 setFormData(prev => ({
                     ...prev,
-                    id: baseCode,
                     product_code: baseCode
                 }))
             }
@@ -151,6 +150,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
         e.preventDefault()
         // Only send fields that exist in database
         const { id, subcategory, price, stock, color, length, width, height, ...cleanData } = formData
+        // Explicitly set product_code from formData.product_code (if needed, but it should be there)
         onSave(cleanData)
     }
 
@@ -198,7 +198,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                 </label>
                                 <input
                                     type="text"
-                                    value={formData.product_code || formData.id || ''}
+                                    value={formData.product_code}
                                     onChange={(e) => {
                                         let input = e.target.value.toUpperCase()
 
@@ -206,7 +206,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                         if (input.length > 5) return
 
                                         // If user tries to edit first 2 chars, prevent it
-                                        const currentCode = formData.product_code || formData.id || ''
+                                        const currentCode = formData.product_code || ''
                                         if (currentCode.length >= 2 && input.length >= 2) {
                                             // Keep first 2 chars from category
                                             const prefix = formData.category ? formData.category.substring(0, 2) : currentCode.substring(0, 2)
@@ -215,7 +215,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
 
                                         setFormData(prev => ({
                                             ...prev,
-                                            id: input,
                                             product_code: input
                                         }))
                                     }}
@@ -242,7 +241,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                                             if (product) {
                                                 setFormData(prev => ({
                                                     ...prev,
-                                                    id: product.product_code || product.id,
                                                     product_code: product.product_code || product.id
                                                 }))
                                             }
