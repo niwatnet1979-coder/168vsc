@@ -17,15 +17,15 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
             contactName: '', // New field for extracted contact name
             taxid: '',
             branch: '',
-            addrNumber: '',
-            addrMoo: '',
-            addrVillage: '',
-            addrSoi: '',
-            addrRoad: '',
-            addrTambon: '',
-            addrAmphoe: '',
-            addrProvince: '',
-            addrZipcode: '',
+            number: '',
+            villageno: '',
+            village: '',
+            lane: '',
+            road: '',
+            subdistrict: '',
+            district: '',
+            province: '',
+            zipcode: '',
             phone: '',
             email: ''
         };
@@ -76,17 +76,17 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
             extract(/(สาขา|Branch)[\s:]*(\d+|[a-zA-Z0-9]+)/i, 'branch');
         }
 
-        extract(/(\d{5})(?!\d)/, 'addrZipcode');
+        extract(/(\d{5})(?!\d)/, 'zipcode');
 
-        if (!extract(/(จังหวัด|จ\.)\s*([^\s]+)/, 'addrProvince')) {
+        if (!extract(/(จังหวัด|จ\.)\s*([^\s]+)/, 'province')) {
             if (workingText.includes('กรุงเทพ')) {
-                result.addrProvince = 'กรุงเทพมหานคร';
+                result.province = 'กรุงเทพมหานคร';
                 workingText = workingText.replace(/กรุงเทพ(มหานคร)?/, ' ').trim();
             }
         }
 
-        extract(/(อำเภอ|อ\.|เขต)\s*([^\s]+)/, 'addrAmphoe');
-        extract(/(ตำบล|ต\.|แขวง)\s*([^\s]+)/, 'addrTambon');
+        extract(/(อำเภอ|อ\.|เขต)\s*([^\s]+)/, 'district');
+        extract(/(ตำบล|ต\.|แขวง)\s*([^\s]+)/, 'subdistrict');
 
         // 2. Identify Split Point
         let splitIndex = -1;
@@ -155,7 +155,7 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         // Extract Moo
         const mooMatch = addrText.match(/(หมู่|ม\.)\s*(\d+)/);
         if (mooMatch) {
-            result.addrMoo = mooMatch[2];
+            result.villageno = mooMatch[2];
             addrText = addrText.replace(mooMatch[0], ' ').trim();
         }
 
@@ -163,7 +163,7 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         const soiRegex = /(ซอย|ซ\.)\s*([^\s]+(?:\s+\d+)?)/;
         const soiMatch = addrText.match(soiRegex);
         if (soiMatch) {
-            result.addrSoi = soiMatch[2];
+            result.lane = soiMatch[2];
             addrText = addrText.replace(soiMatch[0], ' ').trim();
         }
 
@@ -171,7 +171,7 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         const roadRegex = /(ถนน|ถ\.)\s*([^\s]+)/;
         const roadMatch = addrText.match(roadRegex);
         if (roadMatch) {
-            result.addrRoad = roadMatch[2];
+            result.road = roadMatch[2];
             addrText = addrText.replace(roadMatch[0], ' ').trim();
         }
 
@@ -179,13 +179,13 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         // Priority: Start of string. Updated to support hyphen/slash (e.g. 64/44-45)
         const smartNoMatch = addrText.match(/^([\d/\-]+)/);
         if (smartNoMatch) {
-            result.addrNumber = smartNoMatch[1];
+            result.number = smartNoMatch[1];
             addrText = addrText.replace(smartNoMatch[0], ' ').trim();
         } else {
             const noRegex = /(?:เลขที่|No\.)?\s*([\d/\-]+)/;
             const noMatch = addrText.match(noRegex);
             if (noMatch) {
-                result.addrNumber = noMatch[1];
+                result.number = noMatch[1];
                 addrText = addrText.replace(noMatch[0], ' ').trim();
             }
         }
@@ -204,18 +204,18 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
                     result.company = leftovers;
                 } else {
                     // If we already have a company name, this might be Village "อาคาร ABC"
-                    result.addrVillage = leftovers;
+                    result.village = leftovers;
                 }
             } else {
-                result.addrVillage = leftovers;
+                result.village = leftovers;
             }
         }
 
-        // Final fallback: If contactName is empty but result.addrVillage looks like a person?
+        // Final fallback: If contactName is empty but result.village looks like a person?
         // E.g. "K.เตี้ย"
-        if (result.addrVillage && !result.contactName && result.addrVillage.match(/^(K\.|คุณ|Mr|Ms|Mrs|นาย|นาง|น\.ส)/i)) {
-            result.contactName = result.addrVillage;
-            result.addrVillage = '';
+        if (result.village && !result.contactName && result.village.match(/^(K\.|คุณ|Mr|Ms|Mrs|นาย|นาง|น\.ส)/i)) {
+            result.contactName = result.village;
+            result.village = '';
         }
 
         onParse(result);
