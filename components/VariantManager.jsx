@@ -506,25 +506,25 @@ export default function VariantManager({
                     <p className="text-sm text-secondary-500 mt-1">คลิก "เพิ่ม Variant" เพื่อเพิ่มข้อมูลสินค้า</p>
                 </div>
             )}
-        </div>
 
-        {/* Delete Variant Confirmation Dialog */}
-    <ConfirmDialog
-        isOpen={showDeleteConfirm}
-        title="ยืนยันการลบ Variant"
-        message="คุณต้องการลบ Variant นี้ใช่หรือไม่?"
-        onConfirm={() => {
-            setShowDeleteConfirm(false)
-            if (variantToDelete !== null) {
-                const newVariants = variants.filter((_, i) => i !== variantToDelete)
-                onChange(newVariants)
-                setVariantToDelete(null)
-            }
-        }}
-        onCancel={() => {
-            setShowDeleteConfirm(false)
-            setVariantToDelete(null)
-        }}
-    />
+            {/* Delete Variant Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="ยืนยันการลบ Variant"
+                message="คุณต้องการลบ Variant นี้ใช่หรือไม่?"
+                onConfirm={() => {
+                    setShowDeleteConfirm(false)
+                    if (variantToDelete !== null) {
+                        const newVariants = variants.filter((_, i) => i !== variantToDelete)
+                        onChange(newVariants)
+                        setVariantToDelete(null)
+                    }
+                }}
+                onCancel={() => {
+                    setShowDeleteConfirm(false)
+                    setVariantToDelete(null)
+                }}
+            />
+        </div>
     )
 }
