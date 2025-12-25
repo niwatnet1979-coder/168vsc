@@ -33,26 +33,45 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                 contact1: customer.contact1 || { name: '', phone: '' },
                 contact2: customer.contact2 || { name: '', phone: '' },
                 // Ensure taxInvoices is never empty - always show at least one form
+                // Ensure taxInvoices is never empty - always show at least one form
                 taxInvoices: (Array.isArray(customer.taxInvoices) && customer.taxInvoices.length > 0)
                     ? customer.taxInvoices.filter(Boolean)
                     : [{ id: Date.now(), companyName: '', taxId: '', branch: '', address: '' }],
-                addresses: (Array.isArray(customer.addresses) ? customer.addresses : []).filter(Boolean).map(addr => ({
-                    ...addr,
-                    // Map DB snake_case to camelCase for UI
-                    googleMapsLink: addr.google_maps_link || addr.googleMapsLink || '',
-                    label: addr.label || addr.location_name || '',
-                    // Map all address fields from snake_case to camelCase
-                    addrNumber: addr.addr_number || addr.addrNumber || '',
-                    addrMoo: addr.addr_moo || addr.addrMoo || '',
-                    addrVillage: addr.addr_village || addr.addrVillage || '',
-                    addrSoi: addr.addr_soi || addr.addrSoi || '',
-                    addrRoad: addr.addr_road || addr.addrRoad || '',
-                    addrTambon: addr.addr_tambon || addr.addrTambon || '',
-                    addrAmphoe: addr.addr_amphoe || addr.addrAmphoe || '',
-                    province: addr.addr_province || addr.province || '',
-                    zipcode: addr.addr_zipcode || addr.zipcode || ''
-                })),
-                contacts: (Array.isArray(customer.contacts) ? customer.contacts : []).filter(Boolean)
+                // Ensure addresses is never empty - always show at least one form
+                addresses: (Array.isArray(customer.addresses) && customer.addresses.length > 0)
+                    ? customer.addresses.filter(Boolean).map(addr => ({
+                        ...addr,
+                        // Map DB snake_case to camelCase for UI
+                        googleMapsLink: addr.google_maps_link || addr.googleMapsLink || '',
+                        label: addr.label || addr.location_name || '',
+                        // Map all address fields from snake_case to camelCase
+                        addrNumber: addr.addr_number || addr.addrNumber || '',
+                        addrMoo: addr.addr_moo || addr.addrMoo || '',
+                        addrVillage: addr.addr_village || addr.addrVillage || '',
+                        addrSoi: addr.addr_soi || addr.addrSoi || '',
+                        addrRoad: addr.addr_road || addr.addrRoad || '',
+                        addrTambon: addr.addr_tambon || addr.addrTambon || '',
+                        addrAmphoe: addr.addr_amphoe || addr.addrAmphoe || '',
+                        province: addr.addr_province || addr.province || '',
+                        zipcode: addr.addr_zipcode || addr.zipcode || ''
+                    }))
+                    : [{
+                        id: Date.now() + 1,
+                        label: '',
+                        address: '',
+                        googleMapsLink: ''
+                    }],
+                // Ensure contacts is never empty - always show at least one form
+                contacts: (Array.isArray(customer.contacts) && customer.contacts.length > 0)
+                    ? customer.contacts.filter(Boolean)
+                    : [{
+                        id: (Date.now() + 2).toString(),
+                        name: '',
+                        position: '',
+                        phone: '',
+                        email: '',
+                        note: ''
+                    }]
             })
         } else {
             // Reset for new customer
