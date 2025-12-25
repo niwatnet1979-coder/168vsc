@@ -1,6 +1,11 @@
 -- Enable Realtime for Customer Tables
 -- This allows automatic synchronization of data changes across all connected clients
--- Enable realtime replication for all customer tables
+-- First, remove tables if they're already in publication (to avoid errors)
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS customers;
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS customer_addresses;
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS customer_contacts;
+ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS customer_tax_invoices;
+-- Now add them back
 ALTER PUBLICATION supabase_realtime
 ADD TABLE customers;
 ALTER PUBLICATION supabase_realtime
