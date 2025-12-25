@@ -35,6 +35,7 @@ export default function OrderCustomerSection({
     setShowAddCustomerModal,
     showEditCustomerModal,
     setShowEditCustomerModal,
+    handleEditCustomer,
 
     // Modal state
     addingContactFor,
@@ -55,7 +56,7 @@ export default function OrderCustomerSection({
                     </h2>
                     {customer.id && (
                         <button
-                            onClick={() => setShowEditCustomerModal(true)}
+                            onClick={handleEditCustomer}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg transition-colors"
                         >
                             <Edit2 size={14} />

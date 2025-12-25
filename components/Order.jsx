@@ -504,6 +504,7 @@ export default function OrderForm() {
                             setShowAddCustomerModal={setShowAddCustomerModal}
                             showEditCustomerModal={showEditCustomerModal}
                             setShowEditCustomerModal={setShowEditCustomerModal}
+                            handleEditCustomer={handleEditCustomer}
                             addingContactFor={addingContactFor}
                             setAddingContactFor={setAddingContactFor}
                             customerModalTab={customerModalTab}
