@@ -152,23 +152,23 @@ export default function TaxAddressParserModal({ isOpen, onClose, onParse }) {
         // 4. Process Address Part
         let addrText = addressPart;
 
-        // Extract Moo
-        const mooMatch = addrText.match(/(หมู่|ม\.)\s*(\d+)/);
+        // Extract Moo (support both Thai and English)
+        const mooMatch = addrText.match(/(หมู่|ม\.|Moo|M\.)\s*(\d+)/i);
         if (mooMatch) {
             result.villageno = mooMatch[2];
             addrText = addrText.replace(mooMatch[0], ' ').trim();
         }
 
-        // Extract Soi
-        const soiRegex = /(ซอย|ซ\.)\s*([^\s]+(?:\s+\d+)?)/;
+        // Extract Soi (support both Thai and English)
+        const soiRegex = /(ซอย|ซ\.|Soi|S\.)\s*([^\s]+(?:\s+\d+)?)/i;
         const soiMatch = addrText.match(soiRegex);
         if (soiMatch) {
             result.lane = soiMatch[2];
             addrText = addrText.replace(soiMatch[0], ' ').trim();
         }
 
-        // Extract Road
-        const roadRegex = /(ถนน|ถ\.)\s*([^\s]+)/;
+        // Extract Road (support both Thai and English)
+        const roadRegex = /(ถนน|ถ\.|Road|Rd\.)\s*([^\s]+)/i;
         const roadMatch = addrText.match(roadRegex);
         if (roadMatch) {
             result.road = roadMatch[2];
