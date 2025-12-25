@@ -382,7 +382,7 @@ export default function CustomersPage() {
 
                     const result = await DataManager.saveCustomer(customerPayload)
 
-                    if (result.success) {
+                    if (result) {
                         // Reload customers to get complete data with relations
                         await loadCustomers()
                         setShowModal(false)
