@@ -42,18 +42,18 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                     ? customer.addresses.filter(Boolean).map(addr => ({
                         ...addr,
                         // Map DB snake_case to camelCase for UI
-                        maps: addr.google_maps_link || addr.maps || '',
+                        maps: addr.maps || addr.maps || '',
                         label: addr.label || addr.location_name || '',
                         // Map all address fields from snake_case to camelCase
-                        number: addr.addr_number || addr.number || '',
-                        villageno: addr.addr_moo || addr.villageno || '',
-                        village: addr.addr_village || addr.village || '',
-                        lane: addr.addr_soi || addr.lane || '',
-                        road: addr.addr_road || addr.road || '',
-                        subdistrict: addr.addr_tambon || addr.subdistrict || '',
-                        district: addr.addr_amphoe || addr.district || '',
-                        province: addr.addr_province || addr.province || '',
-                        zipcode: addr.addr_zipcode || addr.zipcode || ''
+                        number: addr.number || addr.number || '',
+                        villageno: addr.villageno || addr.villageno || '',
+                        village: addr.village || addr.village || '',
+                        lane: addr.lane || addr.lane || '',
+                        road: addr.road || addr.road || '',
+                        subdistrict: addr.subdistrict || addr.subdistrict || '',
+                        district: addr.district || addr.district || '',
+                        province: addr.province || addr.province || '',
+                        zipcode: addr.zipcode || addr.zipcode || ''
                     }))
                     : [{
                         id: Date.now() + 1,
