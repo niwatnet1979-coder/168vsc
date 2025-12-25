@@ -508,7 +508,7 @@ export default function VariantManager({
             )}
         </div>
 
-        {/* Delete Variant Confirmation Dialog */ }
+        {/* Delete Variant Confirmation Dialog */}
     <ConfirmDialog
         isOpen={showDeleteConfirm}
         title="ยืนยันการลบ Variant"
