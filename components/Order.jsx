@@ -252,6 +252,21 @@ export default function OrderForm() {
         modalOpeners.openContactTab('inspector')
     }
 
+    // Fetch full customer data before opening edit modal
+    const handleEditCustomer = async () => {
+        if (!customer?.id) return
+
+        try {
+            const fullCustomer = await DataManager.getCustomerById(customer.id)
+            if (fullCustomer) {
+                setCustomer(fullCustomer)
+            }
+        } catch (error) {
+            console.error('Error fetching full customer:', error)
+        }
+        setShowEditCustomerModal(true)
+    }
+
 
     // === PRODUCT SEARCH HANDLERS (using utilities) ===
     const handleSearchProduct = createProductSearchHandler(
