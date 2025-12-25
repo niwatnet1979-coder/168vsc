@@ -29,7 +29,9 @@ export function useOrderLoader({
     setShippingFee,
     setPaymentSchedule,
     setSelectedItemIndex,
-    setSelectedJobIndex
+    setSelectedJobIndex,
+    setReceiverContact,
+    setPurchaserContact
 }) {
     const router = useRouter()
 
@@ -91,6 +93,12 @@ export function useOrderLoader({
 
                 // Tax Invoice
                 if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
+
+                // Receiver Contact
+                if (order.receiverContact) setReceiverContact(order.receiverContact)
+
+                // Purchaser Contact  
+                if (order.purchaserContact) setPurchaserContact(order.purchaserContact)
 
                 // Infer vatIncluded mode
                 if (order.total && order.items && order.vatRate > 0) {
@@ -222,7 +230,9 @@ export function useOrderLoader({
         setVatIncluded,
         setShippingFee,
         setPaymentSchedule,
-        setSelectedItemIndex
+        setSelectedItemIndex,
+        setReceiverContact,
+        setPurchaserContact
     ])
 
     // Trigger fetch on mount/route change

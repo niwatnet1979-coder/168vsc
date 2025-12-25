@@ -171,6 +171,8 @@ export default function OrderForm() {
         setPaymentSchedule,
         setSelectedItemIndex,
         setSelectedJobIndex,
+        setReceiverContact,
+        setPurchaserContact
     })
 
     // --- 1:N Job Management State ---
