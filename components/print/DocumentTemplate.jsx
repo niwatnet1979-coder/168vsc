@@ -70,7 +70,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
                     </div>
                     <div className="meta-row">
                         <span className="meta-label">อ้างอิงออเดอร์:</span>
-                        <span className="meta-value">{order.order_number || order.id?.substring(0, 8).toUpperCase()}</span>
+                        <span className="meta-value">{order.id?.substring(0, 8).toUpperCase()}</span>
                     </div>
                 </div>
             </header>
@@ -101,7 +101,7 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
                         <td>
                             <div className="item-title">ชำระค่าสินค้า/บริการ (Payment for Goods/Services)</div>
                             <div className="item-desc">
-                                อ้างอิงใบสั่งซื้อเลขที่ {order.order_number || order.id?.substring(0, 8)}
+                                อ้างอิงใบสั่งซื้อเลขที่ {order.id?.substring(0, 8)}
                                 {payment.type && ` (${payment.type})`}
                             </div>
                         </td>

@@ -32,6 +32,7 @@ import { DataManager } from '../lib/dataManager'
 import { useDebug } from '../contexts/DebugContext'
 import { SHOP_LAT, SHOP_LON } from '../lib/utils'
 import ConfirmDialog from '../components/ConfirmDialog'
+import Swal from 'sweetalert2'
 
 export default function SettingsPage() {
     const { data: session } = useSession()
@@ -80,8 +81,6 @@ export default function SettingsPage() {
     })
     const [newOption, setNewOption] = useState('')
     const [activeOptionType, setActiveOptionType] = useState(null)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [deleteTarget, setDeleteTarget] = useState({ type: null, index: null })
 
     const defaultProductTypes = [
         'XX ไม่ระบุ',
@@ -208,6 +207,31 @@ export default function SettingsPage() {
     }, [])
 
     const handleSave = async () => {
+        // 1. Confirm Dialog
+        const confirmResult = await Swal.fire({
+            title: 'ยืนยันการบันทึก?',
+            text: "คุณต้องการบันทึกการตั้งค่าใช่หรือไม่",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, บันทึกเลย',
+            cancelButtonText: 'ยกเลิก'
+        })
+
+        if (!confirmResult.isConfirmed) return
+
+        // 2. Show loading state
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            text: 'กรุณารอสักครู่',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
+
         // Merge shopLat/shopLon into systemOptions for storage
         const systemOptionsToSave = {
             ...productOptions,
@@ -229,84 +253,156 @@ export default function SettingsPage() {
             quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
         })
 
-        console.log('Save Settings Result:', success)
-
         if (success) {
             setIsSaved(true)
             setTimeout(() => setIsSaved(false), 3000)
-            alert('บันทึกข้อมูลเรียบร้อย')
+
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ',
+                text: 'การตั้งค่าถูกบันทึกเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            })
         } else {
-            alert('เกิดข้อผิดพลาดในการบันทึก')
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
+                confirmButtonText: 'ตกลง'
+            })
         }
     }
 
-    const handleAddOption = async (type) => {
-        if (!newOption.trim()) return
-        const updatedOptions = {
-            ...productOptions,
-            [type]: [...productOptions[type], newOption.trim()]
-        }
-        setProductOptions(updatedOptions)
-
-        // CRITICAL FIX: Save using saveSettings with systemOptions
-        const systemOptionsToSave = {
-            ...updatedOptions,
-            shopLat: shopSettings.shopLat,
-            shopLon: shopSettings.shopLon
-        }
-
-        await DataManager.saveSettings({
-            shopName: shopSettings.name,
-            shopAddress: shopSettings.address,
-            shopPhone: shopSettings.phone,
-            shopEmail: shopSettings.email,
-            shopTaxId: shopSettings.taxId,
-            vatRegistered: shopSettings.vatRegistered,
-            vatRate: shopSettings.vatRate,
-            promptpayQr: shopSettings.promptpayQr,
-            systemOptions: systemOptionsToSave,
-            quotationDefaultTerms: shopSettings.quotationDefaultTerms,
-            quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+    const handleAddOption = async (type, label) => {
+        const { value: newValue } = await Swal.fire({
+            title: `เพิ่ม${label}`,
+            input: 'text',
+            inputLabel: `กรุณากรอก${label}`,
+            inputPlaceholder: `ตัวอย่าง: ...`,
+            showCancelButton: true,
+            confirmButtonText: 'บันทึก',
+            cancelButtonText: 'ยกเลิก',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'กรุณากรอกข้อมูล'
+                }
+            }
         })
 
-        setNewOption('')
-        setActiveOptionType(null)
-    }
+        if (newValue) {
+            const updatedOptions = {
+                ...productOptions,
+                [type]: [...(productOptions[type] || []), newValue.trim()]
+            }
+            setProductOptions(updatedOptions)
 
-    const handleDeleteOption = (type, index) => {
-        setDeleteTarget({ type, index })
-        setShowDeleteConfirm(true)
-    }
+            // Save immediately logic reused from handleSave structure
+            const systemOptionsToSave = {
+                ...updatedOptions,
+                shopLat: shopSettings.shopLat,
+                shopLon: shopSettings.shopLon
+            }
 
-    const handleConfirmDelete = async () => {
-        setShowDeleteConfirm(false)
-        const { type, index } = deleteTarget
+            try {
+                Swal.fire({
+                    title: 'กำลังบันทึก...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                })
 
-        const updatedList = productOptions[type].filter((_, i) => i !== index)
-        const updatedOptions = { ...productOptions, [type]: updatedList }
-        setProductOptions(updatedOptions)
+                await DataManager.saveSettings({
+                    shopName: shopSettings.name,
+                    shopAddress: shopSettings.address,
+                    shopPhone: shopSettings.phone,
+                    shopEmail: shopSettings.email,
+                    shopTaxId: shopSettings.taxId,
+                    vatRegistered: shopSettings.vatRegistered,
+                    vatRate: shopSettings.vatRate,
+                    promptpayQr: shopSettings.promptpayQr,
+                    systemOptions: systemOptionsToSave,
+                    quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+                    quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+                })
 
-        const systemOptionsToSave = {
-            ...updatedOptions,
-            shopLat: shopSettings.shopLat,
-            shopLon: shopSettings.shopLon
+                Swal.fire({
+                    icon: 'success',
+                    title: 'เพิ่มข้อมูลสำเร็จ',
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+            } catch (error) {
+                console.error(error)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถบันทึกข้อมูลได้'
+                })
+            }
         }
+    }
 
-        await DataManager.saveSettings({
-            shopName: shopSettings.name,
-            shopAddress: shopSettings.address,
-            shopPhone: shopSettings.phone,
-            shopEmail: shopSettings.email,
-            shopTaxId: shopSettings.taxId,
-            vatRegistered: shopSettings.vatRegistered,
-            vatRate: shopSettings.vatRate,
-            promptpayQr: shopSettings.promptpayQr,
-            systemOptions: systemOptionsToSave,
-            quotationDefaultTerms: shopSettings.quotationDefaultTerms,
-            quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+    const handleDeleteOption = async (type, value) => {
+        const result = await Swal.fire({
+            title: 'ยืนยันการลบ?',
+            text: `คุณต้องการลบ "${value}" ออกจากระบบหรือไม่`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ลบข้อมูล',
+            cancelButtonText: 'ยกเลิก'
         })
 
-        setDeleteTarget({ type: null, index: null })
+        if (result.isConfirmed) {
+            const updatedOptions = {
+                ...productOptions,
+                [type]: productOptions[type].filter(item => item !== value)
+            }
+            setProductOptions(updatedOptions)
+
+            const systemOptionsToSave = {
+                ...updatedOptions,
+                shopLat: shopSettings.shopLat,
+                shopLon: shopSettings.shopLon
+            }
+
+            try {
+                Swal.fire({
+                    title: 'กำลังลบข้อมูล...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                })
+
+                await DataManager.saveSettings({
+                    shopName: shopSettings.name,
+                    shopAddress: shopSettings.address,
+                    shopPhone: shopSettings.phone,
+                    shopEmail: shopSettings.email,
+                    shopTaxId: shopSettings.taxId,
+                    vatRegistered: shopSettings.vatRegistered,
+                    vatRate: shopSettings.vatRate,
+                    promptpayQr: shopSettings.promptpayQr,
+                    systemOptions: systemOptionsToSave,
+                    quotationDefaultTerms: shopSettings.quotationDefaultTerms,
+                    quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
+                })
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ลบข้อมูลสำเร็จ',
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+            } catch (error) {
+                console.error(error)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถลบข้อมูลได้'
+                })
+            }
+        }
     }
 
     const handleUploadQR = async (e) => {
@@ -317,12 +413,28 @@ export default function SettingsPage() {
             const result = await DataManager.uploadShopAsset(file)
             if (result.success) {
                 setShopSettings(prev => ({ ...prev, promptpayQr: result.url }))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'อัพโหลดสำเร็จ',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                })
             } else {
-                alert(`อัพโหลดไม่สำเร็จ: ${result.error}`)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'อัพโหลดไม่สำเร็จ',
+                    text: result.error
+                })
             }
         } catch (err) {
             console.error(err)
-            alert('เกิดข้อผิดพลาดในการอัพโหลด')
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'เกิดข้อผิดพลาดในการอัพโหลด'
+            })
         }
     }
 
@@ -608,37 +720,18 @@ export default function SettingsPage() {
                                                 <div className="p-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
                                                     <h3 className="font-bold text-secondary-900">{type.label}</h3>
                                                     <button
-                                                        onClick={() => setActiveOptionType(activeOptionType === type.id ? null : type.id)}
+                                                        onClick={() => handleAddOption(type.id, type.label)}
                                                         className="p-1.5 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                                     >
                                                         <Plus size={18} />
                                                     </button>
                                                 </div>
-                                                {activeOptionType === type.id && (
-                                                    <div className="p-2 bg-primary-50 border-b border-primary-100 flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={newOption}
-                                                            onChange={(e) => setNewOption(e.target.value)}
-                                                            placeholder="เพิ่มตัวเลือก..."
-                                                            className="flex-1 px-3 py-1.5 text-sm border border-secondary-300 rounded focus:ring-1 focus:ring-primary-500"
-                                                            autoFocus
-                                                            onKeyDown={(e) => e.key === 'Enter' && handleAddOption(type.id)}
-                                                        />
-                                                        <button
-                                                            onClick={() => handleAddOption(type.id)}
-                                                            className="px-3 py-1.5 bg-primary-600 text-white text-xs rounded hover:bg-primary-700"
-                                                        >
-                                                            เพิ่ม
-                                                        </button>
-                                                    </div>
-                                                )}
                                                 <ul className="divide-y divide-secondary-100 max-h-[300px] overflow-y-auto">
                                                     {productOptions[type.id]?.map((opt, idx) => (
                                                         <li key={idx} className="p-3 flex justify-between items-center hover:bg-secondary-50 group">
                                                             <span className="text-sm text-secondary-700">{opt}</span>
                                                             <button
-                                                                onClick={() => handleDeleteOption(type.id, idx)}
+                                                                onClick={() => handleDeleteOption(type.id, opt)}
                                                                 className="text-secondary-400 hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                                             >
                                                                 <Trash2 size={16} />
@@ -693,16 +786,7 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="ยืนยันการลบตัวเลือก"
-                message="คุณต้องการลบตัวเลือกนี้ใช่หรือไม่?"
-                onConfirm={handleConfirmDelete}
-                onCancel={() => {
-                    setShowDeleteConfirm(false)
-                    setDeleteTarget({ type: null, index: null })
-                }}
-            />
+
         </AppLayout>
     )
 }

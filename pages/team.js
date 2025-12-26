@@ -29,6 +29,7 @@ import TeamMemberModal from '../components/TeamMemberModal'
 import TeamManagementModal from '../components/TeamManagementModal'
 import { DataManager } from '../lib/dataManager'
 import ConfirmDialog from '../components/ConfirmDialog'
+import Swal from 'sweetalert2'
 
 export default function TeamPage() {
     const [activeTab, setActiveTab] = useState('current') // current, resigned
@@ -114,21 +115,57 @@ export default function TeamPage() {
     }
 
     const handleSave = async (data) => {
-        let result = null
-
         // Ensure ID is passed if editing
         if (editingMember && editingMember.id) {
             data.id = editingMember.id
         }
 
-        result = await DataManager.saveEmployee(data)
+        // 1. Confirm Dialog
+        const confirmResult = await Swal.fire({
+            title: 'ยืนยันการบันทึก?',
+            text: "คุณต้องการบันทึกข้อมูลทีมงานใช่หรือไม่",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, บันทึกเลย',
+            cancelButtonText: 'ยกเลิก'
+        })
+
+        if (!confirmResult.isConfirmed) return
+
+        // 2. Show loading state
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            text: 'กรุณารอสักครู่',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
+
+        const result = await DataManager.saveEmployee(data)
 
         if (result && result.success) {
             await loadTeams()
             setShowModal(false)
+
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ',
+                text: 'ข้อมูลทีมงานถูกบันทึกเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            })
         } else {
             console.error(result)
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + (result?.error || 'Unknown error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: result?.error || 'ไม่สามารถบันทึกข้อมูลได้',
+                confirmButtonText: 'ตกลง'
+            })
         }
     }
 

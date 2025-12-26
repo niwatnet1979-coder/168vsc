@@ -6,6 +6,7 @@ import CustomerModal from '../components/CustomerModal'
 import { DataManager } from '../lib/dataManager'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { supabase } from '../lib/supabaseClient'
+import Swal from 'sweetalert2'
 
 import {
     Search,
@@ -394,6 +395,31 @@ export default function CustomersPage() {
                 onClose={() => setShowModal(false)}
                 customer={editingCustomer}
                 onSave={async (savedCustomer) => {
+                    // 1. Confirm Dialog
+                    const confirmResult = await Swal.fire({
+                        title: 'ยืนยันการบันทึก?',
+                        text: "คุณต้องการบันทึกข้อมูลลูกค้าใช่หรือไม่",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'ใช่, บันทึกเลย',
+                        cancelButtonText: 'ยกเลิก'
+                    })
+
+                    if (!confirmResult.isConfirmed) return
+
+                    // 2. Show loading state
+                    Swal.fire({
+                        title: 'กำลังบันทึกข้อมูล...',
+                        text: 'กรุณารอสักครู่',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        willOpen: () => {
+                            Swal.showLoading()
+                        }
+                    })
+
                     // Prepare data for DataManager
                     const customerPayload = { ...savedCustomer }
                     if (editingCustomer) {
@@ -407,8 +433,21 @@ export default function CustomersPage() {
                         await loadCustomers()
                         setShowModal(false)
                         setEditingCustomer(null)
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'บันทึกสำเร็จ',
+                            text: 'ข้อมูลลูกค้าถูกบันทึกเรียบร้อยแล้ว',
+                            timer: 1500,
+                            showConfirmButton: false
+                        })
                     } else {
-                        alert('บันทึกไม่สำเร็จ กรุณาลองใหม่')
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
+                            confirmButtonText: 'ตกลง'
+                        })
                     }
                 }}
             />

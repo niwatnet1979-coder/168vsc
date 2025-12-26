@@ -15,7 +15,7 @@ export default function OrderHeader({
 
     const formatOrderId = (id) => {
         if (!id) return ''
-        if (String(id).length > 20) return `OD${String(id).slice(-6)}`
+        if (String(id).length > 20) return `#${String(id).slice(-6)}`
         return `#${id}`
     }
 

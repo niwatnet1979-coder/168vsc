@@ -324,7 +324,8 @@ export default function OrderForm() {
 
     const handleConfirmSave = () => {
         setShowConfirmSaveModal(false)
-        handlersSaveOrder(fetchOrderData)
+        // FIX: Pass calculated total to save handler
+        handlersSaveOrder(fetchOrderData, { total })
     }
 
 
@@ -514,7 +515,7 @@ export default function OrderForm() {
 
                         { }
                         <OrderJobSection
-                            currentJobInfo={currentJobInfo}
+                            currentJobInfo={currentJobInfo || generalJobInfo}
                             items={items}
                             selectedItemIndex={selectedItemIndex}
                             selectedJobIndex={selectedJobIndex}

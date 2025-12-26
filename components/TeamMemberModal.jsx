@@ -48,7 +48,7 @@ export default function TeamMemberModal({
     const [formData, setFormData] = useState(member || initialFormState)
 
     // Option States
-    const [teams, setTeams] = useState([])
+    const [teamOptions, setTeamOptions] = useState([])
     const [teamTypes, setTeamTypes] = useState([])
     const [jobPositions, setJobPositions] = useState([])
     const [jobLevels, setJobLevels] = useState([])
@@ -58,8 +58,6 @@ export default function TeamMemberModal({
     const [commissionRates, setCommissionRates] = useState([])
 
     // Defaults
-    // const defaultTeamNames = ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร'] // Removed
-
     const defaultTeamTypes = ['QC', 'SALE', 'บริหาร']
     const defaultJobPositions = ['พนักงาน', 'บริหาร']
     const defaultJobLevels = ['Executive', 'Director', 'Manager', 'Leader', 'Senior', 'Staff']
@@ -70,35 +68,28 @@ export default function TeamMemberModal({
 
     useEffect(() => {
         const loadOptions = async () => {
-            if (isOpen) {
-                const teamsDb = await DataManager.getTeams()
-                setTeams(teamsDb || [])
-            }
+            // Fetch all settings from the single source of truth (Settings Table via getSettings)
+            const settings = await DataManager.getSettings()
+            const options = settings?.systemOptions || {}
 
-            // Load other static options only once if not loaded
-            if (jobPositions.length === 0) {
-                const options = await DataManager.getProductOptions()
-                if (options) {
-                    setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
-                    setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
-                    setJobLevels(options.jobLevels && options.jobLevels.length > 0 ? options.jobLevels : defaultJobLevels)
-                    setEmploymentTypes(options.employmentTypes && options.employmentTypes.length > 0 ? options.employmentTypes : defaultEmploymentTypes)
-                    setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
-                    setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
-                    setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
-                } else {
-                    // Fallback to defaults
-                    setTeamTypes(defaultTeamTypes)
-                    setJobPositions(defaultJobPositions)
-                    setJobLevels(defaultJobLevels)
-                    setEmploymentTypes(defaultEmploymentTypes)
-                    setPaymentTypes(defaultPaymentTypes)
-                    setWageRates(defaultWageRates)
-                    setCommissionRates(defaultCommissionRates)
-                }
+            if (options) {
+                // Team Names (Array of Strings)
+                setTeamOptions(options.teamNames && options.teamNames.length > 0 ? options.teamNames : [])
+
+                // Other Options
+                setTeamTypes(options.teamTypes && options.teamTypes.length > 0 ? options.teamTypes : defaultTeamTypes)
+                setJobPositions(options.jobPositions && options.jobPositions.length > 0 ? options.jobPositions : defaultJobPositions)
+                setJobLevels(options.jobLevels && options.jobLevels.length > 0 ? options.jobLevels : defaultJobLevels)
+                setEmploymentTypes(options.employmentTypes && options.employmentTypes.length > 0 ? options.employmentTypes : defaultEmploymentTypes)
+                setPaymentTypes(options.paymentTypes && options.paymentTypes.length > 0 ? options.paymentTypes : defaultPaymentTypes)
+                setWageRates(options.wageRates && options.wageRates.length > 0 ? options.wageRates : defaultWageRates)
+                setCommissionRates(options.commissionRates && options.commissionRates.length > 0 ? options.commissionRates : defaultCommissionRates)
             }
         }
-        loadOptions()
+
+        if (isOpen) {
+            loadOptions()
+        }
     }, [isOpen])
 
     // Update form data when member prop changes or modal opens
@@ -206,26 +197,20 @@ export default function TeamMemberModal({
                             <div>
                                 <label className="block text-sm font-medium text-secondary-700 mb-1">ชื่อทีม</label>
                                 <select
-                                    value={formData.teamId || ''}
+                                    value={formData.team || ''}
                                     onChange={e => {
-                                        const tId = e.target.value
-                                        const selectedTeam = teams.find(t => t.id === tId)
-                                        if (selectedTeam) {
-                                            setFormData({
-                                                ...formData,
-                                                teamId: selectedTeam.id,
-                                                team: selectedTeam.name,
-                                                teamType: selectedTeam.team_type || formData.teamType
-                                            })
-                                        } else {
-                                            setFormData({ ...formData, teamId: '', team: '' })
-                                        }
+                                        const selectedTeamName = e.target.value
+                                        setFormData({
+                                            ...formData,
+                                            team: selectedTeamName,
+                                            // Optional: auto-select teamType based on team name if logic exists (not implementing hardcoded logic here)
+                                        })
                                     }}
                                     className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                                 >
                                     <option value="">เลือกชื่อทีม</option>
-                                    {teams.map((t) => (
-                                        <option key={t.id} value={t.id}>{t.name} {t.team_type ? `(${t.team_type})` : ''}</option>
+                                    {teamOptions.map((name, i) => (
+                                        <option key={i} value={name}>{name}</option>
                                     ))}
                                 </select>
                             </div>

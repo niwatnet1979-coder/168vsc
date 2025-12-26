@@ -170,13 +170,58 @@ export default function ProductManagement() {
             return
         }
 
+        // Dynamically import Swal to ensure client-side execution
+        const Swal = (await import('sweetalert2')).default
+
+        // 1. Confirm Dialog
+        const confirmResult = await Swal.fire({
+            title: 'ยืนยันการบันทึก?',
+            text: "คุณต้องการบันทึกข้อมูลสินค้าใช่หรือไม่",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, บันทึกเลย',
+            cancelButtonText: 'ยกเลิก'
+        })
+
+        if (!confirmResult.isConfirmed) return
+
+        // 2. Show Loading
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            text: 'กรุณารอสักครู่',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
+
+        // 3. Perform Save
         const savedProduct = await DataManager.saveProduct(productData)
+
         if (savedProduct) {
             await loadProducts()
             setShowModal(false)
             setCurrentProduct(null)
+
+            // 4. Show Success
+            await Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ',
+                text: 'ข้อมูลสินค้าถูกบันทึกเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            })
         } else {
-            alert('บันทึกสินค้าไม่สำเร็จ')
+            // 5. Show Error
+            await Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'บันทึกสินค้าไม่สำเร็จ กรุณาลองใหม่',
+                confirmButtonText: 'ตกลง'
+            })
         }
     }
 

@@ -76,7 +76,8 @@ export function useOrderLoader({
             const order = await DataManager.getOrderById(idToLoad)
 
             if (order) {
-                setOrderNumber(order.orderNumber || order.order_number || order.id)
+                // FIX: Use ID only, removed legacy order_number support
+                setOrderNumber(order.id)
 
                 // Use joined customer data directly
                 if (order.customer && order.customer.id) {
@@ -92,13 +93,60 @@ export function useOrderLoader({
                 }
 
                 // Tax Invoice
-                if (order.taxInvoice) setTaxInvoice(order.taxInvoice)
+                if (order.taxInvoice) {
+                    const loadedTax = order.taxInvoice
+                    setTaxInvoice({
+                        ...loadedTax,
+                        company: loadedTax.company || loadedTax.companyName || '',
+                    })
+                }
 
                 // Receiver Contact
-                if (order.receiverContact) setReceiverContact(order.receiverContact)
+                if (order.receiverContact) {
+                    const rc = Array.isArray(order.receiverContact) ? order.receiverContact[0] : order.receiverContact
+                    setReceiverContact(rc)
+                }
 
                 // Purchaser Contact  
-                if (order.purchaserContact) setPurchaserContact(order.purchaserContact)
+                if (order.purchaserContact) {
+                    const pc = Array.isArray(order.purchaserContact) ? order.purchaserContact[0] : order.purchaserContact
+                    setPurchaserContact(pc)
+                }
+                if (order.purchaserContact) {
+                    const pc = Array.isArray(order.purchaserContact) ? order.purchaserContact[0] : order.purchaserContact
+                    setPurchaserContact(pc)
+                }
+
+                // FIX: Load Addresses with IDs
+                if (order.taxInvoiceDeliveryAddress) {
+                    setTaxInvoiceDeliveryAddress({
+                        id: order.taxInvoiceDeliveryAddress.id,
+                        label: order.taxInvoiceDeliveryAddress.label,
+                        address: order.taxInvoiceDeliveryAddress.address,
+                        googleMapLink: order.taxInvoiceDeliveryAddress.google_maps_link || order.taxInvoiceDeliveryAddress.googleMapLink,
+                        distance: order.taxInvoiceDeliveryAddress.distance
+                    })
+                }
+
+                if (order.deliveryAddress) {
+                    // Similar logic if deliveryAddress state exists in context
+                }
+
+                // FIX: Load Pricing & Payment Data
+                if (typeof order.shipping_fee !== 'undefined' || typeof order.shippingFee !== 'undefined') {
+                    setShippingFee(Number(order.shipping_fee) || Number(order.shippingFee) || 0)
+                }
+
+                if (order.discount) {
+                    setDiscount({
+                        mode: order.discount.mode || 'percent',
+                        value: Number(order.discount.value) || 0
+                    })
+                }
+
+                if (typeof order.vat_rate !== 'undefined' || typeof order.vatRate !== 'undefined') {
+                    setVatRate(Number(order.vat_rate) || Number(order.vatRate) || 0)
+                }
 
                 // Infer vatIncluded mode
                 if (order.total && order.items && order.vatRate > 0) {
@@ -194,20 +242,81 @@ export function useOrderLoader({
                 }
 
                 // Payment & Pricing
-                if (order.discount) setDiscount(order.discount)
+                const loadedDiscount = order.discount || {
+                    mode: order.discount_mode || 'percent',
+                    value: Number(order.discount_value) || 0
+                }
+                setDiscount(loadedDiscount)
+
                 if (order.shippingFee) setShippingFee(order.shippingFee)
                 if (order.taxInvoiceDeliveryAddress) setTaxInvoiceDeliveryAddress(order.taxInvoiceDeliveryAddress)
                 if (order.paymentSchedule) setPaymentSchedule(order.paymentSchedule)
 
-                // Store initial data for comparison
+                // FIX: Populate General Job Info from first job if available
+                // or fall back to order columns
+                let jobInfo = {
+                    jobType: order.job_type || '', // From order column
+                    team: '',
+                    appointmentDate: '',
+                    completionDate: '',
+                    notes: '',
+                    // Address
+                    installLocationId: null,
+                    installLocationName: '',
+                    installAddress: '',
+                    googleMapLink: '',
+                    distance: '',
+                    // Inspector
+                    inspector1: null,
+                }
+
+                if (order.jobs && order.jobs.length > 0) {
+                    const mainJob = order.jobs[0] // Use first job as main
+                    jobInfo = {
+                        ...jobInfo,
+                        id: mainJob.id,
+                        uniqueId: mainJob.id,
+                        orderId: mainJob.order_id,
+
+                        team: mainJob.assigned_team || '',
+                        jobType: mainJob.job_type || jobInfo.jobType, // Prefer job's specific type
+                        appointmentDate: mainJob.appointment_date,
+                        completionDate: mainJob.completion_date,
+                        notes: mainJob.job_notes,
+                        serviceFeeId: mainJob.team_payment_batch_id,
+
+                        // Location
+                        installLocationId: mainJob.siteAddressRecord?.id || null,
+                        installLocationName: mainJob.siteAddressRecord?.label || mainJob.install_location_name || '',
+                        installAddress: mainJob.siteAddressRecord?.address || mainJob.install_address || '',
+                        googleMapLink: mainJob.siteAddressRecord?.google_maps_link || mainJob.google_map_link || '',
+                        distance: mainJob.siteAddressRecord?.distance || '',
+
+                        // Inspector
+                        inspector1: mainJob.siteInspectorRecord ? {
+                            id: mainJob.siteInspectorRecord.id,
+                            name: mainJob.siteInspectorRecord.name,
+                            phone: mainJob.siteInspectorRecord.phone,
+                            email: mainJob.siteInspectorRecord.email,
+                            lineId: mainJob.siteInspectorRecord.line_id,
+                            position: mainJob.siteInspectorRecord.position,
+                            note: mainJob.siteInspectorRecord.note
+                        } : null
+                    }
+                }
+
+                setGeneralJobInfo(jobInfo)
+
+                // Store initial data
                 setInitialOrderData({
                     customer: order.customer || order.customerDetails || { id: '', name: '', phone: '', email: '' },
                     items: processedItems || [],
-                    taxInvoice: order.taxInvoice || { companyName: '', branch: '', taxId: '', address: '' },
+                    taxInvoice: order.taxInvoice || { company: '', branch: '', taxId: '', address: '' },
                     taxInvoiceDeliveryAddress: order.taxInvoiceDeliveryAddress || { type: '', label: '', address: '' },
-                    discount: order.discount || { mode: 'percent', value: 0 },
+                    discount: loadedDiscount,
                     shippingFee: order.shippingFee || 0,
-                    paymentSchedule: order.paymentSchedule || []
+                    paymentSchedule: order.paymentSchedule || [],
+                    generalJobInfo: jobInfo // Add to initial data
                 })
             } else {
                 console.warn(`Order ${idToLoad} not found in database.`)

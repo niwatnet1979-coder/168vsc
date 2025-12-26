@@ -206,8 +206,7 @@ export default function MobilePage() {
 
         const match = selectedPlanDetails.items.find(i =>
             i.order_id === qrCode ||
-            i.order?.customer_name === qrCode ||
-            (i.order?.order_number && qrCode.includes(i.order.order_number))
+            i.order?.customer_name === qrCode
         )
 
         if (match) {

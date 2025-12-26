@@ -80,6 +80,7 @@ export default function OrderTaxInvoiceSection({
                                                         onClick={() => {
                                                             setTaxInvoice({
                                                                 ...inv,
+                                                                company: inv.company || inv.companyName || '',
                                                                 branch: inv.branch || 'สำนักงานใหญ่',
                                                                 phone: customer.phone || '',
                                                                 email: customer.email || ''
@@ -185,6 +186,7 @@ export default function OrderTaxInvoiceSection({
                                     const isSame = currentJobInfo?.installAddress && newValue.address === currentJobInfo?.installAddress;
 
                                     setTaxInvoiceDeliveryAddress({
+                                        id: newValue.id, // Capture ID for relation
                                         type: isSame ? 'same' : 'custom',
                                         label: newValue.label,
                                         address: newValue.address,

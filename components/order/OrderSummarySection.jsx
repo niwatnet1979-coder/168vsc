@@ -110,7 +110,7 @@ export default function OrderSummarySection({
                             {otherOutstandingOrders.map((order, idx) => (
                                 <div key={idx} className="flex justify-between items-center text-xs text-secondary-600 mb-1">
                                     <span className="truncate">
-                                        #{order.id.length > 20 ? `OD${order.id.slice(-6)}` : order.id}
+                                        #{order.id.length > 20 ? `${order.id.slice(-6)}` : order.id}
                                     </span>
                                     <span className="font-medium text-warning-600">{currency(order.outstanding)}</span>
                                 </div>

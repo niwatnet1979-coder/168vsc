@@ -117,8 +117,8 @@ export default function OrderSummaryEdit({
                         <button
                             onClick={() => setVatIncluded(true)}
                             className={`px-3 py-1 text-xs rounded transition-colors ${vatIncluded
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                                 }`}
                         >
                             รวม VAT
@@ -126,8 +126,8 @@ export default function OrderSummaryEdit({
                         <button
                             onClick={() => setVatIncluded(false)}
                             className={`px-3 py-1 text-xs rounded transition-colors ${!vatIncluded
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                                 }`}
                         >
                             แยก VAT
@@ -167,7 +167,7 @@ export default function OrderSummaryEdit({
                             {otherOutstandingOrders.map((order, idx) => (
                                 <div key={idx} className="flex justify-between items-center text-xs text-secondary-600 mb-1">
                                     <span className="truncate">
-                                        #{order.id.length > 20 ? `OD${order.id.slice(-6)}` : order.id}
+                                        #{order.id.length > 20 ? `${order.id.slice(-6)}` : order.id}
                                     </span>
                                     <span className="font-medium text-warning-600">{currency(order.outstanding)}</span>
                                 </div>
