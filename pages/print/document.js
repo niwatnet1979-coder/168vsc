@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { DataManager } from '../../lib/dataManager'
+import { formatAddress } from '../../lib/utils'
 import DocumentTemplate from '../../components/print/DocumentTemplate'
 import { Printer, AlertCircle } from 'lucide-react'
 
@@ -47,7 +48,26 @@ export default function DocumentPrintPage() {
                 const systemSettings = await DataManager.getSettings()
                 setSettings(systemSettings)
 
-                setData({ order, payment, customer: order.customer })
+                // Prepare Customer Data for Print
+                // Prioritize Tax Invoice details if available, otherwise use Customer details
+                let printCustomer = {
+                    name: order.customer?.name || '-',
+                    address: order.customer?.address || '-',
+                    taxid: order.customer?.taxid || '-',
+                    phone: order.customer?.phone || '-'
+                }
+
+                if (order.taxInvoice) {
+                    printCustomer.name = order.taxInvoice.company || order.taxInvoice.companyName || printCustomer.name
+                    printCustomer.address = formatAddress(order.taxInvoice) || printCustomer.address
+                    printCustomer.taxid = order.taxInvoice.taxId || order.taxInvoice.tax_id || printCustomer.taxid
+                    printCustomer.phone = order.taxInvoice.phone || printCustomer.phone
+                } else if (order.customer) {
+                    // Fallback: If no tax invoice, try to format regular customer address if it's an object or just use as is
+                    printCustomer.address = formatAddress(order.customer.addresses?.[0] || order.customer.address || order.customer)
+                }
+
+                setData({ order, payment, customer: printCustomer })
             } catch (err) {
                 console.error(err)
                 setError(err.message)

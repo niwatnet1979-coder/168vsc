@@ -145,16 +145,28 @@ export default function DocumentTemplate({ type, payment, order, customer, setti
                             </tr>
                         </thead>
                         <tbody>
-                            {order.items.map((item, i) => (
-                                <tr key={i} style={{ borderBottom: '1px dashed #eee' }}>
-                                    <td style={{ padding: '4px' }}>
-                                        {item.name}
-                                        {item.width && ` (${item.width}x${item.height}cm)`}
-                                    </td>
-                                    <td style={{ textAlign: 'right', padding: '4px' }}>{item.qty}</td>
-                                    <td style={{ textAlign: 'right', padding: '4px' }}>{currency((item.price || 0) * (item.qty || 1))}</td>
-                                </tr>
-                            ))}
+                            {order.items.map((item, i) => {
+                                const sku = item.sku || item.variant?.sku || item.product?.product_code || item.code || '-'
+                                const name = item.product?.name || item.name || 'รายการสินค้า'
+                                const dim = item.dimensions || (item.width && item.height ? `${item.width}x${item.height}cm` : '')
+                                const color = item.variant?.color ? ` (${item.variant.color})` : ''
+                                const qty = item.qty || item.quantity || 1
+                                const price = item.price || item.unit_price || 0
+                                const total = price * qty
+
+                                return (
+                                    <tr key={i} style={{ borderBottom: '1px dashed #eee' }}>
+                                        <td style={{ padding: '4px' }}>
+                                            <div style={{ fontWeight: '600' }}>{name}</div>
+                                            <div style={{ fontSize: '11px', color: '#777' }}>
+                                                {sku} {dim ? ` - ${dim}` : ''}{color}
+                                            </div>
+                                        </td>
+                                        <td style={{ textAlign: 'right', padding: '4px' }}>{qty}</td>
+                                        <td style={{ textAlign: 'right', padding: '4px' }}>{currency(total)}</td>
+                                    </tr>
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>
