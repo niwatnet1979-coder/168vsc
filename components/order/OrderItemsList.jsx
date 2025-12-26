@@ -2,7 +2,7 @@ import React from 'react';
 import {
     FileText, Package, Layers, Scaling, Palette, Gem, Zap, Power,
     UserCheck, MapPin, Truck, Wrench, List, Calendar, CheckCircle,
-    Users, QrCode, Plus
+    Users, QrCode, Plus, Lightbulb
 } from 'lucide-react';
 import OrderItemModal from '../OrderItemModal';
 
@@ -191,6 +191,13 @@ export default function OrderItemsList({
                                         <div className="flex items-center gap-1" title="แสงไฟ">
                                             <Zap size={12} />
                                             <span>{item.lightColor}</span>
+                                        </div>
+                                    )}
+                                    {/* FIX: Display Bulb Type (light) */}
+                                    {item.light && (
+                                        <div className="flex items-center gap-1" title="ขั้วไฟ">
+                                            <Lightbulb size={12} />
+                                            <span>{item.light}</span>
                                         </div>
                                     )}
                                     {item.remote && (
