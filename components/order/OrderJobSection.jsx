@@ -32,7 +32,9 @@ export default function OrderJobSection({
     showJobDropdown,
     setShowJobDropdown,
     showItemDropdown,
-    setShowItemDropdown
+
+    setShowItemDropdown,
+    orderId
 }) {
     const canShare = items.every(item => !item.jobs || item.jobs.length <= 1);
 
@@ -40,6 +42,7 @@ export default function OrderJobSection({
         <div className="order-3 md:order-4 flex flex-col h-full">
             <JobInfoCard
                 className="h-full"
+                orderId={orderId}
                 title={
                     <div className="flex items-center gap-3">
                         <span>ข้อมูลงาน</span>

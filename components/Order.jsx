@@ -543,7 +543,9 @@ export default function OrderForm() {
                             showJobDropdown={showJobDropdown}
                             setShowJobDropdown={setShowJobDropdown}
                             showItemDropdown={showItemDropdown}
+
                             setShowItemDropdown={setShowItemDropdown}
+                            orderId={router.query.id} // Pass orderId
                         />
 
                         { }

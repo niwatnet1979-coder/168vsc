@@ -78,8 +78,7 @@ export default function PaymentEntryModal({
             // Normalize date to YYYY-MM-DD for date input
             const populated = {
                 ...payment,
-                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date),
-                date: normalizeDateForInput(payment.date) || (payment.date === '' ? '' : payment.date),
+                date: normalizeDateForInput(payment.date) || normalizeDateForInput(new Date()),
                 // Normalize method key (some callers use `method`, UI uses `paymentMethod`)
                 paymentMethod: payment.paymentMethod || payment.method || payment.payment_method || 'โอน',
                 // Map new fields
@@ -135,6 +134,11 @@ export default function PaymentEntryModal({
     const handleSave = () => {
         if ((!formData.amount && formData.amountMode === 'amount')) {
             alert('กรุณากรอกยอดชำระ')
+            return
+        }
+
+        if (!formData.date) {
+            alert('กรุณาระบุวันที่ชำระเงิน')
             return
         }
 

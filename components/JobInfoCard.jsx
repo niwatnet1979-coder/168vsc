@@ -26,8 +26,8 @@ export default function JobInfoCard({
     onAddNewAddress,
     onAddNewInspector,
     title = 'ข้อมูลงานหลัก', // Default title
-    actions = null // Add actions prop
-}) {
+    actions = null, // Add actions prop
+    orderId }) {
     const [installLocationSearchTerm, setInstallLocationSearchTerm] = useState('')
     const [showInstallLocationDropdown, setShowInstallLocationDropdown] = useState(false)
 
@@ -53,7 +53,8 @@ export default function JobInfoCard({
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(`/print/job-order?orderId=${data.orderId}`, '_blank');
+                                const oid = orderId || data.orderId || data.order_id
+                                window.open(`/print/job-order?orderId=${oid}&jobId=${data.id}`, '_blank');
                             }}
                             className="p-1.5 text-secondary-500 hover:text-primary-600 hover:bg-secondary-100 rounded-lg transition-colors"
                             title="พิมพ์ใบงาน (Job Order)"
