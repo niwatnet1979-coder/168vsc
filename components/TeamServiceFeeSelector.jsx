@@ -29,6 +29,7 @@ export default function TeamServiceFeeSelector({
                 // Find team by name
                 const teams = await DataManager.getTeams()
                 console.log('[Selector] Fetched Teams:', teams)
+                console.log('[Selector] Target Team Name:', teamName)
 
                 const normalizedTarget = String(teamName).trim().toLowerCase()
 
@@ -49,6 +50,23 @@ export default function TeamServiceFeeSelector({
     useEffect(() => {
         if (resolvedTeamId) loadBatches()
     }, [resolvedTeamId])
+
+    // New: Load specific batch if value exists but not in list
+    useEffect(() => {
+        const loadSpecificBatch = async () => {
+            if (value && !batches.find(b => b.id === value)) {
+                console.log('[Selector] Loading specific batch:', value)
+                const batch = await DataManager.getTeamServiceFeeById(value)
+                if (batch) {
+                    setBatches(prev => {
+                        if (prev.find(b => b.id === batch.id)) return prev
+                        return [...prev, batch]
+                    })
+                }
+            }
+        }
+        loadSpecificBatch()
+    }, [value, batches])
 
     const loadBatches = async () => {
         if (!resolvedTeamId) return

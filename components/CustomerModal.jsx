@@ -790,7 +790,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                                     <label className="block text-xs font-medium text-secondary-500 mb-1">Line ID</label>
                                                     <input
                                                         type="text"
-                                                        value={contact.line}
+                                                        value={contact.line || contact.lineId || contact.line_id || ''}
                                                         onChange={e => updateContact(contact.id, 'line', e.target.value)}
                                                         className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 placeholder-secondary-400"
                                                         placeholder="ไอดีไลน์..."

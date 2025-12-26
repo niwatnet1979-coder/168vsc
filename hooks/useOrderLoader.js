@@ -198,9 +198,18 @@ export function useOrderLoader({
                         // CRITICAL: Preserve jobs BEFORE any mapping
                         const preservedJobs = item.jobs || []
 
+                        // Normalize fields (snake_case -> camelCase)
+                        const normalizedItem = {
+                            ...item,
+                            // FIX: Ensure unitPrice and qty are populated
+                            unitPrice: Number(item.unitPrice || item.unit_price || item.price || 0),
+                            price: Number(item.unitPrice || item.unit_price || item.price || 0),
+                            qty: Number(item.qty || item.quantity || 1), // Map quantity to qty
+                        }
+
                         if (product) {
                             const mappedItem = {
-                                ...item,
+                                ...normalizedItem,
                                 product,
                                 jobs: preservedJobs,
                                 material: item.material || product.material,
@@ -209,7 +218,16 @@ export function useOrderLoader({
                                 length: item.length || product.length,
                                 width: item.width || product.width,
                                 height: item.height || product.height,
-                                image: item.image || product.variants?.[0]?.images?.[0] || null,
+                                // FIX: Prioritize selected variant image, then item image, then default variant image
+                                image: (() => {
+                                    // 1. If item has a specific variant linked, try to find that variant's image
+                                    if (item.product_variant_id && product.variants) {
+                                        const linkedVariant = product.variants.find(v => v.id === item.product_variant_id)
+                                        if (linkedVariant?.images?.[0]) return linkedVariant.images[0]
+                                    }
+                                    // 2. Use item's saved image or default product image
+                                    return item.image || product.variants?.[0]?.images?.[0] || null
+                                })(),
                                 selectedVariant: item.variant || null,
                                 variant_id: item.product_variant_id || item.variant?.id || null,
                                 variantId: item.product_variant_id || item.variant?.id || null,
@@ -272,33 +290,37 @@ export function useOrderLoader({
 
                 if (order.jobs && order.jobs.length > 0) {
                     const mainJob = order.jobs[0] // Use first job as main
+                    console.log('[useOrderLoader] Main Job Data:', mainJob)
+                    console.log('[useOrderLoader] Inspector Record:', mainJob.siteInspectorRecord)
+                    console.log('[useOrderLoader] Team Payment ID:', mainJob.team_payment_id)
                     jobInfo = {
                         ...jobInfo,
                         id: mainJob.id,
                         uniqueId: mainJob.id,
                         orderId: mainJob.order_id,
 
-                        team: mainJob.assigned_team || '',
-                        jobType: mainJob.job_type || jobInfo.jobType, // Prefer job's specific type
+                        team: mainJob.team || '',
+                        jobType: mainJob.job_type || jobInfo.jobType,
                         appointmentDate: mainJob.appointment_date,
                         completionDate: mainJob.completion_date,
-                        notes: mainJob.job_notes,
-                        serviceFeeId: mainJob.team_payment_batch_id,
+                        notes: mainJob.notes,
+                        teamPaymentId: mainJob.team_payment_id,
 
                         // Location
-                        installLocationId: mainJob.siteAddressRecord?.id || null,
-                        installLocationName: mainJob.siteAddressRecord?.label || mainJob.install_location_name || '',
-                        installAddress: mainJob.siteAddressRecord?.address || mainJob.install_address || '',
-                        googleMapLink: mainJob.siteAddressRecord?.google_maps_link || mainJob.google_map_link || '',
-                        distance: mainJob.siteAddressRecord?.distance || '',
+                        locationId: mainJob.siteAddressRecord?.id || mainJob.location_id || null,
+                        installLocationName: mainJob.siteAddressRecord?.label || '',
+                        installAddress: mainJob.siteAddressRecord?.address || '',
+                        googleMapLink: mainJob.siteAddressRecord?.maps || '',
+                        distance: mainJob.distance || mainJob.siteAddressRecord?.distance || '',
 
                         // Inspector
-                        inspector1: mainJob.siteInspectorRecord ? {
+                        inspectorId: mainJob.siteInspectorRecord?.id || mainJob.inspector_id || null,
+                        inspector: mainJob.siteInspectorRecord ? {
                             id: mainJob.siteInspectorRecord.id,
                             name: mainJob.siteInspectorRecord.name,
                             phone: mainJob.siteInspectorRecord.phone,
                             email: mainJob.siteInspectorRecord.email,
-                            lineId: mainJob.siteInspectorRecord.line_id,
+                            line: mainJob.siteInspectorRecord.line || mainJob.siteInspectorRecord.lineId || mainJob.siteInspectorRecord.line_id, // Standardized to 'line'
                             position: mainJob.siteInspectorRecord.position,
                             note: mainJob.siteInspectorRecord.note
                         } : null
@@ -350,12 +372,15 @@ export function useOrderLoader({
     }, [fetchOrderData])
 
     // Initialize selected job index to latest job
+    /* 
+    FIX: Disabled auto-select as it interferes with manual selection logic
     useEffect(() => {
         if (items && items[selectedItemIndex]?.jobs?.length > 0) {
             const jobCount = items[selectedItemIndex].jobs.length
             setSelectedJobIndex(jobCount - 1)
         }
     }, [items?.length, selectedItemIndex, setSelectedJobIndex])
+    */
 
     // Return fetchOrderData for external use (e.g., after save)
     return {

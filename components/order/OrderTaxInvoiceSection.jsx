@@ -159,6 +159,7 @@ export default function OrderTaxInvoiceSection({
                             addresses={[
                                 // Include "Same as Install" option if available
                                 ...(currentJobInfo?.installAddress ? [{
+                                    id: currentJobInfo?.locationId || currentJobInfo?.installLocationId, // Pass ID for saving
                                     label: 'ใช้ที่อยู่เดียวกับสถานที่ติดตั้ง/ขนส่ง',
                                     address: currentJobInfo?.installAddress,
                                     googleMapLink: currentJobInfo.googleMapLink || '',

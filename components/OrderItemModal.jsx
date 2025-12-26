@@ -95,11 +95,13 @@ const OrderItemModal = React.forwardRef(({
                 setFormData(prev => ({
                     ...item,
                     _searchTerm: item.name || '',
-                    lightColor: item.lightColor || prev.lightColor || '',
+                    lightColor: item.lightColor || item.light_color || prev.lightColor || '',
                     remote: item.remote || prev.remote || '',
-                    bulbType: item.bulbType || prev.bulbType || '',
+                    bulbType: item.bulbType || item.light || prev.bulbType || '',
                     crystalColor: item.crystalColor || prev.crystalColor || '',
                     remark: item.remark || prev.remark || '',
+                    // FIX: Ensure unitPrice is populated from price/unit_price
+                    unitPrice: item.unitPrice !== undefined ? item.unitPrice : (item.price || item.unit_price || 0),
                     // Ensure selectedVariant is set from item data
                     selectedVariant: item.selectedVariant || item.variant || null,
                     selectedVariantIndex: item.selectedVariantIndex !== undefined ? item.selectedVariantIndex : null
@@ -162,7 +164,18 @@ const OrderItemModal = React.forwardRef(({
                         setProductVariants(variants)
 
                         // Try to match existing variant from item data
-                        const variantToMatch = item.selectedVariant || item.variant
+                        const variantToMatch = item.selectedVariant || item.variant || (item.product_variant_id ? variants.find(v => v.id === item.product_variant_id) : null)
+
+                        // Backfill missing product details if found
+                        setFormData(prev => ({
+                            ...prev,
+                            name: prev.name || product.name,
+                            code: prev.code || product.product_code || product.id,
+                            image: prev.image || product.images?.[0] || product.variants?.[0]?.images?.[0] || null,
+                            // Also try to set variant if we found it via ID
+                            selectedVariant: prev.selectedVariant || variantToMatch || null
+                        }))
+
                         if (variantToMatch) {
                             const index = variants.findIndex(v =>
                                 v.id === variantToMatch.id ||
@@ -174,7 +187,9 @@ const OrderItemModal = React.forwardRef(({
                                 setFormData(prev => ({
                                     ...prev,
                                     selectedVariant: variants[index],
-                                    selectedVariantIndex: index
+                                    selectedVariantIndex: index,
+                                    // Ensure price is set if still 0
+                                    unitPrice: prev.unitPrice || variants[index].price || 0
                                 }))
                             } else {
                                 console.warn('[OrderItemModal] Could not match variant:', variantToMatch)
@@ -367,6 +382,8 @@ const OrderItemModal = React.forwardRef(({
             remote: formData.remote || '',
             // Ensure jobs array is passed through if it exists in formData
             jobs: formData.jobs || [],
+            // FIX: Explicitly save selected variant image or fallback to existing image
+            image: formData.selectedVariant?.images?.[0] || formData.image || '',
         }
 
         console.log('[OrderItemModal] Saving item:', itemData)
@@ -425,10 +442,17 @@ const OrderItemModal = React.forwardRef(({
                                         category: formData.category,
                                         material: formData.material,
                                         description: formData.description,
+                                        description: formData.description,
                                         variants: productVariants
                                     }}
                                     variant="ghost"
                                     showImage={true}
+                                    image={
+                                        formData.selectedVariant?.images?.[0] || // 1. Selected Variant Image
+                                        formData.image ||                        // 2. Saved Item Image
+                                        productVariants?.[0]?.images?.[0] ||     // 3. Default Variant Image
+                                        null
+                                    }
                                     showPrice={true}
                                     showStock={true}
                                 />

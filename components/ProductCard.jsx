@@ -11,7 +11,8 @@ export default function ProductCard({
     showImage = true,
     showPrice = true,
     showStock = true,
-    className = ''
+    className = '',
+    image = null // FIX: Accept explicit image override
 }) {
     if (!product) return null
 
@@ -178,9 +179,9 @@ export default function ProductCard({
             <div className="p-4 flex items-start gap-4">
                 {showImage && (
                     <div className="w-20 h-20 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100">
-                        {product.variants?.[0]?.images?.[0] ? (
+                        {image || product.variants?.[0]?.images?.[0] ? (
                             <img
-                                src={product.variants[0].images[0]}
+                                src={image || product.variants[0].images[0]}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                             />

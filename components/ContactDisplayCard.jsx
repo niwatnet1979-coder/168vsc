@@ -35,10 +35,10 @@ export default function ContactDisplayCard({ contact, onClick, className = "" })
                             <span className="truncate max-w-[150px]">{contact.email}</span>
                         </div>
                     )}
-                    {(contact.lineId || contact.line) && (
+                    {(contact.line || contact.lineId || contact.line_id) && (
                         <div className="flex items-center gap-1.5 hover:text-secondary-900 transition-colors pl-3 border-l border-secondary-200">
                             <MessageCircle size={11} className="text-[#06c755] shrink-0" />
-                            <span className="font-medium text-[#06c755]">{contact.lineId || contact.line}</span>
+                            <span className="font-medium text-[#06c755]">{contact.line || contact.lineId || contact.line_id}</span>
                         </div>
                     )}
                 </div>

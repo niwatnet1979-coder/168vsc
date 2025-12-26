@@ -88,19 +88,19 @@ export default function OrderItemsList({
                                     )}
                                     {/* Code Badge */}
                                     <span className="bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-200 text-[10px] font-mono text-secondary-500">
-                                        {item.code || '-'}
+                                        {item.code || item.product_code || item.product?.product_code || '-'}
                                     </span>
                                     {/* Name */}
-                                    <span className="text-sm font-bold text-secondary-900 truncate">{item.name || 'สินค้าใหม่'}</span>
+                                    <span className="text-sm font-bold text-secondary-900 truncate">{item.name || item.product?.name || 'สินค้าใหม่'}</span>
 
                                     {/* Price & Stock - Moved from Right */}
                                     <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                                         <div className="flex items-center gap-1">
                                             <div className="text-secondary-500 font-medium text-[11px]">
-                                                {currency(item.unitPrice || 0)}
+                                                {currency(item.unitPrice || item.price || item.unit_price || 0)}
                                             </div>
                                             <div className="text-secondary-400 text-[10px]">
-                                                x {item.qty || 1}
+                                                x {item.qty}
                                             </div>
                                             <div className="font-bold text-primary-700 text-[11px] ml-1">
                                                 {currency((item.unitPrice || 0) * (item.qty || 0))}
@@ -229,8 +229,8 @@ export default function OrderItemsList({
                                             <div className="flex items-center gap-1">
                                                 <UserCheck size={12} />
                                                 <span>
-                                                    {(latestJob?.inspector1?.name) || '-'}
-                                                    {(latestJob?.inspector1?.phone) && ` (${latestJob?.inspector1?.phone})`}
+                                                    {(latestJob?.inspector?.name || latestJob?.inspector1?.name) || '-'}
+                                                    {(latestJob?.inspector?.phone || latestJob?.inspector1?.phone) && ` (${latestJob?.inspector?.phone || latestJob?.inspector1?.phone})`}
                                                 </span>
                                             </div>
 
@@ -363,7 +363,8 @@ export default function OrderItemsList({
                     setEditingItemIndex(null)  // CRITICAL FIX: Reset after save
                     setShowOrderItemModal(false)  // Close modal
                 }}
-                onDelete={onDeleteItem}
+                // FIX: Pass explicit index to delete handler
+                onDelete={() => onDeleteItem(editingItemIndex)}
                 item={editingItemIndex !== null ? items[editingItemIndex] : null}
                 productsData={productsData}
                 isEditing={editingItemIndex !== null}

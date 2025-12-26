@@ -23,6 +23,9 @@ export function useJobState(items, selectedItemIndex, selectedJobIndex) {
                         ...job,
                         itemIndex: itemIdx,
                         jobIndex: jobIdx,
+                        // FIX: Add underscore aliases for OrderJobSection compatibility
+                        _itemIndex: itemIdx,
+                        _jobIndex: jobIdx,
                         productName: item.name || item.description || 'Unnamed Product'
                     })
                 })

@@ -64,18 +64,34 @@ export default function AddressSelector({
         let fullAddress = ''
 
         // Priority: Construct from components if available (to ensure full detail)
-        if (typeof addr === 'object' && (addr.addrNumber || addr.addrRoad || addr.addrTambon || addr.addrAmphoe || addr.province)) {
+        // Priority: Construct from components if available (to ensure full detail)
+        // Checks for both component-prop style (addr*) and DB-column style (number, moo, etc.)
+        if (typeof addr === 'object') {
             const p = []
-            if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
-            if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`)
-            if (addr.addrVillage) p.push(addr.addrVillage)
-            if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`)
-            if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`)
-            if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`)
-            if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`)
-            if (addr.province) p.push(`จังหวัด ${addr.province}`)
-            if (addr.zipcode) p.push(addr.zipcode)
-            fullAddress = p.join(' ')
+
+            const val = (k1, k2) => addr[k1] || addr[k2]
+
+            const number = val('addrNumber', 'number')
+            const moo = val('addrMoo', 'moo')
+            const village = val('addrVillage', 'village')
+            const soi = val('addrSoi', 'lane') || val('addrSoi', 'soi') // 'lane' is DB column
+            const road = val('addrRoad', 'road')
+            const tambon = val('addrTambon', 'subdistrict')
+            const amphoe = val('addrAmphoe', 'district')
+            const province = val('province', 'province')
+            const zipcode = val('zipcode', 'zipcode')
+
+            if (number) p.push(`เลขที่ ${number}`)
+            if (moo) p.push(`หมู่ ${moo}`)
+            if (village) p.push(village)
+            if (soi) p.push(`ซอย ${soi}`)
+            if (road) p.push(`ถนน ${road}`)
+            if (tambon) p.push(`ตำบล ${tambon}`)
+            if (amphoe) p.push(`อำเภอ ${amphoe}`)
+            if (province) p.push(`จังหวัด ${province}`)
+            if (zipcode) p.push(zipcode)
+
+            if (p.length > 0) fullAddress = p.join(' ')
         }
 
         // Fallback: Use existing address string if construction failed or no components
@@ -140,18 +156,33 @@ export default function AddressSelector({
                                                 ? addr.address
                                                 : (addr.address || '')
                                             let fullAddress = addressText
+
+                                            // Improved construction logic matching handleSelect
                                             if (!fullAddress && typeof addr === 'object') {
                                                 const p = []
-                                                if (addr.addrNumber) p.push(`เลขที่ ${addr.addrNumber}`)
-                                                if (addr.addrMoo) p.push(`หมู่ ${addr.addrMoo}`)
-                                                if (addr.addrVillage) p.push(addr.addrVillage)
-                                                if (addr.addrSoi) p.push(`ซอย ${addr.addrSoi}`)
-                                                if (addr.addrRoad) p.push(`ถนน ${addr.addrRoad}`)
-                                                if (addr.addrTambon) p.push(`ตำบล ${addr.addrTambon}`)
-                                                if (addr.addrAmphoe) p.push(`อำเภอ ${addr.addrAmphoe}`)
-                                                if (addr.province) p.push(`จังหวัด ${addr.province}`)
-                                                if (addr.zipcode) p.push(addr.zipcode)
-                                                fullAddress = p.join(' ')
+                                                const val = (k1, k2) => addr[k1] || addr[k2]
+
+                                                const number = val('addrNumber', 'number')
+                                                const moo = val('addrMoo', 'moo')
+                                                const village = val('addrVillage', 'village')
+                                                const soi = val('addrSoi', 'lane') || val('addrSoi', 'soi')
+                                                const road = val('addrRoad', 'road')
+                                                const tambon = val('addrTambon', 'subdistrict')
+                                                const amphoe = val('addrAmphoe', 'district')
+                                                const province = val('province', 'province')
+                                                const zipcode = val('zipcode', 'zipcode')
+
+                                                if (number) p.push(`เลขที่ ${number}`)
+                                                if (moo) p.push(`หมู่ ${moo}`)
+                                                if (village) p.push(village)
+                                                if (soi) p.push(`ซอย ${soi}`)
+                                                if (road) p.push(`ถนน ${road}`)
+                                                if (tambon) p.push(`ตำบล ${tambon}`)
+                                                if (amphoe) p.push(`อำเภอ ${amphoe}`)
+                                                if (province) p.push(`จังหวัด ${province}`)
+                                                if (zipcode) p.push(zipcode)
+
+                                                if (p.length > 0) fullAddress = p.join(' ')
                                             }
 
                                             return (

@@ -135,11 +135,12 @@ export default function JobInfoCard({
                 </div>
 
                 {/* Location */}
+                {/* Location */}
                 <AddressSelector
                     label="สถานที่ติดตั้ง / ขนส่ง"
                     addresses={customer?.addresses || []}
                     value={{
-                        id: data.installLocationId,
+                        id: data.locationId,
                         label: data.installLocationName,
                         address: data.installAddress,
                         googleMapLink: data.googleMapLink,
@@ -148,7 +149,7 @@ export default function JobInfoCard({
                     onChange={(newValue) => {
                         if (newValue) {
                             handleUpdate({
-                                installLocationId: newValue.id,
+                                locationId: newValue.id,
                                 installLocationName: newValue.label,
                                 installAddress: newValue.address,
                                 googleMapLink: newValue.googleMapLink,
@@ -157,7 +158,7 @@ export default function JobInfoCard({
                         } else {
                             // Reset
                             handleUpdate({
-                                installLocationId: null,
+                                locationId: null,
                                 installLocationName: '',
                                 installAddress: '',
                                 googleMapLink: '',
@@ -175,26 +176,26 @@ export default function JobInfoCard({
                 <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md">
                     {/* Note: ContactSelector has its own label usage, but we wrap it for consistency */}
                     <label className="block text-xs font-medium text-secondary-500 mb-1">ผู้ตรวจงาน / รับสินค้า</label>
-                    {!data.inspector1 || !data.inspector1.name ? (
+                    {!data.inspector || !data.inspector.name ? (
                         <ContactSelector
                             variant="seamless"
                             label={null} // Hide internal label
                             contacts={customer.contacts || []}
-                            value={data.inspector1}
+                            value={data.inspector}
                             onChange={(contact) => {
                                 handleUpdate({
-                                    inspector1: contact ? {
+                                    inspector: contact ? {
                                         id: contact.id,
                                         name: contact.name,
                                         phone: contact.phone || '',
                                         email: contact.email || '',
-                                        lineId: contact.lineId || contact.line_id || '',
+                                        line: contact.line || contact.lineId || contact.line_id || '',
                                         position: contact.position || '',
                                         note: contact.note || ''
                                     } : null,
-                                    // Keep canonical DB field in sync so save/load remains consistent
-                                    site_inspector_id: contact ? contact.id : null,
-                                    // Clear any joined fallback when explicitly setting a new inspector
+                                    // Use new foreign key identifier
+                                    inspectorId: contact ? contact.id : null,
+                                    // Clear legacy ref
                                     siteInspectorRecord: contact ? contact : null
                                 })
                             }}
@@ -203,12 +204,12 @@ export default function JobInfoCard({
                         />
                     ) : (
                         <ContactDisplayCard
-                            contact={data.inspector1}
+                            contact={data.inspector}
                             onClick={() => handleUpdate({
                                 // Explicitly clear inspector across all related fields to prevent re-hydration
-                                inspector1: null,
-                                siteInspectorRecord: null,
-                                site_inspector_id: null
+                                inspector: null,
+                                inspectorId: null,
+                                siteInspectorRecord: null
                             })}
                             className="sm:mt-0"
                         />
@@ -231,21 +232,12 @@ export default function JobInfoCard({
                 {/* Team Service Fee Selector (New) */}
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                     <TeamServiceFeeSelector
-                        teamId={null} // We need teamId. 'data.team' is likely a NAME string in current app, not ID.
-                        // We need to resolve Name -> ID for the selector to work completely.
-                        // Or the selector can search by Name?
-                        // My implementation uses teamId.
-                        // Let's pass teamName and let Selector find ID or use Name?
-                        // Modified Selector to accept teamName? NO, Selector uses DataManager.getTeamServiceFees(teamId).
-                        // I should probably try to resolve ID if possible, or pass teamName to Selector to resolve.
-                        // In JobInfoCard, 'data.team' is string. 
-                        // I'll update Selector to handle teamName prop and lookup ID internally if needed.
+                        teamId={null}
                         teamName={data.team}
-                        // Assuming Job ID is available in data.id
-                        value={data.serviceFeeId} // Need this in prop
+                        value={data.teamPaymentId} // FIX: use teamPaymentId
                         onChange={async (newId) => {
                             // Update UI state first
-                            handleUpdate({ serviceFeeId: newId })
+                            handleUpdate({ teamPaymentId: newId })
 
                             // Sync with DB if we have a valid Job ID
                             if (data.id) {
