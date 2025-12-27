@@ -31,7 +31,8 @@ import OrderSummaryEdit from './order/OrderSummaryEdit'
 import OrderPaymentSection from './order/OrderPaymentSection'
 import OrderJobSection from './order/OrderJobSection'
 import OrderItemsList from './order/OrderItemsList'
-import ConfirmDialog from './ConfirmDialog'
+// import ConfirmDialog from './ConfirmDialog' // Removed
+import Swal from 'sweetalert2'
 
 import ProductModal from './ProductModal'
 
@@ -317,15 +318,58 @@ export default function OrderForm() {
     )
 
     // Use handler from createOrderHandlers
-    const handleSaveOrder = () => {
-        // Show custom confirm dialog instead of window.confirm()
-        setShowConfirmSaveModal(true)
-    }
+    // Use handler from createOrderHandlers
+    const handleSaveOrder = async () => {
+        // 1. Confirm Dialog
+        const result = await Swal.fire({
+            title: 'ยืนยันการบันทึก?',
+            text: "คุณต้องการบันทึกออเดอร์นี้ใช่หรือไม่?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, บันทึกเลย',
+            cancelButtonText: 'ยกเลิก',
+            customClass: {
+                popup: 'rounded-2xl shadow-xl',
+                confirmButton: 'rounded-lg px-6 py-2.5 font-medium shadow-lg shadow-blue-500/30',
+                cancelButton: 'rounded-lg px-6 py-2.5 font-medium'
+            }
+        })
 
-    const handleConfirmSave = () => {
-        setShowConfirmSaveModal(false)
-        // FIX: Pass calculated total to save handler
-        handlersSaveOrder(fetchOrderData, { total })
+        if (!result.isConfirmed) return
+
+        // 2. Show Loading
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล...',
+            text: 'กรุณารอสักครู่',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading()
+            }
+        })
+
+        // 3. Save
+        const success = await handlersSaveOrder(fetchOrderData, { total })
+
+        // 4. Success/Error Feedback
+        if (success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ',
+                text: 'ข้อมูลออเดอร์ถูกบันทึกเรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            })
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
+                confirmButtonText: 'ตกลง'
+            })
+        }
     }
 
 
@@ -817,14 +861,7 @@ export default function OrderForm() {
                         paymentCount={paymentSchedule.length}
                     />
 
-                    {/* Confirm Save Dialog */}
-                    <ConfirmDialog
-                        isOpen={showConfirmSaveModal}
-                        title="ยืนยันการบันทึก"
-                        message="คุณต้องการบันทึกออเดอร์นี้ใช่หรือไม่?"
-                        onConfirm={handleConfirmSave}
-                        onCancel={() => setShowConfirmSaveModal(false)}
-                    />
+
                 </div >
             </div >
         </AppLayout >

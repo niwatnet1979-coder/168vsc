@@ -66,6 +66,8 @@ export function useOrderLoader({
         loadOtherOrders()
     }, [customer?.id, router.query.id, setOtherOutstandingOrders])
 
+
+
     // Fetch Order Data (Complete Implementation)
     const fetchOrderData = useCallback(async (targetId) => {
         const idToLoad = targetId || router.query.id
@@ -175,26 +177,12 @@ export function useOrderLoader({
                     setVatIncluded(true)
                 }
 
-                // Load items and fetch product images
+                // Load items
                 let processedItems = []
                 if (order.items) {
-                    console.log('[Order] Loading items with jobs:', order.items.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        jobsCount: item.jobs?.length || 0,
-                        jobs: item.jobs
-                    })))
-
-                    // Fetch all products to get images
-                    const products = await DataManager.getProducts()
+                    console.log('[Order] Processing items:', order.items.length)
 
                     processedItems = order.items.map(item => {
-                        const product = products.find(p =>
-                            p.uuid === item.product_id ||
-                            p.product_code === item.product_code ||
-                            p.product_code === item.code
-                        )
-
                         // CRITICAL: Preserve jobs BEFORE any mapping
                         const preservedJobs = item.jobs || []
 
@@ -207,54 +195,38 @@ export function useOrderLoader({
                             qty: Number(item.qty || item.quantity || 1), // Map quantity to qty
                         }
 
+                        // Use joined product/variant data directly instead of fetching all products
+                        const product = item.product
+                        const variant = item.variant
+
                         if (product) {
                             const mappedItem = {
                                 ...normalizedItem,
                                 product,
                                 jobs: preservedJobs,
-                                material: item.material || product.material,
+                                material: item.material || product.material, // fallback to product if not in item
                                 category: item.category || product.category,
                                 subcategory: item.subcategory || product.subcategory,
                                 length: item.length || product.length,
                                 width: item.width || product.width,
                                 height: item.height || product.height,
-                                // FIX: Prioritize selected variant image, then item image, then default variant image
-                                image: (() => {
-                                    // 1. If item has a specific variant linked, try to find that variant's image
-                                    if (item.product_variant_id && product.variants) {
-                                        const linkedVariant = product.variants.find(v => v.id === item.product_variant_id)
-                                        if (linkedVariant?.images?.[0]) return linkedVariant.images[0]
-                                    }
-                                    // 2. Use item's saved image or default product image
-                                    return item.image || product.variants?.[0]?.images?.[0] || null
-                                })(),
-                                selectedVariant: item.variant || null,
-                                variant_id: item.product_variant_id || item.variant?.id || null,
-                                variantId: item.product_variant_id || item.variant?.id || null,
+
+                                // Image Logic: Item Snapshot -> Variant Image -> Null
+                                image: item.image || variant?.images?.[0] || null,
+
+                                selectedVariant: variant || null,
+                                variant_id: item.product_variant_id || variant?.id || null,
+                                variantId: item.product_variant_id || variant?.id || null,
                                 light: item.light || item.bulbType || null,
                                 lightColor: item.light_color || item.lightColor || null,
                                 bulbType: item.light || item.bulbType || null
                             }
-
-                            console.log('[Order] Mapped item with jobs:', {
-                                itemId: mappedItem.id,
-                                itemName: mappedItem.name,
-                                jobsCount: mappedItem.jobs?.length || 0,
-                                jobs: mappedItem.jobs
-                            })
-
                             return mappedItem
                         }
 
-                        return { ...item, jobs: preservedJobs }
+                        // Fallback for items without product link
+                        return { ...normalizedItem, jobs: preservedJobs }
                     })
-
-                    console.log('[Order] Items after mapping:', processedItems.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        jobsCount: item.jobs?.length || 0,
-                        jobs: item.jobs
-                    })))
 
                     setItems(processedItems)
                 }
@@ -365,6 +337,37 @@ export function useOrderLoader({
         setReceiverContact,
         setPurchaserContact
     ])
+
+    // Realtime Subscription
+    useEffect(() => {
+        if (!router.query.id || !DataManager.supabase) return
+
+        const orderId = router.query.id
+        console.log('[useOrderLoader] Subscribing to order updates:', orderId)
+
+        const subscription = DataManager.supabase
+            .channel(`order_updates_${orderId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `id=eq.${orderId}`
+                },
+                (payload) => {
+                    console.log('[useOrderLoader] Realtime update received:', payload)
+                    // Debounce/Throttle could be added here if needed, but for now direct fetch
+                    fetchOrderData(orderId)
+                }
+            )
+            .subscribe()
+
+        return () => {
+            console.log('[useOrderLoader] Unsubscribing channel')
+            DataManager.supabase.removeChannel(subscription)
+        }
+    }, [router.query.id, fetchOrderData])
 
     // Trigger fetch on mount/route change
     useEffect(() => {
