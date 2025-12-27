@@ -4,6 +4,8 @@ import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
 import InventoryCheckInModal from '../components/InventoryCheckInModal'
 import InventoryCheckOutModal from '../components/InventoryCheckOutModal'
+import InventoryEditModal from '../components/InventoryEditModal' // Added
+import InventoryHelpModal from '../components/InventoryHelpModal' // Added
 import QRDisplayModal from '../components/QRDisplayModal'
 import TrackingTimeline from '../components/TrackingTimeline'
 import StockCheckModal from '../components/StockCheckModal'
@@ -22,7 +24,10 @@ import {
     LogOut,
     X,
     AlertTriangle,
-    ClipboardCheck
+    ClipboardCheck,
+    Trash2,
+    Edit, // Added
+    HelpCircle // Added
 } from 'lucide-react'
 import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
 
@@ -35,12 +40,39 @@ export default function InventoryPage() {
     const [filter, setFilter] = useState('all') // all, in_stock, low_stock
     const [showCheckInModal, setShowCheckInModal] = useState(false)
     const [showCheckOutModal, setShowCheckOutModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false) // Added
+    const [showHelpModal, setShowHelpModal] = useState(false) // Added
+    const [editingItem, setEditingItem] = useState(null) // Added
     const [showQRModal, setShowQRModal] = useState(false)
     const [showTrackingModal, setShowTrackingModal] = useState(false)
     const [showStockCheckModal, setShowStockCheckModal] = useState(false)
     const [showScanner, setShowScanner] = useState(false)
     const [selectedItem, setSelectedItem] = useState(null)
     const [trackingEvents, setTrackingEvents] = useState([])
+
+    const handleEdit = (item) => { // Added
+        setEditingItem(item)
+        setShowEditModal(true)
+    }
+
+    const handleDelete = async (item) => {
+        const result = await showConfirm({
+            title: t('Delete Item?'),
+            text: `${t('Are you sure you want to delete')} ${item.product?.name} (${item.qr_code})? ${t('This cannot be undone.')}`,
+            confirmButtonText: t('Delete'),
+            confirmButtonColor: '#d33'
+        })
+
+        if (result.isConfirmed) {
+            const success = await DataManager.deleteInventoryItem(item.id)
+            if (success) {
+                await showSuccess({ title: t('Deleted successfully') })
+                loadInventory()
+            } else {
+                await showError({ title: t('Failed to delete item') })
+            }
+        }
+    }
 
 
     const handleScan = (code) => {
@@ -54,9 +86,18 @@ export default function InventoryPage() {
 
     const loadInventory = async () => {
         setIsLoading(true)
-        const data = await DataManager.getInventoryItems()
-        setItems(data)
-        setIsLoading(false)
+        try {
+            const data = await DataManager.getInventoryItems()
+            setItems(data)
+        } catch (error) {
+            console.error(error)
+            await showError({
+                title: t('Error loading inventory'),
+                text: error.message || 'Failed to fetch items'
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleTrackItem = async (item) => {
@@ -120,6 +161,13 @@ export default function InventoryPage() {
                         <h1 className="text-2xl font-bold text-secondary-900 flex items-center gap-2">
                             <Box className="text-primary-600" />
                             {t('Inventory Management')}
+                            <button
+                                onClick={() => setShowHelpModal(true)}
+                                className="ml-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                                title={t('Help Guide')}
+                            >
+                                <HelpCircle size={20} />
+                            </button>
                         </h1>
                         <p className="text-secondary-500 text-sm">{t('Manage stock, check-in/out, and track items')}</p>
                     </div>
@@ -209,6 +257,14 @@ export default function InventoryPage() {
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-secondary-900">{item.product?.name}</div>
                                             <div className="text-xs text-secondary-500">{item.product?.code}</div>
+                                            {item.variant_id && item.variants && (
+                                                <div className="mt-1 flex items-center gap-1">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200">
+                                                        {item.variants.color && <span className="mr-1">{item.variants.color}</span>}
+                                                        {item.variants.size && <span>{item.variants.size}</span>}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-1.5 text-sm text-secondary-600">
@@ -233,6 +289,13 @@ export default function InventoryPage() {
                                                 <QrCode size={18} />
                                             </button>
                                             <button
+                                                onClick={() => handleEdit(item)}
+                                                className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
+                                                title={t('Edit Item')}
+                                            >
+                                                <Edit size={18} />
+                                            </button>
+                                            <button
                                                 onClick={() => handleTrackItem(item)}
                                                 className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
                                                 title={t('View History')}
@@ -242,12 +305,13 @@ export default function InventoryPage() {
                                             {item.status !== 'lost' && item.status !== 'sold' && (
                                                 <button
                                                     onClick={() => handleMarkLost(item)}
-                                                    className="text-secondary-400 hover:text-danger-600 transition-colors"
+                                                    className="text-secondary-400 hover:text-danger-600 transition-colors mr-2" // Removed invalid trailing space/chars
                                                     title={t('Mark as Lost')}
                                                 >
                                                     <AlertTriangle size={18} />
                                                 </button>
                                             )}
+                                            {/* Delete button moved to Edit Modal */}
                                         </td>
                                     </tr>
                                 ))
@@ -268,11 +332,28 @@ export default function InventoryPage() {
             </div>
 
             {/* Modals */}
+            {showEditModal && (
+                <InventoryEditModal
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                    item={editingItem}
+                    onSave={loadInventory}
+                    onDelete={handleDelete} // Passed handleDelete
+                />
+            )}
+
+            {showHelpModal && (
+                <InventoryHelpModal
+                    isOpen={showHelpModal}
+                    onClose={() => setShowHelpModal(false)}
+                />
+            )}
+
             {showCheckInModal && (
                 <InventoryCheckInModal
                     isOpen={showCheckInModal}
                     onClose={() => setShowCheckInModal(false)}
-                    onSuccess={loadInventory}
+                    onSave={loadInventory}
                 />
             )}
 
@@ -290,6 +371,8 @@ export default function InventoryPage() {
                 qrCode={selectedItem?.qr_code || ''}
                 productName={selectedItem?.product?.name || 'Unknown Product'}
                 lotNumber={selectedItem?.lot_number}
+                boxCount={selectedItem?.box_count || 1}
+                boxes={selectedItem?.boxes || []}
             />
 
             {/* Tracking Modal */}

@@ -4,17 +4,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
-import {
-    ArrowLeft,
-    Package,
-    CreditCard,
-    Wrench,
-    Camera,
-    ClipboardCheck,
-    Edit,
-    Users,
-    AlertCircle
-} from 'lucide-react'
+
 
 import JobInfoCard from '../components/JobInfoCard'
 import ProductCard from '../components/ProductCard'
@@ -26,6 +16,20 @@ import JobCompletionView from '../components/JobCompletionView'
 import CustomerModal from '../components/CustomerModal'
 import ProductModal from '../components/ProductModal'
 import { calculateDistance, extractCoordinates, formatDateForInput, formatDateForSave, SHOP_LAT, SHOP_LON } from '../lib/utils' // Import utils
+import { createRoot } from 'react-dom/client'
+import JobLabelTemplate from '../components/print/JobLabelTemplate'
+import {
+    ArrowLeft,
+    Package,
+    CreditCard,
+    Wrench,
+    Camera,
+    ClipboardCheck,
+    Edit,
+    Users,
+    AlertCircle,
+    Printer
+} from 'lucide-react'
 
 export default function JobDetailPage() {
     const router = useRouter()
@@ -218,6 +222,49 @@ export default function JobDetailPage() {
         setCustomerModalTab('contacts')
         setAddingContactFor('inspector')
         setShowEditCustomerModal(true)
+    }
+
+    const handlePrintLabel = () => {
+        if (!job) return
+
+        // Open new window
+        const printWindow = window.open('', '', 'width=800,height=600')
+        if (!printWindow) return
+
+        // Create container
+        const container = printWindow.document.createElement('div')
+        printWindow.document.body.appendChild(container)
+
+        // Render
+        const root = createRoot(container)
+
+        // Ask for box count
+        const boxCountInput = prompt('Enter number of boxes (Leave empty for single label):', '1')
+        const totalBoxes = parseInt(boxCountInput) || 1
+
+        // We will render multiple labels if boxes > 1
+        const Labels = () => (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                {Array.from({ length: totalBoxes }).map((_, i) => (
+                    <div key={i} style={{ pageBreakAfter: 'always' }}>
+                        <JobLabelTemplate
+                            job={job}
+                            customer={customer}
+                            boxNumber={totalBoxes > 1 ? i + 1 : null}
+                            totalBoxes={totalBoxes > 1 ? totalBoxes : null}
+                        />
+                    </div>
+                ))}
+            </div>
+        )
+
+        root.render(<Labels />)
+
+        // Wait for render then print
+        setTimeout(() => {
+            printWindow.print()
+            printWindow.close()
+        }, 500) // Small delay for rendering and QR generation
     }
 
     const tabs = [
@@ -500,14 +547,23 @@ export default function JobDetailPage() {
 
                         {/* Job Info: Save */}
                         {activeTab === 'customer' && (
-                            <button
-                                type="button"
-                                onClick={handleSaveJobInfo}
-                                disabled={!isJobInfoDirty}
-                                className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${isJobInfoDirty ? 'opacity-100' : 'opacity-50 cursor-not-allowed'}`}
-                            >
-                                บันทึก
-                            </button>
+                            <>
+                                <button
+                                    onClick={handlePrintLabel}
+                                    className="text-xs font-bold text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1"
+                                >
+                                    <Printer size={14} />
+                                    <span>Labels</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveJobInfo}
+                                    disabled={!isJobInfoDirty}
+                                    className={`text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg shadow-sm transition-opacity ${isJobInfoDirty ? 'opacity-100' : 'opacity-50 cursor-not-allowed'}`}
+                                >
+                                    บันทึก
+                                </button>
+                            </>
                         )}
 
                         {/* Edit Order Button (always visible) */}

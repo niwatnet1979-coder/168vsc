@@ -104,7 +104,26 @@ export const translations = {
         'Unknown': 'Unknown',
         'Item already scanned in this session.': 'Item already scanned in this session.',
         'Verified': 'Verified',
-        'QR Code not found or not in Stock.': 'QR Code not found or not in Stock.'
+        'QR Code not found or not in Stock.': 'QR Code not found or not in Stock.',
+
+        // Inventory Help Modal
+        'Inventory System Guide': 'Inventory System Guide',
+        'Receiving Items (Check-in)': 'Receiving Items (Check-in)',
+        'Use this when new stock arrives.': 'Use this when new stock arrives.',
+        'Scan a product or search by name.': 'Scan a product or search by name.',
+        'If product has Variants (Color/Size), select the correct one.': 'If product has Variants (Color/Size), select the correct one.',
+        'Box Count: If an item comes in multiple boxes (e.g. 1 Chandelier = 2 Boxes), enter the number of boxes. The system will track them individually.': 'Box Count: If an item comes in multiple boxes (e.g. 1 Chandelier = 2 Boxes), enter the number of boxes. The system will track them individually.',
+        'Location: Specify where you are storing the item.': 'Location: Specify where you are storing the item.',
+        'Multi-box Tracking': 'Multi-box Tracking',
+        'Example: Item A (2 Boxes)': 'Example: Item A (2 Boxes)',
+        'The system will generate 2 unique QR Codes:': 'The system will generate 2 unique QR Codes:',
+        'You must stick these labels on the respective boxes.': 'You must stick these labels on the respective boxes.',
+        'Dispensing Items (Check-out)': 'Dispensing Items (Check-out)',
+        'To ensure nothing is missing, the system requires verification:': 'To ensure nothing is missing, the system requires verification:',
+        'For single-box items: Scan once to verify.': 'For single-box items: Scan once to verify.',
+        'For Multi-box items: You must scan ALL boxes belonging to that set.': 'For Multi-box items: You must scan ALL boxes belonging to that set.',
+        'Only when all boxes are green can you confirm the check-out.': 'Only when all boxes are green can you confirm the check-out.',
+        'Understood': 'Understood'
     },
     th: {
         'Dashboard': 'แดชบอร์ด',
@@ -153,7 +172,7 @@ export const translations = {
         'All Status': 'ทุกสถานะ',
         'Draft': 'แบบร่าง',
         'Ordered': 'สั่งซื้อแล้ว',
-        'Shipping': 'กำลังขนส่ง',
+        'Shipping': 'ขนส่ง',
         'Received': 'ได้รับของแล้ว',
         'Completed': 'เสร็จสมบูรณ์',
         'Pending': 'รอดำเนินการ',
@@ -206,7 +225,26 @@ export const translations = {
         'Unknown': 'ไม่ระบุ',
         'Item already scanned in this session.': 'สินค้านี้ถูกสแกนไปแล้วในรอบนี้',
         'Verified': 'ตรวจสอบแล้ว',
-        'QR Code not found or not in Stock.': 'ไม่พบรหัส QR หรือไม่ได้อยู่ในสต็อก'
+        'QR Code not found or not in Stock.': 'ไม่พบรหัส QR หรือไม่ได้อยู่ในสต็อก',
+
+        // Inventory Help Modal
+        'Inventory System Guide': 'คู่มือระบบคลังสินค้า',
+        'Receiving Items (Check-in)': 'การรับสินค้าเข้า (Check-in)',
+        'Use this when new stock arrives.': 'ใช้เมนูนี้เมื่อมีสินค้าใหม่มาส่ง',
+        'Scan a product or search by name.': 'สแกนสินค้าหรือค้นหาจากชื่อ',
+        'If product has Variants (Color/Size), select the correct one.': 'หากสินค้ามีตัวเลือก (สี/ไซส์) กรุณาเลือกให้ถูกต้อง',
+        'Box Count: If an item comes in multiple boxes (e.g. 1 Chandelier = 2 Boxes), enter the number of boxes. The system will track them individually.': 'จำนวนกล่อง: หากสินค้า 1 ชิ้นมีหลายกล่อง (เช่น โคมไฟ 1 ชุด มี 2 กล่อง) ให้ระบุจำนวนกล่อง ระบบจะติดตามแยกรายกล่อง',
+        'Location: Specify where you are storing the item.': 'สถานที่จัดเก็บ: ระบุตำแหน่งที่นำสินค้าไปวาง',
+        'Multi-box Tracking': 'การติดตามสินค้ารายกล่อง (Multi-box)',
+        'Example: Item A (2 Boxes)': 'ตัวอย่าง: สินค้า A (2 กล่อง)',
+        'The system will generate 2 unique QR Codes:': 'ระบบจะสร้าง QR Code 2 อันที่ไม่ซ้ำกัน:',
+        'You must stick these labels on the respective boxes.': 'คุณต้องติดสติกเกอร์ QR Code นี้ลงบนกล่องแต่ละใบให้ถูกต้อง',
+        'Dispensing Items (Check-out)': 'การเบิกสินค้าออก (Check-out)',
+        'To ensure nothing is missing, the system requires verification:': 'เพื่อป้องกันของหาย ระบบต้องมีการตรวจสอบก่อนเบิก:',
+        'For single-box items: Scan once to verify.': 'สินค้ากล่องเดียว: สแกนครั้งเดียวเพื่อยืนยัน',
+        'For Multi-box items: You must scan ALL boxes belonging to that set.': 'สินค้าหลายกล่อง: ต้องสแกน QR ของ "ทุกกล่อง" ในชุดนั้นให้ครบ',
+        'Only when all boxes are green can you confirm the check-out.': 'เมื่อขึ้นสีเขียวครบทุกกล่องแล้ว จึงจะกดยืนยันการเบิกได้',
+        'Understood': 'รับทราบ/เข้าใจแล้ว'
     }
 };
 

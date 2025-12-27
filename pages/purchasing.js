@@ -18,7 +18,7 @@ import {
     Gem,
     Trash2
 } from 'lucide-react'
-import ConfirmDialog from '../components/ConfirmDialog'
+import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
 
 export default function PurchasingPage() {
     const { t } = useLanguage()
@@ -30,8 +30,6 @@ export default function PurchasingPage() {
     const [viewMode, setViewMode] = useState('orders')
     const [suggestions, setSuggestions] = useState([])
     const [selectedSuggestion, setSelectedSuggestion] = useState(null)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [poToDelete, setPoToDelete] = useState(null)
 
     useEffect(() => {
         if (viewMode === 'orders') {
@@ -57,6 +55,29 @@ export default function PurchasingPage() {
         const data = await DataManager.getPurchaseOrders()
         setOrders(data)
         setIsLoading(false)
+    }
+
+    const handleDeletePO = async (poId) => {
+        const result = await showConfirm({
+            title: t('Confirm Delete PO'),
+            text: t('Are you sure you want to delete this Purchase Order?'),
+            confirmButtonText: t('Delete'),
+            confirmButtonColor: '#d33'
+        })
+
+        if (result.isConfirmed) {
+            try {
+                const success = await DataManager.deletePurchaseOrder(poId)
+                if (success) {
+                    await showSuccess({ title: t('Deleted'), text: t('Purchase Order deleted successfully') })
+                    loadOrders()
+                } else {
+                    throw new Error('Delete failed')
+                }
+            } catch (error) {
+                showError({ title: t('Error'), text: t('Failed to delete Purchase Order') })
+            }
+        }
     }
 
     const getStatusColor = (status) => {
@@ -251,85 +272,99 @@ export default function PurchasingPage() {
                             <option value="ordered">{t('Ordered')}</option>
                             <option value="shipping">{t('Shipping')}</option>
                             <option value="received">{t('Received')}</option>
+                            <option value="completed">{t('Completed')}</option>
                         </select>
                     </div>
 
-                    {/* List */}
+                    {/* Orders Table */}
                     <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-secondary-50 border-b border-secondary-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('PO #')}</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Supplier')}</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Status')}</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Expect Date')}</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase text-right">{t('Total Cost')}</th>
-                                    <th className="px-6 py-3 text-xs font-semibold text-secondary-500 uppercase">{t('Actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-secondary-200">
-                                {isLoading ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-secondary-50 border-b border-secondary-200">
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-8 text-center text-secondary-500">
-                                            {t('Loading orders...')}
-                                        </td>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">PO #</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Supplier')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Date')}</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">{t('Details')}</th>
+                                        <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">{t('Total (THB)')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Payment')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Status')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Actions')}</th>
                                     </tr>
-                                ) : filteredOrders.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="px-6 py-8 text-center text-secondary-500">
-                                            {t('No purchase orders found.')}
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredOrders.map((po) => (
-                                        <tr key={po.id} className="hover:bg-secondary-50 transition-colors">
-                                            <td className="px-6 py-4 font-mono text-sm text-secondary-900">
-                                                {po.id.substring(0, 8)}...
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-secondary-900 font-medium">
-                                                {po.supplier_name}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(po.status)}`}>
-                                                    {po.status ? po.status.toUpperCase() : 'DRAFT'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-secondary-600">
-                                                {po.expected_date ? new Date(po.expected_date).toLocaleDateString() : '-'}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-secondary-900 font-mono text-right">
-                                                {po.total_landed_cost > 0 ? (
-                                                    <span>฿{po.total_landed_cost.toLocaleString()}</span>
-                                                ) : (
-                                                    <span className="text-secondary-400">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-secondary-600">
-                                                <div className="flex items-center gap-2">
+                                </thead>
+                                <tbody className="divide-y divide-secondary-100">
+                                    {isLoading ? (
+                                        <tr><td colSpan="8" className="px-6 py-8 text-center text-secondary-500">{t('Loading Orders...')}</td></tr>
+                                    ) : filteredOrders.length === 0 ? (
+                                        <tr><td colSpan="8" className="px-6 py-8 text-center text-secondary-500">{t('No orders found.')}</td></tr>
+                                    ) : (
+                                        filteredOrders.map(po => (
+                                            <tr key={po.id} className="hover:bg-secondary-50">
+                                                <td
+                                                    className="px-6 py-4 font-mono text-primary-600 font-medium cursor-pointer hover:underline hover:text-primary-800"
+                                                    onClick={() => {
+                                                        setSelectedSuggestion(po)
+                                                        setShowCreateModal(true)
+                                                    }}
+                                                >
+                                                    #{po.id.slice(0, 8)}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-secondary-900">{po.supplier_name}</div>
+                                                    {po.external_ref_no && (
+                                                        <div className="text-xs text-secondary-500">Ref: {po.external_ref_no}</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-secondary-600 text-sm">
+                                                    {new Date(po.created_at).toLocaleDateString('th-TH')}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="text-sm font-medium text-secondary-900">{po.items?.length || 0} items</div>
+                                                    <div className="text-xs text-secondary-500">
+                                                        Ship: {po.shipping_origin > 0 ? `+${(po.shipping_origin * (po.exchange_rate || 5)).toLocaleString()}` : '-'}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-bold text-secondary-900">
+                                                    ฿{Number(po.total_landed_cost).toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border
+                                                        ${po.payment_status === 'paid' ? 'bg-green-50 text-green-700 border-green-200'
+                                                            : po.payment_status === 'partial' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                                : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                                                        {po.payment_status || 'unpaid'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(po.status)}`}>
+                                                        {t(po.status.charAt(0).toUpperCase() + po.status.slice(1))}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center flex gap-2 justify-center">
+                                                    {po.status === 'shipping' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm('Receive this order?')) {
+                                                                    const success = await DataManager.receivePurchaseOrder(po.id)
+                                                                    if (success) loadOrders()
+                                                                }
+                                                            }}
+                                                            className="p-1 hover:bg-purple-100 rounded text-purple-600" title="Receive Items">
+                                                            <Box size={18} />
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={() => window.location.href = `/purchasing/${po.id}`}
-                                                        className="text-primary-600 hover:text-primary-800 font-medium"
-                                                    >
-                                                        View
+                                                        onClick={() => handleDeletePO(po.id)}
+                                                        className="p-1 hover:bg-red-100 rounded text-red-500">
+                                                        <Trash2 size={18} />
                                                     </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            setPoToDelete(po.id)
-                                                            setShowDeleteConfirm(true)
-                                                        }}
-                                                        className="text-danger-500 hover:text-danger-700 p-1 rounded hover:bg-danger-50"
-                                                        title="Delete PO"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
@@ -345,23 +380,6 @@ export default function PurchasingPage() {
                     setShowCreateModal(false)
                     setSelectedSuggestion(null)
                     loadOrders()
-                }}
-            />
-
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="Confirm Delete PO"
-                message="Are you sure you want to delete this Purchase Order?"
-                onConfirm={async () => {
-                    setShowDeleteConfirm(false)
-                    if (!poToDelete) return
-                    await DataManager.deletePurchaseOrder(poToDelete)
-                    setPoToDelete(null)
-                    loadOrders()
-                }}
-                onCancel={() => {
-                    setShowDeleteConfirm(false)
-                    setPoToDelete(null)
                 }}
             />
         </AppLayout>

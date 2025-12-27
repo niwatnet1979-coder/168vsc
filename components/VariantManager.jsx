@@ -442,6 +442,20 @@ export default function VariantManager({
                                 placeholder="0"
                             />
                         </div>
+
+                        {/* Min Stock */}
+                        <div>
+                            <label className="block text-sm font-medium text-secondary-700 mb-1">
+                                จุดสั่งซื้อต่ำสุด (Min Stock)
+                            </label>
+                            <input
+                                type="number"
+                                value={variantForm.minStock}
+                                onChange={(e) => handleFormChange({ minStock: e.target.value })}
+                                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                placeholder="0"
+                            />
+                        </div>
                     </div>
 
                     {/* Images */}

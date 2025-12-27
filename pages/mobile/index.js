@@ -190,7 +190,7 @@ export default function MobilePage() {
     const loadPlanDetails = async (planId) => {
         const { data } = await supabase
             .from('shipping_plans')
-            .select(`*, items:shipping_plan_items(*, order:orders(*))`)
+            .select(`*, items:shipping_plan_items(*, order:orders(*), inventory_item:inventory_items(*, boxes:inventory_boxes(*), product:products(name)))`)
             .eq('id', planId)
             .single()
         setSelectedPlanDetails(data)
@@ -198,29 +198,117 @@ export default function MobilePage() {
 
     const handleShippingScan = async (qrCode) => {
         if (!selectedPlanDetails) return
-        // QR Code format: ORDER-UUID or just UUID?
-        // Assuming we verify against order_id or tracking_number (if applicable)
-        // For now, let's assume we scan the Order ID or a code that maps to it.
-        // Simple match: scanned code matches an order's id or customer name?
-        // Let's search in the items list.
 
-        const match = selectedPlanDetails.items.find(i =>
-            i.order_id === qrCode ||
-            i.order?.customer_name === qrCode
-        )
+        const cleanQr = qrCode.trim()
 
-        if (match) {
-            // Update status
-            await supabase.from('shipping_plan_items').update({
-                status: 'verified',
-                scanned_at: new Date().toISOString()
-            }).eq('id', match.id)
+        // Find match in items or boxes
+        let matchItem = null
+        let matchBox = null
 
-            // Reload
-            loadPlanDetails(selectedPlanDetails.id)
-            alert(`Verified: ${match.order?.customer_name}`)
+        for (const item of selectedPlanDetails.items) {
+            // 1. Check Item QR (Single Box Item ONLY)
+            if (item.inventory_item?.qr_code === cleanQr) {
+                // STRICT CHECK: If item has multiple boxes, Parent QR is NOT allowed to be scanned as a box.
+                if (item.inventory_item.box_count > 1) {
+                    alert(`⚠️ สินค้านี้มีหลายกล่อง (${item.inventory_item.box_count} กล่อง)\nกรุณาสแกน QR ที่ติดอยู่บนกล่อง (เช่น ...-BOX-1, ...-BOX-2)\nห้ามสแกน QR หลักของสินค้า`)
+                    return
+                }
+                matchItem = item
+                break
+            }
+            // 2. Check Box QR (Multi Box Item)
+            if (item.inventory_item?.boxes) {
+                const box = item.inventory_item.boxes.find(b => b.qr_code === cleanQr)
+                if (box) {
+                    matchItem = item
+                    matchBox = box
+                    break
+                }
+            }
+        }
+
+        if (matchItem) {
+            // Check if already verified (Legacy check)
+            if (matchItem.status === 'verified') {
+                alert('⚠️ รายการนี้ตรวจสอบครบถ้วนแล้ว (Verified)')
+                return
+            }
+
+            // Get existing scanned boxes
+            const scannedBoxes = matchItem.scanned_boxes || []
+
+            // Check for duplicates
+            const isDuplicate = scannedBoxes.some(b => b.qr === cleanQr)
+            if (isDuplicate) {
+                alert('⚠️ กล่องนี้สแกนไปแล้ว (Already Scanned)')
+                return
+            }
+
+            // LOT VALIDATION (Critical)
+            const currentLot = matchBox ? matchBox.lot_number : (matchItem.inventory_item.lot_number || '') // Assuming box has lot or inherit from item
+            // *Note: Currently boxes might not store lot_number explicitly if it's on item, but let's assume we get it from item if box doesn't have it.*
+            // If matchItem.inventory_item has lot_number, use it.
+            const itemLot = matchItem.inventory_item?.lot_number
+
+            if (scannedBoxes.length > 0) {
+                const firstScan = scannedBoxes[0]
+                const firstLot = firstScan.lot
+
+                if (itemLot && firstLot && itemLot !== firstLot) {
+                    // This logic compares against previous scan. 
+                    // Actually better to compare Current Scan Lot vs Previous Scan Lot? 
+                    // Or Item Lot? Item Lot is usually single source of truth.
+                    // The requirement is "If Scan 1 is Lot A, Scan 2 is Lot B -> Alert".
+                    // So we compare currentLot vs firstLot.
+                    if (currentLot && firstLot && currentLot !== firstLot) {
+                        const confirmMixed = confirm(`⚠️ CRITICAL WARNING: LOT MISMATCH!\n\nFirst Box Lot: ${firstLot}\nThis Box Lot: ${currentLot}\n\nDo you want to proceed with MIXED LOTS?`)
+                        if (!confirmMixed) return
+                    }
+                }
+            }
+
+            // Preparing New Scan Record
+            const newScan = {
+                qr: cleanQr,
+                lot: currentLot || itemLot || 'Unknown',
+                scanned_at: new Date().toISOString(),
+                box_number: matchBox ? matchBox.box_number : 1
+            }
+
+            const newScannedBoxes = [...scannedBoxes, newScan]
+
+            // Function to update state
+            const updateState = (status) => {
+                const updatedItems = selectedPlanDetails.items.map(i =>
+                    i.id === matchItem.id
+                        ? { ...i, scanned_boxes: newScannedBoxes, status: status }
+                        : i
+                )
+                setSelectedPlanDetails({ ...selectedPlanDetails, items: updatedItems })
+            }
+
+            // Check if Complete
+            const totalBoxes = matchItem.inventory_item?.box_count || 1
+            const isComplete = newScannedBoxes.length >= totalBoxes
+            const newStatus = isComplete ? 'verified' : matchItem.status // Keep 'pending' if not complete
+
+            // Update DB
+            const { error } = await supabase.from('shipping_plan_items').update({
+                scanned_boxes: newScannedBoxes,
+                status: newStatus,
+                scanned_at: isComplete ? new Date().toISOString() : null
+            }).eq('id', matchItem.id)
+
+            if (!error) {
+                updateState(newStatus)
+                // Play Sound
+                // if (window.navigator?.vibrate) window.navigator.vibrate(200)
+            } else {
+                alert('Error updating scan: ' + error.message)
+            }
+
         } else {
-            alert('Item not found in this plan!')
+            alert('❌ ไม่พบสินค้าหรือกล่องนี้ในแผนงาน (Not Found)')
         }
     }
 
@@ -780,6 +868,77 @@ export default function MobilePage() {
                                     {selectedPlanDetails.license_plate && <div>ทะเบียน: {selectedPlanDetails.license_plate}</div>}
                                 </div>
 
+                                {/* Progress Bar */}
+                                <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <span className="text-xs font-semibold text-secondary-600">ความคืบหน้า (Progress)</span>
+                                        <span className="text-sm font-bold text-primary-700">
+                                            {selectedPlanDetails.items.filter(i => i.status === 'verified').length} / {selectedPlanDetails.items.length}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-secondary-100 rounded-full h-2.5 overflow-hidden">
+                                        <div
+                                            className="bg-primary-600 h-2.5 rounded-full transition-all duration-500"
+                                            style={{ width: `${(selectedPlanDetails.items.filter(i => i.status === 'verified').length / selectedPlanDetails.items.length) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                {/* Item List */}
+                                <div className="space-y-3 pb-8">
+                                    {selectedPlanDetails.items.map((item, idx) => {
+                                        const isVerified = item.status === 'verified'
+                                        // Calculate Box Progress
+                                        const scannedCount = item.scanned_boxes?.length || 0
+                                        const totalBoxes = item.inventory_item?.box_count || 1
+                                        const progressPercent = (scannedCount / totalBoxes) * 100
+                                        const itemLot = item.inventory_item?.lot_number || '-'
+
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`p-3 rounded-xl border flex items-center gap-3 transition-colors ${isVerified
+                                                    ? 'bg-green-50 border-green-200'
+                                                    : 'bg-white border-secondary-200'
+                                                    }`}
+                                            >
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 flex-col ${isVerified ? 'bg-green-100 text-green-600' : 'bg-secondary-100 text-secondary-400'
+                                                    }`}>
+                                                    {isVerified ? <CheckCircle size={20} /> : <Package size={20} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className={`font-bold text-sm truncate ${isVerified ? 'text-green-900' : 'text-secondary-900'}`}>
+                                                            {item.inventory_item?.product?.name || 'Unknown Item'}
+                                                        </h4>
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${isVerified ? 'bg-green-200 text-green-800' : 'bg-secondary-100 text-secondary-500'}`}>
+                                                            {isVerified ? 'OK' : 'PENDING'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-secondary-500 truncate flex items-center gap-2 mt-1">
+                                                        <span className="font-mono bg-secondary-100 px-1 rounded">{item.inventory_item?.qr_code}</span>
+                                                        <span className="font-bold text-secondary-600">Lot: {itemLot}</span>
+                                                    </div>
+
+                                                    {/* Box Progress Bar */}
+                                                    <div className="mt-2">
+                                                        <div className="flex justify-between text-[10px] mb-1 font-medium text-secondary-600">
+                                                            <span>Boxes Scanned</span>
+                                                            <span>{scannedCount} / {totalBoxes}</span>
+                                                        </div>
+                                                        <div className="w-full h-1.5 bg-secondary-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${isVerified ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                                style={{ width: `${progressPercent}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
                                 {/* Scan Input */}
                                 <div className="mt-4 flex gap-2">
                                     <input
@@ -797,26 +956,28 @@ export default function MobilePage() {
                                         <QrCode size={20} />
                                     </button>
                                 </div>
-                            </div>
+                            </div >
 
                             {/* Items List */}
-                            <div className="space-y-2">
-                                {selectedPlanDetails.items.map(item => (
-                                    <div key={item.id} className={`p-3 rounded-lg border flex justify-between items-center
+                            < div className="space-y-2" >
+                                {
+                                    selectedPlanDetails.items.map(item => (
+                                        <div key={item.id} className={`p-3 rounded-lg border flex justify-between items-center
                                         ${item.status === 'verified' ? 'bg-success-50 border-success-200' : 'bg-white border-secondary-200'}`}>
-                                        <div>
-                                            <p className="font-bold text-sm">{item.order?.customer_name}</p>
-                                            <p className="text-xs text-secondary-500">{item.order?.job_info?.installLocationName || 'No Location'}</p>
+                                            <div>
+                                                <p className="font-bold text-sm">{item.order?.customer_name}</p>
+                                                <p className="text-xs text-secondary-500">{item.order?.job_info?.installLocationName || 'No Location'}</p>
+                                            </div>
+                                            {item.status === 'verified' ? (
+                                                <CheckCircle className="text-success-600" size={20} />
+                                            ) : (
+                                                <span className="text-xs bg-secondary-100 text-secondary-500 px-2 py-1 rounded">Pending</span>
+                                            )}
                                         </div>
-                                        {item.status === 'verified' ? (
-                                            <CheckCircle className="text-success-600" size={20} />
-                                        ) : (
-                                            <span className="text-xs bg-secondary-100 text-secondary-500 px-2 py-1 rounded">Pending</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                                    ))
+                                }
+                            </div >
+                        </div >
                     ) : (
                         <div className="space-y-3">
                             {shippingPlans.map(plan => (
@@ -914,8 +1075,9 @@ export default function MobilePage() {
                             ))}
                         </div>
                     )
-                })()}
-            </div>
+                })()
+                }
+            </div >
 
             <style jsx global>{`
                 .safe-area-bottom {

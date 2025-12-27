@@ -18,11 +18,13 @@ import {
     Smartphone,
     UserCog,
     ShoppingBag,
+    Wallet,
 
     Box,
     CheckCircle,
     Globe,
-    ScrollText
+    ScrollText,
+    Truck
 } from 'lucide-react';
 import packageJson from '../package.json';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -70,6 +72,8 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         { name: 'Products', icon: Package, path: '/products' },
         { name: 'Inventory', icon: Box, path: '/inventory' },
         { name: 'Purchasing', icon: ShoppingBag, path: '/purchasing' },
+        { name: 'Finance', icon: Wallet, path: '/finance' },
+        { name: 'Shipping', icon: Truck, path: '/shipping' },
         { name: 'Quality Control', icon: CheckCircle, path: '/qc' },
 
         { name: 'Customers', icon: Users, path: '/customers' },

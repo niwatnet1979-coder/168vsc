@@ -13,8 +13,10 @@ import {
     User,
     MapPin,
     Package,
-    X
+    X,
+    Trash2
 } from 'lucide-react'
+import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
 
 export default function ShippingPage() {
     const [plans, setPlans] = useState([])
@@ -41,6 +43,31 @@ export default function ShippingPage() {
             setPlans(data)
         }
         setIsLoading(false)
+    }
+
+    const deletePlan = async (id) => {
+        const result = await showConfirm({
+            title: 'Delete Shipping Plan?',
+            text: 'Are you sure you want to delete this shipping plan? This cannot be undone.',
+            confirmButtonText: 'Delete',
+            confirmButtonColor: '#d33'
+        })
+        if (!result.isConfirmed) return
+
+        setIsLoading(true)
+        // Delete items first
+        try {
+            await supabase.from('shipping_plan_items').delete().eq('shipping_plan_id', id)
+            const { error } = await supabase.from('shipping_plans').delete().eq('id', id)
+
+            if (error) throw error
+
+            await showSuccess({ title: 'Deleted', text: 'Shipping plan deleted successfully' })
+            loadPlans()
+        } catch (error) {
+            showError({ text: 'Error deleting plan: ' + error.message })
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -80,7 +107,7 @@ export default function ShippingPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {plans.map(plan => (
-                            <div key={plan.id} className="bg-white rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow p-5">
+                            <div key={plan.id} className="relative bg-white rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow p-5">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center gap-2">
                                         <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
@@ -93,12 +120,24 @@ export default function ShippingPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold
-                                        ${plan.status === 'completed' ? 'bg-success-100 text-success-700' :
-                                            plan.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                                                'bg-secondary-100 text-secondary-600'}`}>
-                                        {plan.status.toUpperCase()}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold
+                                            ${plan.status === 'completed' ? 'bg-success-100 text-success-700' :
+                                                plan.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-secondary-100 text-secondary-600'}`}>
+                                            {plan.status.toUpperCase()}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                deletePlan(plan.id)
+                                            }}
+                                            className="p-1 text-secondary-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            title="Delete Plan"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2 text-sm text-secondary-600 mb-4">
@@ -131,85 +170,131 @@ export default function ShippingPage() {
             </div>
 
             {/* Create Modal */}
-            {showCreateModal && (
-                <CreatePlanModal
-                    onClose={() => setShowCreateModal(false)}
-                    onSave={async (formData) => {
-                        const { error } = await supabase.from('shipping_plans').insert([{
-                            courier: formData.courier,
-                            driver_name: formData.driver_name,
-                            license_plate: formData.license_plate,
-                            plan_date: new Date().toISOString(),
-                            status: 'draft'
-                        }])
-                        if (error) alert('Error creating plan')
-                        else {
-                            loadPlans()
-                            setShowCreateModal(false)
-                        }
-                    }}
-                />
-            )}
+            {
+                showCreateModal && (
+                    <CreatePlanModal
+                        onClose={() => setShowCreateModal(false)}
+                        onSave={async (formData) => {
+                            const { error } = await supabase.from('shipping_plans').insert([{
+                                courier: formData.courier,
+                                driver_name: formData.driver_name,
+                                license_plate: formData.license_plate,
+                                plan_date: new Date().toISOString(),
+                                status: 'draft'
+                            }])
+                            if (error) showError({ text: 'Error creating plan' })
+                            else {
+                                showSuccess({ title: 'Created', text: 'Shipping plan created' })
+                                loadPlans()
+                                setShowCreateModal(false)
+                            }
+                        }}
+                    />
+                )
+            }
 
             {/* Manage Modal */}
-            {selectedPlan && (
-                <ManagePlanModal
-                    plan={selectedPlan}
-                    onClose={() => setSelectedPlan(null)}
-                    onUpdate={loadPlans}
-                />
-            )}
-        </AppLayout>
+            {
+                selectedPlan && (
+                    <ManagePlanModal
+                        plan={selectedPlan}
+                        onClose={() => setSelectedPlan(null)}
+                        onUpdate={loadPlans}
+                        onDelete={() => {
+                            deletePlan(selectedPlan.id)
+                            setSelectedPlan(null)
+                        }}
+                    />
+                )
+            }
+        </AppLayout >
     )
 }
 
-function ManagePlanModal({ plan, onClose, onUpdate }) {
+function ManagePlanModal({ plan, onClose, onUpdate, onDelete }) {
     const [items, setItems] = useState([])
-    const [newItemId, setNewItemId] = useState('')
+    const [availableInventory, setAvailableInventory] = useState([])
+    const [searchTerm, setSearchTerm] = useState('')
     const [isAdding, setIsAdding] = useState(false)
+    const [selectedInventoryId, setSelectedInventoryId] = useState('')
 
     useEffect(() => {
         loadItems()
+        loadInventory()
     }, [plan])
 
     const loadItems = async () => {
+        // Fetch shipping plan items with linked inventory details
         const { data } = await supabase
             .from('shipping_plan_items')
-            .select('*, order:orders(*)')
+            .select(`
+                *,
+                inventory_item:inventory_items (
+                    id,
+                    qr_code,
+                    box_count,
+                    status,
+                    product:products(name, product_code),
+                    variants:product_variants!variant_id(sku, color, size)
+                ),
+                order:orders(id, customer:customers(name))
+            `)
             .eq('shipping_plan_id', plan.id)
         setItems(data || [])
     }
 
+    const loadInventory = async () => {
+        const inventory = await DataManager.getInventoryItemsForShipping()
+        setAvailableInventory(inventory)
+    }
+
     const addItem = async (e) => {
         e.preventDefault()
-        if (!newItemId) return
+        if (!selectedInventoryId) return
         setIsAdding(true)
 
-        // Verify Address/Order exists? For now just try to link by Order ID (short UUID or manual code?)
-        // Assuming we rely on full UUID or we need a search.
-        // Let's assume input is a full Order UUID for MVP, or we would need a search picker.
-        // TO KEEP IT SIMPLE FOR NOW: We will assume user enters Order ID.
-        // Ideally we should have a dropdown of 'Ready to Ship' orders.
+        try {
+            // Find selected inventory item
+            const invItem = availableInventory.find(i => i.id === selectedInventoryId)
 
-        // Let's implement a quick search separately? No, let's just insert for now.
-        const { error } = await supabase.from('shipping_plan_items').insert({
-            shipping_plan_id: plan.id,
-            order_id: newItemId
-        })
+            // Insert into shipping_plan_items
+            const { error } = await supabase.from('shipping_plan_items').insert({
+                shipping_plan_id: plan.id,
+                inventory_item_id: selectedInventoryId,
+                status: 'pending'
+                // We might also link order_id here if the inventory item is reserved for an order?
+                // For now, let's assume we link primarily via inventory_item_id
+            })
 
-        if (error) {
-            alert('Error adding order: ' + error.message)
-        } else {
-            setNewItemId('')
+            if (error) throw error
+
+            // Update Inventory Status to 'shipping' or similar?
+            // Or just keep it as 'in_stock' until actually shipped?
+            // Let's keep it simple: Link created. Status change happens on 'Ship' action.
+
+            setSelectedInventoryId('')
             loadItems()
-            onUpdate()
+            onUpdate() // Update parent list counts
+        } catch (error) {
+            showError({ text: 'Error adding item: ' + error.message })
+        } finally {
+            setIsAdding(false)
         }
-        setIsAdding(false)
     }
+
+    // Filter inventory based on search
+    const filteredInventory = availableInventory.filter(item => {
+        const term = searchTerm.toLowerCase()
+        const name = item.product?.name?.toLowerCase() || ''
+        const code = item.product?.product_code?.toLowerCase() || ''
+        const sku = item.variants?.sku?.toLowerCase() || ''
+        const qr = item.qr_code?.toLowerCase() || ''
+        return name.includes(term) || code.includes(term) || sku.includes(term) || qr.includes(term)
+    })
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b flex justify-between items-center bg-primary-50 rounded-t-xl">
                     <div>
                         <h2 className="text-xl font-bold text-primary-900">{plan.courier} Plan</h2>
@@ -218,65 +303,157 @@ function ManagePlanModal({ plan, onClose, onUpdate }) {
                     <button onClick={onClose}><X size={24} className="text-secondary-400" /></button>
                 </div>
 
-                <div className="p-6 flex-1 overflow-y-auto">
-                    {/* Items List */}
-                    <div className="space-y-4 mb-6">
-                        <h3 className="font-bold text-secondary-800">Items in this shipment</h3>
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Left: Current Items in Plan */}
+                    <div className="w-1/2 border-r p-6 overflow-y-auto bg-secondary-50/30">
+                        <h3 className="font-bold text-secondary-800 mb-4 flex items-center gap-2">
+                            <Package size={18} />
+                            Shipment Items ({items.length})
+                        </h3>
+
                         {items.length === 0 ? (
-                            <div className="text-center p-8 bg-secondary-50 rounded-lg text-secondary-500">
+                            <div className="text-center p-8 border-2 border-dashed border-secondary-200 rounded-lg text-secondary-500">
                                 No items added yet.
                             </div>
                         ) : (
-                            items.map(item => (
-                                <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <Package size={20} className="text-secondary-400" />
-                                        <div>
-                                            {/* Defensive check if order data is missing */}
-                                            <p className="font-bold">{item.order?.customer_name || 'Order #' + item.order_id}</p>
-                                            <p className="text-xs text-secondary-500">Status: {item.status}</p>
+                            <div className="space-y-3">
+                                {items.map(item => {
+                                    const inv = item.inventory_item
+                                    const productName = inv?.product?.name || 'Unknown Item'
+                                    const variantStr = inv?.variants
+                                        ? `${inv.variants.sku} ${inv.variants.color || ''} ${inv.variants.size || ''}`
+                                        : ''
+
+                                    return (
+                                        <div key={item.id} className="bg-white p-3 border border-secondary-200 rounded-lg shadow-sm flex justify-between items-start group">
+                                            <div>
+                                                <div className="font-bold text-secondary-900 line-clamp-1">{productName}</div>
+                                                <div className="text-xs text-secondary-500 mb-1">{variantStr}</div>
+                                                <div className="flex gap-2">
+                                                    <span className="text-[10px] bg-secondary-100 px-1.5 py-0.5 rounded text-secondary-600 font-mono">
+                                                        {inv?.qr_code || 'No QR'}
+                                                    </span>
+                                                    {item.status && (
+                                                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded uppercase">
+                                                            {item.status}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    const result = await showConfirm({
+                                                        title: 'Remove Item?',
+                                                        text: 'Remove this item from the shipping plan?',
+                                                        confirmButtonText: 'Remove',
+                                                        confirmButtonColor: '#d33'
+                                                    })
+                                                    if (!result.isConfirmed) return
+
+                                                    await supabase.from('shipping_plan_items').delete().eq('id', item.id)
+                                                    loadItems()
+                                                    onUpdate()
+                                                }}
+                                                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                            >
+                                                <X size={16} />
+                                            </button>
                                         </div>
-                                    </div>
-                                    <button
-                                        onClick={async () => {
-                                            await supabase.from('shipping_plan_items').delete().eq('id', item.id)
-                                            loadItems()
-                                            onUpdate()
-                                        }}
-                                        className="text-red-500 text-xs hover:underline"
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            ))
+                                    )
+                                })}
+                            </div>
                         )}
                     </div>
 
-                    {/* Add Item Form */}
-                    <div className="bg-secondary-50 p-4 rounded-lg">
-                        <h4 className="font-bold text-sm mb-2">Add Order to Shipment</h4>
-                        <p className="text-xs text-secondary-500 mb-2">Enter available Order ID to add to this truck</p>
-                        <form onSubmit={addItem} className="flex gap-2">
+                    {/* Right: Add Inventory */}
+                    <div className="w-1/2 p-6 overflow-y-auto flex flex-col">
+                        <h3 className="font-bold text-secondary-800 mb-4 flex items-center gap-2">
+                            <Search size={18} />
+                            Add from Inventory
+                        </h3>
+
+                        {/* Search */}
+                        <div className="mb-4 relative">
                             <input
                                 type="text"
-                                value={newItemId}
-                                onChange={e => setNewItemId(e.target.value)}
-                                placeholder="Order UUID..."
-                                className="flex-1 p-2 border rounded"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                placeholder="Search Name, SKU, QR..."
+                                className="w-full pl-9 pr-4 py-2 border border-secondary-300 rounded-lg text-sm"
                             />
-                            <button
-                                type="submit"
-                                disabled={isAdding}
-                                className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50"
-                            >
-                                Add
-                            </button>
-                        </form>
+                            <Search size={16} className="absolute left-3 top-2.5 text-secondary-400" />
+                        </div>
+
+                        {/* Inventory List */}
+                        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                            {filteredInventory.length === 0 ? (
+                                <div className="text-center py-8 text-secondary-400 text-sm">
+                                    No available inventory found.
+                                </div>
+                            ) : (
+                                filteredInventory.map(inv => {
+                                    const isAlreadyAdded = items.some(i => i.inventory_item_id === inv.id)
+                                    if (isAlreadyAdded) return null // Hide already added items
+
+                                    const productName = inv.product?.name || 'Unknown'
+                                    return (
+                                        <div key={inv.id} className="p-3 border border-secondary-200 rounded-lg hover:border-primary-300 transition-colors flex justify-between items-center bg-white">
+                                            <div className="flex-1 min-w-0 pr-2">
+                                                <div className="font-medium text-sm text-secondary-900 truncate">{productName}</div>
+                                                <div className="text-xs text-secondary-500 truncate">
+                                                    {inv.variants?.sku} · {inv.variants?.color}
+                                                </div>
+                                                <div className="mt-1 flex gap-2">
+                                                    <span className="text-[10px] bg-secondary-100 px-1.5 py-0.5 rounded font-mono text-secondary-600">
+                                                        {inv.qr_code}
+                                                    </span>
+                                                    <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded">
+                                                        {inv.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedInventoryId(inv.id)
+                                                    // Auto-submit specific item
+                                                    // But we need to bypass the form state logic or set it and trigger
+                                                    // Let's just call insert logic directly directly for UX
+                                                    const autoAdd = async () => {
+                                                        const { error } = await supabase.from('shipping_plan_items').insert({
+                                                            shipping_plan_id: plan.id,
+                                                            inventory_item_id: inv.id,
+                                                            status: 'pending'
+                                                        })
+                                                        if (!error) {
+                                                            loadItems() // Refresh left side
+                                                            onUpdate()
+                                                        }
+                                                    }
+                                                    autoAdd()
+                                                }}
+                                                className="shrink-0 p-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors"
+                                            >
+                                                <Plus size={18} />
+                                            </button>
+                                        </div>
+                                    )
+                                })
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-4 border-t flex justify-end">
-                    <button onClick={onClose} className="px-4 py-2 text-secondary-600">Close</button>
+                <div className="p-4 border-t flex justify-between items-center">
+                    <button
+                        onClick={onDelete}
+                        className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium"
+                    >
+                        <Trash2 size={18} />
+                        Delete Plan
+                    </button>
+                    <button onClick={onClose} className="px-6 py-2 bg-secondary-100 text-secondary-700 rounded-lg hover:bg-secondary-200 font-medium">
+                        Done
+                    </button>
                 </div>
             </div>
         </div>

@@ -14,142 +14,242 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
-    Wallet
+    Wallet,
+    ArrowUpRight,
+    ArrowDownLeft,
+    User
 } from 'lucide-react'
 
+// Tab Component
+const TabButton = ({ active, onClick, children, icon: Icon }) => (
+    <button
+        onClick={onClick}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${active
+            ? 'bg-primary-600 text-white shadow-md'
+            : 'bg-white text-secondary-600 hover:bg-secondary-50 border border-secondary-200'
+            }`}
+    >
+        {Icon && <Icon size={16} />}
+        {children}
+    </button>
+)
+
+import PurchaseOrderModal from '../components/PurchaseOrderModal'
+
+// ... existing imports ...
+
 export default function FinancePage() {
-    const [payments, setPayments] = useState([])
-    const [filter, setFilter] = useState('all') // all, paid, partial, unpaid, overdue
+    const [activeTab, setActiveTab] = useState('receivables')
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Data States
+    const [receivables, setReceivables] = useState([])
+    const [payables, setPayables] = useState([])
+    const [reimbursements, setReimbursements] = useState([])
+
+    // Filter States
     const [searchTerm, setSearchTerm] = useState('')
+    const [filterStatus, setFilterStatus] = useState('all')
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
-    // Load and calculate data from LocalStorage
-    // Load and calculate data from Supabase
+    // Modal State
+    const [selectedPO, setSelectedPO] = useState(null)
+    const [isPOModalOpen, setIsPOModalOpen] = useState(false)
+
     useEffect(() => {
-        const loadPayments = async () => {
-            try {
-                const orders = await DataManager.getOrders()
+        loadData()
+    }, [activeTab])
 
-                const calculatedPayments = orders.map(order => {
-                    const total = Number(order.totalAmount) || 0
-                    const deposit = Number(order.deposit) || 0
+    const loadData = async () => {
+        setIsLoading(true)
+        setSearchTerm('')
+        setFilterStatus('all')
+        setCurrentPage(1)
 
-                    // Calculate total paid (Deposit + any additional payments)
-                    const additionalPaid = Array.isArray(order.payments)
-                        ? order.payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-                        : 0
+        try {
+            if (activeTab === 'receivables') {
+                await loadReceivables()
+            } else if (activeTab === 'payables') {
+                await loadPayables()
+            } else if (activeTab === 'reimbursement') {
+                await loadReimbursements()
+            }
+        } catch (error) {
+            console.error("Error loading finance data:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-                    const paid = deposit + additionalPaid
-                    const outstanding = total - paid
+    // ... loadReceivables ...
 
-                    let status = 'Unpaid'
-                    if (outstanding <= 0 && total > 0) status = 'Paid'
-                    else if (paid > 0) status = 'Partial'
+    const loadPayables = async () => {
+        const pos = await DataManager.getPayablePurchaseOrders() || []
+        const mapped = pos.map(po => {
+            const totalTHB = Number(po.total_landed_cost) || 0
 
-                    // Mock due date (e.g., 7 days after order date)
-                    const orderDate = new Date(order.orderDate || order.createdAt)
-                    const dueDate = new Date(orderDate)
-                    dueDate.setDate(dueDate.getDate() + 7)
+            // Logic for 'paid' amount calculation based on status/payment logs
+            // Ideally backend sums this up, but for now specific to status
+            let paidAmount = 0
+            if (po.payment_status === 'paid') paidAmount = totalTHB
+            else if (po.payment_status === 'partial') paidAmount = totalTHB / 2 // Approximation for visual if no ledger
 
-                    // Safe date formatting
-                    const formatDate = (d) => {
-                        if (isNaN(d.getTime())) return '-'
-                        return d.toISOString().split('T')[0]
-                    }
+            const outstanding = totalTHB - paidAmount
 
-                    return {
-                        id: order.id,
-                        date: formatDate(orderDate),
-                        customer: order.customerName || 'Unknown',
-                        total: total,
-                        deposit: deposit,
-                        paid: paid,
-                        outstanding: Math.max(0, outstanding), // No negative outstanding
-                        status: status,
-                        dueDate: formatDate(dueDate)
-                    }
-                })
+            return {
+                id: po.id,
+                date: new Date(po.created_at).toLocaleDateString('th-TH'),
+                supplier: po.supplier_name,
+                total: totalTHB,
+                paid: paidAmount,
+                outstanding: outstanding,
+                status: po.payment_status,
+                dueDateStr: po.expected_date ? new Date(po.expected_date).toLocaleDateString('th-TH') : '-',
+                currency: po.currency,
+                originalCost: po.shipping_origin
+            }
+        })
+        setPayables(mapped)
+    }
 
-                // Sort by date desc
-                calculatedPayments.sort((a, b) => new Date(b.date) - new Date(a.date))
+    // ... loadReimbursements, getStats ...
 
-                setPayments(calculatedPayments)
-            } catch (error) {
-                console.error("Error loading payments:", error)
+    // Copy existing functions ...
+    const loadReceivables = async () => {
+        const orders = await DataManager.getOrders()
+        const calculated = orders.map(order => {
+            const total = Number(order.totalAmount) || 0
+            const deposit = Number(order.deposit) || 0
+            const additionalPaid = Array.isArray(order.payments)
+                ? order.payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                : 0
+            const paid = deposit + additionalPaid
+            const outstanding = total - paid
+
+            let status = 'Unpaid'
+            if (outstanding <= 0 && total > 0) status = 'Paid'
+            else if (paid > 0) status = 'Partial'
+
+            const orderDate = new Date(order.orderDate || order.createdAt)
+            const dueDate = new Date(orderDate)
+            dueDate.setDate(dueDate.getDate() + 7)
+
+            return {
+                id: order.id,
+                date: orderDate.toLocaleDateString('th-TH'),
+                customer: order.customerName || 'Unknown',
+                total, deposit, paid, outstanding: Math.max(0, outstanding),
+                status,
+                dueDate: dueDate,
+                dueDateStr: dueDate.toLocaleDateString('th-TH'),
+                rawDate: orderDate
+            }
+        }).sort((a, b) => b.rawDate - a.rawDate)
+        setReceivables(calculated)
+    }
+
+    const loadReimbursements = async () => {
+        const queue = await DataManager.getReimbursementQueue() || []
+        const mapped = queue.map(po => ({
+            id: po.id,
+            date: new Date(po.payment_date || po.created_at).toLocaleDateString('th-TH'),
+            payer: po.payer_name,
+            amount: Number(po.total_landed_cost) || 0,
+            note: po.remarks || `Reimburse for PO #${po.external_ref_no || po.id.slice(0, 6)}`,
+            status: 'pending'
+        }))
+        setReimbursements(mapped)
+    }
+
+    const getStats = () => {
+        if (activeTab === 'receivables') {
+            return {
+                totalRevenue: receivables.reduce((s, i) => s + i.total, 0),
+                received: receivables.reduce((s, i) => s + i.paid, 0),
+                outstanding: receivables.reduce((s, i) => s + i.outstanding, 0),
+                labelRevenue: 'ยอดขายรวม',
+                labelReceived: 'รับแล้ว',
+                labelOutstanding: 'ค้างรับ'
+            }
+        } else if (activeTab === 'payables') {
+            return {
+                totalRevenue: payables.reduce((s, i) => s + i.total, 0),
+                received: payables.reduce((s, i) => s + i.paid, 0),
+                outstanding: payables.reduce((s, i) => s + i.outstanding, 0),
+                labelRevenue: 'ยอดซื้อรวม',
+                labelReceived: 'จ่ายแล้ว',
+                labelOutstanding: 'ค้างจ่าย'
+            }
+        } else {
+            return {
+                totalRevenue: reimbursements.reduce((s, i) => s + i.amount, 0),
+                received: 0,
+                outstanding: reimbursements.reduce((s, i) => s + i.amount, 0),
+                labelRevenue: 'ยอดเบิกทั้งหมด',
+                labelReceived: '-',
+                labelOutstanding: 'รอจ่ายคืน'
             }
         }
+    }
+    const stats = getStats()
 
-        loadPayments()
-    }, [])
+    const getData = () => {
+        if (activeTab === 'receivables') return receivables
+        if (activeTab === 'payables') return payables
+        return reimbursements
+    }
 
-    // Filter logic
-    const filteredPayments = payments.filter(payment => {
+    const currentData = getData().filter(item => {
+        const lowerSearch = searchTerm.toLowerCase()
         const matchesSearch =
-            payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.customer.toLowerCase().includes(searchTerm.toLowerCase())
+            (item.id && item.id.toLowerCase().includes(lowerSearch)) ||
+            (item.customer && item.customer.toLowerCase().includes(lowerSearch)) ||
+            (item.supplier && item.supplier.toLowerCase().includes(lowerSearch)) ||
+            (item.payer && item.payer.toLowerCase().includes(lowerSearch))
 
         if (!matchesSearch) return false
 
-        const today = new Date()
-        const dueDate = new Date(payment.dueDate)
-        // Reset time for accurate date comparison
-        today.setHours(0, 0, 0, 0)
-        dueDate.setHours(0, 0, 0, 0)
-
-        const isOverdue = payment.outstanding > 0 && dueDate < today
-
-        switch (filter) {
-            case 'paid':
-                return payment.status === 'Paid'
-            case 'partial':
-                return payment.status === 'Partial'
-            case 'unpaid':
-                return payment.status === 'Unpaid'
-            case 'overdue':
-                return isOverdue
-            default:
-                return true
+        if (filterStatus === 'all') return true
+        if (activeTab === 'receivables') {
+            if (filterStatus === 'paid') return item.status === 'Paid'
+            if (filterStatus === 'unpaid') return item.status === 'Unpaid'
+            if (filterStatus === 'partial') return item.status === 'Partial'
+            if (filterStatus === 'overdue') return item.outstanding > 0 && item.dueDate < new Date()
         }
+        if (activeTab === 'payables') {
+            if (filterStatus === 'paid') return item.status === 'paid'
+            if (filterStatus === 'unpaid') return item.status === 'unpaid'
+            if (filterStatus === 'partial') return item.status === 'partial'
+        }
+        return true
     })
 
-    // Pagination
-    const totalPages = Math.ceil(filteredPayments.length / itemsPerPage)
-    const paginatedPayments = filteredPayments.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const totalPages = Math.ceil(currentData.length / itemsPerPage)
+    const paginatedData = currentData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-    // Calculate stats
-    const stats = {
-        totalRevenue: payments.reduce((sum, p) => sum + p.total, 0),
-        totalPaid: payments.reduce((sum, p) => sum + p.paid, 0),
-        totalOutstanding: payments.reduce((sum, p) => sum + p.outstanding, 0),
-        totalDeposit: payments.reduce((sum, p) => sum + p.deposit, 0)
-    }
-
-    const countByStatus = {
-        paid: payments.filter(p => p.status === 'Paid').length,
-        partial: payments.filter(p => p.status === 'Partial').length,
-        unpaid: payments.filter(p => p.status === 'Unpaid').length,
-        overdue: payments.filter(p => {
-            const today = new Date()
-            const dueDate = new Date(p.dueDate)
-            today.setHours(0, 0, 0, 0)
-            dueDate.setHours(0, 0, 0, 0)
-            return p.outstanding > 0 && dueDate < today
-        }).length
-    }
-
-    const getStatusColor = (status, isOverdue) => {
-        if (isOverdue) return 'bg-danger-100 text-danger-700'
-        switch (status) {
-            case 'Paid': return 'bg-success-100 text-success-700'
-            case 'Partial': return 'bg-warning-100 text-warning-700'
-            case 'Unpaid': return 'bg-secondary-100 text-secondary-700'
-            default: return 'bg-secondary-100 text-secondary-700'
+    const handleReimburse = async (id) => {
+        if (!confirm('Mark this as reimbursed?')) return
+        const success = await DataManager.updatePurchaseOrderPayment(id, { is_reimbursed: true })
+        if (success) {
+            alert('Reimbursement marked as complete.')
+            loadReimbursements()
+        } else {
+            alert('Failed to update.')
         }
+    }
+
+    const handleViewPO = async (id) => {
+        // Fetch full PO details including items
+        const fullPO = await DataManager.getPurchaseOrderById(id)
+        if (fullPO) {
+            setSelectedPO(fullPO)
+            setIsPOModalOpen(true)
+        }
+    }
+
+    const handlePOSave = () => {
+        loadData() // Refresh list
     }
 
     return (
@@ -159,219 +259,189 @@ export default function FinancePage() {
             </Head>
 
             <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Header & Tabs */}
+                {/* ... existing header code ... */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-secondary-900 flex items-center gap-3">
                             <Wallet className="text-primary-600" size={32} />
-                            การเงิน
+                            การเงิน (Finance)
                         </h1>
-                        <p className="text-secondary-500 mt-1">จัดการสถานะการชำระเงินและยอดคงค้าง</p>
+                        <p className="text-secondary-500 mt-1">บริหารจัดการกระแสเงินสด รับ-จ่าย</p>
+                    </div>
+
+                    <div className="flex bg-secondary-100/50 p-1.5 rounded-xl self-start md:self-auto">
+                        <TabButton
+                            active={activeTab === 'receivables'}
+                            onClick={() => setActiveTab('receivables')}
+                            icon={ArrowDownLeft}
+                        >
+                            รายรับ (Receivables)
+                        </TabButton>
+                        <TabButton
+                            active={activeTab === 'payables'}
+                            onClick={() => setActiveTab('payables')}
+                            icon={ArrowUpRight}
+                        >
+                            รายจ่าย (Payables)
+                        </TabButton>
+                        <TabButton
+                            active={activeTab === 'reimbursement'}
+                            onClick={() => setActiveTab('reimbursement')}
+                            icon={User}
+                        >
+                            เบิกจ่าย (Reimburse)
+                        </TabButton>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="stats-card">
+                        <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
                                 <DollarSign size={20} />
                             </div>
-                            <span className="text-secondary-600 text-sm font-medium">ยอดรวมทั้งหมด</span>
+                            <span className="text-secondary-600 font-medium">{stats.labelRevenue}</span>
                         </div>
-                        <div className="text-xl font-bold text-secondary-900">฿{stats.totalRevenue.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-secondary-900">฿{stats.totalRevenue.toLocaleString()}</div>
                     </div>
-
-                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                    <div className="stats-card">
+                        <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-success-50 rounded-lg text-success-600">
                                 <CheckCircle size={20} />
                             </div>
-                            <span className="text-secondary-600 text-sm font-medium">รับชำระแล้ว</span>
+                            <span className="text-secondary-600 font-medium">{stats.labelReceived}</span>
                         </div>
-                        <div className="text-xl font-bold text-success-700">฿{stats.totalPaid.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-success-700">฿{stats.received.toLocaleString()}</div>
                     </div>
-
-                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                    <div className="stats-card">
+                        <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-danger-50 rounded-lg text-danger-600">
                                 <AlertCircle size={20} />
                             </div>
-                            <span className="text-secondary-600 text-sm font-medium">ค้างชำระ</span>
+                            <span className="text-secondary-600 font-medium">{stats.labelOutstanding}</span>
                         </div>
-                        <div className="text-xl font-bold text-danger-700">฿{stats.totalOutstanding.toLocaleString()}</div>
-                    </div>
-
-                    <div className="bg-white px-4 py-3 rounded-xl border border-secondary-200 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-warning-50 rounded-lg text-warning-600">
-                                <CreditCard size={20} />
-                            </div>
-                            <span className="text-secondary-600 text-sm font-medium">มัดจำรวม</span>
-                        </div>
-                        <div className="text-xl font-bold text-warning-700">฿{stats.totalDeposit.toLocaleString()}</div>
+                        <div className="text-2xl font-bold text-danger-700">฿{stats.outstanding.toLocaleString()}</div>
                     </div>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="flex flex-wrap gap-2 bg-white p-2 rounded-xl border border-secondary-200 shadow-sm">
-                    {[
-                        { id: 'all', label: 'ทั้งหมด', count: payments.length, icon: FileText },
-                        { id: 'paid', label: 'ชำระครบ', count: countByStatus.paid, icon: CheckCircle },
-                        { id: 'partial', label: 'ชำระบางส่วน', count: countByStatus.partial, icon: Clock },
-                        { id: 'unpaid', label: 'ยังไม่ชำระ', count: countByStatus.unpaid, icon: AlertCircle },
-                        { id: 'overdue', label: 'เกินกำหนด', count: countByStatus.overdue, icon: AlertCircle }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => { setFilter(tab.id); setCurrentPage(1); }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === tab.id
-                                ? tab.id === 'overdue'
-                                    ? 'bg-danger-100 text-danger-700 shadow-sm'
-                                    : 'bg-primary-100 text-primary-700 shadow-sm'
-                                : 'text-secondary-600 hover:bg-secondary-50'
-                                }`}
-                        >
-                            <tab.icon size={16} />
-                            {tab.label}
-                            <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${filter === tab.id ? 'bg-white/50' : 'bg-secondary-100'
-                                }`}>
-                                {tab.count}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-
-                {/* Search */}
-                <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <div className="relative flex-1 w-full">
+                {/* Controls */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-secondary-200 shadow-sm">
+                    <div className="relative w-full sm:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary-400" size={20} />
                         <input
                             type="text"
-                            placeholder="ค้นหา Order ID หรือชื่อลูกค้า..."
+                            placeholder="ค้นหา..."
                             value={searchTerm}
-                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                            className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                     </div>
+
+                    {activeTab !== 'reimbursement' && (
+                        <div className="flex gap-2">
+                            {['all', 'unpaid', 'paid'].map(s => (
+                                <button key={s} onClick={() => setFilterStatus(s)}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${filterStatus === s ? 'bg-primary-100 text-primary-700' : 'text-secondary-500 hover:bg-secondary-50'}`}>
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {/* Table */}
+                {/* Table Data */}
                 <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">Order ID</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">วันที่</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">ลูกค้า</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ยอดรวม</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">มัดจำ</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">ชำระแล้ว</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase tracking-wider">คงค้าง</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase tracking-wider">กำหนดชำระ</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">สถานะ</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase tracking-wider">จัดการ</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">Date</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-600 uppercase">
+                                        {activeTab === 'receivables' ? 'Customer' : (activeTab === 'payables' ? 'Supplier' : 'Payer')}
+                                    </th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">Total</th>
+                                    {activeTab !== 'reimbursement' && <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">Paid</th>}
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">Outstanding</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">Status</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-secondary-100">
-                                {paginatedPayments.length > 0 ? (
-                                    paginatedPayments.map((payment) => {
-                                        const today = new Date()
-                                        const dueDate = new Date(payment.dueDate)
-                                        today.setHours(0, 0, 0, 0)
-                                        dueDate.setHours(0, 0, 0, 0)
-                                        const isOverdue = payment.outstanding > 0 && dueDate < today
-
-                                        return (
-                                            <tr key={payment.id} className={`hover:bg-secondary-50 transition-colors ${isOverdue ? 'bg-danger-50/30' : ''}`}>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <Link href={`/order?id=${payment.id}`} className="font-mono font-medium text-primary-600 hover:text-primary-700 hover:underline">
-                                                        {payment.id && payment.id.length > 8 ? `#${payment.id.slice(-6)}` : payment.id}
-                                                    </Link>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600">
-                                                    {payment.date}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-medium text-secondary-900">{payment.customer}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-bold text-secondary-900">฿{payment.total.toLocaleString()}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className="text-sm text-secondary-600">฿{payment.deposit.toLocaleString()}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className="text-sm font-medium text-success-700">฿{payment.paid.toLocaleString()}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <div className={`text-sm font-bold ${payment.outstanding > 0 ? 'text-danger-600' : 'text-secondary-400'}`}>
-                                                        {payment.outstanding > 0 ? `฿${payment.outstanding.toLocaleString()}` : '-'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className={`text-sm flex items-center gap-1 ${isOverdue ? 'text-danger-600 font-medium' : 'text-secondary-600'}`}>
-                                                        {payment.dueDate}
-                                                        {isOverdue && <AlertCircle size={14} />}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status, isOverdue)}`}>
-                                                        {isOverdue ? 'Overdue' : payment.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <button className="px-3 py-1 bg-success-600 text-white text-xs font-medium rounded hover:bg-success-700 transition-colors shadow-sm">
-                                                        บันทึก
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td colSpan="10" className="px-6 py-12 text-center text-secondary-500">
-                                            <div className="flex flex-col items-center justify-center">
-                                                <Wallet size={48} className="text-secondary-300 mb-4" />
-                                                <p className="text-lg font-medium text-secondary-900">ไม่พบข้อมูลการเงิน</p>
-                                                <p className="text-sm text-secondary-500 mt-1">ลองเปลี่ยนตัวกรอง หรือค้นหาใหม่</p>
-                                            </div>
+                                {paginatedData.map(item => (
+                                    <tr key={item.id} className="hover:bg-secondary-50">
+                                        <td className="px-6 py-4 whitespace-nowrap font-mono text-primary-600">
+                                            {activeTab === 'payables' ? (
+                                                <button onClick={() => handleViewPO(item.id)} className="hover:underline text-left">
+                                                    {item.id.length > 8 ? '#' + item.id.slice(0, 8) : '#' + item.id}
+                                                </button>
+                                            ) : (
+                                                <span>{item.id.length > 8 ? '#' + item.id.slice(0, 8) : '#' + item.id}</span>
+                                            )}
                                         </td>
+                                        <td className="px-6 py-4 text-sm text-secondary-600">{item.date}</td>
+                                        <td className="px-6 py-4 font-medium text-secondary-900">
+                                            {item.customer || item.supplier || item.payer}
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-medium">฿{(item.total ?? item.amount ?? 0).toLocaleString()}</td>
+                                        {activeTab !== 'reimbursement' && (
+                                            <td className="px-6 py-4 text-right text-success-600">฿{item.paid.toLocaleString()}</td>
+                                        )}
+                                        <td className="px-6 py-4 text-right font-bold text-danger-600">
+                                            {item.outstanding > 0 || (activeTab === 'reimbursement') ? `฿${(item.outstanding || item.amount).toLocaleString()}` : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium 
+                                                ${item.status === 'Paid' || item.status === 'paid' ? 'bg-success-100 text-success-700'
+                                                    : item.status === 'pending' ? 'bg-warning-100 text-warning-700' : 'bg-red-100 text-red-700'}`}>
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            {activeTab === 'receivables' && (
+                                                <Link href={`/order?id=${item.id}`} className="text-primary-600 hover:underline text-sm">View</Link>
+                                            )}
+                                            {activeTab === 'payables' && (
+                                                <button onClick={() => handleViewPO(item.id)} className="text-primary-600 hover:underline text-sm">
+                                                    View / Pay
+                                                </button>
+                                            )}
+                                            {activeTab === 'reimbursement' && (
+                                                <button
+                                                    onClick={() => handleReimburse(item.id)}
+                                                    className="px-3 py-1 bg-primary-600 text-white text-xs rounded shadow hover:bg-primary-700">
+                                                    Refund
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {paginatedData.length === 0 && (
+                                    <tr>
+                                        <td colSpan="8" className="px-6 py-12 text-center text-secondary-500">No records found</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="px-6 py-4 border-t border-secondary-200 flex items-center justify-between bg-secondary-50">
-                            <div className="text-sm text-secondary-600">
-                                แสดง {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredPayments.length)} จาก {filteredPayments.length} รายการ
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                                <span className="text-sm font-medium text-secondary-700 px-2">
-                                    หน้า {currentPage} / {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 border border-secondary-300 rounded-lg text-secondary-600 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </div>
+
             </div>
+
+            <PurchaseOrderModal
+                isOpen={isPOModalOpen}
+                onClose={() => setIsPOModalOpen(false)}
+                onSave={handlePOSave}
+                initialItem={selectedPO}
+            />
+
+            <style jsx>{`
+                .stats-card {
+                    @apply bg-white p-4 rounded-xl border border-secondary-200 shadow-sm;
+                }
+            `}</style>
         </AppLayout>
     )
 }
