@@ -68,6 +68,21 @@ export default function SettingsPage() {
         materials: ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้'],
         materialColors: ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ'],
         crystalColors: ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ'],
+        // Expense Categories
+        expenseTypes: [
+            "สินค้า",
+            "อุปกรณ์ไม่สึกหรอ",
+            "อุปกรณ์สิ้นเปลือง",
+            "ภาษี บัญชี",
+            "อาคาร สาธารณูปโภค",
+            "โฆษณา ส่งเสริมการขาย",
+            "ตกแต่งอาคารรื้อถอนไม่ได้",
+            "อาหาร",
+            "รถ เดินทาง",
+            "เงินเดือน",
+            "สวัสดิการ",
+            "ขนส่ง"
+        ],
         // Employee Options
         teamNames: ['ทีมช่างกี', 'ทีมQC', 'ทีมSALE', 'ทีมบริหาร'],
         teamTypes: ['QC', 'SALE', 'บริหาร'],
@@ -105,6 +120,7 @@ export default function SettingsPage() {
         { id: 'materials', label: 'วัสดุ (Materials)' },
         { id: 'materialColors', label: 'สีวัสดุ (Material Colors)' },
         { id: 'crystalColors', label: 'สีคริสตัล (Crystal Colors)' },
+        { id: 'expenseTypes', label: 'ประเภทรายจ่าย (Expense Categories)' },
         // Employee Options
         { id: 'teamNames', label: 'ชื่อทีม (Team Names)' },
         { id: 'teamTypes', label: 'ประเภททีม (Team Types)' },

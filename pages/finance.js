@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
+import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
+import { formatDate } from '../lib/data/helpers'
 import {
     Search,
     DollarSign,
@@ -34,13 +36,23 @@ const TabButton = ({ active, onClick, children, icon: Icon }) => (
     </button>
 )
 
+import { useLanguage } from '../contexts/LanguageContext'
 import PurchaseOrderModal from '../components/PurchaseOrderModal'
-
-// ... existing imports ...
+import ReimburseModal from '../components/ReimburseModal'
+import PaymentModal from '../components/PaymentModal'
 
 export default function FinancePage() {
+    const { t } = useLanguage()
     const [activeTab, setActiveTab] = useState('receivables')
     const [isLoading, setIsLoading] = useState(true)
+
+    // Reimburse Modal State
+    const [selectedReimbursePO, setSelectedReimbursePO] = useState(null)
+    const [isReimburseModalOpen, setIsReimburseModalOpen] = useState(false)
+
+    // Payment Modal State
+    const [selectedPaymentPO, setSelectedPaymentPO] = useState(null)
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
     // Data States
     const [receivables, setReceivables] = useState([])
@@ -49,7 +61,8 @@ export default function FinancePage() {
 
     // Filter States
     const [searchTerm, setSearchTerm] = useState('')
-    const [filterStatus, setFilterStatus] = useState('all')
+    const [filterStatus, setFilterStatus] = useState('all') // for receivables/payables
+    const [reimburseStatus, setReimburseStatus] = useState('pending') // pending | history
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 15
 
@@ -59,7 +72,7 @@ export default function FinancePage() {
 
     useEffect(() => {
         loadData()
-    }, [activeTab])
+    }, [activeTab, reimburseStatus])
 
     const loadData = async () => {
         setIsLoading(true)
@@ -90,22 +103,26 @@ export default function FinancePage() {
             const totalTHB = Number(po.total_landed_cost) || 0
 
             // Logic for 'paid' amount calculation based on status/payment logs
-            // Ideally backend sums this up, but for now specific to status
             let paidAmount = 0
-            if (po.payment_status === 'paid') paidAmount = totalTHB
-            else if (po.payment_status === 'partial') paidAmount = totalTHB / 2 // Approximation for visual if no ledger
+            if (po.paid_amount !== undefined && po.paid_amount !== null) {
+                paidAmount = Number(po.paid_amount)
+            } else if (po.payment_status === 'paid') {
+                paidAmount = totalTHB
+            } else if (po.payment_status === 'partial') {
+                paidAmount = totalTHB / 2 // Fallback approximation
+            }
 
             const outstanding = totalTHB - paidAmount
 
             return {
                 id: po.id,
-                date: new Date(po.created_at).toLocaleDateString('th-TH'),
+                date: formatDate(po.created_at),
                 supplier: po.supplier_name,
                 total: totalTHB,
                 paid: paidAmount,
                 outstanding: outstanding,
                 status: po.payment_status,
-                dueDateStr: po.expected_date ? new Date(po.expected_date).toLocaleDateString('th-TH') : '-',
+                dueDateStr: formatDate(po.expected_date),
                 currency: po.currency,
                 originalCost: po.shipping_origin
             }
@@ -137,12 +154,12 @@ export default function FinancePage() {
 
             return {
                 id: order.id,
-                date: orderDate.toLocaleDateString('th-TH'),
+                date: formatDate(orderDate),
                 customer: order.customerName || 'Unknown',
                 total, deposit, paid, outstanding: Math.max(0, outstanding),
                 status,
                 dueDate: dueDate,
-                dueDateStr: dueDate.toLocaleDateString('th-TH'),
+                dueDateStr: formatDate(dueDate),
                 rawDate: orderDate
             }
         }).sort((a, b) => b.rawDate - a.rawDate)
@@ -150,14 +167,22 @@ export default function FinancePage() {
     }
 
     const loadReimbursements = async () => {
-        const queue = await DataManager.getReimbursementQueue() || []
+        let queue = []
+        if (reimburseStatus === 'pending') {
+            queue = await DataManager.getReimbursementQueue() || []
+        } else {
+            queue = await DataManager.getReimbursementHistory() || []
+        }
+
         const mapped = queue.map(po => ({
             id: po.id,
-            date: new Date(po.payment_date || po.created_at).toLocaleDateString('th-TH'),
+            date: formatDate(po.payment_date || po.created_at),
             payer: po.payer_name,
             amount: Number(po.total_landed_cost) || 0,
             note: po.remarks || `Reimburse for PO #${po.external_ref_no || po.id.slice(0, 6)}`,
-            status: 'pending'
+            status: po.is_reimbursed ? 'Reimbursed' : 'pending',
+            reimbursedDate: formatDate(po.reimbursed_date),
+            slipUrl: po.reimbursed_slip_url
         }))
         setReimbursements(mapped)
     }
@@ -220,7 +245,9 @@ export default function FinancePage() {
         if (activeTab === 'payables') {
             if (filterStatus === 'paid') return item.status === 'paid'
             if (filterStatus === 'unpaid') return item.status === 'unpaid'
-            if (filterStatus === 'partial') return item.status === 'partial'
+            if (filterStatus === 'unpaid') return item.status === 'unpaid'
+            if (filterStatus === 'deposit') return item.status === 'partial'
+            if (filterStatus === 'paid') return item.status === 'paid'
         }
         return true
     })
@@ -228,14 +255,41 @@ export default function FinancePage() {
     const totalPages = Math.ceil(currentData.length / itemsPerPage)
     const paginatedData = currentData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-    const handleReimburse = async (id) => {
-        if (!confirm('Mark this as reimbursed?')) return
-        const success = await DataManager.updatePurchaseOrderPayment(id, { is_reimbursed: true })
-        if (success) {
-            alert('Reimbursement marked as complete.')
-            loadReimbursements()
-        } else {
-            alert('Failed to update.')
+    // ... (in handleReimburse)
+    const handleReimburse = (item) => {
+        setSelectedReimbursePO(item)
+        setIsReimburseModalOpen(true)
+    }
+
+    const handleReimburseSuccess = () => {
+        loadReimbursements()
+    }
+
+    const handleRevert = async (id) => {
+        const result = await showConfirm({
+            title: 'ยกเลิกสถานะคืนเงิน?',
+            text: "รายการนี้จะกลับไปอยู่ที่ 'Pending' (รอจ่ายคืน)",
+            icon: 'warning',
+            confirmButtonText: 'ใช่, ยกเลิก',
+            cancelButtonText: 'ไม่',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6'
+        })
+
+        if (result.isConfirmed) {
+            const success = await DataManager.revertReimbursement(id)
+            if (success) {
+                await showSuccess({
+                    title: 'เรียบร้อย',
+                    text: 'รายการถูกย้ายกลับไปที่ Pending แล้ว'
+                })
+                loadReimbursements()
+            } else {
+                await showError({
+                    title: 'ผิดพลาด',
+                    text: 'ไม่สามารถทำรายการได้'
+                })
+            }
         }
     }
 
@@ -250,6 +304,11 @@ export default function FinancePage() {
 
     const handlePOSave = () => {
         loadData() // Refresh list
+    }
+
+    const handlePay = (item) => {
+        setSelectedPaymentPO(item)
+        setIsPaymentModalOpen(true)
     }
 
     return (
@@ -339,14 +398,29 @@ export default function FinancePage() {
                         />
                     </div>
 
-                    {activeTab !== 'reimbursement' && (
+                    {activeTab !== 'reimbursement' ? (
                         <div className="flex gap-2">
-                            {['all', 'unpaid', 'paid'].map(s => (
+                            {['all', 'unpaid', 'deposit', 'paid'].map(s => (
                                 <button key={s} onClick={() => setFilterStatus(s)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize ${filterStatus === s ? 'bg-primary-100 text-primary-700' : 'text-secondary-500 hover:bg-secondary-50'}`}>
-                                    {s}
+                                    {s === 'all' ? t('All Status') : t(s.charAt(0).toUpperCase() + s.slice(1))}
                                 </button>
                             ))}
+                        </div>
+                    ) : (
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setReimburseStatus('pending')}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${reimburseStatus === 'pending' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                Pending
+                            </button>
+                            <button
+                                onClick={() => setReimburseStatus('history')}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${reimburseStatus === 'history' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                History
+                            </button>
                         </div>
                     )}
                 </div>
@@ -366,6 +440,9 @@ export default function FinancePage() {
                                     {activeTab !== 'reimbursement' && <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">Paid</th>}
                                     <th className="px-6 py-4 text-right text-xs font-semibold text-secondary-600 uppercase">Outstanding</th>
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">Status</th>
+                                    {activeTab === 'reimbursement' && reimburseStatus === 'history' && (
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">Paid Date</th>
+                                    )}
                                     <th className="px-6 py-4 text-center text-xs font-semibold text-secondary-600 uppercase">Actions</th>
                                 </tr>
                             </thead>
@@ -394,26 +471,66 @@ export default function FinancePage() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium 
-                                                ${item.status === 'Paid' || item.status === 'paid' ? 'bg-success-100 text-success-700'
+                                                ${item.status === 'Paid' || item.status === 'paid' || item.status === 'Reimbursed' ? 'bg-success-100 text-success-700'
                                                     : item.status === 'pending' ? 'bg-warning-100 text-warning-700' : 'bg-red-100 text-red-700'}`}>
                                                 {item.status}
                                             </span>
                                         </td>
+                                        {activeTab === 'reimbursement' && reimburseStatus === 'history' && (
+                                            <td className="px-6 py-4 text-center text-sm text-secondary-600 bg-gray-50/50">
+                                                {item.reimbursedDate}
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 text-center">
                                             {activeTab === 'receivables' && (
                                                 <Link href={`/order?id=${item.id}`} className="text-primary-600 hover:underline text-sm">View</Link>
                                             )}
                                             {activeTab === 'payables' && (
-                                                <button onClick={() => handleViewPO(item.id)} className="text-primary-600 hover:underline text-sm">
-                                                    View / Pay
-                                                </button>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button onClick={() => handleViewPO(item.id)} className="text-secondary-500 hover:text-secondary-700 text-sm">
+                                                        View
+                                                    </button>
+                                                    {item.status !== 'paid' && (
+                                                        <button
+                                                            onClick={() => handlePay(item)}
+                                                            className="px-3 py-1 bg-primary-600 text-white text-xs rounded shadow hover:bg-primary-700"
+                                                        >
+                                                            Pay
+                                                        </button>
+                                                    )}
+                                                </div>
                                             )}
                                             {activeTab === 'reimbursement' && (
-                                                <button
-                                                    onClick={() => handleReimburse(item.id)}
-                                                    className="px-3 py-1 bg-primary-600 text-white text-xs rounded shadow hover:bg-primary-700">
-                                                    Refund
-                                                </button>
+                                                item.status === 'pending' ? (
+                                                    <button
+                                                        onClick={() => handleReimburse(item)}
+                                                        className="px-3 py-1 bg-primary-600 text-white text-xs rounded shadow hover:bg-primary-700">
+                                                        {t('Pay Back')}
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex gap-2 justify-center items-center">
+                                                        {item.slipUrl ? (
+                                                            <a
+                                                                href={item.slipUrl}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="px-2 py-1 bg-white border border-secondary-300 text-secondary-600 text-xs rounded hover:bg-secondary-50 flex items-center gap-1"
+                                                                title="View Slip"
+                                                            >
+                                                                <FileText size={14} />
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-300">-</span>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleRevert(item.id)}
+                                                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                                                            title="Undo / Delete from History"
+                                                        >
+                                                            <AlertCircle size={16} />
+                                                        </button>
+                                                    </div>
+                                                )
                                             )}
                                         </td>
                                     </tr>
@@ -437,11 +554,25 @@ export default function FinancePage() {
                 initialItem={selectedPO}
             />
 
+            <ReimburseModal
+                isOpen={isReimburseModalOpen}
+                onClose={() => setIsReimburseModalOpen(false)}
+                poData={selectedReimbursePO}
+                onSuccess={handleReimburseSuccess}
+            />
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                poData={selectedPaymentPO}
+                onSuccess={() => loadData()}
+            />
+
             <style jsx>{`
                 .stats-card {
                     @apply bg-white p-4 rounded-xl border border-secondary-200 shadow-sm;
                 }
             `}</style>
-        </AppLayout>
+        </AppLayout >
     )
 }

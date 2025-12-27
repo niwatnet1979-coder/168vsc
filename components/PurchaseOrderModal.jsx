@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react'
-import { X, Save, Plus, Trash2, Search, Calculator, ExternalLink, User, CreditCard, DollarSign, Truck, FileText, Banknote, List, ShoppingBag } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { X, Search, Info, Calendar, CreditCard, ShoppingCart, ShoppingBag, FileText, Banknote, List, Package, Trash2, Plus, Calculator, Truck, User, ExternalLink, DollarSign, ChevronDown, Save, UserCircle } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import { useSession } from 'next-auth/react'
 import ProductModal from './ProductModal'
+import { currency as formatCurrency } from '../lib/utils'
+import Swal from '../lib/sweetAlert' // Import default export as Swal for convenience wrapper
+import { showConfirm, showSuccess, showError } from '../lib/sweetAlert' // Import specific helpers
 
 export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialItem }) {
     // Tabs
@@ -10,7 +14,15 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
     // Header 
     const [supplierName, setSupplierName] = useState('')
     const [expectedDate, setExpectedDate] = useState('') // datetime-local
-    const [createdBy, setCreatedBy] = useState('Admin')
+    const [createdBy, setCreatedBy] = useState('')
+    const [expenseCategory, setExpenseCategory] = useState("สินค้า") // Default category
+
+    // Options for Dropdowns
+    const [expenseOptions, setExpenseOptions] = useState([])
+    const [employeeOptions, setEmployeeOptions] = useState([]) // For Payer Dropdown & Creator Auto-fill
+
+    // Auth Session
+    const { data: session } = useSession()
 
     // Financial & Currency
     const [currency, setCurrency] = useState('CNY')
@@ -30,16 +42,25 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
     const [purchaseLink, setPurchaseLink] = useState('')
     const [remarks, setRemarks] = useState('')
 
+    // Custom Item State
+    const [isCustomItem, setIsCustomItem] = useState(false)
+    const [customItemName, setCustomItemName] = useState('')
+
     // Items
     const [products, setProducts] = useState([])
     const [poItems, setPoItems] = useState([])
 
-    // Item Entry
+    // Item Entry (New Logic)
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [selectedVariant, setSelectedVariant] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [itemQty, setItemQty] = useState(1)
     const [itemPriceForeign, setItemPriceForeign] = useState(0)
+
+    // Search Popup State
+    const [showSearchPopup, setShowSearchPopup] = useState(false)
+    const [searchResults, setSearchResults] = useState([])
+    const [productVariants, setProductVariants] = useState([])
 
     // Inline Product Creation
     const [showProductModal, setShowProductModal] = useState(false)
@@ -48,23 +69,30 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
     const [poId, setPoId] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    const searchInputRef = useRef(null)
+
     useEffect(() => {
         if (isOpen) {
             loadProducts()
+            loadOptions()
             resetForm()
             // Set default date to now + 7 days
             const d = new Date()
             d.setDate(d.getDate() + 7)
-            setExpectedDate(d.toISOString().slice(0, 16)) // YYYY-MM-DDTHH:mm
+            // Fix timezone offset for default value
+            const offset = d.getTimezoneOffset() * 60000
+            const localISOTime = (new Date(d - offset)).toISOString().slice(0, 16)
+            setExpectedDate(localISOTime)
 
             if (initialItem) {
-                if (initialItem.id && initialItem.items) {
+                if (initialItem.id) {
                     // EDIT MODE
                     setPoId(initialItem.id)
                     setSupplierName(initialItem.supplier_name || '')
                     const exp = initialItem.expected_date ? new Date(initialItem.expected_date).toISOString().slice(0, 16) : ''
                     setExpectedDate(exp)
-                    setCreatedBy(initialItem.created_by || 'Admin')
+                    setCreatedBy(initialItem.created_by || '')
+                    setExpenseCategory(initialItem.expense_category || "สินค้า")
 
                     setCurrency(initialItem.currency || 'CNY')
                     setExchangeRate(initialItem.exchange_rate || 5.0)
@@ -87,17 +115,78 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                     setPurchaseLink(initialItem.purchase_link || '')
                     setRemarks(initialItem.remarks || '')
 
-                    setPoItems(initialItem.items.map(i => ({
-                        ...i,
-                        total_price: i.total_price || 0
-                    })) || [])
+                    setPoItems(initialItem.items?.map(i => {
+                        const product = i.product || i.products || {}
+                        const foreignPrice = i.unit_price_foreign || (i.unit_price / (initialItem.exchange_rate || 5))
+                        // Auto-calculate unit_price if missing but foreign price exists
+                        const unitPrice = i.unit_price > 0 ? i.unit_price : (foreignPrice * (initialItem.exchange_rate || 5))
+
+                        return {
+                            product_id: i.product_id,
+                            variant_id: i.variant_id,
+                            product_name: i.product_name || product.name || 'Unknown Item',
+                            product_code: i.product_code || product.product_code || '-',
+                            variant_sku: i.variant_sku,
+                            variant_details: i.variant_details,
+                            quantity: i.quantity,
+                            unit_price_foreign: foreignPrice,
+                            unit_price: unitPrice,
+                            total_price: i.quantity * unitPrice, // Always recalculate total
+                            image: i.image || product.images?.[0] || null
+                        }
+                    }) || [])
 
                 } else if (initialItem.product_code) {
-                    // CREATE MODE
+                    // CREATE MODE from Product list
+                    setSearchTerm(initialItem.name)
+                    // We need to wait for products to load to select it, or just use initialItem data
+                    // For simplicity, we just pre-fill search
+                    if (session?.user?.email) {
+                        autoIdentifyCreator(session.user.email)
+                    }
+                }
+            } else {
+                // NEW CREATE MODE: Auto-fill Creator from Session
+                if (session?.user?.email) {
+                    autoIdentifyCreator(session.user.email)
                 }
             }
         }
-    }, [isOpen, initialItem])
+    }, [isOpen, initialItem, session])
+
+    // Auto-switch Custom Item Mode based on Expense Category
+    useEffect(() => {
+        if (expenseCategory === 'สินค้า') {
+            setIsCustomItem(false)
+        } else {
+            setIsCustomItem(true)
+            // Optional: Clear or set default custom name if needed, but keeping it empty is safer
+        }
+    }, [expenseCategory])
+
+    // Auto-set Exchange Rate for THB
+    useEffect(() => {
+        if (currency === 'THB') {
+            setExchangeRate(1)
+        }
+    }, [currency])
+
+    // Search Logic
+    useEffect(() => {
+        if (!products.length) return
+
+        if (searchTerm.trim()) {
+            const lowerTerm = searchTerm.toLowerCase()
+            const results = products.filter(p =>
+                (p.name && p.name.toLowerCase().includes(lowerTerm)) ||
+                (p.product_code && p.product_code.toLowerCase().includes(lowerTerm)) ||
+                (p.id && p.id.toLowerCase().includes(lowerTerm))
+            ).slice(0, 50) // Limit results
+            setSearchResults(results)
+        } else {
+            setSearchResults(products.slice(0, 20)) // Default show some
+        }
+    }, [searchTerm, products])
 
     const resetForm = () => {
         setPoId(null)
@@ -120,6 +209,7 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
         setSearchTerm('')
         setItemQty(1)
         setItemPriceForeign(0)
+        setProductVariants([])
     }
 
     const loadProducts = async () => {
@@ -127,38 +217,88 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
         setProducts(data || [])
     }
 
-    const filteredProducts = products.filter(p =>
-        p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.product_code?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const loadOptions = async () => {
+        // Load settings for Expense Types
+        const settings = await DataManager.getSettings()
+        if (settings?.productOptions?.expenseTypes) {
+            setExpenseOptions(settings.productOptions.expenseTypes)
+        } else {
+            // Fallback Default
+            setExpenseOptions(["สินค้า", "อุปกรณ์ไม่สึกหรอ", "อุปกรณ์สิ้นเปลือง", "ภาษี บัญชี", "อาคาร สาธารณูปโภค", "โฆษณา ส่งเสริมการขาย", "ตกแต่งอาคารรื้อถอนไม่ได้", "อาหาร", "รถ เดินทาง", "เงินเดือน", "สวัสดิการ", "ขนส่ง"])
+        }
+
+        // Load active employees for Payer & Creator
+        const emps = await DataManager.getActiveEmployees()
+        setEmployeeOptions(emps || [])
+    }
+
+    const autoIdentifyCreator = async (email) => {
+        const emp = await DataManager.getEmployeeByEmail(email)
+        if (emp?.nickname) {
+            setCreatedBy(emp.nickname)
+        } else {
+            // Fallback if not found (e.g. admin@gmail.com might not be in employee list)
+            setCreatedBy(session?.user?.name || 'Admin')
+        }
+    }
 
     const handleProductSelect = (product) => {
         setSelectedProduct(product)
-        setSelectedVariant(null)
-        setSearchTerm('')
+        setSearchTerm(product.name) // Set input to product name
+        setShowSearchPopup(false)
+
+        // Variants
+        setProductVariants(product.variants || [])
+
+        // Auto-select first variant if exists
+        if (product.variants && product.variants.length > 0) {
+            const first = product.variants[0]
+            setSelectedVariant(first)
+            setItemPriceForeign(0) // Default to 0 as requested (do not use selling price)
+        } else {
+            setSelectedVariant(null)
+            setItemPriceForeign(0) // Default to 0
+        }
+
+        setItemQty(1)
     }
 
     const addItem = () => {
-        if (!selectedProduct) return
+        if (!isCustomItem && !selectedProduct) return
+        if (isCustomItem && !customItemName.trim()) return
+
         const unitPriceTHB = itemPriceForeign * exchangeRate
         const totalTHB = itemQty * unitPriceTHB
-        const foreignTotal = itemQty * itemPriceForeign
+
+        // Get image from variant or product
+        const img = !isCustomItem ? (selectedVariant?.images?.[0] || selectedProduct.images?.[0] || null) : null
 
         const newItem = {
-            product_id: selectedProduct.id || selectedProduct.uuid,
-            variant_id: selectedVariant ? (selectedVariant.id || selectedVariant.uuid) : null,
-            product_name: selectedProduct.name,
-            product_code: selectedProduct.product_code,
-            variant_sku: selectedVariant ? selectedVariant.sku : null,
-            variant_details: selectedVariant ? `${selectedVariant.color || ''} ${selectedVariant.size || ''}` : '',
+            product_id: isCustomItem ? null : (selectedProduct.id || selectedProduct.uuid),
+            variant_id: !isCustomItem && selectedVariant ? (selectedVariant.id || selectedVariant.uuid) : null,
+            product_name: isCustomItem ? customItemName : selectedProduct.name,
+            product_code: !isCustomItem ? selectedProduct.product_code : '-',
+            variant_sku: !isCustomItem && selectedVariant ? selectedVariant.sku : null,
+            variant_details: !isCustomItem && selectedVariant ? `${selectedVariant.color || ''} ${selectedVariant.size || ''}` : '',
             quantity: itemQty,
             unit_price_foreign: itemPriceForeign,
             unit_price: unitPriceTHB,
-            total_price: totalTHB
+            total_price: totalTHB,
+            image: img,
+            is_custom: isCustomItem,
+            item_name: isCustomItem ? customItemName : null
         }
         setPoItems([...poItems, newItem])
-        setSelectedProduct(null)
-        setSelectedVariant(null)
+
+        // Reset Item Entry
+        if (isCustomItem) {
+            setCustomItemName('')
+        } else {
+            setSelectedProduct(null)
+            setSelectedVariant(null)
+            setSearchTerm('')
+            setProductVariants([])
+        }
         setItemQty(1)
         setItemPriceForeign(0)
     }
@@ -181,14 +321,17 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
         if (result && result.success) {
             await loadProducts()
             setShowProductModal(false)
-            alert('Product created successfully!')
+            // Optionally auto-select the new product
+            if (result.product) {
+                handleProductSelect(result.product)
+            }
         } else {
-            alert('Failed to create product')
+            showError({ title: 'Error', text: 'Failed to create product' })
         }
     }
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
+        if (e) e.preventDefault()
         if (!supplierName || poItems.length === 0) return
 
         setIsSubmitting(true)
@@ -210,9 +353,24 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
             purchase_link: purchaseLink,
             remarks: remarks,
             created_by: createdBy,
+            expense_category: expenseCategory,
             payer_name: payerName,
             is_reimbursed: !!reimbursedDate,
             reimbursed_date: reimbursedDate || null
+        }
+
+        // Confirm before saving
+        const confirmResult = await showConfirm({
+            title: 'Confirm Save?',
+            text: "Please verify the details before saving.",
+            confirmButtonText: 'Yes, Save it!',
+            cancelButtonText: 'Cancel',
+            icon: 'question'
+        })
+
+        if (!confirmResult.isConfirmed) {
+            setIsSubmitting(false)
+            return
         }
 
         try {
@@ -224,6 +382,12 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
             }
 
             if (result) {
+                await showSuccess({
+                    title: 'Saved!',
+                    text: 'Purchase Order saved successfully.',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
                 onSave()
                 onClose()
             } else {
@@ -231,7 +395,78 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
             }
         } catch (error) {
             console.error(error)
-            alert('Error creating/updating PO. Please check if database migration has been run.')
+            await showError({
+                title: 'Error',
+                text: error.message || 'Error creating/updating PO.'
+            })
+            // If details exist, we might need a custom fire for the footer/html
+            if (error.details) {
+                showError({ // Fallback to custom error if needed or just use consistent error
+                    title: 'Error Details',
+                    text: error.details
+                })
+            }
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleDeleteItem = async (index) => {
+        const result = await showConfirm({
+            title: 'Remove Item?',
+            text: 'Are you sure you want to remove this item?',
+            confirmButtonText: 'Yes, Remove',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#d33',
+            icon: 'warning'
+        })
+
+        if (result.isConfirmed) {
+            const newItems = [...poItems]
+            newItems.splice(index, 1)
+            setPoItems(newItems)
+        }
+    }
+
+    const handleDelete = async () => {
+        const result = await showConfirm({
+            title: 'ยืนยันการลบ',
+            text: 'คุณต้องการลบใบสั่งซื้อนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ลบข้อมูล',
+            cancelButtonText: 'ยกเลิก',
+            reverseButtons: true, // Cancel on left, Confirm on right (optional preference, usually defaults to Confirm Right)
+            customClass: {
+                popup: 'rounded-2xl shadow-xl border border-secondary-100',
+                confirmButton: 'rounded-lg px-6 py-2.5 font-medium shadow-lg shadow-red-500/30',
+                cancelButton: 'rounded-lg px-6 py-2.5 font-medium'
+            }
+        })
+
+        if (!result.isConfirmed) return
+
+        setIsSubmitting(true)
+        try {
+            const success = await DataManager.deletePurchaseOrder(poId)
+            if (success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: 'Purchase order has been deleted.',
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+                onSave()
+                onClose()
+            } else {
+                Swal.fire({ icon: 'error', title: 'Failed', text: 'Failed to delete purchase order.' })
+            }
+        } catch (error) {
+            console.error(error)
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Error deleting purchase order.' })
         } finally {
             setIsSubmitting(false)
         }
@@ -241,339 +476,511 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
     const { itemsTotalTHB, shippingTHB, grandTotalTHB } = calculateTotals()
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[95vh] overflow-y-auto flex flex-col">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 outline-none" tabIndex={-1}>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col border border-secondary-200">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between sticky top-0 bg-white z-20">
+                <div className="px-6 py-4 border-b border-secondary-200 flex items-center justify-between bg-white z-20 shrink-0">
                     <div>
                         <h2 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
-                            <Plus className="text-primary-600" />
-                            {poId ? 'Edit Purchase Order' : 'Create Purchase Order'}
+                            <ShoppingBag className="text-primary-600" />
+                            {poId ? 'แก้ไขใบสั่งซื้อ (Edit PO)' : 'สร้างใบสั่งซื้อ (Create PO)'}
                         </h2>
+                        <p className="text-xs text-secondary-500 mt-1 ml-8">จัดการข้อมูลการสั่งซื้อสินค้าและต้นทุนนำเข้า</p>
                     </div>
-                    <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
+                    <button onClick={onClose} className="p-2 hover:bg-secondary-100 rounded-full text-secondary-400 hover:text-secondary-600 transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex-1 overflow-y-auto">
-                    {/* Tabs */}
-                    <div className="px-6 pt-4 flex gap-6 border-b border-secondary-200 bg-secondary-50 sticky top-0 z-10">
-                        <button
-                            onClick={() => setActiveTab('general')}
-                            className={`pb-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'general' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
-                        >
-                            <FileText size={16} /> General Info
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('financial')}
-                            className={`pb-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'financial' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
-                        >
-                            <Banknote size={16} /> Financial & Payment
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('reference')}
-                            className={`pb-3 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'reference' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700'}`}
-                        >
-                            <List size={16} /> Reference & Notes
-                        </button>
-                    </div>
+                {/* Main Content Layout */}
+                <div className="flex-1 overflow-hidden flex flex-col md:flex-row bg-secondary-50">
 
-                    <div className="p-6 space-y-6">
-                        {/* Tab Content: General */}
-                        <div className={activeTab === 'general' ? 'block' : 'hidden'}>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-1">
-                                    <label className="label">Supplier Name *</label>
-                                    <input type="text" className="input-field" placeholder="e.g. 1688 Shop A" required autoFocus
+                    {/* LEFT SIDE: Inputs (Scrollable) */}
+                    <div className="w-full md:w-[400px] lg:w-[450px] overflow-y-auto border-r border-secondary-200 bg-white shadow-sm flex-shrink-0 z-10 custom-scrollbar">
+                        {/* Tabs */}
+                        <div className="flex border-b border-secondary-200 sticky top-0 bg-white z-10 px-2 pt-2 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02)]">
+                            <button
+                                onClick={() => setActiveTab('general')}
+                                className={`flex-1 pb-3 pt-2 text-xs font-semibold flex flex-col items-center gap-1 border-b-2 transition-colors ${activeTab === 'general' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50'}`}
+                            >
+                                <FileText size={16} /> ข้อมูลทั่วไป
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('financial')}
+                                className={`flex-1 pb-3 pt-2 text-xs font-semibold flex flex-col items-center gap-1 border-b-2 transition-colors ${activeTab === 'financial' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50'}`}
+                            >
+                                <Banknote size={16} /> การเงิน
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('reference')}
+                                className={`flex-1 pb-3 pt-2 text-xs font-semibold flex flex-col items-center gap-1 border-b-2 transition-colors ${activeTab === 'reference' ? 'border-primary-600 text-primary-700' : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50'}`}
+                            >
+                                <List size={16} /> อ้างอิง
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-6 pb-20">
+                            {/* Tab Content: General */}
+                            <div className={activeTab === 'general' ? 'space-y-4 animate-in fade-in slide-in-from-left-4 duration-300' : 'hidden'}>
+                                <div>
+                                    <label className="label">ชื่อร้านค้า / Supplier *</label>
+                                    <input type="text" className="input-field" placeholder="ระบุชื่อร้านค้า..." required autoFocus
                                         value={supplierName} onChange={e => setSupplierName(e.target.value)} />
                                 </div>
-                                <div className="md:col-span-1">
-                                    <label className="label">Expected Date</label>
+
+                                <div>
+                                    <label className="label">ประเภทรายจ่าย (Expense Category)</label>
+                                    <select
+                                        className="input-field"
+                                        value={expenseCategory}
+                                        onChange={e => setExpenseCategory(e.target.value)}
+                                    >
+                                        {expenseOptions.map((opt, idx) => (
+                                            <option key={idx} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="bg-secondary-50 p-4 rounded-xl border border-secondary-200">
+                                    <h3 className="font-semibold text-secondary-800 mb-3 flex items-center gap-2 text-sm">
+                                        <DollarSign size={16} className="text-primary-600" /> ต้นทุนนำเข้า
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="label">สกุลเงิน (Currency)</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {['CNY', 'THB', 'USD'].map(c => (
+                                                    <button
+                                                        key={c}
+                                                        onClick={() => setCurrency(c)}
+                                                        className={`py-2 text-xs font-bold rounded-lg border ${currency === c ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-secondary-600 border-secondary-300 hover:bg-secondary-50'}`}
+                                                    >
+                                                        {c}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="label">อัตราแลกเปลี่ยน (Rate)</label>
+                                            <div className="relative">
+                                                <Calculator className="absolute left-3 top-2.5 text-secondary-400" size={16} />
+                                                <input type="number" step="0.01" className="input-field pl-10"
+                                                    value={exchangeRate} onChange={e => setExchangeRate(parseFloat(e.target.value))} />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="label">ค่าขนส่งจีน-ไทย ({currency})</label>
+                                            <div className="relative">
+                                                <Truck className="absolute left-3 top-2.5 text-secondary-400" size={16} />
+                                                <input type="number" step="0.01" className="input-field pl-10"
+                                                    value={originShippingCost} onChange={e => setOriginShippingCost(parseFloat(e.target.value))} />
+                                            </div>
+                                            <p className="text-xs text-secondary-500 mt-1 ml-1 text-right">≈ ฿{shippingTHB.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="label">วันที่คาดว่าจะเข้า (Expected Date)</label>
                                     <input type="datetime-local" className="input-field"
                                         value={expectedDate} onChange={e => setExpectedDate(e.target.value)} />
                                 </div>
-                                <div className="md:col-span-1">
-                                    <label className="label">Created By</label>
+                                <div>
+                                    <label className="label">ผู้ทำรายการ (Created By)</label>
                                     <div className="relative">
-                                        <User className="absolute left-3 top-2.5 text-secondary-400" size={16} />
-                                        <input type="text" className="input-field pl-10"
-                                            value={createdBy} onChange={e => setCreatedBy(e.target.value)} />
+                                        <UserCircle className="absolute left-3 top-2.5 text-secondary-400" size={16} />
+                                        <input type="text" className="input-field pl-10 bg-secondary-50"
+                                            value={createdBy} readOnly title="Auto-filled from Login" />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Items Editor (Always visible in General Tab) */}
-                            <div className="mt-8 border-t border-secondary-200 pt-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-semibold text-secondary-800 flex items-center gap-2">
-                                        <ShoppingBag size={18} /> Order Items
+                            {/* Tab Content: Financial */}
+                            <div className={activeTab === 'financial' ? 'space-y-5 animate-in fade-in slide-in-from-left-4 duration-300' : 'hidden'}>
+
+
+                                <div className="bg-white rounded-xl border border-secondary-200 p-4 shadow-sm">
+                                    <h3 className="font-semibold text-secondary-800 mb-3 flex items-center gap-2 text-sm">
+                                        <CreditCard size={16} className="text-primary-600" /> สถานะการชำระ
                                     </h3>
-                                    <button onClick={() => setShowProductModal(true)} className="text-xs bg-primary-50 text-primary-700 px-3 py-1.5 rounded-lg border border-primary-200 hover:bg-primary-100 font-medium flex gap-1 items-center">
-                                        <Plus size={14} /> New Product
-                                    </button>
-                                </div>
-
-                                {/* Add Item Bar */}
-                                <div className="bg-secondary-50 p-4 rounded-xl border border-secondary-200 flex flex-col md:flex-row gap-4 mb-4">
-                                    <div className="flex-1 w-full md:w-auto relative">
-                                        <label className="label">Product</label>
-                                        {!selectedProduct ? (
-                                            <div className="relative">
-                                                <Search className="absolute left-3 top-2.5 text-secondary-400" size={16} />
-                                                <input type="text" className="input-field pl-9" placeholder="Search sku/name..."
-                                                    value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                                                {searchTerm && (
-                                                    <div className="absolute top-full left-0 right-0 bg-white border border-secondary-200 mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto z-20">
-                                                        {filteredProducts.map(p => (
-                                                            <button key={p.id} onClick={() => handleProductSelect(p)} className="w-full text-left px-3 py-2 hover:bg-secondary-50 text-sm border-b border-secondary-100 flex justify-between">
-                                                                <span>{p.name}</span>
-                                                                <span className="text-xs text-secondary-400 font-mono">{p.product_code}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center justify-between px-3 py-2 bg-white border border-primary-300 rounded-lg text-sm shadow-sm ring-1 ring-primary-100">
-                                                <span className="font-medium truncate">{selectedProduct.name}</span>
-                                                <button onClick={() => setSelectedProduct(null)} className="text-xs text-red-500 hover:text-red-700 font-medium px-2">Change</button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Variant */}
-                                    <div className="w-full md:w-48">
-                                        <label className="label">Variant</label>
-                                        <select className="input-field bg-white"
-                                            disabled={!selectedProduct?.variants?.length}
-                                            onChange={e => {
-                                                const v = selectedProduct.variants.find(v => (v.id || v.uuid) === e.target.value)
-                                                setSelectedVariant(v)
-                                            }}
-                                            value={selectedVariant ? (selectedVariant.id || selectedVariant.uuid) : ''}>
-                                            <option value="">{selectedProduct?.variants?.length ? 'Select Variant' : '-'}</option>
-                                            {selectedProduct?.variants?.map(v => (
-                                                <option key={v.id || v.uuid} value={v.id || v.uuid}>{v.sku} - {v.color} {v.size}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="w-full md:w-32">
-                                        <label className="label">Price ({currency})</label>
-                                        <input type="number" className="input-field text-right" min="0" step="0.01"
-                                            value={itemPriceForeign} onChange={e => setItemPriceForeign(parseFloat(e.target.value) || 0)} />
-                                    </div>
-                                    <div className="w-full md:w-20">
-                                        <label className="label">Qty</label>
-                                        <input type="number" className="input-field text-center" min="1"
-                                            value={itemQty} onChange={e => setItemQty(parseInt(e.target.value) || 1)} />
-                                    </div>
-                                    <div className="w-full md:w-auto flex flex-col justify-end">
-                                        <button onClick={addItem} disabled={!selectedProduct} className="w-full md:w-auto h-[42px] px-6 bg-secondary-800 text-white rounded-lg hover:bg-secondary-900 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                                            Add Item
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Items List */}
-                                <div className="border border-secondary-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                                    <table className="w-full text-sm">
-                                        <thead className="bg-secondary-50 text-secondary-600 font-medium border-b border-secondary-200">
-                                            <tr>
-                                                <th className="px-4 py-3 text-left">Product Details</th>
-                                                <th className="px-4 py-3 text-right">Price ({currency})</th>
-                                                <th className="px-4 py-3 text-right">Total (THB)</th>
-                                                <th className="px-4 py-3 text-center">Qty</th>
-                                                <th className="w-10"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-secondary-100">
-                                            {poItems.length === 0 ? (
-                                                <tr><td colSpan="5" className="text-center py-8 text-secondary-400">No items added yet.</td></tr>
-                                            ) : (
-                                                poItems.map((item, idx) => (
-                                                    <tr key={idx} className="hover:bg-secondary-50">
-                                                        <td className="px-4 py-3">
-                                                            <div className="font-medium text-secondary-900">{item.product_name}</div>
-                                                            <div className="text-xs text-secondary-500 font-mono mt-0.5">
-                                                                {item.variant_sku || item.product_code}
-                                                                {item.variant_details && <span className="ml-2 bg-secondary-100 px-1.5 py-0.5 rounded text-secondary-600">{item.variant_details}</span>}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-right font-mono">{item.unit_price_foreign?.toFixed(2)}</td>
-                                                        <td className="px-4 py-3 text-right font-medium">฿{item.total_price?.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-center bg-secondary-50/50 font-medium">{item.quantity}</td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <button onClick={() => removeItem(idx)} className="text-secondary-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                        {poItems.length > 0 && (
-                                            <tfoot className="bg-secondary-50 font-bold text-secondary-800 border-t border-secondary-200">
-                                                <tr>
-                                                    <td colSpan="2" className="px-4 py-3 text-right">Subtotal:</td>
-                                                    <td className="px-4 py-3 text-right">฿{itemsTotalTHB.toLocaleString()}</td>
-                                                    <td colSpan="2"></td>
-                                                </tr>
-                                            </tfoot>
-                                        )}
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tab Content: Financial */}
-                        <div className={activeTab === 'financial' ? 'block' : 'hidden'}>
-                            <h3 className="font-semibold text-secondary-800 mb-4 flex items-center gap-2 pb-2 border-b border-secondary-100">
-                                <DollarSign size={18} /> Cost Breakdown
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div>
-                                    <label className="label">Currency</label>
-                                    <select className="input-field" value={currency} onChange={e => setCurrency(e.target.value)}>
-                                        <option value="CNY">CNY (Chinese Yuan)</option>
-                                        <option value="THB">THB (Thai Baht)</option>
-                                        <option value="USD">USD (US Dollar)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="label">Exchange Rate (to THB)</label>
-                                    <div className="relative">
-                                        <Calculator className="absolute left-3 top-2.5 text-secondary-400" size={16} />
-                                        <input type="number" step="0.01" className="input-field pl-10"
-                                            value={exchangeRate} onChange={e => setExchangeRate(parseFloat(e.target.value))} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="label">Origin Shipping Cost ({currency})</label>
-                                    <div className="relative">
-                                        <Truck className="absolute left-3 top-2.5 text-secondary-400" size={16} />
-                                        <input type="number" step="0.01" className="input-field pl-10"
-                                            value={originShippingCost} onChange={e => setOriginShippingCost(parseFloat(e.target.value))} />
-                                    </div>
-                                    <p className="text-xs text-secondary-500 mt-1 ml-1">≈ ฿{shippingTHB.toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            <h3 className="font-semibold text-secondary-800 mb-4 flex items-center gap-2 pb-2 border-b border-secondary-100">
-                                <CreditCard size={18} /> Payment Status
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="label">Payment Status</label>
-                                    <select className={`input-field font-semibold ${paymentStatus === 'paid' ? 'text-green-600' : 'text-amber-600'}`}
-                                        value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                                        <option value="unpaid">Unpaid (รอจ่าย)</option>
-                                        <option value="partial">Partial (มัดจำ)</option>
-                                        <option value="paid">Paid (จ่ายครบ)</option>
-                                    </select>
-                                </div>
-                                {paymentStatus !== 'unpaid' && (
-                                    <>
+                                    <div className="space-y-3">
                                         <div>
-                                            <label className="label">Payment Date</label>
-                                            <input type="date" className="input-field" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
-                                        </div>
-                                        <div>
-                                            <label className="label">Payment Method</label>
-                                            <select className="input-field" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
-                                                <option value="transfer">Bank Transfer</option>
-                                                <option value="alipay">Alipay</option>
-                                                <option value="credit_card">Credit Card</option>
-                                                <option value="cash">Cash</option>
+                                            <label className="label">สถานะ</label>
+                                            <select className={`input-field font-semibold ${paymentStatus === 'paid' ? 'text-green-600' : 'text-amber-600'}`}
+                                                value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
+                                                <option value="unpaid">Unpaid (รอจ่าย)</option>
+                                                <option value="partial">Partial (มัดจำ)</option>
+                                                <option value="paid">Paid (จ่ายครบ)</option>
                                             </select>
                                         </div>
-
-                                        <div className="md:col-span-2 space-y-3">
-                                            <label className="flex items-center gap-3 p-3 border border-secondary-200 rounded-lg bg-white cursor-pointer hover:bg-secondary-50 transition-colors">
-                                                <input type="checkbox" className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
-                                                    checked={isAdvancedPayment}
-                                                    onChange={e => {
-                                                        setIsAdvancedPayment(e.target.checked)
-                                                        if (!e.target.checked) {
-                                                            setPayerName('')
-                                                            setReimbursedDate('')
-                                                        }
-                                                    }} />
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-secondary-800 text-sm">Advanced Payment (สำรองจ่าย)</span>
-                                                    <span className="text-xs text-secondary-500">Check this if someone paid on behalf of the company (e.g. Employee).</span>
+                                        {paymentStatus !== 'unpaid' && (
+                                            <div className="grid grid-cols-2 gap-3 animate-in fade-in zoom-in-95 duration-200">
+                                                <div>
+                                                    <label className="label">วันที่จ่าย</label>
+                                                    <input type="date" className="input-field" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
                                                 </div>
-                                            </label>
+                                                <div>
+                                                    <label className="label">ช่องทาง</label>
+                                                    <select className="input-field" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                                                        <option value="transfer">โอนเงิน</option>
+                                                        <option value="alipay">Alipay</option>
+                                                        <option value="credit_card">บัตรเครดิต</option>
+                                                        <option value="cash">เงินสด</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
 
+                                        <div className="pt-2 border-t border-secondary-100">
+                                            <label className="flex items-center gap-3 py-2 cursor-pointer">
+                                                <input type="checkbox" className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                                                    checked={isAdvancedPayment}
+                                                    onChange={e => setIsAdvancedPayment(e.target.checked)} />
+                                                <span className="font-medium text-secondary-700 text-sm">Advanced Pay (สำรองจ่าย)</span>
+                                            </label>
                                             {isAdvancedPayment && (
-                                                <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <label className="label text-amber-800 mb-2">Reimbursement Info</label>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <input type="text" className="input-field bg-white" placeholder="Paid by (Payer Name)..."
-                                                                value={payerName} onChange={e => setPayerName(e.target.value)} />
-                                                        </div>
-                                                        <div>
-                                                            <input type="date" className="input-field bg-white"
-                                                                value={reimbursedDate} onChange={e => setReimbursedDate(e.target.value)}
-                                                                placeholder="Reimbursed Date" />
-                                                            <span className="text-xs text-secondary-500 mt-1 block">Reimbursed Date (วันที่คืนเงิน) - Leave empty if not reimbursed.</span>
-                                                        </div>
+                                                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 mt-2 text-sm space-y-2 animate-in fade-in slide-in-from-top-2">
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-amber-900">ชื่อผู้สำรองจ่าย (Payer Name)</label>
+                                                        <select
+                                                            className="input-field bg-white mt-1"
+                                                            required={isAdvancedPayment}
+                                                            value={payerName}
+                                                            onChange={e => setPayerName(e.target.value)}
+                                                        >
+                                                            <option value="">-- เลือกผู้สำรองจ่าย --</option>
+                                                            {employeeOptions.map(emp => (
+                                                                <option key={emp.id} value={emp.nickname}>{emp.nickname} ({emp.fullname})</option>
+                                                            ))}
+                                                            {/* Fallback for existing data not in list */}
+                                                            {payerName && !employeeOptions.find(e => e.nickname === payerName) && (
+                                                                <option value={payerName}>{payerName}</option>
+                                                            )}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-semibold text-amber-900">วันที่ได้รับเงินคืน (Reimbursed Date)</label>
+                                                        <input type="date" className="input-field bg-white mt-1"
+                                                            value={reimbursedDate} onChange={e => setReimbursedDate(e.target.value)} />
+                                                        <p className="text-[10px] text-amber-700 mt-1">*ใส่เมื่อโอนคืนแล้วเท่านั้น (Leave empty for Pending)</p>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </>
-                                )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Tab Content: Reference */}
-                        <div className={activeTab === 'reference' ? 'block' : 'hidden'}>
-                            <div className="space-y-6 max-w-2xl">
+                            {/* Tab Content: Reference */}
+                            <div className={activeTab === 'reference' ? 'space-y-4 animate-in fade-in slide-in-from-left-4 duration-300' : 'hidden'}>
                                 <div>
-                                    <label className="label">External Reference No. (Order ID)</label>
+                                    <label className="label">เลขที่อ้างอิง (Order ID)</label>
                                     <input type="text" className="input-field" placeholder="e.g. 1688-2024-001"
                                         value={externalRef} onChange={e => setExternalRef(e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="label">Purchase Link (URL)</label>
+                                    <label className="label">ลิงก์สินค้า (URL)</label>
                                     <div className="flex gap-2">
-                                        <input type="url" className="input-field" placeholder="https://detail.1688.com/..."
+                                        <input type="url" className="input-field" placeholder="https://..."
                                             value={purchaseLink} onChange={e => setPurchaseLink(e.target.value)} />
                                         {purchaseLink && (
-                                            <a href={purchaseLink} target="_blank" rel="noreferrer" className="p-2 bg-secondary-100 rounded-lg text-secondary-600 hover:bg-secondary-200 border border-secondary-300">
-                                                <ExternalLink size={20} />
+                                            <a href={purchaseLink} target="_blank" rel="noreferrer" className="p-2.5 bg-secondary-100 rounded-lg text-secondary-600 hover:bg-secondary-200 border border-secondary-300">
+                                                <ExternalLink size={18} />
                                             </a>
                                         )}
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="label">Remarks / Notes</label>
-                                    <textarea className="input-field h-32 resize-none" placeholder="Additional notes about this order..."
+                                    <label className="label">หมายเหตุ (Remarks)</label>
+                                    <textarea className="input-field h-32 resize-none" placeholder="บันทึกเพิ่มเติม..."
                                         value={remarks} onChange={e => setRemarks(e.target.value)} ></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Footer Totals & Actions */}
-                <div className="p-4 border-t border-secondary-200 bg-slate-50 sticky bottom-0 z-20">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div className="text-xs text-secondary-500 hidden md:block">
-                            <span className="font-semibold text-secondary-700">Summary:</span> {poItems.length} items | Exchange: {exchangeRate}
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <div className="text-right">
-                                <div className="text-xs text-secondary-500">Grand Total (Est.)</div>
-                                <div className="text-xl font-bold text-primary-700">฿{grandTotalTHB.toLocaleString()}</div>
+                    {/* RIGHT SIDE: Items (Expanded) */}
+                    <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+
+                        {/* 1. Add Item Card (Sticky Top) */}
+                        <div className="p-4 bg-white border-b border-secondary-200 shadow-sm z-10 w-full">
+                            <h3 className="text-sm font-bold text-secondary-800 mb-3 flex items-center gap-2">
+                                <Plus className="text-primary-600" size={18} /> เพิ่มรายการสินค้า
+                            </h3>
+
+                            <div className="flex flex-col gap-3">
+                                {/* Search Row */}
+                                <div className="relative w-full">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="label mb-0">{isCustomItem ? 'ชื่อรายการ (Item Name)' : 'ค้นหาสินค้า (Search Product)'}</label>
+                                        <button
+                                            onClick={() => {
+                                                setIsCustomItem(!isCustomItem)
+                                                setSearchTerm('')
+                                                setCustomItemName('')
+                                                setSelectedProduct(null)
+                                            }}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer transition-colors ${isCustomItem ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'}`}
+                                        >
+                                            {isCustomItem ? 'กลับไปเลือกสินค้า' : '+ เพิ่มรายการเอง (Custom)'}
+                                        </button>
+                                    </div>
+                                    {isCustomItem ? (
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2.5 border border-amber-200 rounded-lg text-sm bg-amber-50 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-sm outline-none"
+                                            placeholder="ระบุชื่อรายการ..."
+                                            value={customItemName}
+                                            onChange={e => setCustomItemName(e.target.value)}
+                                        />
+                                    ) : (
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-2.5 text-secondary-400" size={18} />
+                                            <input
+                                                ref={searchInputRef}
+                                                type="text"
+                                                className="w-full pl-10 pr-4 py-2.5 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 shadow-sm outline-none"
+                                                placeholder="ค้นหาสินค้า (ชื่อ, รหัส, SKU)..."
+                                                value={searchTerm}
+                                                onChange={e => {
+                                                    setSearchTerm(e.target.value)
+                                                    setShowSearchPopup(true)
+                                                }}
+                                                onFocus={() => setShowSearchPopup(true)}
+                                                // Handle blur carefully to allow clicking on results
+                                                onBlur={() => setTimeout(() => setShowSearchPopup(false), 200)}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* SEARCH POPUP */}
+                                    {showSearchPopup && searchResults.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-secondary-200 rounded-lg shadow-xl max-h-[300px] overflow-y-auto z-[60] divide-y divide-secondary-100">
+                                            {searchResults.map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    onClick={() => handleProductSelect(p)}
+                                                    className="p-3 hover:bg-primary-50 cursor-pointer flex gap-3 transition-colors"
+                                                >
+                                                    {/* Image */}
+                                                    <div className="w-10 h-10 bg-secondary-100 rounded-md overflow-hidden flex-shrink-0 border border-secondary-200">
+                                                        {(p.images?.[0] || p.variants?.[0]?.images?.[0]) ? (
+                                                            <img src={p.images?.[0] || p.variants?.[0]?.images?.[0]} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-secondary-400"><Package size={16} /></div>
+                                                        )}
+                                                    </div>
+                                                    {/* Text */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="font-bold text-secondary-900 text-sm truncate">{p.name}</div>
+                                                            <div className="text-primary-600 font-mono text-xs font-bold whitespace-nowrap">
+                                                                {p.product_code}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-between items-end mt-0.5">
+                                                            <div className="text-xs text-secondary-500 truncate w-3/4">
+                                                                {p.variants?.length ? `${p.variants.length} ตัวเลือก` : 'ไม่มีตัวเลือก'}
+                                                            </div>
+                                                            <div className="text-secondary-400 text-[10px]">
+                                                                Stock: {p.stock || 0}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button
+                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                                                onClick={() => {
+                                                    setShowProductModal(true)
+                                                    setShowSearchPopup(false)
+                                                }}
+                                                className="w-full p-3 text-center text-sm text-primary-600 font-medium hover:bg-primary-50 flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={16} /> สร้างสินค้าใหม่
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Details Row (Variant, Price, Qty) */}
+                                <div className="flex gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        {isCustomItem ? (
+                                            <div className="h-[42px] content-center text-xs text-secondary-400 italic bg-secondary-50 rounded-lg px-3 border border-secondary-200">
+                                                - ไม่ระบุตัวเลือก -
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <select
+                                                    className={`w-full appearance-none pl-3 pr-8 py-2.5 border border-secondary-300 rounded-lg text-sm bg-white focus:ring-primary-500 outline-none ${!selectedProduct ? 'bg-secondary-50 text-secondary-400 cursor-not-allowed' : 'text-secondary-900'}`}
+                                                    disabled={!selectedProduct || !productVariants.length}
+                                                    value={selectedVariant ? (selectedVariant.id || selectedVariant.uuid) : ''}
+                                                    onChange={e => {
+                                                        const v = productVariants.find(v => (v.id || v.uuid) === e.target.value)
+                                                        setSelectedVariant(v)
+                                                        // Do not auto-set price from variant.price (selling price)
+                                                        setItemPriceForeign(0)
+                                                    }}
+                                                >
+                                                    <option value="">{productVariants.length ? 'เลือกตัวเลือก (Variant)...' : (selectedProduct ? 'ไม่มีตัวเลือก' : 'เลือกสินค้าก่อน')}</option>
+                                                    {productVariants.map(v => (
+                                                        <option key={v.id || v.uuid} value={v.id || v.uuid}>
+                                                            {v.sku} - {v.color} {v.size} ({v.price})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="absolute right-3 top-3 text-secondary-400 pointer-events-none" size={14} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="w-24 relative flex-shrink-0">
+                                        <div className="absolute left-3 top-2.5 text-secondary-400 text-xs font-bold">{currency}</div>
+                                        <input type="number" className="w-full pl-10 pr-3 py-2.5 border border-secondary-300 rounded-lg text-sm text-right focus:ring-primary-500 outline-none"
+                                            min="0" step="0.01"
+                                            value={itemPriceForeign} onChange={e => setItemPriceForeign(parseFloat(e.target.value) || 0)} />
+                                    </div>
+
+                                    <div className="w-20 flex-shrink-0">
+                                        <input type="number" className="w-full px-3 py-2.5 border border-secondary-300 rounded-lg text-sm text-center focus:ring-primary-500 outline-none"
+                                            min="1" placeholder="Qty"
+                                            value={itemQty} onChange={e => setItemQty(parseInt(e.target.value) || 1)} />
+                                    </div>
+
+                                    <button
+                                        onClick={addItem}
+                                        disabled={!isCustomItem && !selectedProduct}
+                                        className={`px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm flex items-center gap-2 whitespace-nowrap shadow-sm flex-shrink-0 transition-colors ${isCustomItem ? 'bg-amber-600 hover:bg-amber-700' : 'bg-secondary-900 hover:bg-black'}`}
+                                    >
+                                        <Plus size={16} /> <span className="hidden sm:inline">เพิ่ม</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex gap-3">
-                                <button onClick={onClose} className="btn-secondary">Cancel</button>
-                                <button onClick={handleSubmit} disabled={isSubmitting || poItems.length === 0 || !supplierName} className="btn-primary flex items-center gap-2">
-                                    <Save size={18} />
-                                    {isSubmitting ? 'Saving...' : 'Save Order'}
+                        </div>
+
+                        {/* 2. Items List (Scrollable) */}
+                        <div className="flex-1 overflow-y-auto p-4 bg-secondary-50 custom-scrollbar">
+                            {poItems.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-secondary-400 border-2 border-dashed border-secondary-200 rounded-xl bg-white/50 min-h-[200px]">
+                                    <ShoppingBag size={48} className="mb-4 opacity-20" />
+                                    <p className="font-medium">ยังไม่มีสินค้าในใบสั่งซื้อ</p>
+                                    <p className="text-xs mt-1 text-secondary-400">เลือกร้านค้าและเพิ่มสินค้าได้เลย</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between px-2 text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-2">
+                                        <div>รายการสินค้า ({poItems.length})</div>
+                                        <div>ยอดรวม</div>
+                                    </div>
+
+                                    {poItems.map((item, idx) => (
+                                        <div key={idx} className="bg-white p-3 rounded-xl border border-secondary-200 shadow-sm flex gap-4 group transition-all hover:shadow-md hover:border-primary-200 items-start">
+                                            {/* Index & Image */}
+                                            <div className="relative">
+                                                <div className="w-16 h-16 bg-secondary-50 rounded-lg border border-secondary-100 flex items-center justify-center overflow-hidden">
+                                                    {item.image ? (
+                                                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Package size={24} className="text-secondary-300" />
+                                                    )}
+                                                </div>
+                                                <div className="absolute -top-2 -left-2 w-5 h-5 bg-secondary-900 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white shadow-sm font-bold">
+                                                    {idx + 1}
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="font-bold text-secondary-900 text-sm truncate pr-2">{item.product_name || item.item_name}</div>
+                                                        {item.product_code && item.product_code !== '-' && (
+                                                            <div className="text-xs text-primary-600 font-mono font-medium mt-0.5 mb-1 bg-primary-50 inline-block px-1.5 py-0.5 rounded">
+                                                                {item.variant_sku || item.product_code}
+                                                            </div>
+                                                        )}
+                                                        {item.is_custom && (
+                                                            <div className="text-xs text-amber-600 font-mono font-medium mt-0.5 mb-1 bg-amber-50 inline-block px-1.5 py-0.5 rounded">
+                                                                Custom Item
+                                                            </div>
+                                                        )}
+                                                        {item.variant_details && (
+                                                            <div className="text-[10px] text-secondary-500 flex items-center gap-1">
+                                                                <span className="bg-secondary-100 px-1.5 py-0.5 rounded">
+                                                                    {item.variant_details}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-secondary-900">฿{item.total_price?.toLocaleString()}</div>
+                                                        <div className="text-xs text-secondary-500 font-mono">
+                                                            {item.unit_price_foreign} {currency} x {item.quantity}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Delete Action */}
+                                            <button
+                                                onClick={() => removeItem(idx)}
+                                                className="p-2 text-secondary-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. Footer Summary */}
+                        <div className="p-4 bg-white border-t border-secondary-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                            <div className="flex items-end justify-between">
+                                <div className="hidden md:block">
+                                    <div className="text-xs text-secondary-500">Summary</div>
+                                    <div className="flex gap-4 mt-1">
+                                        <div className="text-xs text-secondary-600 bg-secondary-50 px-2 py-1 rounded">Rate: <span className="font-mono font-bold text-secondary-900">{exchangeRate}</span></div>
+                                        <div className="text-xs text-secondary-600 bg-secondary-50 px-2 py-1 rounded">Items: <span className="font-mono font-bold text-secondary-900">{poItems.length}</span></div>
+                                    </div>
+                                </div>
+
+                                <div className="text-right flex flex-col items-end">
+                                    <div className="text-xs text-secondary-500 mb-1">ยอดรวมสุทธิ (Grand Total)</div>
+                                    <div className="text-2xl font-black text-primary-700 leading-none">
+                                        <span className="text-sm font-normal text-secondary-400 mr-1">THB</span>
+                                        {grandTotalTHB.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex gap-3 pt-4 border-t border-secondary-100">
+                                {poId && (
+                                    <button
+                                        onClick={handleDelete}
+                                        className="mr-auto text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
+                                    >
+                                        <Trash2 size={14} /> Delete
+                                    </button>
+                                )}
+
+                                <div className="flex-1 md:flex-none"></div>
+
+                                <button onClick={onClose} className="px-5 py-2.5 rounded-lg border border-secondary-300 text-secondary-700 font-bold text-sm hover:bg-secondary-50 transition-colors">
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={!supplierName || poItems.length === 0 || isSubmitting}
+                                    className="px-6 py-2.5 rounded-lg bg-primary-600 text-white font-bold text-sm shadow-lg shadow-primary-200 hover:bg-primary-700 hover:shadow-primary-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <div className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Saving...</div>
+                                    ) : (
+                                        <>
+                                            <Save size={18} /> Save Order
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -589,10 +996,12 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
             />
 
             <style jsx>{`
-                .label { @apply block text-xs font-semibold text-secondary-700 mb-1.5; }
-                .input-field { @apply w-full px-3 py-2.5 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-shadow; }
-                .btn-primary { @apply px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 transition-colors shadow-sm; }
-                .btn-secondary { @apply px-6 py-2.5 border border-secondary-300 rounded-lg text-secondary-700 font-medium hover:bg-secondary-50 transition-colors bg-white; }
+                .label { @apply block text-xs font-bold text-secondary-700 mb-1.5 uppercase tracking-wide; }
+                .input-field { @apply w-full px-3 py-2.5 border border-secondary-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-shadow bg-white; }
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.1); border-radius: 20px; }
+                .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); }
             `}</style>
         </div>
     )

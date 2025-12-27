@@ -57,6 +57,10 @@ export const translations = {
         'Pending': 'Pending',
         'Processing': 'Processing',
         'Create PO': 'Create PO',
+        'Unpaid': 'Unpaid',
+        'Paid': 'Paid',
+        'Deposit': 'Deposit',
+        'Pay Back': 'Pay Back',
 
         // Inventory
         'Inventory Management': 'Inventory Management',
@@ -178,6 +182,10 @@ export const translations = {
         'Pending': 'รอดำเนินการ',
         'Processing': 'กำลังดำเนินการ',
         'Create PO': 'ออกใบสั่งซื้อ',
+        'Unpaid': 'ยังไม่จ่าย',
+        'Paid': 'จ่ายแล้ว',
+        'Deposit': 'มัดจำ',
+        'Pay Back': 'จ่ายคืน',
 
         // Inventory
         'Inventory Management': 'จัดการคลังสินค้า',
