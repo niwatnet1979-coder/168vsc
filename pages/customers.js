@@ -4,9 +4,8 @@ import Link from 'next/link'
 import AppLayout from '../components/AppLayout'
 import CustomerModal from '../components/CustomerModal'
 import { DataManager } from '../lib/dataManager'
-import ConfirmDialog from '../components/ConfirmDialog'
+import { showConfirm, showLoading, showSuccess, showError } from '../lib/sweetAlert'
 import { supabase } from '../lib/supabaseClient'
-import Swal from 'sweetalert2'
 
 import {
     Search,
@@ -160,22 +159,25 @@ export default function CustomersPage() {
         setShowModal(true)
     }
 
-    const handleDelete = (id) => {
-        setCustomerToDelete(id)
-        setShowDeleteConfirm(true)
-    }
+    const handleDelete = async (id) => {
+        const result = await showConfirm({
+            title: 'ยืนยันการลบลูกค้า',
+            text: "คุณต้องการลบลูกค้าคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้",
+            confirmButtonText: 'ลบข้อมูล',
+            confirmButtonColor: '#d33'
+        })
 
-    const handleConfirmDelete = async () => {
-        setShowDeleteConfirm(false)
-        if (!customerToDelete) return
+        if (!result.isConfirmed) return
 
-        const success = await DataManager.deleteCustomer(customerToDelete)
+        showLoading('กำลังลบข้อมูล...', 'กรุณารอสักครู่')
+
+        const success = await DataManager.deleteCustomer(id)
         if (success) {
-            setCustomers(customers.filter(c => c.id !== customerToDelete))
+            setCustomers(customers.filter(c => c.id !== id))
+            await showSuccess({ title: 'ลบสำเร็จ', text: 'ข้อมูลลูกค้าถูกลบเรียบร้อยแล้ว' })
         } else {
-            alert('ไม่สามารถลบข้อมูลได้')
+            await showError({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถลบข้อมูลได้' })
         }
-        setCustomerToDelete(null)
     }
 
     // handleSave is now handled in CustomerModal's onSave prop which calls this implicitly?
@@ -301,17 +303,17 @@ export default function CustomersPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex gap-2">
                                                     {(customer.line || customer.lineId) && (
-                                                        <span className="p-1.5 bg-[#06c755]/10 text-[#06c755] rounded-lg" title={`Line: ${customer.line || customer.lineId}`}>
+                                                        <span className="p-1.5 bg-[#06c755]/10 text-[#06c755] rounded-lg" title={`Line: ${customer.line || customer.lineId} `}>
                                                             <MessageCircle size={16} />
                                                         </span>
                                                     )}
                                                     {customer.facebook && (
-                                                        <span className="p-1.5 bg-[#1877f2]/10 text-[#1877f2] rounded-lg" title={`FB: ${customer.facebook}`}>
+                                                        <span className="p-1.5 bg-[#1877f2]/10 text-[#1877f2] rounded-lg" title={`FB: ${customer.facebook} `}>
                                                             <Facebook size={16} />
                                                         </span>
                                                     )}
                                                     {customer.instagram && (
-                                                        <span className="p-1.5 bg-[#e4405f]/10 text-[#e4405f] rounded-lg" title={`IG: ${customer.instagram}`}>
+                                                        <span className="p-1.5 bg-[#e4405f]/10 text-[#e4405f] rounded-lg" title={`IG: ${customer.instagram} `}>
                                                             <Instagram size={16} />
                                                         </span>
                                                     )}
@@ -396,13 +398,9 @@ export default function CustomersPage() {
                 customer={editingCustomer}
                 onSave={async (savedCustomer) => {
                     // 1. Confirm Dialog
-                    const confirmResult = await Swal.fire({
+                    const confirmResult = await showConfirm({
                         title: 'ยืนยันการบันทึก?',
                         text: "คุณต้องการบันทึกข้อมูลลูกค้าใช่หรือไม่",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
                         confirmButtonText: 'ใช่, บันทึกเลย',
                         cancelButtonText: 'ยกเลิก'
                     })
@@ -410,15 +408,7 @@ export default function CustomersPage() {
                     if (!confirmResult.isConfirmed) return
 
                     // 2. Show loading state
-                    Swal.fire({
-                        title: 'กำลังบันทึกข้อมูล...',
-                        text: 'กรุณารอสักครู่',
-                        allowOutsideClick: false,
-                        showConfirmButton: false,
-                        willOpen: () => {
-                            Swal.showLoading()
-                        }
-                    })
+                    showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
 
                     // Prepare data for DataManager
                     const customerPayload = { ...savedCustomer }
@@ -434,34 +424,20 @@ export default function CustomersPage() {
                         setShowModal(false)
                         setEditingCustomer(null)
 
-                        Swal.fire({
-                            icon: 'success',
+                        await showSuccess({
                             title: 'บันทึกสำเร็จ',
-                            text: 'ข้อมูลลูกค้าถูกบันทึกเรียบร้อยแล้ว',
-                            timer: 1500,
-                            showConfirmButton: false
+                            text: 'ข้อมูลลูกค้าถูกบันทึกเรียบร้อยแล้ว'
                         })
                     } else {
-                        Swal.fire({
-                            icon: 'error',
+                        await showError({
                             title: 'เกิดข้อผิดพลาด',
-                            text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
-                            confirmButtonText: 'ตกลง'
+                            text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่'
                         })
                     }
                 }}
             />
 
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="ยืนยันการลบลูกค้า"
-                message="คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?"
-                onConfirm={handleConfirmDelete}
-                onCancel={() => {
-                    setShowDeleteConfirm(false)
-                    setCustomerToDelete(null)
-                }}
-            />
+
         </AppLayout>
     )
 }

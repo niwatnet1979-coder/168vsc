@@ -28,8 +28,7 @@ import {
 import TeamMemberModal from '../components/TeamMemberModal'
 import TeamManagementModal from '../components/TeamManagementModal'
 import { DataManager } from '../lib/dataManager'
-import ConfirmDialog from '../components/ConfirmDialog'
-import Swal from 'sweetalert2'
+import { showConfirm, showLoading, showSuccess, showError } from '../lib/sweetAlert'
 
 export default function TeamPage() {
     const [activeTab, setActiveTab] = useState('current') // current, resigned
@@ -68,8 +67,7 @@ export default function TeamPage() {
     }
 
     const [formData, setFormData] = useState(initialFormState)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [memberToDelete, setMemberToDelete] = useState(null)
+
 
     // Load data
     const loadTeams = async () => {
@@ -96,22 +94,25 @@ export default function TeamPage() {
         setShowModal(true)
     }
 
-    const handleDelete = (id) => {
-        setMemberToDelete(id)
-        setShowDeleteConfirm(true)
-    }
+    const handleDelete = async (id) => {
+        const result = await showConfirm({
+            title: 'ยืนยันการลบทีมงาน',
+            text: "คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?",
+            confirmButtonText: 'ลบ',
+            confirmButtonColor: '#d33'
+        })
 
-    const handleConfirmDelete = async () => {
-        setShowDeleteConfirm(false)
-        if (!memberToDelete) return
+        if (!result.isConfirmed) return
 
-        const success = await DataManager.deleteEmployee(memberToDelete)
+        showLoading('กำลังลบข้อมูล...', 'กรุณารอสักครู่')
+
+        const success = await DataManager.deleteEmployee(id)
         if (success) {
             await loadTeams()
+            await showSuccess({ title: 'ลบสำเร็จ', text: 'ข้อมูลทีมงานถูกลบเรียบร้อยแล้ว' })
         } else {
-            alert('ลบข้อมูลไม่สำเร็จ')
+            await showError({ title: 'ลบข้อมูลไม่สำเร็จ' })
         }
-        setMemberToDelete(null)
     }
 
     const handleSave = async (data) => {
@@ -121,29 +122,17 @@ export default function TeamPage() {
         }
 
         // 1. Confirm Dialog
-        const confirmResult = await Swal.fire({
+        const confirmResult = await showConfirm({
             title: 'ยืนยันการบันทึก?',
             text: "คุณต้องการบันทึกข้อมูลทีมงานใช่หรือไม่",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'ใช่, บันทึกเลย',
+            confirmButtonText: 'ใช่,บันทึกเลย',
             cancelButtonText: 'ยกเลิก'
         })
 
         if (!confirmResult.isConfirmed) return
 
         // 2. Show loading state
-        Swal.fire({
-            title: 'กำลังบันทึกข้อมูล...',
-            text: 'กรุณารอสักครู่',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading()
-            }
-        })
+        showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
 
         const result = await DataManager.saveEmployee(data)
 
@@ -151,20 +140,15 @@ export default function TeamPage() {
             await loadTeams()
             setShowModal(false)
 
-            Swal.fire({
-                icon: 'success',
+            await showSuccess({
                 title: 'บันทึกสำเร็จ',
-                text: 'ข้อมูลทีมงานถูกบันทึกเรียบร้อยแล้ว',
-                timer: 1500,
-                showConfirmButton: false
+                text: 'ข้อมูลทีมงานถูกบันทึกเรียบร้อยแล้ว'
             })
         } else {
             console.error(result)
-            Swal.fire({
-                icon: 'error',
+            await showError({
                 title: 'เกิดข้อผิดพลาด',
-                text: result?.error || 'ไม่สามารถบันทึกข้อมูลได้',
-                confirmButtonText: 'ตกลง'
+                text: result?.error || 'ไม่สามารถบันทึกข้อมูลได้'
             })
         }
     }
@@ -351,16 +335,7 @@ export default function TeamPage() {
                 onClose={() => setShowTeamModal(false)}
             />
 
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="ยืนยันการลบทีมงาน"
-                message="คุณต้องการลบข้อมูลทีมงานนี้หรือไม่?"
-                onConfirm={handleConfirmDelete}
-                onCancel={() => {
-                    setShowDeleteConfirm(false)
-                    setMemberToDelete(null)
-                }}
-            />
+
         </AppLayout>
     )
 }

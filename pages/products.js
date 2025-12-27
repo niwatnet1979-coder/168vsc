@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx'
 import { DataManager } from '../lib/dataManager'
 import { supabase } from '../lib/supabaseClient' // Realtime
 import ProductModal from '../components/ProductModal'
-import ConfirmDialog from '../components/ConfirmDialog'
+import { showConfirm, showLoading, showSuccess, showError } from '../lib/sweetAlert'
 
 // Components
 import ProductHeader from '../components/ProductHeader'
@@ -24,8 +24,7 @@ export default function ProductManagement() {
     const itemsPerPage = 20
     const [expandedProducts, setExpandedProducts] = useState(new Set())
     const [isLoading, setIsLoading] = useState(true)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [productToDelete, setProductToDelete] = useState(null)
+
 
     const loadProducts = async (useLoading = true) => {
         if (useLoading) setIsLoading(true)
@@ -116,38 +115,28 @@ export default function ProductManagement() {
         setExpandedProducts(newExpanded)
     }
 
-    const handleDelete = (uuid) => {
-        setProductToDelete(uuid)
-        setShowDeleteConfirm(true)
-    }
+    const handleDelete = async (uuid) => {
+        const result = await showConfirm({
+            title: 'ยืนยันการลบสินค้า',
+            text: "คุณต้องการลบสินค้านี้ใช่หรือไม่?",
+            confirmButtonText: 'ลบ',
+            confirmButtonColor: '#d33'
+        })
 
-    const handleConfirmDelete = async () => {
-        setShowDeleteConfirm(false)
-        if (!productToDelete) return
+        if (!result.isConfirmed) return
 
-        const result = await DataManager.deleteProduct(productToDelete)
-        if (result.success) {
-            setProducts(products.filter(p => p.uuid !== productToDelete))
-            const Swal = (await import('sweetalert2')).default
-            Swal.fire({
-                icon: 'success',
-                title: 'ลบสินค้าสำเร็จ',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000
-            })
+        showLoading('กำลังลบสินค้า...', 'กรุณารอสักครู่')
+
+        const resultDelete = await DataManager.deleteProduct(uuid)
+        if (resultDelete.success) {
+            setProducts(products.filter(p => p.uuid !== uuid))
+            await showSuccess({ title: 'ลบสินค้าสำเร็จ' })
         } else {
-            const Swal = (await import('sweetalert2')).default
-            Swal.fire({
-                icon: 'error',
+            await showError({
                 title: 'ไม่สามารถลบสินค้าได้',
-                text: result.error || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ',
-                confirmButtonText: 'ตกลง',
-                confirmButtonColor: '#d33',
+                text: resultDelete.error || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'
             })
         }
-        setProductToDelete(null)
     }
 
     const handleEdit = (product) => {
@@ -170,17 +159,10 @@ export default function ProductManagement() {
             return
         }
 
-        // Dynamically import Swal to ensure client-side execution
-        const Swal = (await import('sweetalert2')).default
-
         // 1. Confirm Dialog
-        const confirmResult = await Swal.fire({
+        const confirmResult = await showConfirm({
             title: 'ยืนยันการบันทึก?',
             text: "คุณต้องการบันทึกข้อมูลสินค้าใช่หรือไม่",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
             confirmButtonText: 'ใช่, บันทึกเลย',
             cancelButtonText: 'ยกเลิก'
         })
@@ -188,15 +170,7 @@ export default function ProductManagement() {
         if (!confirmResult.isConfirmed) return
 
         // 2. Show Loading
-        Swal.fire({
-            title: 'กำลังบันทึกข้อมูล...',
-            text: 'กรุณารอสักครู่',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading()
-            }
-        })
+        showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
 
         // 3. Perform Save
         const savedProduct = await DataManager.saveProduct(productData)
@@ -207,20 +181,15 @@ export default function ProductManagement() {
             setCurrentProduct(null)
 
             // 4. Show Success
-            await Swal.fire({
-                icon: 'success',
+            await showSuccess({
                 title: 'บันทึกสำเร็จ',
-                text: 'ข้อมูลสินค้าถูกบันทึกเรียบร้อยแล้ว',
-                timer: 1500,
-                showConfirmButton: false
+                text: 'ข้อมูลสินค้าถูกบันทึกเรียบร้อยแล้ว'
             })
         } else {
             // 5. Show Error
-            await Swal.fire({
-                icon: 'error',
+            await showError({
                 title: 'เกิดข้อผิดพลาด',
-                text: 'บันทึกสินค้าไม่สำเร็จ กรุณาลองใหม่',
-                confirmButtonText: 'ตกลง'
+                text: 'บันทึกสินค้าไม่สำเร็จ กรุณาลองใหม่'
             })
         }
     }
@@ -288,16 +257,7 @@ export default function ProductManagement() {
                 existingProducts={products}
             />
 
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="ยืนยันการลบสินค้า"
-                message="คุณต้องการลบสินค้านี้ใช่หรือไม่?"
-                onConfirm={handleConfirmDelete}
-                onCancel={() => {
-                    setShowDeleteConfirm(false)
-                    setProductToDelete(null)
-                }}
-            />
+
         </AppLayout>
     )
 }

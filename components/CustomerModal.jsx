@@ -4,12 +4,11 @@ import {
     MessageCircle, Facebook, Instagram, Globe, Sparkles
 } from 'lucide-react'
 import TaxAddressParserModal from './TaxAddressParserModal'
-import ConfirmDialog from './ConfirmDialog'
+import { showConfirm } from '../lib/sweetAlert'
 
 export default function CustomerModal({ isOpen, onClose, customer, onSave, onDelete, initialTab = 'customer' }) {
     const [activeTab, setActiveTab] = useState(initialTab)
     const [isSaving, setIsSaving] = useState(false)
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [formData, setFormData] = useState({
         name: '', phone: '', email: '', line: '', facebook: '', instagram: '',
         contact1: { name: '', phone: '' }, contact2: { name: '', phone: '' },
@@ -346,7 +345,17 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
                                     {/* Show delete button only if it's an existing customer (customer prop exists) and onDelete is provided */}
                                     {customer && onDelete && (
                                         <button
-                                            onClick={() => setShowDeleteConfirm(true)}
+                                            onClick={async () => {
+                                                const result = await showConfirm({
+                                                    title: 'ยืนยันการลบลูกค้า',
+                                                    text: "คุณต้องการลบลูกค้าคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้",
+                                                    confirmButtonText: 'ลบข้อมูล',
+                                                    confirmButtonColor: '#d33'
+                                                })
+                                                if (result.isConfirmed) {
+                                                    onDelete(customer.id)
+                                                }
+                                            }}
                                             className="p-1.5 text-danger-600 bg-danger-50 hover:bg-danger-100 rounded-full transition-colors flex items-center justify-center"
                                             title="ลบลูกค้า"
                                         >
@@ -842,16 +851,7 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
             />
 
             {/* Delete Customer Confirmation Dialog */}
-            <ConfirmDialog
-                isOpen={showDeleteConfirm}
-                title="ยืนยันการลบลูกค้า"
-                message="คุณต้องการลบลูกค้าคนนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้"
-                onConfirm={() => {
-                    setShowDeleteConfirm(false)
-                    onDelete(customer.id)
-                }}
-                onCancel={() => setShowDeleteConfirm(false)}
-            />
+
         </div>
     )
 }

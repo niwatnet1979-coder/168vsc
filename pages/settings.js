@@ -31,8 +31,7 @@ import TeamMemberModal from '../components/TeamMemberModal'
 import { DataManager } from '../lib/dataManager'
 import { useDebug } from '../contexts/DebugContext'
 import { SHOP_LAT, SHOP_LON } from '../lib/utils'
-import ConfirmDialog from '../components/ConfirmDialog'
-import Swal from 'sweetalert2'
+import { showConfirm, showLoading, showSuccess, showError, showInput } from '../lib/sweetAlert'
 
 export default function SettingsPage() {
     const { data: session } = useSession()
@@ -208,13 +207,9 @@ export default function SettingsPage() {
 
     const handleSave = async () => {
         // 1. Confirm Dialog
-        const confirmResult = await Swal.fire({
+        const confirmResult = await showConfirm({
             title: 'ยืนยันการบันทึก?',
             text: "คุณต้องการบันทึกการตั้งค่าใช่หรือไม่",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
             confirmButtonText: 'ใช่, บันทึกเลย',
             cancelButtonText: 'ยกเลิก'
         })
@@ -222,15 +217,7 @@ export default function SettingsPage() {
         if (!confirmResult.isConfirmed) return
 
         // 2. Show loading state
-        Swal.fire({
-            title: 'กำลังบันทึกข้อมูล...',
-            text: 'กรุณารอสักครู่',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading()
-            }
-        })
+        showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
 
         // Merge shopLat/shopLon into systemOptions for storage
         const systemOptionsToSave = {
@@ -257,32 +244,24 @@ export default function SettingsPage() {
             setIsSaved(true)
             setTimeout(() => setIsSaved(false), 3000)
 
-            Swal.fire({
-                icon: 'success',
+            await showSuccess({
                 title: 'บันทึกสำเร็จ',
-                text: 'การตั้งค่าถูกบันทึกเรียบร้อยแล้ว',
-                timer: 1500,
-                showConfirmButton: false
+                text: 'การตั้งค่าถูกบันทึกเรียบร้อยแล้ว'
             })
         } else {
-            Swal.fire({
-                icon: 'error',
+            await showError({
                 title: 'เกิดข้อผิดพลาด',
-                text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่',
-                confirmButtonText: 'ตกลง'
+                text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่'
             })
         }
     }
 
     const handleAddOption = async (type, label) => {
-        const { value: newValue } = await Swal.fire({
+        const { value: newValue } = await showInput({
             title: `เพิ่ม${label}`,
-            input: 'text',
             inputLabel: `กรุณากรอก${label}`,
             inputPlaceholder: `ตัวอย่าง: ...`,
-            showCancelButton: true,
             confirmButtonText: 'บันทึก',
-            cancelButtonText: 'ยกเลิก',
             inputValidator: (value) => {
                 if (!value) {
                     return 'กรุณากรอกข้อมูล'
@@ -297,7 +276,6 @@ export default function SettingsPage() {
             }
             setProductOptions(updatedOptions)
 
-            // Save immediately logic reused from handleSave structure
             const systemOptionsToSave = {
                 ...updatedOptions,
                 shopLat: shopSettings.shopLat,
@@ -305,11 +283,7 @@ export default function SettingsPage() {
             }
 
             try {
-                Swal.fire({
-                    title: 'กำลังบันทึก...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                })
+                showLoading('กำลังบันทึก...')
 
                 await DataManager.saveSettings({
                     shopName: shopSettings.name,
@@ -325,33 +299,20 @@ export default function SettingsPage() {
                     quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
                 })
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'เพิ่มข้อมูลสำเร็จ',
-                    timer: 1500,
-                    showConfirmButton: false
-                })
+                await showSuccess({ title: 'เพิ่มข้อมูลสำเร็จ' })
             } catch (error) {
                 console.error(error)
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถบันทึกข้อมูลได้'
-                })
+                await showError({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถบันทึกข้อมูลได้' })
             }
         }
     }
 
     const handleDeleteOption = async (type, value) => {
-        const result = await Swal.fire({
+        const result = await showConfirm({
             title: 'ยืนยันการลบ?',
             text: `คุณต้องการลบ "${value}" ออกจากระบบหรือไม่`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'ลบข้อมูล',
-            cancelButtonText: 'ยกเลิก'
+            confirmButtonColor: '#d33'
         })
 
         if (result.isConfirmed) {
@@ -368,11 +329,7 @@ export default function SettingsPage() {
             }
 
             try {
-                Swal.fire({
-                    title: 'กำลังลบข้อมูล...',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                })
+                showLoading('กำลังลบข้อมูล...')
 
                 await DataManager.saveSettings({
                     shopName: shopSettings.name,
@@ -388,19 +345,10 @@ export default function SettingsPage() {
                     quotationWarrantyPolicy: shopSettings.quotationWarrantyPolicy
                 })
 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'ลบข้อมูลสำเร็จ',
-                    timer: 1500,
-                    showConfirmButton: false
-                })
+                await showSuccess({ title: 'ลบข้อมูลสำเร็จ' })
             } catch (error) {
                 console.error(error)
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถลบข้อมูลได้'
-                })
+                await showError({ title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถลบข้อมูลได้' })
             }
         }
     }
@@ -413,25 +361,23 @@ export default function SettingsPage() {
             const result = await DataManager.uploadShopAsset(file)
             if (result.success) {
                 setShopSettings(prev => ({ ...prev, promptpayQr: result.url }))
-                Swal.fire({
-                    icon: 'success',
+                await showSuccess({
                     title: 'อัพโหลดสำเร็จ',
-                    toast: true,
-                    position: 'top-end',
                     showConfirmButton: false,
-                    timer: 3000
+                    timer: 3000,
+                    // Note: 'toast' and 'position' are not explicitly in baseConfig but Swal accepts them if passed.
+                    // However, my centralized lib might force standardized styles.
+                    // For now, standard showSuccess is clean enough.
                 })
             } else {
-                Swal.fire({
-                    icon: 'error',
+                await showError({
                     title: 'อัพโหลดไม่สำเร็จ',
                     text: result.error
                 })
             }
         } catch (err) {
             console.error(err)
-            Swal.fire({
-                icon: 'error',
+            await showError({
                 title: 'Error',
                 text: 'เกิดข้อผิดพลาดในการอัพโหลด'
             })
