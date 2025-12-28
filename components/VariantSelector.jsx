@@ -7,6 +7,71 @@ const PaletteIcon = () => <Palette size={14} className="text-secondary-400" />
 const GemIcon = () => <Gem size={14} className="text-secondary-400" />
 const DefaultIcon = () => <Box size={24} className="text-secondary-300" />
 
+// Shared component for consistent variant item display
+const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false }) => {
+    if (!variant) return null
+    return (
+        <div className="flex items-center gap-3 w-full">
+            {/* Image */}
+            <div className="w-12 h-12 bg-secondary-100 rounded-lg flex-shrink-0 overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
+                {variant.images?.[0] ? (
+                    <img src={variant.images[0]} className="w-full h-full object-cover" alt="Variant" />
+                ) : (
+                    <DefaultIcon />
+                )}
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0 text-left">
+                <div className="flex justify-between items-start">
+                    <div className={`font-bold text-sm truncate pr-2 ${isSelected ? 'text-primary-700' : 'text-secondary-900'}`}>
+                        {variant.sku || '-- No SKU --'}
+                    </div>
+                    <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
+                        ฿{variant.price?.toLocaleString()}
+                    </div>
+                </div>
+
+                <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
+                    {variant.dimensions && (
+                        <div className="flex items-center gap-1">
+                            <BoxIcon />
+                            <span>{variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm</span>
+                        </div>
+                    )}
+                    {variant.color && (
+                        <div className="flex items-center gap-1">
+                            <PaletteIcon />
+                            <span>{variant.color}</span>
+                        </div>
+                    )}
+                    {variant.crystalColor && (
+                        <div className="flex items-center gap-1">
+                            <GemIcon />
+                            <span>{variant.crystalColor}</span>
+                        </div>
+                    )}
+                    <div className="ml-auto flex items-center gap-1.5 px-0.5">
+                        <span className="text-secondary-400 text-[10px]">คงเหลือ {variant.available ?? variant.stock ?? 0}</span>
+                        <div
+                            onMouseDown={(e) => {
+                                console.log('[VariantSelector] Gear clicked on SKU:', variant.sku)
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (onEdit) onEdit()
+                            }}
+                            className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
+                        >
+                            <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {showChevron && <ChevronDown className="h-4 w-4 text-secondary-400 shrink-0 ml-1" aria-hidden="true" />}
+        </div>
+    )
+}
+
 export default function VariantSelector({
     variants = [],
     value, // selected index
@@ -29,73 +94,31 @@ export default function VariantSelector({
 
     const selectedVariant = variants[value]
 
+    // Debug logging
+    React.useEffect(() => {
+        if (selectedVariant) {
+            console.log('[VariantSelector] selectedVariant update:', {
+                sku: selectedVariant.sku,
+                color: selectedVariant.color,
+                dimensions: selectedVariant.dimensions
+            })
+        }
+    }, [selectedVariant])
+
     return (
         <div className="w-full">
             <Combobox value={value} onChange={onChange} disabled={disabled}>
                 {({ open }) => (
                     <div className="relative">
                         <div className="relative w-full">
-                            {/* Display Card when selected AND not open, OR show selection prompt */}
                             {!open && selectedVariant ? (
-                                <Combobox.Button className="w-full text-left">
-                                    <div className="flex items-center gap-3 w-full">
-                                        {/* Image */}
-                                        <div className="w-12 h-12 bg-secondary-100 rounded-lg flex-shrink-0 overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
-                                            {selectedVariant.images?.[0] ? (
-                                                <img src={selectedVariant.images[0]} className="w-full h-full object-cover" alt="Variant" />
-                                            ) : (
-                                                <DefaultIcon />
-                                            )}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start">
-                                                <div className="font-bold text-secondary-900 text-sm truncate pr-2">
-                                                    {selectedVariant.sku || '-- No SKU --'}
-                                                </div>
-                                                <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
-                                                    ฿{selectedVariant.price?.toLocaleString()}
-                                                </div>
-                                            </div>
-
-                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
-                                                {selectedVariant.dimensions && (
-                                                    <div className="flex items-center gap-1">
-                                                        <BoxIcon />
-                                                        <span>{selectedVariant.dimensions.length}×{selectedVariant.dimensions.width}×{selectedVariant.dimensions.height}cm</span>
-                                                    </div>
-                                                )}
-                                                {selectedVariant.color && (
-                                                    <div className="flex items-center gap-1">
-                                                        <PaletteIcon />
-                                                        <span>{selectedVariant.color}</span>
-                                                    </div>
-                                                )}
-                                                {selectedVariant.crystalColor && (
-                                                    <div className="flex items-center gap-1">
-                                                        <GemIcon />
-                                                        <span>{selectedVariant.crystalColor}</span>
-                                                    </div>
-                                                )}
-                                                <div className="ml-auto flex items-center gap-1.5 px-0.5">
-                                                    <span className="text-secondary-400 text-[10px]">คงเหลือ {selectedVariant.available ?? selectedVariant.stock ?? 0}</span>
-                                                    <div
-                                                        onMouseDown={(e) => {
-                                                            console.log('[VariantSelector] Gear clicked (selected display)')
-                                                            e.preventDefault()
-                                                            e.stopPropagation()
-                                                            if (onEdit) onEdit(value)
-                                                        }}
-                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer group/gear"
-                                                    >
-                                                        <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <ChevronDown className="h-4 w-4 text-secondary-400 shrink-0 ml-1" aria-hidden="true" />
-                                    </div>
+                                <Combobox.Button as="div" className="w-full text-left cursor-pointer">
+                                    <VariantItemInner
+                                        variant={selectedVariant}
+                                        isSelected={true}
+                                        showChevron={true}
+                                        onEdit={() => onEdit && onEdit(value)}
+                                    />
                                 </Combobox.Button>
                             ) : (
                                 <div className="relative">
@@ -135,64 +158,12 @@ export default function VariantSelector({
                                                 }
                                                 value={realIndex}
                                             >
-                                                {({ selected, active }) => (
-                                                    <div className="flex items-center gap-3">
-                                                        {/* Image */}
-                                                        <div className="w-12 h-12 bg-secondary-100 rounded-lg flex-shrink-0 overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
-                                                            {v.images?.[0] ? (
-                                                                <img src={v.images[0]} className="w-full h-full object-cover" alt="Variant" />
-                                                            ) : (
-                                                                <DefaultIcon />
-                                                            )}
-                                                        </div>
-
-                                                        {/* Info */}
-                                                        <div className="flex-1 min-w-0 text-left">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className={`font-bold text-sm truncate pr-2 ${selected ? 'text-primary-700' : 'text-secondary-900'}`}>
-                                                                    {v.sku || '-- No SKU --'}
-                                                                </div>
-                                                                <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
-                                                                    ฿{v.price?.toLocaleString()}
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
-                                                                {v.dimensions && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <BoxIcon />
-                                                                        <span>{v.dimensions.length}×{v.dimensions.width}×{v.dimensions.height}cm</span>
-                                                                    </div>
-                                                                )}
-                                                                {v.color && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <PaletteIcon />
-                                                                        <span>{v.color}</span>
-                                                                    </div>
-                                                                )}
-                                                                {v.crystalColor && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <GemIcon />
-                                                                        <span>{v.crystalColor}</span>
-                                                                    </div>
-                                                                )}
-                                                                <div className="ml-auto flex items-center gap-1.5 px-0.5">
-                                                                    <span className="text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
-                                                                    <div
-                                                                        onMouseDown={(e) => {
-                                                                            console.log('[VariantSelector] Gear clicked (list item):', realIndex)
-                                                                            e.preventDefault()
-                                                                            e.stopPropagation()
-                                                                            if (onEdit) onEdit(realIndex)
-                                                                        }}
-                                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer group/gear"
-                                                                    >
-                                                                        <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                {({ selected }) => (
+                                                    <VariantItemInner
+                                                        variant={v}
+                                                        isSelected={selected}
+                                                        onEdit={() => onEdit && onEdit(realIndex)}
+                                                    />
                                                 )}
                                             </Combobox.Option>
                                         )
@@ -203,7 +174,6 @@ export default function VariantSelector({
                             {onAction && (
                                 <div
                                     onMouseDown={(e) => {
-                                        // Use onMouseDown to trigger before blur/close
                                         e.preventDefault()
                                         e.stopPropagation()
                                         onAction()
