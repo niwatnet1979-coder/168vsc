@@ -330,7 +330,7 @@ export default function ReportsPage() {
                                         <tr key={order.id} className="hover:bg-secondary-50">
                                             <td className="px-6 py-4 text-sm font-mono font-medium text-primary-600">
                                                 <Link href={`/order?id=${order.id}`} className="hover:underline">
-                                                    {String(order.id).length > 20 ? `#${String(order.id).slice(-6)}` : order.id}
+                                                    {String(order.id).length > 20 ? `OD${String(order.id).slice(-6)}` : order.id}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-secondary-600">{formatDate(order.createdAt || order.orderDate)}</td>

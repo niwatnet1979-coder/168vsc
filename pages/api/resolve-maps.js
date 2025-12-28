@@ -24,6 +24,7 @@ export default async function handler(req, res) {
             const distance = calculateDistance(SHOP_LAT, SHOP_LON, coords.lat, coords.lon)
             return res.status(200).json({
                 distance: distance ? `${distance} km` : null,
+                distanceNumeric: distance ? parseFloat(distance) : null,
                 coords: coords,
                 finalUrl: finalUrl
             })

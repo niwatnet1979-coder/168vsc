@@ -172,7 +172,17 @@ export default function CustomerModal({ isOpen, onClose, customer, onSave, onDel
     const updateAddress = (id, field, value) => {
         setFormData(prev => ({
             ...prev,
-            addresses: prev.addresses.map(a => a.id === id ? { ...a, [field]: value } : a)
+            addresses: prev.addresses.map(a => {
+                if (a.id === id) {
+                    const updates = { [field]: value }
+                    // Clear distance if maps link changes to trigger recalculation
+                    if (field === 'maps') {
+                        updates.distance = null
+                    }
+                    return { ...a, ...updates }
+                }
+                return a
+            })
         }))
     }
 
