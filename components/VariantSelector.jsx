@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Combobox } from '@headlessui/react'
-import { Search, ChevronDown, Plus, Box, Palette, Gem, X } from 'lucide-react'
+import { Search, ChevronDown, Plus, Box, Palette, Gem, X, Settings } from 'lucide-react'
 
 const BoxIcon = () => <Box size={14} className="text-secondary-400" />
 const PaletteIcon = () => <Palette size={14} className="text-secondary-400" />
@@ -77,7 +77,10 @@ export default function VariantSelector({
                                                         <span>{selectedVariant.crystalColor}</span>
                                                     </div>
                                                 )}
-                                                <span className="ml-auto text-secondary-400 text-[10px]">คงเหลือ {selectedVariant.available ?? selectedVariant.stock ?? 0}</span>
+                                                <div className="ml-auto flex items-center gap-1.5 px-0.5">
+                                                    <span className="text-secondary-400 text-[10px]">คงเหลือ {selectedVariant.available ?? selectedVariant.stock ?? 0}</span>
+                                                    <Settings size={12} className="text-secondary-300" />
+                                                </div>
                                             </div>
                                         </div>
                                         <ChevronDown className="h-4 w-4 text-secondary-400 shrink-0 ml-1" aria-hidden="true" />
@@ -104,7 +107,7 @@ export default function VariantSelector({
                         <Combobox.Options
                             className="absolute z-[100] mt-2 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
                         >
-                            <div className="overflow-y-auto max-h-[320px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="overflow-y-auto max-h-[220px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {filteredVariants.length === 0 ? (
                                     <div className="relative cursor-default select-none py-10 px-4 text-secondary-500 text-center text-sm">
                                         ไม่พบข้อมูลสินค้าที่ตรงกัน
@@ -162,7 +165,10 @@ export default function VariantSelector({
                                                                         <span>{v.crystalColor}</span>
                                                                     </div>
                                                                 )}
-                                                                <span className="ml-auto text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
+                                                                <div className="ml-auto flex items-center gap-1.5 px-0.5">
+                                                                    <span className="text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
+                                                                    <Settings size={12} className="text-secondary-300" />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
