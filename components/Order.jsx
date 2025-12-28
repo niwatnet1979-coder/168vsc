@@ -702,7 +702,7 @@ export default function OrderForm() {
                                                             {currentJobInfo.distance && (
                                                                 <div className="flex justify-between pt-2 border-t border-secondary-200">
                                                                     <span className="font-medium">ระยะทาง:</span>
-                                                                    <span className="font-semibold text-success-600">📍 {currentJobInfo.distance}</span>
+                                                                    <span className="font-semibold text-success-600">{currentJobInfo.distance}</span>
                                                                 </div>
                                                             )}
                                                         </div>

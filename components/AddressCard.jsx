@@ -59,16 +59,17 @@ export default function AddressCard({
                                     href={mapLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-1.5 py-0.5 bg-danger-50 text-danger-600 text-[10px] font-medium rounded border border-danger-200 hover:bg-danger-100 transition-colors cursor-pointer flex items-center gap-1"
+                                    className="px-1.5 py-0.5 bg-success-50 text-success-600 text-[10px] font-medium rounded border border-success-200 hover:bg-success-100 transition-colors cursor-pointer flex items-center gap-1 active:scale-95 transform"
                                     title="เปิดแผนที่ Google Map"
                                     onClick={(e) => e.stopPropagation()} // Prevent triggering parent onClick
                                 >
-                                    <Map size={10} />
-                                    {distance ? `ระยะทาง ${distance}` : 'เปิดแผนที่'}
+                                    <span className="flex items-center gap-1">
+                                        📍 {typeof distance === 'string' ? distance.replace('📍 ', '').replace('ระยะทาง ', '') : distance}
+                                    </span>
                                 </a>
                             ) : (
-                                <span className="px-1.5 py-0.5 bg-secondary-100 text-secondary-600 text-[10px] font-medium rounded border border-secondary-200">
-                                    ระยะทาง {distance}
+                                <span className="px-1.5 py-0.5 bg-success-50 text-success-600 text-[10px] font-medium rounded border border-success-200 flex items-center gap-1">
+                                    📍 {typeof distance === 'string' ? distance.replace('📍 ', '').replace('ระยะทาง ', '') : distance}
                                 </span>
                             )
                         )}

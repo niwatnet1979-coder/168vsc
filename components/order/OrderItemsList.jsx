@@ -252,7 +252,7 @@ export default function OrderItemsList({
 
                                             {(latestJob?.distance || latestJob?.installLocationName) && (
                                                 <div className="flex items-center gap-1 text-secondary-500">
-                                                    {latestJob?.distance && <span>{latestJob?.distance} Km</span>}
+                                                    {latestJob?.distance && <span>{latestJob?.distance}</span>}
                                                     {latestJob?.installLocationName && <span>{latestJob?.installLocationName}</span>}
                                                 </div>
                                             )}
