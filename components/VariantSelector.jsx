@@ -81,13 +81,15 @@ export default function VariantSelector({
                                                 <div className="ml-auto flex items-center gap-1.5 px-0.5">
                                                     <span className="text-secondary-400 text-[10px]">คงเหลือ {selectedVariant.available ?? selectedVariant.stock ?? 0}</span>
                                                     <div
-                                                        onClick={(e) => {
+                                                        onMouseDown={(e) => {
+                                                            console.log('[VariantSelector] Gear clicked (selected display)')
+                                                            e.preventDefault()
                                                             e.stopPropagation()
                                                             if (onEdit) onEdit(value)
                                                         }}
-                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer"
+                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer group/gear"
                                                     >
-                                                        <Settings size={12} className="text-secondary-300 hover:text-primary-600" />
+                                                        <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -177,14 +179,15 @@ export default function VariantSelector({
                                                                 <div className="ml-auto flex items-center gap-1.5 px-0.5">
                                                                     <span className="text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
                                                                     <div
-                                                                        onClick={(e) => {
+                                                                        onMouseDown={(e) => {
+                                                                            console.log('[VariantSelector] Gear clicked (list item):', realIndex)
                                                                             e.preventDefault()
                                                                             e.stopPropagation()
                                                                             if (onEdit) onEdit(realIndex)
                                                                         }}
-                                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer"
+                                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer group/gear"
                                                                     >
-                                                                        <Settings size={12} className="text-secondary-300 hover:text-primary-600" />
+                                                                        <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
                                                                     </div>
                                                                 </div>
                                                             </div>
