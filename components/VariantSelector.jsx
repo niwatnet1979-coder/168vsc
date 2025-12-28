@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Combobox } from '@headlessui/react'
-import { Search, ChevronDown, Plus, Box, Palette, Gem, X, Settings } from 'lucide-react'
+import { Search, ChevronDown, Plus, Box, Palette, Gem, Settings } from 'lucide-react'
 
 const BoxIcon = () => <Box size={14} className="text-secondary-400" />
 const PaletteIcon = () => <Palette size={14} className="text-secondary-400" />
@@ -8,7 +8,7 @@ const GemIcon = () => <Gem size={14} className="text-secondary-400" />
 const DefaultIcon = () => <Box size={24} className="text-secondary-300" />
 
 // Shared component for consistent variant item display
-const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false, hideEdit = false }) => {
+const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false }) => {
     if (!variant) return null
     return (
         <div className="flex items-center gap-3 w-full">
@@ -53,19 +53,17 @@ const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false, hi
                     )}
                     <div className="ml-auto flex items-center gap-1.5 px-0.5">
                         <span className="text-secondary-400 text-[10px]">คงเหลือ {variant.available ?? variant.stock ?? 0}</span>
-                        {!hideEdit && (
-                            <div
-                                onMouseDown={(e) => {
-                                    console.log('[VariantSelector] Gear clicked on SKU:', variant.sku)
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    if (onEdit) onEdit()
-                                }}
-                                className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
-                            >
-                                <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
-                            </div>
-                        )}
+                        <div
+                            onMouseDown={(e) => {
+                                console.log('[VariantSelector] Gear clicked on SKU:', variant.sku)
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (onEdit) onEdit()
+                            }}
+                            className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
+                        >
+                            <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,17 +94,6 @@ export default function VariantSelector({
 
     const selectedVariant = variants[value]
 
-    // Debug logging
-    React.useEffect(() => {
-        if (selectedVariant) {
-            console.log('[VariantSelector] selectedVariant update:', {
-                sku: selectedVariant.sku,
-                color: selectedVariant.color,
-                dimensions: selectedVariant.dimensions
-            })
-        }
-    }, [selectedVariant])
-
     return (
         <div className="w-full">
             <Combobox value={value} onChange={onChange} disabled={disabled}>
@@ -114,33 +101,14 @@ export default function VariantSelector({
                     <div className="relative">
                         <div className="relative w-full">
                             {!open && selectedVariant ? (
-                                <div className="relative">
-                                    <Combobox.Button as="div" className="w-full text-left cursor-pointer">
-                                        <VariantItemInner
-                                            variant={selectedVariant}
-                                            isSelected={true}
-                                            showChevron={true}
-                                            hideEdit={true}
-                                        />
-                                    </Combobox.Button>
-
-                                    {/* Standalone Gear for Main View - Outside the Button to fix interaction */}
-                                    <div
-                                        onMouseDown={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                        }}
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            console.log('[VariantSelector] Main View Gear Triggered')
-                                            if (onEdit) onEdit(value)
-                                        }}
-                                        className="absolute right-8 bottom-[6px] p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200 z-[10]"
-                                    >
-                                        <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
-                                    </div>
-                                </div>
+                                <Combobox.Button as="div" className="w-full text-left cursor-pointer">
+                                    <VariantItemInner
+                                        variant={selectedVariant}
+                                        isSelected={true}
+                                        showChevron={true}
+                                        onEdit={() => onEdit && onEdit(value)}
+                                    />
+                                </Combobox.Button>
                             ) : (
                                 <div className="relative">
                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none">
@@ -168,7 +136,7 @@ export default function VariantSelector({
                                         ไม่พบข้อมูลสินค้าที่ตรงกัน
                                     </div>
                                 ) : (
-                                    filteredVariants.map((v, i) => {
+                                    filteredVariants.map((v) => {
                                         const realIndex = variants.indexOf(v)
                                         return (
                                             <Combobox.Option
