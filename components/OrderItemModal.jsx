@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2 } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import ProductCard from './ProductCard'
@@ -594,7 +594,7 @@ const OrderItemModal = React.forwardRef(({
                     <div className="space-y-3">
                         {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
                         {productVariants.length > 0 && (
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <div className={`bg-white p-2.5 rounded-lg border border-secondary-200 shadow-sm transition-all ${!formData.code ? 'opacity-50' : 'hover:border-primary-300 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">
                                     Variant
                                 </label>
@@ -607,13 +607,47 @@ const OrderItemModal = React.forwardRef(({
                                         }}
                                         className={`w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer pr-6 flex items-center justify-between ${!formData.code ? 'cursor-not-allowed' : ''}`}
                                     >
-                                        <div className="truncate">
+                                        <div className="w-full">
                                             {formData.selectedVariantIndex !== null && formData.selectedVariantIndex !== undefined && productVariants[formData.selectedVariantIndex]
                                                 ? (() => {
                                                     const v = productVariants[formData.selectedVariantIndex]
-                                                    return `${v.color} ${v.crystalColor ? `(${v.crystalColor})` : ''} • ${v.dimensions ? `${v.dimensions.length}×${v.dimensions.width}×${v.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿${v.price?.toLocaleString()} • พร้อมส่ง ${v.available ?? v.stock ?? 0}`
+                                                    return (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="font-bold text-secondary-900 group-hover:text-primary-600 transition-colors">
+                                                                {v.sku || '-- No SKU --'}
+                                                            </div>
+                                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-2 gap-y-1 leading-none">
+                                                                {formData.name && <span className="flex items-center gap-1">{formData.name}</span>}
+                                                                {formData.material && <span className="flex items-center gap-1"> • {formData.material}</span>}
+                                                                {v.dimensions && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Maximize2 size={10} className="text-secondary-400" />
+                                                                        {v.dimensions.length}×{v.dimensions.width}×{v.dimensions.height}cm
+                                                                    </span>
+                                                                )}
+                                                                {v.color && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Palette size={10} className="text-secondary-400" />
+                                                                        {v.color}
+                                                                    </span>
+                                                                )}
+                                                                {v.crystalColor && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Gem size={10} className="text-secondary-400" />
+                                                                        {v.crystalColor}
+                                                                    </span>
+                                                                )}
+                                                                {formData.description && <span className="flex items-center gap-1"> • {formData.description}</span>}
+                                                                {(v.available !== undefined || v.stock !== undefined) && (
+                                                                    <span className="ml-auto text-primary-600 font-medium whitespace-nowrap">
+                                                                        พร้อมส่ง {v.available ?? v.stock ?? 0}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )
                                                 })()
-                                                : '-- เลือก Variant --'}
+                                                : <span className="text-secondary-400">-- เลือก Variant --</span>}
                                         </div>
                                         <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                                     </div>
@@ -634,7 +668,38 @@ const OrderItemModal = React.forwardRef(({
                                                         }}
                                                         className={`p-2.5 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 text-sm ${formData.selectedVariantIndex === i ? 'bg-primary-50 text-primary-700 font-medium' : 'text-secondary-700'}`}
                                                     >
-                                                        {variant.color} {variant.crystalColor ? `(${variant.crystalColor})` : ''} • {variant.dimensions ? `${variant.dimensions.length}×${variant.dimensions.width}×${variant.dimensions.height}cm` : 'ไม่ระบุขนาด'} • ฿{variant.price?.toLocaleString()} • พร้อมส่ง {variant.available ?? variant.stock ?? 0}
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="font-bold text-secondary-900 group-hover:text-primary-700">
+                                                                {variant.sku || '-- No SKU --'}
+                                                            </div>
+                                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-2 gap-y-1">
+                                                                <span className="flex items-center gap-1">{formData.name}</span>
+                                                                {formData.material && <span className="flex items-center gap-1"> • {formData.material}</span>}
+                                                                {variant.dimensions && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Maximize2 size={10} className="text-secondary-400" />
+                                                                        {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm
+                                                                    </span>
+                                                                )}
+                                                                {variant.color && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Palette size={10} className="text-secondary-400" />
+                                                                        {variant.color}
+                                                                    </span>
+                                                                )}
+                                                                {variant.crystalColor && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        • <Gem size={10} className="text-secondary-400" />
+                                                                        {variant.crystalColor}
+                                                                    </span>
+                                                                )}
+                                                                {formData.description && <span className="flex items-center gap-1"> • {formData.description}</span>}
+                                                                <span className="ml-auto flex items-center gap-2 whitespace-nowrap">
+                                                                    <span className="font-bold text-primary-600">฿{variant.price?.toLocaleString()}</span>
+                                                                    <span className="text-secondary-400 text-[10px]">พร้อมส่ง {variant.available ?? variant.stock ?? 0}</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 ))}
 
