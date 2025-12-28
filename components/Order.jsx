@@ -31,8 +31,6 @@ import OrderSummaryEdit from './order/OrderSummaryEdit'
 import OrderPaymentSection from './order/OrderPaymentSection'
 import OrderJobSection from './order/OrderJobSection'
 import OrderItemsList from './order/OrderItemsList'
-// import ConfirmDialog from './ConfirmDialog' // Removed
-// import Swal from 'sweetalert2' // Replaced by lib/sweetAlert
 import { showConfirm, showLoading, showSuccess, showError } from '../lib/sweetAlert'
 
 // ...
@@ -327,23 +325,23 @@ export default function OrderForm() {
     // Use handler from createOrderHandlers
     const handleSaveOrder = async () => {
         // 1. Confirm Dialog
-        const result = await showConfirm({
+        const confirmResult = await showConfirm({
             title: 'ยืนยันการบันทึก?',
             text: "คุณต้องการบันทึกออเดอร์นี้ใช่หรือไม่?",
             confirmButtonText: 'ใช่, บันทึกเลย',
             cancelButtonText: 'ยกเลิก'
         })
 
-        if (!result.isConfirmed) return
+        if (!confirmResult.isConfirmed) return
 
         // 2. Show Loading
         showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
 
         // 3. Save
-        const success = await handlersSaveOrder(fetchOrderData, { total })
+        const saveResult = await handlersSaveOrder(fetchOrderData, { total })
 
         // 4. Success/Error Feedback
-        if (success) {
+        if (saveResult?.success) {
             await showSuccess({
                 title: 'บันทึกสำเร็จ',
                 text: 'ข้อมูลออเดอร์ถูกบันทึกเรียบร้อยแล้ว'
@@ -351,7 +349,7 @@ export default function OrderForm() {
         } else {
             await showError({
                 title: 'เกิดข้อผิดพลาด',
-                text: 'บันทึกไม่สำเร็จ กรุณาลองใหม่'
+                text: saveResult?.message || 'บันทึกไม่สำเร็จ กรุณาลองใหม่'
             })
         }
     }
@@ -512,9 +510,7 @@ export default function OrderForm() {
             <div className="min-h-screen bg-secondary-50 pb-20 pt-6">
                 <div className="space-y-6">
 
-                    { }
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                        { }
                         <OrderCustomerSection
                             customer={customer}
                             customersData={customersData}
@@ -541,7 +537,6 @@ export default function OrderForm() {
                             onAddNewContact={handleAddNewContact}
                         />
 
-                        { }
                         <OrderJobSection
                             currentJobInfo={currentJobInfo || generalJobInfo}
                             items={items}
@@ -576,7 +571,6 @@ export default function OrderForm() {
                             orderId={router.query.id} // Pass orderId
                         />
 
-                        { }
                         <OrderTaxInvoiceSection
                             taxInvoice={taxInvoice}
                             setTaxInvoice={setTaxInvoice}

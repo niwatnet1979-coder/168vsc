@@ -180,11 +180,13 @@ export function useOrderLoader({
                 // Load items
                 let processedItems = []
                 if (order.items) {
-                    console.log('[Order] Processing items:', order.items.length)
-
                     processedItems = order.items.map(item => {
                         // CRITICAL: Preserve jobs BEFORE any mapping
                         const preservedJobs = item.jobs || []
+
+                        // Use joined product/variant data directly
+                        const product = item.product
+                        const variant = item.variant
 
                         // Normalize fields (snake_case -> camelCase)
                         const normalizedItem = {
@@ -193,11 +195,12 @@ export function useOrderLoader({
                             unitPrice: Number(item.unitPrice || item.unit_price || item.price || 0),
                             price: Number(item.unitPrice || item.unit_price || item.price || 0),
                             qty: Number(item.qty || item.quantity || 1), // Map quantity to qty
-                        }
 
-                        // Use joined product/variant data directly instead of fetching all products
-                        const product = item.product
-                        const variant = item.variant
+                            // Flatten Product Data (CRITICAL for Modal consistency)
+                            name: item.name || product?.name || '',
+                            product_code: item.product_code || product?.product_code || '',
+                            code: item.code || item.product_code || product?.product_code || '',
+                        }
 
                         if (product) {
                             const mappedItem = {

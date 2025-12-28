@@ -175,44 +175,23 @@ export default function ProductCard({
 
     // Default variant (for selected product display)
     return (
-        <div className={`bg-white border border-secondary-200 rounded-xl shadow-sm ${className}`}>
-            <div className="p-4 flex items-start gap-4">
-                {showImage && (
-                    <div className="w-20 h-20 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100">
-                        {image || product.variants?.[0]?.images?.[0] ? (
-                            <img
-                                src={image || product.variants[0].images[0]}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <Package size={32} className="text-secondary-400" />
-                            </div>
-                        )}
+        <div className={`bg-transparent ${className}`}>
+            <div className="px-0 py-0">
+                <div className="flex justify-between items-start mb-0.5">
+                    <div className="flex items-center gap-2 truncate pr-2">
+                        <span className="text-secondary-500 font-medium whitespace-nowrap text-sm">{productCode}</span>
+                        <span className="font-bold text-secondary-900 truncate text-sm">{product.name}</span>
                     </div>
-                )}
-                <div className="flex-1 min-w-0 py-1">
-                    <div className="font-bold text-lg text-secondary-900 leading-tight">{product.name}</div>
-                    <div className="text-sm text-secondary-500 mt-1">
-                        {productCode}
-                        {product.category && ` • ${product.category}`}
-                        {product.material && ` • ${product.material}`}
-                    </div>
-                    {product.description && (
-                        <div className="text-sm text-secondary-500 mt-2 line-clamp-2">
-                            {product.description}
-                        </div>
-                    )}
+                    <div className="font-bold text-primary-600 whitespace-nowrap text-sm">{priceDisplay}</div>
                 </div>
-                {showPrice && (
-                    <div className="text-right flex-shrink-0 py-1">
-                        <div className="font-bold text-primary-600 text-xl">{priceDisplay}</div>
-                        {showStock && (
-                            <div className="text-sm text-secondary-500 mt-1">คงเหลือ {totalStock}</div>
-                        )}
+
+                <div className="flex justify-between items-center text-xs text-secondary-500">
+                    <div className="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+                        <span>{product.material || 'ไม่ระบุวัสดุ'}</span>
                     </div>
-                )}
+                    <div>{product.variants?.length || 0} แบบ • คงเหลือ {totalStock}</div>
+                </div>
             </div>
         </div>
     )

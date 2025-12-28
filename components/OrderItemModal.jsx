@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2 } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2, Edit2 } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
+import Swal, { showConfirm, showSelect, showSelectVariant, showProductSearch } from '../lib/sweetAlert'
 import ProductCard from './ProductCard'
 import ConfirmDialog from './ConfirmDialog'
 
@@ -33,11 +34,11 @@ const OrderItemModal = React.forwardRef(({
     })
 
     const [showSearchPopup, setShowSearchPopup] = useState(false)
-    const [showVariantPopup, setShowVariantPopup] = useState(false)
     const [showChangeProductConfirm, setShowChangeProductConfirm] = useState(false)
     const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false)
     const [searchResults, setSearchResults] = useState([])
     const [productVariants, setProductVariants] = useState([])
+    const [selectedProduct, setSelectedProduct] = useState(null)
     const [internalProductsData, setInternalProductsData] = useState([])
 
     const [productOptions, setProductOptions] = useState({
@@ -100,8 +101,8 @@ const OrderItemModal = React.forwardRef(({
                     bulbType: item.bulbType || item.light || prev.bulbType || '',
                     crystalColor: item.crystalColor || prev.crystalColor || '',
                     remark: item.remark || prev.remark || '',
-                    // FIX: Ensure unitPrice is populated from price/unit_price
-                    unitPrice: item.unitPrice !== undefined ? item.unitPrice : (item.price || item.unit_price || 0),
+                    // Use standardized unitPrice from useOrderLoader
+                    unitPrice: Number(item.unitPrice || item.price || item.unit_price || 0),
                     // Ensure selectedVariant is set from item data
                     selectedVariant: item.selectedVariant || item.variant || null,
                     selectedVariantIndex: item.selectedVariantIndex !== undefined ? item.selectedVariantIndex : null
@@ -152,14 +153,16 @@ const OrderItemModal = React.forwardRef(({
                 try {
                     const products = await DataManager.getProducts()
                     const product = products.find(p =>
-                        p.uuid === item.product_id ||
-                        p.product_code === item.product_code ||
-                        p.product_code === item.code ||
-                        p.id === item.code
+                        (item.product_id && p.uuid === item.product_id) ||
+                        (item.product?.uuid && p.uuid === item.product.uuid) ||
+                        (item.product_code && p.product_code === item.product_code) ||
+                        (item.code && p.product_code === item.code) ||
+                        (item.code && p.id === item.code)
                     )
 
                     if (product && product.variants) {
                         console.log('[OrderItemModal] Loaded product variants:', product.variants)
+                        setSelectedProduct(product)
                         const variants = product.variants
                         setProductVariants(variants)
 
@@ -268,24 +271,54 @@ const OrderItemModal = React.forwardRef(({
         }
     }, [formData._searchTerm, showSearchPopup, productsData, internalProductsData])
 
-    const selectProduct = (product) => {
+    const selectProduct = async (product) => {
+        // If same product, check if we should open variant selector
+        if (formData.product_id === (product.uuid || product.product_code)) {
+            setShowSearchPopup(false)
+
+            // If it has variants, open variant selector
+            if (product.variants && product.variants.length > 0) {
+                await showSelectVariant({
+                    variants: product.variants,
+                    productName: product.name,
+                    material: product.material,
+                    selectedIndex: formData.selectedVariantIndex,
+                    onSelect: (index) => handleVariantSelect(index),
+                    actionButtonText: 'เพิ่ม Variant / แก้ไขสินค้า',
+                    onAction: () => {
+                        if (onEditProduct) onEditProduct(product)
+                    }
+                })
+            }
+            return
+        }
+
+        // Direct switch without confirmation (per user request)
+        if (formData.code || formData.product_id) {
+            setShowSearchPopup(false)
+            applyProduct(product)
+            return
+        }
+
+        applyProduct(product)
+    }
+
+    const applyProduct = (product) => {
         // Set product variants if available
+        setSelectedProduct(product)
         setProductVariants(product.variants || [])
 
         // Calculate base price from first variant only (product.price is deprecated)
         const basePrice = (product.variants?.[0]?.price) || 0
         const firstVariant = product.variants?.[0] || null
 
-        // Store variants locally directly from selected product
-        setProductVariants(product.variants || [])
-
         setFormData(prev => ({
             ...prev,
             // New UUID-based reference
-            product_id: product.uuid || product.product_code,  // UUID for stable reference
-            product_code: product.product_code,  // Human-readable code for display
+            product_id: product.uuid || product.product_code,
+            product_code: product.product_code,
 
-            // Legacy field (deprecated but kept for backward compatibility)
+            // Legacy field (deprecated)
             code: product.product_code,
 
             name: product.name,
@@ -294,7 +327,7 @@ const OrderItemModal = React.forwardRef(({
             subcategory: product.subcategory,
             material: product.material,
 
-            basePrice: basePrice,  // Store base price (from first variant)
+            basePrice: basePrice,
             unitPrice: basePrice,
             qty: prev.qty || 1,
 
@@ -304,6 +337,12 @@ const OrderItemModal = React.forwardRef(({
             image: firstVariant?.images?.[0] || prev.image,
 
             _searchTerm: product.name,
+            // Reset variant specific options
+            lightColor: '',
+            crystalColor: '',
+            bulbType: '',
+            remote: '',
+            remark: ''
         }))
         setShowSearchPopup(false)
     }
@@ -395,7 +434,10 @@ const OrderItemModal = React.forwardRef(({
 
     if (!isOpen && !isInline) return null
 
-    const total = (Number(formData.qty) || 0) * (Number(formData.unitPrice) || 0)
+    // Hardened calculation: ensure strict numeric conversion to prevent 85k * 2 = 810k discrepancy
+    const qtyNum = Number(formData.qty) || 0
+    const priceNum = Number(formData.unitPrice || formData.price || 0)
+    const total = qtyNum * priceNum
 
     const Wrapper = isInline ? 'div' : 'div'
     const wrapperProps = isInline ? { className: "w-full h-full flex flex-col p-4" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
@@ -428,8 +470,18 @@ const OrderItemModal = React.forwardRef(({
                     <div className="relative">
                         {formData.code ? (
                             <div
-                                onClick={() => setShowChangeProductConfirm(true)}
-                                className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
+                                onClick={() => {
+                                    showProductSearch(
+                                        activeProductsData,
+                                        (selected) => {
+                                            selectProduct(selected)
+                                        },
+                                        formData.product_id || formData.code, // selectedId
+                                        onAddNewProduct, // onAddNew callback
+                                        onEditProduct // onEdit callback
+                                    )
+                                }}
+                                className="bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
                             >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">
                                     สินค้า <span className="text-danger-500">*</span>
@@ -445,7 +497,7 @@ const OrderItemModal = React.forwardRef(({
                                         description: formData.description,
                                         variants: productVariants
                                     }}
-                                    variant="ghost"
+                                    variant="default"
                                     showImage={true}
                                     image={
                                         formData.selectedVariant?.images?.[0] || // 1. Selected Variant Image
@@ -456,287 +508,135 @@ const OrderItemModal = React.forwardRef(({
                                     showPrice={true}
                                     showStock={true}
                                 />
-                                <div className="hidden group-hover:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm">
-                                    แตะเพื่อเปลี่ยน
-                                </div>
+
                             </div>
                         ) : (
-                            <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md relative">
+                            <div
+                                onClick={() => {
+                                    console.log('[OrderItemModal] Clicked product search', { activeDataLength: activeProductsData?.length })
+                                    showProductSearch(
+                                        activeProductsData,
+                                        (selected) => {
+                                            console.log('[OrderItemModal] Selected product:', selected)
+                                            selectProduct(selected)
+                                        },
+                                        formData.product_id || formData.code, // selectedId
+                                        onAddNewProduct // onAddNew callback
+                                    )
+                                }}
+                                className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md relative cursor-pointer"
+                            >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">
                                     สินค้า <span className="text-danger-500">*</span>
                                 </label>
                                 <div className="relative">
-                                    <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400" size={16} />
-                                    <input
-                                        type="text"
-                                        value={formData._searchTerm}
-                                        onChange={(e) => {
-                                            const val = e.target.value
-                                            setFormData(prev => ({ ...prev, _searchTerm: val }))
-                                            setShowSearchPopup(true)
-                                        }}
-                                        onFocus={() => setShowSearchPopup(true)}
-                                        onBlur={() => setTimeout(() => setShowSearchPopup(false), 200)}
-                                        className="w-full pl-6 pr-0 py-0 bg-transparent border-none text-sm font-medium text-secondary-900 focus:ring-0 focus:outline-none outline-none placeholder-secondary-400 placeholder:font-normal"
-                                        placeholder="ค้นหารหัส หรือ ชื่อสินค้า..."
-                                        autoComplete="off"
-                                        spellCheck="false"
-                                    />
-                                </div>
-
-                                {/* Search Popup */}
-                                {showSearchPopup && (
-                                    <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[360px] overflow-y-auto">
-                                        {searchResults.length > 0 ? (
-                                            searchResults.map(p => (
-                                                <div
-                                                    key={p.id}
-                                                    onClick={() => selectProduct(p)}
-                                                    className="p-3 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 flex items-start gap-3"
-                                                >
-                                                    {/* Product Image */}
-                                                    <div className="w-12 h-12 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
-                                                        {(() => {
-                                                            // Try to get image from first variant, fallback to product images
-                                                            const imageUrl = p.variants?.[0]?.images?.[0] || p.images?.[0]
-                                                            return imageUrl ? (
-                                                                <img
-                                                                    src={imageUrl}
-                                                                    alt={p.name}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <Package size={20} className="text-secondary-400" />
-                                                                </div>
-                                                            )
-                                                        })()}
-                                                    </div>
-
-                                                    {/* Product Info - 3 Lines */}
-                                                    <div className="flex-1 min-w-0 space-y-0.5">
-                                                        {/* Line 1: Product Code + Price Range */}
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <div className="font-bold text-primary-600 text-sm truncate">
-                                                                {p.product_code || p.id}
-                                                            </div>
-                                                            <div className="text-sm font-bold text-primary-600 flex-shrink-0">
-                                                                {(() => {
-                                                                    if (p.variants && p.variants.length > 0) {
-                                                                        const prices = p.variants.map(v => v.price || 0)
-                                                                        const minPrice = Math.min(...prices)
-                                                                        const maxPrice = Math.max(...prices)
-                                                                        if (minPrice === maxPrice) {
-                                                                            return currency(minPrice)
-                                                                        }
-                                                                        return `${currency(minPrice)} - ${currency(maxPrice)}`
-                                                                    }
-                                                                    return currency(p.price || 0)
-                                                                })()}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Line 2: Name • Category • Subcategory • Material • Dimensions • Color Count */}
-                                                        <div className="text-xs text-secondary-700 truncate">
-                                                            {p.name && <span>{p.name}</span>}
-                                                            {p.category && <span> • {p.category}</span>}
-                                                            {p.subcategory && <span> • {p.subcategory}</span>}
-                                                            {p.material && <span> • {p.material}</span>}
-                                                            {(p.length || p.width || p.height) && (
-                                                                <span> • {[p.length, p.width, p.height].filter(Boolean).join('×')} cm</span>
-                                                            )}
-                                                            {p.variants && p.variants.length > 0 && (
-                                                                <span> 🎨 {p.variants.length} สี</span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Line 3: Description + Stock */}
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <div className="text-xs text-secondary-500 truncate flex-1">
-                                                                {p.description || ''}
-                                                            </div>
-                                                            <div className="text-xs text-secondary-500 flex-shrink-0">
-                                                                {(() => {
-                                                                    if (p.variants && p.variants.length > 0) {
-                                                                        const totalStock = p.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-                                                                        return `คงเหลือ: ${totalStock}`
-                                                                    }
-                                                                    return `คงเหลือ: ${p.stock || 0}`
-                                                                })()}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="p-3 text-sm text-secondary-500 text-center">ไม่พบสินค้า</div>
-                                        )}
-                                        {/* Add New Product Option */}
-                                        <div
-                                            onClick={() => {
-                                                if (onAddNewProduct) {
-                                                    onAddNewProduct()
-                                                    setShowSearchPopup(false)
-                                                }
-                                            }}
-                                            className="p-3 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
-                                        >
-                                            <Plus size={16} /> เพิ่มสินค้าใหม่
-                                        </div>
+                                    <div className="w-full pl-3 pr-3 py-2 bg-white/50 border border-secondary-200 rounded-lg flex items-center gap-2 text-secondary-400">
+                                        <Search size={16} />
+                                        <span className="text-sm">คลิกเพื่อค้นหารหัส หรือ ชื่อสินค้า...</span>
                                     </div>
-                                )}
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                        <span className="text-[10px] bg-secondary-100 text-secondary-500 px-1.5 py-0.5 rounded-md">
+                                            {internalProductsData?.length || 0}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                        )
-                        }
+                        )}
                     </div>
 
                     {/* Product Options Dropdowns & Remark */}
                     <div className="space-y-3">
                         {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
                         {productVariants.length > 0 && (
-                            <div className={`bg-white p-2.5 rounded-lg border border-secondary-200 shadow-sm transition-all ${!formData.code ? 'opacity-50' : 'hover:border-primary-300 hover:shadow-md'}`}>
+                            <div className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">
                                     Variant
                                 </label>
                                 <div className="relative">
                                     <div
-                                        onClick={() => {
-                                            if (formData.code) {
-                                                setShowVariantPopup(!showVariantPopup)
-                                            }
+                                        onClick={async () => {
+                                            if (!formData.code || productVariants.length === 0) return
+
+                                            await showSelectVariant({
+                                                variants: productVariants,
+                                                productName: formData.name,
+                                                material: formData.material,
+                                                selectedIndex: formData.selectedVariantIndex,
+                                                onSelect: (index) => handleVariantSelect(index),
+                                                actionButtonText: 'เพิ่ม Variant',
+                                                onAction: () => {
+                                                    if (onEditProduct && selectedProduct) {
+                                                        onEditProduct(selectedProduct)
+                                                    }
+                                                }
+                                            })
                                         }}
-                                        className={`w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer pr-6 flex items-center justify-between ${!formData.code ? 'cursor-not-allowed' : ''}`}
+                                        className={`w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer flex items-center justify-between ${!formData.code ? 'cursor-not-allowed' : ''}`}
                                     >
                                         <div className="w-full">
                                             {formData.selectedVariantIndex !== null && formData.selectedVariantIndex !== undefined && productVariants[formData.selectedVariantIndex]
                                                 ? (() => {
                                                     const v = productVariants[formData.selectedVariantIndex]
+
+                                                    // Helper for icons (JSX version)
+                                                    const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+                                                    const PaletteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" /></svg>
+                                                    const GemIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><path d="M6 3h12l4 6-10 13L2 9Z" /><path d="M11 3 8 9l4 13 4-13-3-6" /></svg>
+                                                    const DefaultIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+
                                                     return (
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <div className="font-bold text-secondary-900 group-hover:text-primary-600 transition-colors">
-                                                                {v.sku || '-- No SKU --'}
+                                                        <div className="flex items-center gap-3">
+                                                            {/* Image */}
+                                                            <div className="w-12 h-12 bg-secondary-100 rounded-lg flex-shrink-0 overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
+                                                                {v.images?.[0] ? (
+                                                                    <img src={v.images[0]} className="w-full h-full object-cover" alt="Variant" />
+                                                                ) : (
+                                                                    <DefaultIcon />
+                                                                )}
                                                             </div>
-                                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-2 gap-y-1 leading-none">
-                                                                {formData.name && <span className="flex items-center gap-1">{formData.name}</span>}
-                                                                {formData.material && <span className="flex items-center gap-1"> • {formData.material}</span>}
-                                                                {v.dimensions && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Maximize2 size={10} className="text-secondary-400" />
-                                                                        {v.dimensions.length}×{v.dimensions.width}×{v.dimensions.height}cm
-                                                                    </span>
-                                                                )}
-                                                                {v.color && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Palette size={10} className="text-secondary-400" />
-                                                                        {v.color}
-                                                                    </span>
-                                                                )}
-                                                                {v.crystalColor && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Gem size={10} className="text-secondary-400" />
-                                                                        {v.crystalColor}
-                                                                    </span>
-                                                                )}
-                                                                {formData.description && <span className="flex items-center gap-1"> • {formData.description}</span>}
-                                                                {(v.available !== undefined || v.stock !== undefined) && (
-                                                                    <span className="ml-auto text-primary-600 font-medium whitespace-nowrap">
-                                                                        พร้อมส่ง {v.available ?? v.stock ?? 0}
-                                                                    </span>
-                                                                )}
+
+                                                            {/* Info */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex justify-between items-start">
+                                                                    <div className="font-bold text-secondary-900 group-hover:text-primary-600 transition-colors text-sm truncate pr-2">
+                                                                        {v.sku || '-- No SKU --'}
+                                                                    </div>
+                                                                    <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
+                                                                        ฿{v.price?.toLocaleString()}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
+                                                                    {v.dimensions && (
+                                                                        <div className="flex items-center gap-1" title="ขนาด">
+                                                                            <BoxIcon />
+                                                                            <span>{v.dimensions.length}×{v.dimensions.width}×{v.dimensions.height}cm</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {v.color && (
+                                                                        <div className="flex items-center gap-1" title="สี/วัสดุ">
+                                                                            <PaletteIcon />
+                                                                            <span>{v.color}</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {v.crystalColor && (
+                                                                        <div className="flex items-center gap-1" title="สีคริสตัล">
+                                                                            <GemIcon />
+                                                                            <span>{v.crystalColor}</span>
+                                                                        </div>
+                                                                    )}
+
+                                                                    <span className="ml-auto text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )
                                                 })()
                                                 : <span className="text-secondary-400">-- เลือก Variant --</span>}
                                         </div>
-                                        <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
                                     </div>
-
-                                    {/* Variant Popup */}
-                                    {showVariantPopup && (
-                                        <>
-                                            {/* Backdrop to close */}
-                                            <div className="fixed inset-0 z-10" onClick={() => setShowVariantPopup(false)} />
-
-                                            <div className="absolute left-0 z-20 w-full mt-1 bg-white border border-secondary-200 rounded-lg shadow-lg max-h-[300px] overflow-y-auto">
-                                                {productVariants.map((variant, i) => (
-                                                    <div
-                                                        key={i}
-                                                        onClick={() => {
-                                                            handleVariantSelect(i)
-                                                            setShowVariantPopup(false)
-                                                        }}
-                                                        className={`p-2.5 hover:bg-secondary-50 cursor-pointer border-b border-secondary-100 last:border-0 text-sm ${formData.selectedVariantIndex === i ? 'bg-primary-50 text-primary-700 font-medium' : 'text-secondary-700'}`}
-                                                    >
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <div className="font-bold text-secondary-900 group-hover:text-primary-700">
-                                                                {variant.sku || '-- No SKU --'}
-                                                            </div>
-                                                            <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-2 gap-y-1">
-                                                                <span className="flex items-center gap-1">{formData.name}</span>
-                                                                {formData.material && <span className="flex items-center gap-1"> • {formData.material}</span>}
-                                                                {variant.dimensions && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Maximize2 size={10} className="text-secondary-400" />
-                                                                        {variant.dimensions.length}×{variant.dimensions.width}×{variant.dimensions.height}cm
-                                                                    </span>
-                                                                )}
-                                                                {variant.color && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Palette size={10} className="text-secondary-400" />
-                                                                        {variant.color}
-                                                                    </span>
-                                                                )}
-                                                                {variant.crystalColor && (
-                                                                    <span className="flex items-center gap-1">
-                                                                        • <Gem size={10} className="text-secondary-400" />
-                                                                        {variant.crystalColor}
-                                                                    </span>
-                                                                )}
-                                                                {formData.description && <span className="flex items-center gap-1"> • {formData.description}</span>}
-                                                                <span className="ml-auto flex items-center gap-2 whitespace-nowrap">
-                                                                    <span className="font-bold text-primary-600">฿{variant.price?.toLocaleString()}</span>
-                                                                    <span className="text-secondary-400 text-[10px]">พร้อมส่ง {variant.available ?? variant.stock ?? 0}</span>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-
-                                                {/* Add Variant Button */}
-                                                <div
-                                                    onClick={() => {
-                                                        if (onEditProduct) {
-                                                            let currentProduct = activeProductsData.find(p => p.product_code === formData.product_code || p.id === formData.code);
-
-                                                            if (!currentProduct && (formData.product_id || formData.code)) {
-                                                                // Reconstruct minimal product object for the modal if not in prop data
-                                                                currentProduct = {
-                                                                    uuid: formData.product_id,
-                                                                    product_code: formData.product_code || formData.code,
-                                                                    id: formData.code,
-                                                                    name: formData.name,
-                                                                    description: formData.description,
-                                                                    category: formData.category,
-                                                                    variants: productVariants || []
-                                                                }
-                                                            }
-
-                                                            if (currentProduct) {
-                                                                onEditProduct(currentProduct)
-                                                                setShowVariantPopup(false)
-                                                            } else {
-                                                                alert('ไม่พบข้อมูลสินค้าต้นทาง')
-                                                            }
-                                                        }
-                                                    }}
-                                                    className="p-2.5 bg-primary-50 text-primary-700 cursor-pointer font-medium flex items-center gap-2 hover:bg-primary-100 sticky bottom-0 border-t border-primary-100"
-                                                >
-                                                    <Plus size={16} /> เพิ่ม Variant ใหม่
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -745,70 +645,77 @@ const OrderItemModal = React.forwardRef(({
                         {/* Row 2: Options Grid (3 Cols) - Light Color, Bulb Type, Remote */}
                         <div className="grid grid-cols-3 gap-2">
                             {/* Light Color */}
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <div
+                                onClick={async () => {
+                                    if (!formData.code) return
+                                    const options = {}
+                                    productOptions.lightColors.forEach(opt => options[opt] = opt)
+                                    const result = await showSelect({
+                                        title: 'เลือกสีแสงไฟ',
+                                        inputOptions: options,
+                                        inputValue: formData.lightColor
+                                    })
+                                    if (result.isConfirmed) {
+                                        setFormData(prev => ({ ...prev, lightColor: result.value }))
+                                    }
+                                }}
+                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                            >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
                                 <div className="relative">
-                                    <select
-                                        value={formData.lightColor}
-                                        onChange={(e) => {
-                                            const val = e.target.value
-                                            setFormData(prev => ({ ...prev, lightColor: val }))
-                                        }}
-                                        disabled={!formData.code}
-                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
-                                    >
-                                        <option value="">-- เลือก --</option>
-                                        {productOptions.lightColors.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    <div className="text-sm font-medium text-secondary-900 truncate h-5">
+                                        {formData.lightColor || <span className="text-secondary-400">-- เลือก --</span>}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Bulb Type */}
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
-                                <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                    ประเภทหลอดไฟ
-                                </label>
+                            <div
+                                onClick={async () => {
+                                    if (!formData.code) return
+                                    const options = {}
+                                    productOptions.bulbTypes.forEach(opt => options[opt] = opt)
+                                    const result = await showSelect({
+                                        title: 'เลือกประเภทหลอดไฟ',
+                                        inputOptions: options,
+                                        inputValue: formData.bulbType
+                                    })
+                                    if (result.isConfirmed) {
+                                        setFormData(prev => ({ ...prev, bulbType: result.value }))
+                                    }
+                                }}
+                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                            >
+                                <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทหลอดไฟ</label>
                                 <div className="relative">
-                                    <select
-                                        value={formData.bulbType}
-                                        onChange={(e) => {
-                                            const val = e.target.value
-                                            setFormData(prev => ({ ...prev, bulbType: val }))
-                                        }}
-                                        disabled={!formData.code}
-                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
-                                    >
-                                        <option value="">-- เลือก --</option>
-                                        {productOptions.bulbTypes.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    <div className="text-sm font-medium text-secondary-900 truncate h-5">
+                                        {formData.bulbType || <span className="text-secondary-400">-- เลือก --</span>}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Remote */}
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <div
+                                onClick={async () => {
+                                    if (!formData.code) return
+                                    const options = {}
+                                    productOptions.remotes.forEach(opt => options[opt] = opt)
+                                    const result = await showSelect({
+                                        title: 'เลือกประเภทรีโมท',
+                                        inputOptions: options,
+                                        inputValue: formData.remote
+                                    })
+                                    if (result.isConfirmed) {
+                                        setFormData(prev => ({ ...prev, remote: result.value }))
+                                    }
+                                }}
+                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                            >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">รีโมท</label>
                                 <div className="relative">
-                                    <select
-                                        value={formData.remote}
-                                        onChange={(e) => {
-                                            const val = e.target.value
-                                            setFormData(prev => ({ ...prev, remote: val }))
-                                        }}
-                                        disabled={!formData.code}
-                                        className="w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 appearance-none cursor-pointer pr-6 disabled:cursor-not-allowed"
-                                    >
-                                        <option value="">-- เลือก --</option>
-                                        {productOptions.remotes.map((opt, i) => (
-                                            <option key={i} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" size={16} />
+                                    <div className="text-sm font-medium text-secondary-900 truncate h-5">
+                                        {formData.remote || <span className="text-secondary-400">-- เลือก --</span>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -904,24 +811,7 @@ const OrderItemModal = React.forwardRef(({
                 }
             </div >
 
-            {/* Change Product Confirmation Dialog */}
-            <ConfirmDialog
-                isOpen={showChangeProductConfirm}
-                title="ยืนยันการเปลี่ยนสินค้า"
-                message="คุณต้องการเปลี่ยนสินค้าใช่หรือไม่?"
-                onConfirm={() => {
-                    setShowChangeProductConfirm(false)
-                    setFormData(prev => ({
-                        ...prev,
-                        code: '', name: '', unitPrice: 0, _searchTerm: '', description: '',
-                        image: null, length: '', width: '', height: '',
-                        material: '', color: '', crystalColor: '',
-                        bulbType: '', light: '', remote: '', category: '', subcategory: '',
-                        selectedVariant: null
-                    }))
-                }}
-                onCancel={() => setShowChangeProductConfirm(false)}
-            />
+            {/* Change Product Confirmation Dialog - DEPRECATED in favor of SweetAlert in selectProduct */}
 
             {/* Delete Item Confirmation Dialog */}
             <ConfirmDialog

@@ -1,31 +1,21 @@
-
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '.env.local' });
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase URL or Key');
-    process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const { supabase } = require('./lib/supabaseClient');
 
 async function checkSchema() {
-    const { data, error } = await supabase
-        .from('product_variants')
+    const { data: orders, error: ordersError } = await supabase
+        .from('orders')
         .select('*')
         .limit(1);
+    
+    if (ordersError) console.error('Orders Error:', ordersError);
+    else console.log('Orders Columns:', Object.keys(orders[0] || {}));
 
-    if (error) {
-        console.error('Error:', error);
-    } else {
-        console.log('Columns in product_variants:', data && data.length > 0 ? Object.keys(data[0]) : 'Table empty or no access');
-        if (data && data.length > 0) {
-            console.log('Has min_stock_level:', Object.keys(data[0]).includes('min_stock_level'));
-        }
-    }
+    const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .limit(1);
+    
+    if (itemsError) console.error('Items Error:', itemsError);
+    else console.log('Items Columns:', Object.keys(items[0] || {}));
 }
 
 checkSchema();
