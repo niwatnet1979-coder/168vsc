@@ -12,6 +12,7 @@ export default function VariantSelector({
     value, // selected index
     onChange,
     onAction, // for "Add Variant"
+    onEdit, // for editing specific variant
     disabled = false,
     placeholder = "-- เลือก Variant --"
 }) {
@@ -79,7 +80,15 @@ export default function VariantSelector({
                                                 )}
                                                 <div className="ml-auto flex items-center gap-1.5 px-0.5">
                                                     <span className="text-secondary-400 text-[10px]">คงเหลือ {selectedVariant.available ?? selectedVariant.stock ?? 0}</span>
-                                                    <Settings size={12} className="text-secondary-300" />
+                                                    <div
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            if (onEdit) onEdit(value)
+                                                        }}
+                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer"
+                                                    >
+                                                        <Settings size={12} className="text-secondary-300 hover:text-primary-600" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -107,7 +116,7 @@ export default function VariantSelector({
                         <Combobox.Options
                             className="absolute z-[100] mt-2 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
                         >
-                            <div className="overflow-y-auto max-h-[220px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="overflow-y-auto max-h-[300px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {filteredVariants.length === 0 ? (
                                     <div className="relative cursor-default select-none py-10 px-4 text-secondary-500 text-center text-sm">
                                         ไม่พบข้อมูลสินค้าที่ตรงกัน
@@ -167,7 +176,16 @@ export default function VariantSelector({
                                                                 )}
                                                                 <div className="ml-auto flex items-center gap-1.5 px-0.5">
                                                                     <span className="text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
-                                                                    <Settings size={12} className="text-secondary-300" />
+                                                                    <div
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault()
+                                                                            e.stopPropagation()
+                                                                            if (onEdit) onEdit(realIndex)
+                                                                        }}
+                                                                        className="p-1 hover:bg-secondary-100 rounded-md transition-colors cursor-pointer"
+                                                                    >
+                                                                        <Settings size={12} className="text-secondary-300 hover:text-primary-600" />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>

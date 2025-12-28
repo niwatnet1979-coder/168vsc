@@ -563,6 +563,11 @@ const OrderItemModal = React.forwardRef(({
                                                 onEditProduct(selectedProduct)
                                             }
                                         }}
+                                        onEdit={() => {
+                                            if (onEditProduct && selectedProduct) {
+                                                onEditProduct(selectedProduct)
+                                            }
+                                        }}
                                         disabled={!formData.code}
                                     />
                                 </div>
