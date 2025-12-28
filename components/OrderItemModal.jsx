@@ -441,7 +441,7 @@ const OrderItemModal = React.forwardRef(({
 
     const Wrapper = isInline ? 'div' : 'div'
     const wrapperProps = isInline ? { className: "w-full h-full flex flex-col p-4" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] h-[600px] max-h-[90vh] flex flex-col overflow-hidden" }
+    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] h-auto max-h-[90vh] flex flex-col overflow-hidden" }
 
 
     return (
@@ -659,7 +659,7 @@ const OrderItemModal = React.forwardRef(({
                                         setFormData(prev => ({ ...prev, lightColor: result.value }))
                                     }
                                 }}
-                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                                className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
                             >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">สีแสงไฟ</label>
                                 <div className="relative">
@@ -684,7 +684,7 @@ const OrderItemModal = React.forwardRef(({
                                         setFormData(prev => ({ ...prev, bulbType: result.value }))
                                     }
                                 }}
-                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                                className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
                             >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ประเภทหลอดไฟ</label>
                                 <div className="relative">
@@ -709,7 +709,7 @@ const OrderItemModal = React.forwardRef(({
                                         setFormData(prev => ({ ...prev, remote: result.value }))
                                     }
                                 }}
-                                className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
+                                className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all cursor-pointer ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}
                             >
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">รีโมท</label>
                                 <div className="relative">
@@ -720,7 +720,7 @@ const OrderItemModal = React.forwardRef(({
                             </div>
                         </div>
 
-                        <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                        <div className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                             <label className="block text-xs font-medium text-secondary-500 mb-1">หมายเหตุ</label>
                             <textarea
                                 rows={1}
@@ -739,7 +739,7 @@ const OrderItemModal = React.forwardRef(({
                     {/* Quantity, Price & Total - Single Row */}
                     <div className="grid grid-cols-12 gap-4 items-end">
                         <div className="col-span-4">
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <div className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">จำนวน</label>
                                 <input
                                     type="number"
@@ -755,7 +755,7 @@ const OrderItemModal = React.forwardRef(({
                             </div>
                         </div>
                         <div className="col-span-4">
-                            <div className={`bg-secondary-50 p-2 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                            <div className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
                                 <label className="block text-xs font-medium text-secondary-500 mb-1">ราคา/หน่วย</label>
                                 <input
                                     type="number"
@@ -770,10 +770,10 @@ const OrderItemModal = React.forwardRef(({
                             </div>
                         </div>
                         <div className="col-span-4">
-                            <div className="bg-primary-50 p-2 rounded-lg border border-primary-100 transition-all hover:shadow-md">
+                            <div className="bg-primary-50 p-2.5 rounded-lg border border-primary-100 transition-all hover:shadow-md">
                                 <label className="block text-xs font-medium text-primary-600 mb-1 text-right">รวมเป็นเงิน</label>
                                 <div className="text-right">
-                                    <span className="text-lg font-bold text-primary-700">{currency(total)}</span>
+                                    <span className="text-sm font-bold text-primary-700">{currency(total)}</span>
                                 </div>
                             </div>
                         </div>
@@ -784,11 +784,11 @@ const OrderItemModal = React.forwardRef(({
                 {/* Footer */}
                 {
                     !hideControls && (
-                        <div className="flex items-center justify-end gap-3 px-3 pt-2 pb-3 border-t border-secondary-200 bg-white flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 sticky bottom-0 rounded-b-2xl">
+                        <div className="flex items-center justify-between gap-3 px-3 pt-2 pb-3 border-t border-secondary-200 bg-white flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 sticky bottom-0 rounded-b-2xl">
                             {isEditing && onDelete && (
                                 <button
                                     onClick={() => setShowDeleteItemConfirm(true)}
-                                    className="px-4 py-2 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center gap-1 mr-auto"
+                                    className="flex-1 px-2 py-2.5 text-sm border border-danger-500 text-danger-500 rounded-lg hover:bg-danger-50 font-medium flex items-center justify-center gap-1"
                                 >
                                     <Trash2 size={16} />
                                     ลบ
@@ -796,13 +796,13 @@ const OrderItemModal = React.forwardRef(({
                             )}
                             <button
                                 onClick={onClose}
-                                className="px-6 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium"
+                                className="flex-1 px-2 py-2.5 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium flex items-center justify-center"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30 transition-all active:scale-95"
+                                className="flex-1 px-2 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium shadow-lg shadow-primary-500/30 transition-all active:scale-95 flex items-center justify-center"
                             >
                                 บันทึก
                             </button>
