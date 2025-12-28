@@ -5,6 +5,7 @@ import { DataManager } from '../lib/dataManager'
 import Swal, { showConfirm, showSelect, showSelectVariant, showProductSearch } from '../lib/sweetAlert'
 import ProductCard from './ProductCard'
 import ConfirmDialog from './ConfirmDialog'
+import VariantSelector from './VariantSelector'
 
 const EMPTY_ARRAY = []
 
@@ -553,90 +554,17 @@ const OrderItemModal = React.forwardRef(({
                                     Variant
                                 </label>
                                 <div className="relative">
-                                    <div
-                                        onClick={async () => {
-                                            if (!formData.code || productVariants.length === 0) return
-
-                                            await showSelectVariant({
-                                                variants: productVariants,
-                                                productName: formData.name,
-                                                material: formData.material,
-                                                selectedIndex: formData.selectedVariantIndex,
-                                                onSelect: (index) => handleVariantSelect(index),
-                                                actionButtonText: 'เพิ่ม Variant',
-                                                onAction: () => {
-                                                    if (onEditProduct && selectedProduct) {
-                                                        onEditProduct(selectedProduct)
-                                                    }
-                                                }
-                                            })
+                                    <VariantSelector
+                                        variants={productVariants}
+                                        value={formData.selectedVariantIndex}
+                                        onChange={(index) => handleVariantSelect(index)}
+                                        onAction={() => {
+                                            if (onEditProduct && selectedProduct) {
+                                                onEditProduct(selectedProduct)
+                                            }
                                         }}
-                                        className={`w-full bg-transparent border-none p-0 text-sm font-medium text-secondary-900 focus:ring-0 cursor-pointer flex items-center justify-between ${!formData.code ? 'cursor-not-allowed' : ''}`}
-                                    >
-                                        <div className="w-full">
-                                            {formData.selectedVariantIndex !== null && formData.selectedVariantIndex !== undefined && productVariants[formData.selectedVariantIndex]
-                                                ? (() => {
-                                                    const v = productVariants[formData.selectedVariantIndex]
-
-                                                    // Helper for icons (JSX version)
-                                                    const BoxIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
-                                                    const PaletteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" /></svg>
-                                                    const GemIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary-400"><path d="M6 3h12l4 6-10 13L2 9Z" /><path d="M11 3 8 9l4 13 4-13-3-6" /></svg>
-                                                    const DefaultIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-
-                                                    return (
-                                                        <div className="flex items-center gap-3">
-                                                            {/* Image */}
-                                                            <div className="w-12 h-12 bg-secondary-100 rounded-lg flex-shrink-0 overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
-                                                                {v.images?.[0] ? (
-                                                                    <img src={v.images[0]} className="w-full h-full object-cover" alt="Variant" />
-                                                                ) : (
-                                                                    <DefaultIcon />
-                                                                )}
-                                                            </div>
-
-                                                            {/* Info */}
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex justify-between items-start">
-                                                                    <div className="font-bold text-secondary-900 group-hover:text-primary-600 transition-colors text-sm truncate pr-2">
-                                                                        {v.sku || '-- No SKU --'}
-                                                                    </div>
-                                                                    <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
-                                                                        ฿{v.price?.toLocaleString()}
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
-                                                                    {v.dimensions && (
-                                                                        <div className="flex items-center gap-1" title="ขนาด">
-                                                                            <BoxIcon />
-                                                                            <span>{v.dimensions.length}×{v.dimensions.width}×{v.dimensions.height}cm</span>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {v.color && (
-                                                                        <div className="flex items-center gap-1" title="สี/วัสดุ">
-                                                                            <PaletteIcon />
-                                                                            <span>{v.color}</span>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {v.crystalColor && (
-                                                                        <div className="flex items-center gap-1" title="สีคริสตัล">
-                                                                            <GemIcon />
-                                                                            <span>{v.crystalColor}</span>
-                                                                        </div>
-                                                                    )}
-
-                                                                    <span className="ml-auto text-secondary-400 text-[10px]">คงเหลือ {v.available ?? v.stock ?? 0}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })()
-                                                : <span className="text-secondary-400">-- เลือก Variant --</span>}
-                                        </div>
-                                    </div>
+                                        disabled={!formData.code}
+                                    />
                                 </div>
                             </div>
                         )}
