@@ -13,6 +13,7 @@ import {
     AlertCircle,
     Clock
 } from 'lucide-react'
+import Swal from 'sweetalert2'
 
 export default function QCPage() {
     const [queue, setQueue] = useState([])
@@ -37,6 +38,46 @@ export default function QCPage() {
     const handleInspect = (item) => {
         setSelectedItem(item)
         setShowInspectionModal(true)
+    }
+
+    const handleScanToInspect = async () => {
+        const { value: qrCode } = await Swal.fire({
+            title: 'Scan Item QR',
+            input: 'text',
+            inputLabel: 'Scan the QR code on the item tag',
+            inputPlaceholder: 'ITEM-XXX...',
+            showCancelButton: true,
+            confirmButtonText: 'Inspect',
+            cancelButtonText: 'Cancel'
+        })
+
+        if (!qrCode) return
+
+        // 1. Search in current queue first
+        const foundInQueue = queue.find(i => i.qr_code.toLowerCase() === qrCode.toLowerCase())
+        if (foundInQueue) {
+            handleInspect(foundInQueue)
+            return
+        }
+
+        // 2. If not in queue, fetch from DB (in case it's not loaded or filtered out)
+        // For MVP, we just show error if not in queue, assuming queue loads all 'qc_pending' / 'in_stock'
+        // But let's try to be smart.
+        try {
+            // Note: DataManager.getInventoryItemByQR gives us the item.
+            // We need to import DataManager if not already valid? It is imported.
+            Swal.fire({ title: 'Searching...', didOpen: () => Swal.showLoading() })
+            const item = await DataManager.getInventoryItemByQR(qrCode)
+            Swal.close()
+
+            if (item) {
+                handleInspect(item)
+            } else {
+                Swal.fire('Not Found', `Item ${qrCode} not found in inventory.`, 'error')
+            }
+        } catch (error) {
+            Swal.fire('Error', error.message, 'error')
+        }
     }
 
     const filteredQueue = queue.filter(item => {
@@ -65,7 +106,10 @@ export default function QCPage() {
                         <p className="text-secondary-500 text-sm">Inspect received items and verify quality.</p>
                     </div>
                     <div className="flex gap-2">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors shadow-sm">
+                        <button
+                            onClick={handleScanToInspect}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 font-medium transition-colors shadow-sm"
+                        >
                             <QrCode size={20} />
                             Scan to Inspect
                         </button>
@@ -143,8 +187,8 @@ export default function QCPage() {
                                         <div className="flex justify-between">
                                             <span>Status:</span>
                                             <span className={`font-medium capitalize ${item.status === 'in_stock' ? 'text-blue-600' :
-                                                    item.status === 'damaged' ? 'text-red-600' :
-                                                        'text-secondary-600'
+                                                item.status === 'damaged' ? 'text-red-600' :
+                                                    'text-secondary-600'
                                                 }`}>
                                                 {item.status.replace('_', ' ')}
                                             </span>

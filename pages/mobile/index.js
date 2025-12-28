@@ -25,13 +25,13 @@ import {
     QrCode,
     Umbrella
 } from 'lucide-react'
+import { showSuccess, showError, showConfirm } from '../../lib/sweetAlert'
 import { DataManager } from '../../lib/dataManager'
 import { supabase } from '../../lib/supabaseClient'
 import AppLayout from '../../components/AppLayout'
 import { useJobs } from '../../hooks/useJobs'
 import LeaveBookingModal from '../../components/LeaveBookingModal'
 import LeaveApprovalModal from '../../components/LeaveApprovalModal'
-import ConfirmDialog from '../../components/ConfirmDialog'
 
 // Helper to format date
 // Helper to format date
@@ -117,8 +117,7 @@ export default function MobilePage() {
     const [showLeaveApprovalModal, setShowLeaveApprovalModal] = useState(false)
     const [selectedLeaveRequest, setSelectedLeaveRequest] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [showCancelLeaveConfirm, setShowCancelLeaveConfirm] = useState(false)
-    const [leaveToCancel, setLeaveToCancel] = useState(null)
+
 
     // Get user role and team
     const userRole = session?.user?.role
@@ -355,7 +354,10 @@ export default function MobilePage() {
         try {
             await DataManager.createLeaveRequest(leaveData)
             await loadLeaveRequests()
-            alert('บันทึกการลาเรียบร้อย')
+            showSuccess({
+                title: 'สำเร็จ',
+                text: 'บันทึกการลาเรียบร้อย'
+            })
         } catch (error) {
             console.error('Error saving leave:', error)
             throw error
@@ -366,7 +368,7 @@ export default function MobilePage() {
         try {
             await DataManager.approveLeaveRequest(leaveId)
             await loadLeaveRequests()
-            alert('อนุมัติการลาเรียบร้อย')
+            showSuccess({ title: 'อนุมัติเรียบร้อย', text: 'การลาได้รับการอนุมัติแล้ว' })
         } catch (error) {
             console.error('Error approving leave:', error)
             throw error
@@ -377,34 +379,35 @@ export default function MobilePage() {
         try {
             await DataManager.rejectLeaveRequest(leaveId, reason)
             await loadLeaveRequests()
-            alert('ปฏิเสธการลาเรียบร้อย')
+            showSuccess({ title: 'ปฏิเสธเรียบร้อย', text: 'คำขอลาถูกปฏิเสธแล้ว' })
         } catch (error) {
             console.error('Error rejecting leave:', error)
             throw error
         }
     }
 
-    const handleCancelLeave = (leaveId) => {
-        setLeaveToCancel(leaveId)
-        setShowCancelLeaveConfirm(true)
-    }
+    const handleCancelLeave = async (leaveId) => {
+        const result = await showConfirm({
+            title: 'ยกเลิกคำขอลา',
+            text: 'คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำขอลาพักร้อนนี้?',
+            confirmButtonText: 'ยืนยันการยกเลิก',
+            confirmButtonColor: '#ef4444', // Danger red
+            icon: 'warning'
+        })
 
-    const handleConfirmCancelLeave = async () => {
-        setShowCancelLeaveConfirm(false)
-        if (!leaveToCancel) return
+        if (!result.isConfirmed) return
 
         try {
-            const { error } = await supabase.from('leave_requests').delete().eq('id', leaveToCancel)
+            const { error } = await supabase.from('leave_requests').delete().eq('id', leaveId)
             if (error) throw error
             await loadLeaveRequests()
-            alert('ยกเลิกคำขอลาเรียบร้อย')
+            showSuccess({ title: 'ยกเลิกสำเร็จ', text: 'คำขอลาถูกยกเลิกแล้ว' })
             setShowLeaveApprovalModal(false)
             setSelectedLeaveRequest(null)
         } catch (error) {
             console.error('Error cancelling leave:', error)
-            alert('เกิดข้อผิดพลาดในการยกเลิก')
+            showError({ text: error.message })
         }
-        setLeaveToCancel(null)
     }
 
     const filterJobs = () => {

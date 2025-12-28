@@ -1,0 +1,2 @@
+ALTER TABLE purchase_orders
+ADD COLUMN inspection_date TIMESTAMP WITH TIME ZONE NULL;

@@ -61,6 +61,8 @@ export const translations = {
         'Paid': 'Paid',
         'Deposit': 'Deposit',
         'Pay Back': 'Pay Back',
+        'Inbound Shipments': 'Inbound Shipments',
+        'Receiving': 'Receiving',
 
         // Inventory
         'Inventory Management': 'Inventory Management',
@@ -137,6 +139,8 @@ export const translations = {
         'Products': 'สินค้า',
         'Inventory': 'คลังสินค้า',
         'Purchasing': 'จัดซื้อ',
+        'Finance': 'การเงิน',
+        'Quotations': 'ใบเสนอราคา',
         'Quality Control': 'ตรวจสอบคุณภาพ (QC)',
         'Customers': 'ลูกค้า',
         'Team': 'ทีมงาน',
@@ -186,6 +190,8 @@ export const translations = {
         'Paid': 'จ่ายแล้ว',
         'Deposit': 'มัดจำ',
         'Pay Back': 'จ่ายคืน',
+        'Inbound Shipments': 'ชิปปิ้ง (นำเข้า)',
+        'Receiving': 'รับสินค้าเข้า (Receiving)',
 
         // Inventory
         'Inventory Management': 'จัดการคลังสินค้า',

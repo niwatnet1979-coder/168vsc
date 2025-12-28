@@ -19,6 +19,7 @@ import {
     Trash2
 } from 'lucide-react'
 import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
+import Swal from 'sweetalert2'
 
 export default function PurchasingPage() {
     const { t } = useLanguage()
@@ -344,9 +345,27 @@ export default function PurchasingPage() {
                                                     {po.status === 'shipping' && (
                                                         <button
                                                             onClick={async () => {
-                                                                if (confirm('Receive this order?')) {
-                                                                    const success = await DataManager.receivePurchaseOrder(po.id)
-                                                                    if (success) loadOrders()
+                                                                const { value: date } = await Swal.fire({
+                                                                    title: t('Receive Order'),
+                                                                    text: t('Please specify the arrival/inspection date:'),
+                                                                    input: 'date',
+                                                                    inputValue: new Date().toISOString().split('T')[0],
+                                                                    showCancelButton: true,
+                                                                    confirmButtonText: t('Confirm Receive'),
+                                                                    cancelButtonText: t('Cancel'),
+                                                                    confirmButtonColor: '#7c3aed'
+                                                                })
+
+                                                                if (date) {
+                                                                    try {
+                                                                        const success = await DataManager.receivePurchaseOrder(po.id, new Date(date).toISOString())
+                                                                        if (success) {
+                                                                            await showSuccess({ title: t('Success'), text: t('Order marked as Arrived') })
+                                                                            loadOrders()
+                                                                        }
+                                                                    } catch (error) {
+                                                                        showError({ title: t('Error'), text: error.message })
+                                                                    }
                                                                 }
                                                             }}
                                                             className="p-1 hover:bg-purple-100 rounded text-purple-600" title="Receive Items">

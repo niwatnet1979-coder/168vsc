@@ -24,7 +24,9 @@ import {
     CheckCircle,
     Globe,
     ScrollText,
-    Truck
+    Truck,
+    Ship,
+    ArrowDownCircle
 } from 'lucide-react';
 import packageJson from '../package.json';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -73,7 +75,9 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         { name: 'Inventory', icon: Box, path: '/inventory' },
         { name: 'Purchasing', icon: ShoppingBag, path: '/purchasing' },
         { name: 'Finance', icon: Wallet, path: '/finance' },
-        { name: 'Shipping', icon: Truck, path: '/shipping' },
+        { name: 'Shipping', icon: Truck, path: '/shipping' }, // Outbound
+        { name: 'Inbound Shipments', icon: Ship, path: '/shipments' }, // Inbound
+        { name: 'Receiving', icon: ArrowDownCircle, path: '/receiving' },
         { name: 'Quality Control', icon: CheckCircle, path: '/qc' },
 
         { name: 'Customers', icon: Users, path: '/customers' },
