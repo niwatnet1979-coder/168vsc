@@ -57,15 +57,24 @@ export default function OrderItemsList({
                     >
                         {/* LEFT: Image (Fixed Aspect) */}
                         <div className="w-24 bg-gray-50 flex items-center justify-center border-r border-secondary-100 flex-shrink-0 relative">
-                            {item.image ? (
-                                <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <Package size={24} className="text-secondary-300" />
-                            )}
+                            {(() => {
+                                // Resolving Image Logic: Item Image -> Selected Variant Image -> Product Image -> Product First Gallery Image
+                                // Resolving Image Logic: Item Image -> Selected Variant Image -> Product Image
+                                const imgSrc = item.image ||
+                                    item.selectedVariant?.image_url ||
+                                    item.product?.image_url
+
+                                if (imgSrc) {
+                                    return (
+                                        <img
+                                            src={imgSrc}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )
+                                }
+                                return <Package size={24} className="text-secondary-300" />
+                            })()}
                             {/* Index Badge */}
                             <div className="absolute top-1 left-1 bg-primary-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-sm z-10">
                                 {idx + 1}

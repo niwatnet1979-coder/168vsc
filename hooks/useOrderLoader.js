@@ -211,8 +211,8 @@ export function useOrderLoader({
                                 width: item.width || product.width,
                                 height: item.height || product.height,
 
-                                // Image Logic: Item Snapshot -> Variant Image -> Null
-                                image: item.image || variant?.images?.[0] || null,
+                                // Image Logic: Item Snapshot -> Variant Image -> Product Image
+                                image: item.image || variant?.image_url || product?.image_url || null,
 
                                 selectedVariant: variant || null,
                                 variant_id: item.product_variant_id || variant?.id || null,
