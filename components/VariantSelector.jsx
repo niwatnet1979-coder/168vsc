@@ -136,7 +136,7 @@ export default function VariantSelector({
                                             console.log('[VariantSelector] Main View Gear Triggered')
                                             if (onEdit) onEdit(value)
                                         }}
-                                        className="absolute right-8 top-1/2 -translate-y-1/2 p-2 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200 z-[10]"
+                                        className="absolute right-8 bottom-[6px] p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200 z-[10]"
                                     >
                                         <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
                                     </div>
