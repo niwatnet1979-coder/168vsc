@@ -1,5 +1,5 @@
 import React from 'react'
-import { Package, Tag, Box, Settings } from 'lucide-react'
+import { Package, Tag, Box, Settings, AlignLeft } from 'lucide-react'
 
 const CodeIcon = () => <Package size={12} className="text-secondary-400" />
 const TagIcon = () => <Tag size={12} className="text-secondary-400" />
@@ -70,8 +70,9 @@ export default function ProductCard({
                 )}
                 <div className="flex-1 min-w-0 text-left">
                     <div className="flex justify-between items-start">
-                        <div className="font-bold text-sm truncate pr-2 text-secondary-900">
-                            {product.name}
+                        <div className="font-bold text-sm truncate pr-2 text-secondary-900 flex items-center gap-1.5">
+                            <span className="text-secondary-400 font-medium">{productCode}</span>
+                            <span>{product.name}</span>
                         </div>
                         <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
                             {priceDisplay}
@@ -79,20 +80,16 @@ export default function ProductCard({
                     </div>
 
                     <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
-                        <div className="flex items-center gap-1">
-                            <CodeIcon />
-                            <span>{productCode}</span>
-                        </div>
-                        {product.category && (
-                            <div className="flex items-center gap-1">
-                                <TagIcon />
-                                <span>{product.category}</span>
-                            </div>
-                        )}
                         {product.material && (
                             <div className="flex items-center gap-1">
                                 <MaterialIcon />
                                 <span>{product.material}</span>
+                            </div>
+                        )}
+                        {(product.description || product.category) && (
+                            <div className="flex items-center gap-1 truncate">
+                                <AlignLeft size={12} className="text-secondary-400" />
+                                <span className="truncate">{product.description || product.category}</span>
                             </div>
                         )}
                         <div className="ml-auto flex items-center gap-1.5 px-0.5">
