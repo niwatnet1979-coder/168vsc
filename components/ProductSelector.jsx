@@ -53,7 +53,6 @@ export default function ProductSelector({
                                 <Combobox.Button as="div" className="w-full text-left cursor-pointer bg-white p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-50 hover:border-secondary-200 hover:shadow-md group">
                                     <div className="flex justify-between items-center mb-0.5">
                                         <div className="text-secondary-500 text-[10px] font-medium uppercase tracking-wider">สินค้า <span className="text-danger-500">*</span></div>
-                                        <ChevronDown className="h-3 w-3 text-secondary-400" />
                                     </div>
                                     <ProductCard
                                         product={selectedProduct}

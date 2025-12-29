@@ -105,7 +105,7 @@ export default function VariantSelector({
                                     <VariantItemInner
                                         variant={selectedVariant}
                                         isSelected={true}
-                                        showChevron={true}
+                                        showChevron={false}
                                         onEdit={() => onEdit && onEdit(value)}
                                     />
                                 </Combobox.Button>
