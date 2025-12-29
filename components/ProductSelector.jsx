@@ -99,6 +99,7 @@ export default function ProductSelector({
                                                 <ProductCard
                                                     product={p}
                                                     variant="compact"
+                                                    onEdit={() => onEdit && onEdit(p)}
                                                 />
                                             )}
                                         </Combobox.Option>

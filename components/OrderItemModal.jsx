@@ -470,8 +470,8 @@ const OrderItemModal = React.forwardRef(({
                     <div className="space-y-3">
                         {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
                         {productVariants.length > 0 && (
-                            <div className={`bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
-                                <label className="block text-xs font-medium text-secondary-500 mb-1">
+                            <div className={`bg-secondary-50 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
+                                <label className="block text-xs font-medium text-secondary-500 mb-1 px-2.5 pt-2.5">
                                     Variant
                                 </label>
                                 <div className="relative">

@@ -101,7 +101,7 @@ export default function VariantSelector({
                     <div className="relative">
                         <div className="relative w-full">
                             {!open && selectedVariant ? (
-                                <Combobox.Button as="div" className="w-full text-left cursor-pointer">
+                                <Combobox.Button as="div" className="w-full text-left cursor-pointer px-2.5 pb-2.5">
                                     <VariantItemInner
                                         variant={selectedVariant}
                                         isSelected={true}
@@ -110,17 +110,17 @@ export default function VariantSelector({
                                     />
                                 </Combobox.Button>
                             ) : (
-                                <div className="relative">
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none">
+                                <div className="relative px-2.5 pb-2.5">
+                                    <div className="absolute left-2.5 top-1/2 -translate-y-[calc(50%+1.25px)] text-secondary-400 pointer-events-none pl-3">
                                         <Search size={14} />
                                     </div>
                                     <Combobox.Input
-                                        className={`w-full bg-transparent border-none pl-5 pr-6 py-0 text-sm font-medium text-secondary-900 focus:ring-0 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text'}`}
+                                        className={`w-full bg-transparent border-none pl-9 pr-8 py-0.5 text-sm font-medium text-secondary-900 focus:ring-0 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text'}`}
                                         displayValue={() => ''}
                                         onChange={(event) => setQuery(event.target.value)}
                                         placeholder={open ? "พิมพ์เพื่อค้นหา..." : placeholder}
                                     />
-                                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center">
+                                    <Combobox.Button className="absolute inset-y-0 right-2.5 flex items-center pr-2 pb-2.5">
                                         <ChevronDown className="h-4 w-4 text-secondary-400" aria-hidden="true" />
                                     </Combobox.Button>
                                 </div>
