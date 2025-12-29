@@ -6,6 +6,7 @@ import Swal, { showConfirm, showSelect, showSelectVariant, showProductSearch } f
 import ProductCard from './ProductCard'
 import ConfirmDialog from './ConfirmDialog'
 import VariantSelector from './VariantSelector'
+import ProductSelector from './ProductSelector'
 
 const EMPTY_ARRAY = []
 
@@ -467,82 +468,15 @@ const OrderItemModal = React.forwardRef(({
                 {/* Body */}
                 <div className={`px-4 pb-2 pt-2 space-y-3 bg-white ${isInline ? 'h-full' : 'flex-1 overflow-y-auto min-h-0'}`}>
                     {/* ... (Existing Body Content) ... */}
-                    {/* Product Search / Selected Item */}
+                    {/* Main Product Selection Dropdown */}
                     <div className="relative">
-                        {formData.code ? (
-                            <div
-                                onClick={() => {
-                                    showProductSearch(
-                                        activeProductsData,
-                                        (selected) => {
-                                            selectProduct(selected)
-                                        },
-                                        formData.product_id || formData.code, // selectedId
-                                        onAddNewProduct, // onAddNew callback
-                                        onEditProduct // onEdit callback
-                                    )
-                                }}
-                                className="bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md cursor-pointer group"
-                            >
-                                <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                    สินค้า <span className="text-danger-500">*</span>
-                                </label>
-                                <ProductCard
-                                    product={{
-                                        name: formData.name,
-                                        product_code: formData.product_code || formData.code,
-                                        code: formData.code,
-                                        category: formData.category,
-                                        material: formData.material,
-                                        description: formData.description,
-                                        description: formData.description,
-                                        variants: productVariants
-                                    }}
-                                    variant="default"
-                                    showImage={true}
-                                    image={
-                                        formData.selectedVariant?.images?.[0] || // 1. Selected Variant Image
-                                        formData.image ||                        // 2. Saved Item Image
-                                        productVariants?.[0]?.images?.[0] ||     // 3. Default Variant Image
-                                        null
-                                    }
-                                    showPrice={true}
-                                    showStock={true}
-                                />
-
-                            </div>
-                        ) : (
-                            <div
-                                onClick={() => {
-                                    console.log('[OrderItemModal] Clicked product search', { activeDataLength: activeProductsData?.length })
-                                    showProductSearch(
-                                        activeProductsData,
-                                        (selected) => {
-                                            console.log('[OrderItemModal] Selected product:', selected)
-                                            selectProduct(selected)
-                                        },
-                                        formData.product_id || formData.code, // selectedId
-                                        onAddNewProduct // onAddNew callback
-                                    )
-                                }}
-                                className="bg-secondary-50 p-3 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md relative cursor-pointer"
-                            >
-                                <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                    สินค้า <span className="text-danger-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <div className="w-full pl-3 pr-3 py-2 bg-white/50 border border-secondary-200 rounded-lg flex items-center gap-2 text-secondary-400">
-                                        <Search size={16} />
-                                        <span className="text-sm">คลิกเพื่อค้นหารหัส หรือ ชื่อสินค้า...</span>
-                                    </div>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                        <span className="text-[10px] bg-secondary-100 text-secondary-500 px-1.5 py-0.5 rounded-md">
-                                            {internalProductsData?.length || 0}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        <ProductSelector
+                            products={activeProductsData}
+                            selectedId={formData.product_id || formData.code}
+                            onSelect={selectProduct}
+                            onAdd={onAddNewProduct}
+                            disabled={false}
+                        />
                     </div>
 
                     {/* Product Options Dropdowns & Remark */}
