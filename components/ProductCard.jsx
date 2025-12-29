@@ -48,12 +48,12 @@ export default function ProductCard({
     const totalStock = getTotalStock()
     const productCode = product.product_code || product.code
 
-    // Compact variant (for search dropdown)
+    // Compact variant (for search dropdown list items)
     if (variant === 'compact') {
         return (
-            <div className={`flex items-center gap-3 w-full ${className}`}>
+            <div className={`flex items-start gap-4 p-2 w-full ${className}`}>
                 {showImage && (
-                    <div className="w-12 h-12 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
+                    <div className="w-16 h-16 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
                         {product.variants?.[0]?.images?.[0] ? (
                             <img
                                 src={product.variants[0].images[0]}
@@ -62,42 +62,27 @@ export default function ProductCard({
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                                <Package size={20} className="text-secondary-400" />
+                                <Package size={24} className="text-secondary-400" />
                             </div>
                         )}
                     </div>
                 )}
-                <div className="flex-1 min-w-0 text-left">
-                    <div className="flex justify-between items-start">
-                        <div className="font-bold text-sm truncate pr-2 text-secondary-900">
-                            {product.name}
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-1.5">
+                        <div className="flex items-center gap-2.5 truncate pr-2">
+                            <span className="text-secondary-400 font-medium whitespace-nowrap text-lg uppercase tracking-tight">{productCode}</span>
+                            <span className="font-bold text-secondary-900 truncate text-xl">{product.name}</span>
                         </div>
-                        <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
-                            {priceDisplay}
-                        </div>
+                        <div className="font-bold text-primary-600 whitespace-nowrap text-xl">{priceDisplay}</div>
                     </div>
 
-                    <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
-                        <div className="flex items-center gap-1">
-                            <CodeIcon />
-                            <span>{productCode}</span>
+                    <div className="flex justify-between items-center text-sm text-secondary-500">
+                        <div className="flex items-center gap-1.5">
+                            <MaterialIcon />
+                            <span>{product.material || 'ไม่ระบุวัสดุ'}</span>
                         </div>
-                        {product.category && (
-                            <div className="flex items-center gap-1">
-                                <TagIcon />
-                                <span>{product.category}</span>
-                            </div>
-                        )}
-                        {product.material && (
-                            <div className="flex items-center gap-1">
-                                <MaterialIcon />
-                                <span>{product.material}</span>
-                            </div>
-                        )}
-                        <div className="ml-auto flex items-center gap-1.5 px-0.5">
-                            {showStock && (
-                                <span className="text-secondary-400 text-[10px]">คงเหลือ {totalStock}</span>
-                            )}
+                        <div className="font-medium text-secondary-600">
+                            {product.variants?.length || 0} แบบ • คงเหลือ {totalStock}
                         </div>
                     </div>
                 </div>
