@@ -50,7 +50,7 @@ export default function ProductSelector({
                     <div className="relative">
                         <div className="relative w-full">
                             {!open && selectedProduct ? (
-                                <Combobox.Button as="div" className="w-full text-left cursor-pointer bg-white p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-50 hover:border-secondary-200 hover:shadow-md group">
+                                <Combobox.Button as="div" className="w-full text-left cursor-pointer bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md group">
                                     <div className="flex justify-between items-center mb-0.5">
                                         <div className="text-secondary-500 text-[10px] font-medium uppercase tracking-wider">สินค้า <span className="text-danger-500">*</span></div>
                                     </div>
