@@ -68,15 +68,15 @@ export default function PurchasingPage() {
 
         if (result.isConfirmed) {
             try {
-                const success = await DataManager.deletePurchaseOrder(poId)
-                if (success) {
+                const res = await DataManager.deletePurchaseOrder(poId)
+                if (res && res.success) {
                     await showSuccess({ title: t('Deleted'), text: t('Purchase Order deleted successfully') })
                     loadOrders()
                 } else {
-                    throw new Error('Delete failed')
+                    throw new Error(res?.message || 'Delete failed')
                 }
             } catch (error) {
-                showError({ title: t('Error'), text: t('Failed to delete Purchase Order') })
+                showError({ title: t('Error'), text: error.message || t('Failed to delete Purchase Order') })
             }
         }
     }
@@ -315,6 +315,11 @@ export default function PurchasingPage() {
                                                     {po.external_ref_no && (
                                                         <div className="text-xs text-secondary-500">Ref: {po.external_ref_no}</div>
                                                     )}
+                                                    {po.tracking_no && (
+                                                        <div className="text-xs text-primary-600 flex items-center gap-1 mt-0.5" title="Tracking Number">
+                                                            <Truck size={12} /> {po.tracking_no}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 text-secondary-600 text-sm">
                                                     {new Date(po.created_at).toLocaleDateString('th-TH')}
@@ -342,14 +347,53 @@ export default function PurchasingPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-center flex gap-2 justify-center">
+                                                    {po.status === 'ordered' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                const now = new Date()
+                                                                now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+
+                                                                const { value: date } = await Swal.fire({
+                                                                    title: t('Mark as Shipped'),
+                                                                    text: t('Please specify the shipping date and time:'),
+                                                                    input: 'datetime-local',
+                                                                    inputValue: now.toISOString().slice(0, 16),
+                                                                    showCancelButton: true,
+                                                                    confirmButtonText: t('Confirm Shipped'),
+                                                                    cancelButtonText: t('Cancel'),
+                                                                    confirmButtonColor: '#3b82f6'
+                                                                })
+
+                                                                if (date) {
+                                                                    try {
+                                                                        const success = await DataManager.markPurchaseOrderAsShipped(po.id, new Date(date).toISOString())
+                                                                        if (success) {
+                                                                            await showSuccess({ title: t('Success'), text: t('Order marked as Shipped') })
+                                                                            loadOrders()
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error(error)
+                                                                        showError({ title: t('Error'), text: error.message })
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors"
+                                                            title="Mark as Shipped"
+                                                        >
+                                                            <Truck size={18} />
+                                                        </button>
+                                                    )}
                                                     {po.status === 'shipping' && (
                                                         <button
                                                             onClick={async () => {
+                                                                const now = new Date()
+                                                                now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+
                                                                 const { value: date } = await Swal.fire({
                                                                     title: t('Receive Order'),
-                                                                    text: t('Please specify the arrival/inspection date:'),
-                                                                    input: 'date',
-                                                                    inputValue: new Date().toISOString().split('T')[0],
+                                                                    text: t('Please specify the arrival/inspection date and time:'),
+                                                                    input: 'datetime-local',
+                                                                    inputValue: now.toISOString().slice(0, 16),
                                                                     showCancelButton: true,
                                                                     confirmButtonText: t('Confirm Receive'),
                                                                     cancelButtonText: t('Cancel'),
@@ -368,7 +412,7 @@ export default function PurchasingPage() {
                                                                     }
                                                                 }
                                                             }}
-                                                            className="p-1 hover:bg-purple-100 rounded text-purple-600" title="Receive Items">
+                                                            className="p-1 hover:bg-purple-100 rounded text-purple-600 transition-colors" title="Receive Items">
                                                             <Box size={18} />
                                                         </button>
                                                     )}

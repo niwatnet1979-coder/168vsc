@@ -66,11 +66,18 @@ const ProductDetailView = forwardRef(({ product, onEdit, onSave, onClose, produc
             const loadOptions = async () => {
                 const options = await DataManager.getProductOptions()
                 if (options) {
+                    const getOpt = (keys) => {
+                        for (const k of keys) {
+                            if (options[k] && options[k].length > 0) return options[k]
+                        }
+                        return null
+                    }
+
                     setProductOptions({
-                        lightColors: options.lightColors || ['warm', 'cool', 'white', '3แสง'],
-                        remotes: options.remotes || ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
-                        bulbTypes: options.bulbTypes || ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module'],
-                        crystalColors: options.crystalColors || ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
+                        lightColors: getOpt(['lightColors', 'Light Colors', 'สีแสง', 'สีแสงไฟ']) || ['warm', 'cool', 'white', '3แสง'],
+                        remotes: getOpt(['remotes', 'Remotes', 'รีโมท']) || ['ไม่มีรีโมท', 'หรี่แสงปรับสี', 'หรี่แสง', 'เปิดปิด'],
+                        bulbTypes: getOpt(['bulbTypes', 'Bulb Types', 'ประเภทหลอดไฟ']) || ['E14', 'E27', 'G9', 'GU9', 'ไฟเส้น', 'LED Module'],
+                        crystalColors: getOpt(['crystalColors', 'Crystal Colors', 'สีคริสตัล', 'สีคริสตัล (Crystal Colors)']) || ['CL ใส', 'GD ทอง', 'PG พิ้งค์โกลด์', 'RG โรสโกลด์', 'SV เงิน', 'BK ดำ', 'TEA ชา', 'SM ควันบุหรี่']
                     })
                 }
             }

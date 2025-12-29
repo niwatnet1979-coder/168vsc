@@ -47,40 +47,12 @@ export default function VariantManager({
             sku += `-D${l}x${w}x${h}`
         }
 
-        // Color Helper
-        const getColorCode = (colorName) => {
-            if (!colorName) return 'XX'
-            if (colorName.includes('Gold') || colorName.includes('GD')) return 'GD'
-            if (colorName.includes('ทองเหลือง')) return 'BS'
-            if (colorName.includes('ทอง')) return 'GD'
-            if (colorName.includes('โรสโกลด์') || colorName.includes('พิงค์โกลด์') || colorName.includes('PG')) return 'PG'
-            if (colorName.includes('เงิน') || colorName.includes('SL')) return 'SL'
-            if (colorName.includes('ดำ') || colorName.includes('BK')) return 'BK'
-            if (colorName.includes('ขาว') || colorName.includes('WH')) return 'WH'
-            if (colorName.includes('ใส') || colorName.includes('CL')) return 'CL'
-            if (colorName.includes('โครเมียม')) return 'CH'
-            if (colorName.includes('สนิม')) return 'RZ'
-            if (colorName.includes('ไม้')) return 'WD'
-            return 'XX'
-        }
+        // Color and Crystal codes are extracted from the value string (e.g. "GD ทอง" -> "GD")
+        sku += `-${DataManager.parseCode(vData.color)}`
 
-        // Crystal Helper
-        const getCrystalCode = (colorName) => {
-            if (!colorName) return null
-            if (colorName.includes('ใส')) return 'CL'
-            if (colorName.includes('ทอง')) return 'GD'
-            if (colorName.includes('ชา')) return 'TEA'
-            if (colorName.includes('ควันบุหรี่')) return 'SM'
-            return 'XX'
-        }
-
-        // Color
-        sku += `-${getColorCode(vData.color)}`
-
-        // Crystal
         if (vData.crystalColor) {
-            const cCode = getCrystalCode(vData.crystalColor)
-            if (cCode) sku += `-${cCode}`
+            const cryCode = DataManager.parseCode(vData.crystalColor, null)
+            if (cryCode) sku += `-${cryCode}`
         }
 
         return sku

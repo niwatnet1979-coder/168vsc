@@ -103,7 +103,7 @@ export default function ProductCard({
                                     }}
                                     className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
                                 >
-                                    <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
+                                    <Settings size={14} className="text-secondary-400 group-hover/gear:text-primary-600 transition-colors" />
                                 </div>
                             )}
                         </div>
@@ -222,29 +222,22 @@ export default function ProductCard({
                     <div className="font-bold text-primary-600 whitespace-nowrap text-sm">{priceDisplay}</div>
                 </div>
 
-                <div className="flex justify-between items-center text-xs text-secondary-500">
+                <div className="flex justify-between items-center text-xs text-secondary-500 mb-0.5">
                     <div className="flex items-center gap-1.5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
                         <span>{product.material || 'ไม่ระบุวัสดุ'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 relative z-10">
+                    <div className="flex items-center gap-1.5 grayscale opacity-70 flex-shrink-0">
                         <span>{product.variants?.length || 0} แบบ • คงเหลือ {totalStock}</span>
-                        {onEdit && (
-                            <div
-                                onMouseDown={(e) => {
-                                    console.log('[ProductCard] Gear clicked for product:', product.name)
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    onEdit()
-                                }}
-                                className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200 flex items-center justify-center"
-                                title="แก้ไขสินค้า"
-                            >
-                                <Settings size={12} className="text-secondary-400 group-hover/gear:text-primary-600 transition-colors" />
-                            </div>
-                        )}
                     </div>
                 </div>
+
+                {product.description && (
+                    <div className="flex items-start gap-1.5 text-[11px] text-secondary-500 leading-normal border-t border-secondary-50/50 pt-1 mt-1">
+                        <AlignLeft size={12} className="text-secondary-400 mt-0.5 flex-shrink-0" />
+                        <div className="truncate">{product.description}</div>
+                    </div>
+                )}
             </div>
         </div>
     )

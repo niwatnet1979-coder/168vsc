@@ -8,7 +8,7 @@ const GemIcon = () => <Gem size={14} className="text-secondary-400" />
 const DefaultIcon = () => <Box size={24} className="text-secondary-300" />
 
 // Shared component for consistent variant item display
-const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false }) => {
+const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false, showEdit = true }) => {
     if (!variant) return null
     return (
         <div className="flex items-center gap-3 w-full">
@@ -53,17 +53,19 @@ const VariantItemInner = ({ variant, onEdit, isSelected, showChevron = false }) 
                     )}
                     <div className="ml-auto flex items-center gap-1.5 px-0.5">
                         <span className="text-secondary-400 text-[10px]">คงเหลือ {variant.available ?? variant.stock ?? 0}</span>
-                        <div
-                            onMouseDown={(e) => {
-                                console.log('[VariantSelector] Gear clicked on SKU:', variant.sku)
-                                e.preventDefault()
-                                e.stopPropagation()
-                                if (onEdit) onEdit()
-                            }}
-                            className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
-                        >
-                            <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
-                        </div>
+                        {showEdit && onEdit && (
+                            <div
+                                onMouseDown={(e) => {
+                                    console.log('[VariantSelector] Gear clicked on SKU:', variant.sku)
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    if (onEdit) onEdit()
+                                }}
+                                className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
+                            >
+                                <Settings size={14} className="text-secondary-400 group-hover/gear:text-primary-600 transition-colors" />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -106,6 +108,7 @@ export default function VariantSelector({
                                         variant={selectedVariant}
                                         isSelected={true}
                                         showChevron={false}
+                                        showEdit={false}
                                         onEdit={() => onEdit && onEdit(value)}
                                     />
                                 </Combobox.Button>

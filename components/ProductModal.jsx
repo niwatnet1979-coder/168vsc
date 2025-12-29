@@ -39,17 +39,25 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
     ]
 
     const defaultMaterials = ['สแตนเลส', 'เหล็ก', 'อะคริลิก', 'พลาสติก', 'ไม้']
-    const defaultMaterialColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ']
-    const defaultCrystalColors = ['ทอง', 'โรสโกลด์', 'พิ้งค์โกลด์', 'เงิน', 'ดำ', 'ใส']
+    const defaultMaterialColors = ['GD ทอง', 'PG พิ้งค์โกลด์', 'RG โรสโกลด์', 'SV เงิน', 'BK ดำ', 'WT ขาว', 'CL ใส']
+    const defaultCrystalColors = ['CL ใส', 'GD ทอง', 'PG พิ้งค์โกลด์', 'RG โรสโกลด์', 'SV เงิน', 'BK ดำ', 'TEA ชา', 'SM ควันบุหรี่']
 
     useEffect(() => {
         const loadOptions = async () => {
             const options = await DataManager.getProductOptions()
             if (options) {
-                setProductTypes(options.productTypes && options.productTypes.length > 0 ? options.productTypes : defaultProductTypes)
-                setMaterials(options.materials && options.materials.length > 0 ? options.materials : defaultMaterials)
-                setMaterialColors(options.materialColors && options.materialColors.length > 0 ? options.materialColors : defaultMaterialColors)
-                setCrystalColors(options.crystalColors && options.crystalColors.length > 0 ? options.crystalColors : defaultCrystalColors)
+                // Helper to find key case-insensitively or mapped
+                const getOpt = (keys) => {
+                    for (const k of keys) {
+                        if (options[k] && options[k].length > 0) return options[k]
+                    }
+                    return null
+                }
+
+                setProductTypes(getOpt(['productTypes', 'Product Types', 'ประเภทสินค้า']) || defaultProductTypes)
+                setMaterials(getOpt(['materials', 'Materials', 'วัสดุ']) || defaultMaterials)
+                setMaterialColors(getOpt(['materialColors', 'Material Colors', 'สีวัสดุ', 'สีวัสดุ (Material Colors)']) || defaultMaterialColors)
+                setCrystalColors(getOpt(['crystalColors', 'Crystal Colors', 'สีคริสตัล', 'สีคริสตัล (Crystal Colors)']) || defaultCrystalColors)
             } else {
                 // Fallback to defaults
                 setProductTypes(defaultProductTypes)
@@ -76,8 +84,6 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
                 name: '',
                 description: '',
                 material: '',
-                product_code: '',
-                product_code: '',
                 variants: [],
                 images: []
             })
@@ -88,7 +94,7 @@ export default function ProductModal({ isOpen, onClose, product, onSave, existin
     useEffect(() => {
         // Generate product_code whenever category, dimensions, or material changes
         if (formData.category) {
-            const prefix = formData.category.substring(0, 2).toUpperCase()
+            const prefix = DataManager.parseCode(formData.category).toUpperCase()
 
             // Validate prefix is 2 letters/chars
             if (prefix.length === 2) {

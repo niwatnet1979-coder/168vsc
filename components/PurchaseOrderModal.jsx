@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { X, Search, Info, Calendar, CreditCard, ShoppingCart, ShoppingBag, FileText, Banknote, List, Package, Trash2, Plus, Calculator, Truck, User, ExternalLink, DollarSign, ChevronDown, Save, UserCircle } from 'lucide-react'
+import { X, Search, Info, Calendar, CreditCard, ShoppingCart, ShoppingBag, FileText, Banknote, List, Package, Trash2, Plus, Calculator, Truck, User, ExternalLink, DollarSign, ChevronDown, Save, UserCircle, Scaling, Palette, Gem } from 'lucide-react'
+import { cleanPrefix } from '../lib/productHelpers'
 import { DataManager } from '../lib/dataManager'
 import { useSession } from 'next-auth/react'
 import ProductModal from './ProductModal'
 import { currency as formatCurrency } from '../lib/utils'
-import Swal from '../lib/sweetAlert' // Import default export as Swal for convenience wrapper
+// import Swal from '../lib/sweetAlert' // Removed to prevent conflict
 import { showConfirm, showSuccess, showError } from '../lib/sweetAlert' // Import specific helpers
 
 export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialItem }) {
@@ -39,6 +40,7 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
 
     // Reference
     const [externalRef, setExternalRef] = useState('')
+    const [trackingNumber, setTrackingNumber] = useState('') // New Tracking Number
     const [purchaseLink, setPurchaseLink] = useState('')
     const [remarks, setRemarks] = useState('')
 
@@ -112,6 +114,7 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                     }
 
                     setExternalRef(initialItem.external_ref_no || '')
+                    setTrackingNumber(initialItem.tracking_no || '') // Map Tracking Number
                     setPurchaseLink(initialItem.purchase_link || '')
                     setRemarks(initialItem.remarks || '')
 
@@ -350,6 +353,7 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
             payment_date: paymentDate || null,
             payment_method: paymentMethod,
             external_ref_no: externalRef,
+            tracking_no: trackingNumber, // Add to payload
             purchase_link: purchaseLink,
             remarks: remarks,
             created_by: createdBy,
@@ -450,23 +454,20 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
 
         setIsSubmitting(true)
         try {
-            const success = await DataManager.deletePurchaseOrder(poId)
-            if (success) {
-                await Swal.fire({
-                    icon: 'success',
+            const res = await DataManager.deletePurchaseOrder(poId)
+            if (res && res.success) {
+                await showSuccess({
                     title: 'Deleted!',
-                    text: 'Purchase order has been deleted.',
-                    timer: 1500,
-                    showConfirmButton: false
+                    text: 'Purchase order has been deleted.'
                 })
                 onSave()
                 onClose()
             } else {
-                Swal.fire({ icon: 'error', title: 'Failed', text: 'Failed to delete purchase order.' })
+                showError({ title: 'Failed', text: res?.message || 'Failed to delete purchase order.' })
             }
         } catch (error) {
             console.error(error)
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Error deleting purchase order.' })
+            showError({ title: 'Error', text: error.message || 'Error deleting purchase order.' })
         } finally {
             setIsSubmitting(false)
         }
@@ -673,9 +674,17 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                             {/* Tab Content: Reference */}
                             <div className={activeTab === 'reference' ? 'space-y-4 animate-in fade-in slide-in-from-left-4 duration-300' : 'hidden'}>
                                 <div>
-                                    <label className="label">เลขที่อ้างอิง (Order ID)</label>
+                                    <label className="label">เลขที่ใบสั่งซื้อร้านค้า (Supplier Order ID)</label>
                                     <input type="text" className="input-field" placeholder="e.g. 1688-2024-001"
                                         value={externalRef} onChange={e => setExternalRef(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="label">เลขพัสดุ (Tracking Number)</label>
+                                    <div className="relative">
+                                        <Truck className="absolute left-3 top-2.5 text-secondary-400" size={16} />
+                                        <input type="text" className="input-field pl-10" placeholder="e.g. SF123456789"
+                                            value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="label">ลิงก์สินค้า (URL)</label>
@@ -823,11 +832,16 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                                                     }}
                                                 >
                                                     <option value="">{productVariants.length ? 'เลือกตัวเลือก (Variant)...' : (selectedProduct ? 'ไม่มีตัวเลือก' : 'เลือกสินค้าก่อน')}</option>
-                                                    {productVariants.map(v => (
-                                                        <option key={v.id || v.uuid} value={v.id || v.uuid}>
-                                                            {v.sku} - {v.color} {v.size} ({v.price})
-                                                        </option>
-                                                    ))}
+                                                    {productVariants.map(v => {
+                                                        const shortSku = selectedProduct && v.sku.startsWith(selectedProduct.product_code + '-')
+                                                            ? '...' + v.sku.slice(selectedProduct.product_code.length)
+                                                            : v.sku
+                                                        return (
+                                                            <option key={v.id || v.uuid} value={v.id || v.uuid}>
+                                                                {shortSku} - {cleanPrefix(v.color)} {v.size ? `• ${v.size} ` : ''} ({v.price})
+                                                            </option>
+                                                        )
+                                                    })}
                                                 </select>
                                                 <ChevronDown className="absolute right-3 top-3 text-secondary-400 pointer-events-none" size={14} />
                                             </div>
@@ -895,8 +909,11 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                                                     <div>
                                                         <div className="font-bold text-secondary-900 text-sm truncate pr-2">{item.product_name || item.item_name}</div>
                                                         {item.product_code && item.product_code !== '-' && (
-                                                            <div className="text-xs text-primary-600 font-mono font-medium mt-0.5 mb-1 bg-primary-50 inline-block px-1.5 py-0.5 rounded">
-                                                                {item.variant_sku || item.product_code}
+                                                            <div className="text-xs text-primary-600 font-mono font-medium mt-0.5 mb-1 bg-primary-50 inline-block px-1.5 py-0.5 rounded" title={item.variant_sku || item.product_code}>
+                                                                {/* Only show suffix if it shares prefix */}
+                                                                {item.variant_sku && item.product_code && item.variant_sku.startsWith(item.product_code + '-')
+                                                                    ? '...' + item.variant_sku.slice(item.product_code.length)
+                                                                    : (item.variant_sku || item.product_code)}
                                                             </div>
                                                         )}
                                                         {item.is_custom && (
@@ -905,10 +922,34 @@ export default function PurchaseOrderModal({ isOpen, onClose, onSave, initialIte
                                                             </div>
                                                         )}
                                                         {item.variant_details && (
-                                                            <div className="text-[10px] text-secondary-500 flex items-center gap-1">
-                                                                <span className="bg-secondary-100 px-1.5 py-0.5 rounded">
-                                                                    {item.variant_details}
-                                                                </span>
+                                                            <div className="flex flex-wrap gap-1.5 mt-1">
+                                                                {item.variant_details.split(',').map((part, i) => {
+                                                                    const text = part.trim()
+                                                                    if (!text) return null
+
+                                                                    if (text.includes('สี')) {
+                                                                        return (
+                                                                            <div key={i} className="flex items-center gap-1 text-[10px] text-secondary-600 bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100">
+                                                                                <Palette size={10} className="text-secondary-400" /> {cleanPrefix(text)}
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                    if (text.includes('ขนาด') || /\d+x\d+/.test(text)) {
+                                                                        return (
+                                                                            <div key={i} className="flex items-center gap-1 text-[10px] text-secondary-600 bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100">
+                                                                                <Scaling size={10} className="text-secondary-400" /> {cleanPrefix(text)}
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                    if (text.includes('คริสตัล') || text.includes('Crystal')) {
+                                                                        return (
+                                                                            <div key={i} className="flex items-center gap-1 text-[10px] text-secondary-600 bg-secondary-50 px-1.5 py-0.5 rounded border border-secondary-100">
+                                                                                <Gem size={10} className="text-secondary-400" /> {cleanPrefix(text)}
+                                                                            </div>
+                                                                        )
+                                                                    }
+                                                                    return <span key={i} className="bg-secondary-50 px-1.5 py-0.5 rounded text-[10px] text-secondary-500 border border-secondary-100">{text}</span>
+                                                                })}
                                                             </div>
                                                         )}
                                                     </div>

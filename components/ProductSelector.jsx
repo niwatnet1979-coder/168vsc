@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Combobox } from '@headlessui/react'
-import { Search, ChevronDown, Plus, Package } from 'lucide-react'
+import { Search, ChevronDown, Plus, Package, Settings } from 'lucide-react'
 import ProductCard from './ProductCard'
 
 // Shared component for the search input view
@@ -49,24 +49,18 @@ export default function ProductSelector({
             <Combobox value={selectedProduct} onChange={onSelect} disabled={disabled}>
                 {({ open }) => (
                     <div className="relative">
-                        <div className="relative w-full">
+                        <div className="relative">
                             {!open && selectedProduct ? (
-                                <Combobox.Button as="div" className="w-full text-left cursor-pointer bg-secondary-50 p-2.5 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md group">
-                                    <div className="flex justify-between items-center mb-0.5">
-                                        <div className="text-secondary-500 text-[10px] font-medium uppercase tracking-wider">สินค้า <span className="text-danger-500">*</span></div>
-                                    </div>
+                                <Combobox.Button as="div" className="w-full text-left cursor-pointer px-2.5 pb-2.5">
                                     <ProductCard
                                         product={selectedProduct}
                                         variant="default"
-                                        showImage={false} // Match user's green box preference
+                                        showImage={false}
                                         onEdit={() => onEdit && onEdit(selectedProduct)}
                                     />
                                 </Combobox.Button>
                             ) : (
-                                <div className="bg-secondary-50 p-3 rounded-lg border-none">
-                                    <label className="block text-xs font-medium text-secondary-500 mb-1">
-                                        สินค้า <span className="text-danger-500">*</span>
-                                    </label>
+                                <div className="px-3 pb-3">
                                     <ProductSearchInput
                                         query={query}
                                         setQuery={setQuery}

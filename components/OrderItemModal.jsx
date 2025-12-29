@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2, Edit2 } from 'lucide-react'
+import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2, Edit2, Settings } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
 import Swal, { showConfirm, showSelect } from '../lib/sweetAlert'
@@ -335,6 +335,17 @@ const OrderItemModal = React.forwardRef(({
         setShowSearchPopup(false)
     }
 
+    // New unified handler for editing the current product
+    const handleEditCurrentProduct = (productOverride = null) => {
+        const productToEdit = productOverride || selectedProduct;
+        if (onEditProduct && productToEdit) {
+            console.log('[OrderItemModal] Editing product:', productToEdit.product_code || productToEdit.id);
+            onEditProduct(productToEdit);
+        } else {
+            console.warn('[OrderItemModal] No product found to edit');
+        }
+    }
+
     // Expose triggerSave to parent
     React.useImperativeHandle(ref, () => ({
         triggerSave: () => handleSave()
@@ -455,13 +466,31 @@ const OrderItemModal = React.forwardRef(({
                 <div className={`px-4 pb-2 pt-2 space-y-3 bg-white ${isInline ? 'h-full' : 'flex-1 overflow-y-auto min-h-0'}`}>
                     {/* ... (Existing Body Content) ... */}
                     {/* Main Product Selection Dropdown */}
-                    <div className="relative">
+                    <div className={`bg-secondary-50 rounded-lg border border-secondary-100 transition-all hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md group`}>
+                        <div className="flex justify-between items-center px-2.5 pt-2.5 mb-1">
+                            <label className="text-secondary-500 text-[10px] font-medium uppercase tracking-wider">
+                                สินค้า <span className="text-danger-500">*</span>
+                            </label>
+                            {selectedProduct && (
+                                <div
+                                    onMouseDown={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleEditCurrentProduct(selectedProduct)
+                                    }}
+                                    className="p-1 hover:bg-secondary-200 rounded-md transition-all cursor-pointer group/gear border border-transparent"
+                                    title="แก้ไขสินค้า"
+                                >
+                                    <Settings size={14} className="text-secondary-400 group-hover/gear:text-primary-600 transition-colors" />
+                                </div>
+                            )}
+                        </div>
                         <ProductSelector
                             products={activeProductsData}
                             selectedId={formData.product_id || formData.code}
                             onSelect={selectProduct}
                             onAdd={onAddNewProduct}
-                            onEdit={onEditProduct}
+                            onEdit={(p) => handleEditCurrentProduct(p)}
                             disabled={false}
                         />
                     </div>
@@ -471,24 +500,31 @@ const OrderItemModal = React.forwardRef(({
                         {/* Row 1: Variant (full width if exists) - MOST IMPORTANT */}
                         {productVariants.length > 0 && (
                             <div className={`bg-secondary-50 rounded-lg border border-secondary-100 transition-all ${!formData.code ? 'opacity-50' : 'hover:bg-secondary-100 hover:border-secondary-200 hover:shadow-md'}`}>
-                                <label className="block text-xs font-medium text-secondary-500 mb-1 px-2.5 pt-2.5">
-                                    Variant
-                                </label>
+                                <div className="flex justify-between items-center px-2.5 pt-2.5 mb-1">
+                                    <label className="block text-xs font-medium text-secondary-500">
+                                        Variant
+                                    </label>
+                                    {selectedProduct && (
+                                        <div
+                                            onMouseDown={(e) => {
+                                                e.preventDefault()
+                                                e.stopPropagation()
+                                                handleEditCurrentProduct()
+                                            }}
+                                            className="p-1 hover:bg-secondary-200 rounded-md transition-all cursor-pointer group/gear border border-transparent"
+                                            title="แก้ไขสินค้า"
+                                        >
+                                            <Settings size={14} className="text-secondary-400 group-hover/gear:text-primary-600 transition-colors" />
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="relative">
                                     <VariantSelector
                                         variants={productVariants}
                                         value={formData.selectedVariantIndex}
                                         onChange={(index) => handleVariantSelect(index)}
-                                        onAction={() => {
-                                            if (onEditProduct && selectedProduct) {
-                                                onEditProduct(selectedProduct)
-                                            }
-                                        }}
-                                        onEdit={() => {
-                                            if (onEditProduct && selectedProduct) {
-                                                onEditProduct(selectedProduct)
-                                            }
-                                        }}
+                                        onAction={() => handleEditCurrentProduct()}
+                                        onEdit={() => handleEditCurrentProduct()}
                                         disabled={!formData.code}
                                     />
                                 </div>
