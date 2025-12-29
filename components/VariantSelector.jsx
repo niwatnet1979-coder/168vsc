@@ -128,9 +128,9 @@ export default function VariantSelector({
                         </div>
 
                         <Combobox.Options
-                            className="absolute z-[100] mt-2 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-xl shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
+                            className="absolute z-[100] mt-2 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
                         >
-                            <div className="overflow-y-auto max-h-[300px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="overflow-y-auto max-h-[220px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {filteredVariants.length === 0 ? (
                                     <div className="relative cursor-default select-none py-10 px-4 text-secondary-500 text-center text-sm">
                                         ไม่พบข้อมูลสินค้าที่ตรงกัน
