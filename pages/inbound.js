@@ -19,7 +19,7 @@ import {
     Diamond,
     Gem
 } from 'lucide-react'
-import { searchProducts, bindLpnToProduct, bindLpnSetToProduct, uploadEvidencePhoto } from '../lib/data/inboundManager'
+import { searchProducts, bindLpnToProduct, bindLpnSetToProduct, uploadEvidencePhoto, checkLpnForResume } from '../lib/data/inboundManager'
 
 export default function InboundStationPage() {
     const { t } = useLanguage()
@@ -53,20 +53,7 @@ export default function InboundStationPage() {
             if (step === 2 && document.activeElement !== lpnInputRef.current) {
                 if (e.key === 'Enter') {
                     if (scanBuffer) {
-                        if (bindBoxCount > 1) {
-                            handleBoxScan(scanBuffer)
-                        } else {
-                            setLpn(scanBuffer)
-                            // Allow auto-submit if product/variant selected
-                            if (selectedProduct) {
-                                if (selectedProduct.variants?.length > 0 && !selectedVariant) {
-                                    // Need variant selection
-                                } else {
-                                    // Small delay to ensure state updates or just pass buffer
-                                    setTimeout(() => submitBinding(), 10)
-                                }
-                            }
-                        }
+                        checkAndHandleLpn(scanBuffer)
                         setScanBuffer('')
                     }
                 } else if (e.key.length === 1) {
@@ -104,13 +91,23 @@ export default function InboundStationPage() {
         setIsUploading(true)
         try {
             const url = await uploadEvidencePhoto(file)
-            setEvidencePhotos(prev => [...prev, { url, tags: ['inbound'] }])
+            setEvidencePhotos(prev => [...prev, {
+                url,
+                category: 'YDNumber', // Default to YDNumber as it's common
+                captured_text: '',
+                custom_notes: '',
+                tags: ['inbound']
+            }])
         } catch (error) {
             console.error(error)
             alert("Error uploading photo")
         } finally {
             setIsUploading(false)
         }
+    }
+
+    const updatePhotoData = (idx, updates) => {
+        setEvidencePhotos(prev => prev.map((p, i) => i === idx ? { ...p, ...updates } : p))
     }
 
     const togglePhotoTag = (photoIdx, tag) => {
@@ -128,69 +125,117 @@ export default function InboundStationPage() {
         setEvidencePhotos(prev => prev.filter((_, i) => i !== photoIdx))
     }
 
-    // Handle Scanning for Multi-Box
+    // Unified LPN Check & Handle
+    const checkAndHandleLpn = async (code) => {
+        if (!code) return
+
+        // 1. Check if LPN exists in DB (Resume Case)
+        const existingItem = await checkLpnForResume(code)
+
+        if (existingItem) {
+            // Already bound and fully stocked?
+            if (existingItem.status === 'in_stock') {
+                alert(`LPN ${code} is already in stock and bound to ${existingItem.product?.name || 'a product'}.`)
+                return
+            }
+
+            // Pending Binding? Suggest Resume
+            if (existingItem.status === 'pending_binding') {
+                const confirmResume = confirm(`LPN ${code} has been received but not bound. Resume binding?`)
+                if (confirmResume) {
+                    // Load Evidence
+                    if (existingItem.photos) {
+                        setEvidencePhotos(existingItem.photos.map(p => ({
+                            url: p.photo_url,
+                            category: p.category || 'Other',
+                            captured_text: p.captured_text || '',
+                            custom_notes: p.custom_notes || '',
+                            tags: p.tags || []
+                        })))
+                    }
+                    // Load product/variant if any (though usually null for pending)
+                    if (existingItem.product) setSelectedProduct(existingItem.product)
+                    if (existingItem.variants) setSelectedVariant(existingItem.variants)
+
+                    setLpn(code)
+                    setStep(2)
+                    return
+                }
+            } else {
+                alert(`LPN ${code} is already in use (Status: ${existingItem.status}).`)
+                return
+            }
+        }
+
+        // 2. New LPN Handling
+        if (bindBoxCount > 1) {
+            handleBoxScan(code)
+        } else {
+            setLpn(code)
+            // Auto-submit if product selected
+            if (selectedProduct) {
+                if (!(selectedProduct.variants?.length > 0 && !selectedVariant)) {
+                    setTimeout(() => submitBinding(), 10)
+                }
+            }
+        }
+    }
+
     const handleBoxScan = (scannedCode) => {
         if (!scannedCode) return
-
-        // Prevent duplicates in current session
         if (scannedLpns.includes(scannedCode)) {
             alert('LPN already scanned!')
-            setLpn('')
             return
         }
-
-        const newList = [...scannedLpns, scannedCode]
-        setScannedLpns(newList)
-        setLpn('') // Clear input for next scan
-
-        // Auto-submit if all boxes scanned
-        if (newList.length === bindBoxCount) {
-            // Optional: Auto-submit or just focus confirm button
-        }
+        setScannedLpns(prev => [...prev, scannedCode])
     }
 
     const removeScannedLpn = (codeToRemove) => {
         setScannedLpns(scannedLpns.filter(c => c !== codeToRemove))
     }
 
-    const submitBinding = async () => {
-        // Validation
-        if (!selectedProduct) return
-        if (selectedProduct.variants?.length > 0 && !selectedVariant) {
-            alert('Please select a variant')
+    const submitBinding = async (isSwift = false) => {
+        // Validation for full binding
+        if (!isSwift) {
+            if (!selectedProduct) {
+                alert('Please select a product')
+                return
+            }
+            if (selectedProduct.variants?.length > 0 && !selectedVariant) {
+                alert('Please select a variant')
+                return
+            }
+        }
+
+        // Single LPN Validation
+        if (bindBoxCount === 1 && !lpn) {
+            alert('Please scan LPN')
             return
         }
 
-        // Logic Switch: Single vs Multi
+        // Multi LPN Validation
+        if (bindBoxCount > 1 && scannedLpns.length !== bindBoxCount) {
+            alert(`Please scan all ${bindBoxCount} boxes (Current: ${scannedLpns.length})`)
+            return
+        }
+
         setIsSubmitting(true)
         try {
             if (bindBoxCount > 1) {
-                // Multi-Box Binding
-                if (scannedLpns.length !== bindBoxCount) {
-                    alert(`Please scan all ${bindBoxCount} boxes (Current: ${scannedLpns.length})`)
-                    return
-                }
-
                 const results = await bindLpnSetToProduct({
                     lpnList: scannedLpns,
-                    product: selectedProduct,
-                    variantId: selectedVariant?.id || null,
+                    product: isSwift ? null : selectedProduct,
+                    variantId: isSwift ? null : (selectedVariant?.id || null),
                     evidencePhotos: evidencePhotos
                 })
                 if (results && results.length > 0) {
                     setLastBoundSetId(results[0].set_id)
                 }
             } else {
-                // Single Binding (Legacy/Standard)
-                if (!lpn) {
-                    alert('Please scan LPN')
-                    return
-                }
-
                 await bindLpnToProduct({
                     lpnCode: lpn,
-                    product: selectedProduct,
-                    variantId: selectedVariant?.id || null,
+                    product: isSwift ? null : selectedProduct,
+                    variantId: isSwift ? null : (selectedVariant?.id || null),
                     evidencePhotos: evidencePhotos
                 })
             }
@@ -292,24 +337,50 @@ export default function InboundStationPage() {
                                                 <X size={16} />
                                             </button>
                                         </div>
-                                        <div className="p-3 bg-white border-t border-secondary-100 flex flex-col gap-2">
+                                        <div className="p-4 bg-white border-t border-secondary-100 space-y-3 text-left">
+                                            {/* Category Selector */}
                                             <div className="flex flex-wrap gap-1.5">
-                                                {['Box', 'Damage', 'Label', 'Detail'].map(tag => {
-                                                    const isActive = photo.tags?.includes(tag)
-                                                    return (
-                                                        <button
-                                                            key={tag}
-                                                            onClick={() => togglePhotoTag(idx, tag)}
-                                                            className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all border ${isActive
-                                                                    ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
-                                                                    : 'bg-white border-secondary-200 text-secondary-500 hover:border-secondary-400'
-                                                                }`}
-                                                        >
-                                                            {tag}
-                                                        </button>
-                                                    )
-                                                })}
+                                                {[
+                                                    { id: 'YDNumber', label: 'YD Number' },
+                                                    { id: 'TrackingNumber', label: 'Tracking' },
+                                                    { id: 'BillNumber', label: 'Bill' },
+                                                    { id: 'Other', label: 'อื่นๆ' }
+                                                ].map(cat => (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => updatePhotoData(idx, { category: cat.id })}
+                                                        className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all border ${photo.category === cat.id
+                                                            ? 'bg-primary-600 border-primary-600 text-white shadow-sm'
+                                                            : 'bg-secondary-50 border-secondary-200 text-secondary-500'
+                                                            }`}
+                                                    >
+                                                        {cat.label}
+                                                    </button>
+                                                ))}
                                             </div>
+
+                                            {/* Code Input (Scan/OCR result) */}
+                                            <div className="relative">
+                                                <QrCode size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Scan or Type Code..."
+                                                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-secondary-50/50"
+                                                    value={photo.captured_text || ''}
+                                                    onChange={e => updatePhotoData(idx, { captured_text: e.target.value })}
+                                                />
+                                            </div>
+
+                                            {/* Custom Notes (ONLY for Other or always?) */}
+                                            {photo.category === 'Other' && (
+                                                <input
+                                                    type="text"
+                                                    placeholder="Specify details..."
+                                                    className="w-full px-3 py-1.5 text-sm border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 bg-secondary-50/50 italic"
+                                                    value={photo.custom_notes || ''}
+                                                    onChange={e => updatePhotoData(idx, { custom_notes: e.target.value })}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -324,12 +395,21 @@ export default function InboundStationPage() {
                             </div>
                         )}
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-between items-center gap-2 pt-4 border-t border-secondary-100">
+                            <div className="text-left">
+                                <p className="text-xs text-secondary-400 font-medium uppercase tracking-wider">Fast Track</p>
+                                <button
+                                    onClick={() => setStep(2)}
+                                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 group"
+                                >
+                                    Skip to Binding <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
                             <button
                                 onClick={() => setStep(2)}
-                                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium flex items-center gap-2"
+                                className="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center gap-2"
                             >
-                                Next Step <ArrowRight size={18} />
+                                Continue to LPN Binding <ArrowRight size={18} />
                             </button>
                         </div>
                     </div>
@@ -545,18 +625,34 @@ export default function InboundStationPage() {
                                     )}
                                 </div>
 
-                                <button
-                                    onClick={() => submitBinding()}
-                                    disabled={
-                                        isSubmitting ||
-                                        (selectedProduct?.variants?.length > 0 && !selectedVariant) ||
-                                        (bindBoxCount === 1 && !lpn) ||
-                                        (bindBoxCount > 1 && scannedLpns.length !== bindBoxCount)
-                                    }
-                                    className="w-full py-2 bg-secondary-900 text-white rounded-lg hover:bg-secondary-800 disabled:bg-secondary-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-                                >
-                                    {isSubmitting ? 'Binding...' : bindBoxCount > 1 ? 'Confirm All Boxes' : 'Confirm Binding'}
-                                </button>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => submitBinding(true)} // SWIFT BINDING
+                                        disabled={
+                                            isSubmitting ||
+                                            (bindBoxCount === 1 && !lpn) ||
+                                            (bindBoxCount > 1 && scannedLpns.length !== bindBoxCount)
+                                        }
+                                        className="flex-1 py-3 bg-secondary-900 text-white rounded-xl hover:bg-black disabled:bg-secondary-300 disabled:cursor-not-allowed transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                                    >
+                                        <span className="font-bold flex items-center gap-1"><CheckCircle size={18} /> Finish Swiftly</span>
+                                        <span className="text-[10px] opacity-70 uppercase font-bold tracking-wider">Save Only</span>
+                                    </button>
+                                    <button
+                                        onClick={() => submitBinding(false)} // FULL BINDING
+                                        disabled={
+                                            isSubmitting ||
+                                            !selectedProduct ||
+                                            (selectedProduct?.variants?.length > 0 && !selectedVariant) ||
+                                            (bindBoxCount === 1 && !lpn) ||
+                                            (bindBoxCount > 1 && scannedLpns.length !== bindBoxCount)
+                                        }
+                                        className="flex-[1.5] py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:bg-primary-300 disabled:cursor-not-allowed shadow-lg shadow-primary-100 transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5"
+                                    >
+                                        <span className="font-bold flex items-center gap-1">{isSubmitting ? 'Processing...' : 'Complete Binding'} <ArrowRight size={18} /></span>
+                                        <span className="text-[10px] opacity-80 uppercase font-bold tracking-wider">Save & Print Label</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
