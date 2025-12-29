@@ -241,283 +241,285 @@ export default function InventoryPage() {
 
                 {/* Inventory List */}
                 <div className="bg-white rounded-xl shadow-sm border border-secondary-200 overflow-hidden">
-                    <table className="w-full">
-                        <thead className="bg-secondary-50 border-b border-secondary-200">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Item / QR')}</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Box')}</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Evidence')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Product')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Location')}</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Status')}</th>
-                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Actions')}</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-secondary-100">
-                            {isLoading ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[1000px]">
+                            <thead className="bg-secondary-50 border-b border-secondary-200">
                                 <tr>
-                                    <td colSpan="7" className="px-6 py-8 text-center text-secondary-500">{t('Loading inventory...')}</td>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Item / QR')}</th>
+                                    <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Box')}</th>
+                                    <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Evidence')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Product')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Location')}</th>
+                                    <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Status')}</th>
+                                    <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Actions')}</th>
                                 </tr>
-                            ) : filteredItems.length > 0 ? (
-                                filteredItems.map((item) => (
-                                    <tr key={item.id} className="hover:bg-secondary-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-2">
-                                                <QrCode size={16} className="text-secondary-400" />
-                                                <span className="font-mono text-sm font-medium text-primary-600">{item.qr_code}</span>
-                                            </div>
-                                            <div className="text-xs text-secondary-400 mt-1">Lot: {item.lot_number || '-'}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            {item.total_boxes > 1 ? (
-                                                <div className="flex flex-col items-center">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-100">
-                                                        {item.box_number} / {item.total_boxes}
-                                                    </span>
-                                                    {item.set_id && (
-                                                        <span className="text-[8px] text-primary-600 mt-0.5 font-bold">SET: #{item.set_id}</span>
-                                                    )}
+                            </thead>
+                            <tbody className="divide-y divide-secondary-100">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-8 text-center text-secondary-500">{t('Loading inventory...')}</td>
+                                    </tr>
+                                ) : filteredItems.length > 0 ? (
+                                    filteredItems.map((item) => (
+                                        <tr key={item.id} className="hover:bg-secondary-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <QrCode size={16} className="text-secondary-400" />
+                                                    <span className="font-mono text-sm font-medium text-primary-600">{item.qr_code}</span>
                                                 </div>
-                                            ) : (
-                                                <span className="text-secondary-300 text-xs">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            {item.photos && item.photos.length > 0 ? (
-                                                <button
-                                                    onClick={() => setViewingEvidenceItem(item)}
-                                                    className="group relative inline-flex items-center justify-center p-0.5"
-                                                    title="View Evidence Photos"
-                                                >
-                                                    <div className="w-10 h-10 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-secondary-100 ring-1 ring-secondary-200 group-hover:ring-primary-400 transition-all">
-                                                        <img src={item.photos[0].photo_url} className="w-full h-full object-cover" />
-                                                    </div>
-                                                    {item.photos.length > 1 && (
-                                                        <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm ring-1 ring-primary-700/10">
-                                                            {item.photos.length}
+                                                <div className="text-xs text-secondary-400 mt-1">Lot: {item.lot_number || '-'}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                {item.total_boxes > 1 ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-100">
+                                                            {item.box_number} / {item.total_boxes}
                                                         </span>
-                                                    )}
-                                                </button>
-                                            ) : (
-                                                <ImageIcon size={18} className="text-secondary-200 mx-auto" />
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-start gap-3">
-                                                {/* Product Image */}
-                                                <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-                                                    <img
-                                                        src={item.variants?.image_url || item.product?.image || item.product?.image_url || '/placeholder.png'}
-                                                        alt={item.product?.name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=No+Image' }}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    {/* Matches Print Format */}
-                                                    <div className="font-bold text-sm text-secondary-900 font-mono">
-                                                        {item.variants?.sku || item.product?.product_code || item.product?.code}
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-xs text-secondary-600 mt-1 flex-wrap">
-                                                        <span>{item.product?.name}</span>
-                                                        {item.product?.material && (
-                                                            <>
-                                                                <span className="text-secondary-300">•</span>
-                                                                <span>{item.product.material}</span>
-                                                            </>
+                                                        {item.set_id && (
+                                                            <span className="text-[8px] text-primary-600 mt-0.5 font-bold">SET: #{item.set_id}</span>
                                                         )}
-                                                        {item.variant_id && item.variants && (
-                                                            <div className="flex items-center gap-2 border-l border-secondary-300 pl-2">
-                                                                {item.variants.size && (
-                                                                    <span className="flex items-center gap-1" title="Size">
-                                                                        <BoxSelect size={12} className="text-secondary-400" />
-                                                                        {item.variants.size}
-                                                                    </span>
-                                                                )}
-                                                                {item.variants.color && (
-                                                                    <span className="flex items-center gap-1" title="Color">
-                                                                        <Palette size={12} className="text-secondary-400" />
-                                                                        {item.variants.color}
-                                                                    </span>
-                                                                )}
-                                                                {item.variants.crystal_color && (
-                                                                    <span className="flex items-center gap-1" title="Crystal">
-                                                                        <Diamond size={12} className="text-secondary-400" />
-                                                                        {item.variants.crystal_color}
-                                                                    </span>
-                                                                )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-secondary-300 text-xs">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                {item.photos && item.photos.length > 0 ? (
+                                                    <button
+                                                        onClick={() => setViewingEvidenceItem(item)}
+                                                        className="group relative inline-flex items-center justify-center p-0.5"
+                                                        title="View Evidence Photos"
+                                                    >
+                                                        <div className="w-10 h-10 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-secondary-100 ring-1 ring-secondary-200 group-hover:ring-primary-400 transition-all">
+                                                            <img src={item.photos[0].photo_url} className="w-full h-full object-cover" />
+                                                        </div>
+                                                        {item.photos.length > 1 && (
+                                                            <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm ring-1 ring-primary-700/10">
+                                                                {item.photos.length}
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                ) : (
+                                                    <ImageIcon size={18} className="text-secondary-200 mx-auto" />
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-start gap-3">
+                                                    {/* Product Image */}
+                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                                                        <img
+                                                            src={item.variants?.image_url || item.product?.image || item.product?.image_url || '/placeholder.png'}
+                                                            alt={item.product?.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=No+Image' }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        {/* Matches Print Format */}
+                                                        <div className="font-bold text-sm text-secondary-900 font-mono">
+                                                            {item.variants?.sku || item.product?.product_code || item.product?.code}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs text-secondary-600 mt-1 flex-wrap">
+                                                            <span>{item.product?.name}</span>
+                                                            {item.product?.material && (
+                                                                <>
+                                                                    <span className="text-secondary-300">•</span>
+                                                                    <span>{item.product.material}</span>
+                                                                </>
+                                                            )}
+                                                            {item.variant_id && item.variants && (
+                                                                <div className="flex items-center gap-2 border-l border-secondary-300 pl-2">
+                                                                    {item.variants.size && (
+                                                                        <span className="flex items-center gap-1" title="Size">
+                                                                            <BoxSelect size={12} className="text-secondary-400" />
+                                                                            {item.variants.size}
+                                                                        </span>
+                                                                    )}
+                                                                    {item.variants.color && (
+                                                                        <span className="flex items-center gap-1" title="Color">
+                                                                            <Palette size={12} className="text-secondary-400" />
+                                                                            {item.variants.color}
+                                                                        </span>
+                                                                    )}
+                                                                    {item.variants.crystal_color && (
+                                                                        <span className="flex items-center gap-1" title="Crystal">
+                                                                            <Diamond size={12} className="text-secondary-400" />
+                                                                            {item.variants.crystal_color}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {item.product?.description && (
+                                                            <div className="text-[10px] text-secondary-400 mt-0.5 line-clamp-1">
+                                                                {item.product.description}
                                                             </div>
                                                         )}
                                                     </div>
-                                                    {item.product?.description && (
-                                                        <div className="text-[10px] text-secondary-400 mt-0.5 line-clamp-1">
-                                                            {item.product.description}
-                                                        </div>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5 text-sm text-secondary-600">
-                                                <MapPin size={14} />
-                                                {item.current_location}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-sm text-secondary-600">
+                                                    <MapPin size={14} />
+                                                    {item.current_location}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                 ${item.status === 'in_stock' ? 'bg-success-100 text-success-700' :
-                                                    item.status === 'sold' ? 'bg-secondary-100 text-secondary-700' :
-                                                        'bg-warning-100 text-warning-700'}`}>
-                                                {t(item.status)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        item.status === 'sold' ? 'bg-secondary-100 text-secondary-700' :
+                                                            'bg-warning-100 text-warning-700'}`}>
+                                                    {t(item.status)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
 
-                                            <button
-                                                onClick={() => onPrintClick(item)}
-                                                className="text-secondary-400 hover:text-secondary-700 transition-colors mr-2"
-                                                title={t('Print Label')}
-                                            >
-                                                <Printer size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleEdit(item)}
-                                                className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
-                                                title={t('Edit Item')}
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleTrackItem(item)}
-                                                className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
-                                                title={t('View History')}
-                                            >
-                                                <History size={18} />
-                                            </button>
-                                            {item.status !== 'lost' && item.status !== 'sold' && (
                                                 <button
-                                                    onClick={() => handleMarkLost(item)}
-                                                    className="text-secondary-400 hover:text-danger-600 transition-colors mr-2"
-                                                    title={t('Mark as Lost')}
+                                                    onClick={() => onPrintClick(item)}
+                                                    className="text-secondary-400 hover:text-secondary-700 transition-colors mr-2"
+                                                    title={t('Print Label')}
                                                 >
-                                                    <AlertTriangle size={18} />
+                                                    <Printer size={18} />
                                                 </button>
-                                            )}
-                                            {/* Delete button moved to Edit Modal */}
+                                                <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
+                                                    title={t('Edit Item')}
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleTrackItem(item)}
+                                                    className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
+                                                    title={t('View History')}
+                                                >
+                                                    <History size={18} />
+                                                </button>
+                                                {item.status !== 'lost' && item.status !== 'sold' && (
+                                                    <button
+                                                        onClick={() => handleMarkLost(item)}
+                                                        className="text-secondary-400 hover:text-danger-600 transition-colors mr-2"
+                                                        title={t('Mark as Lost')}
+                                                    >
+                                                        <AlertTriangle size={18} />
+                                                    </button>
+                                                )}
+                                                {/* Delete button moved to Edit Modal */}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <Box size={48} className="text-secondary-300 mb-4" />
+                                                <p className="text-lg font-medium text-secondary-900">{t('No Inventory Items Found')}</p>
+                                                <p className="text-sm text-secondary-500 mt-1">{t('Check-in items to get started')}</p>
+                                            </div>
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <Box size={48} className="text-secondary-300 mb-4" />
-                                            <p className="text-lg font-medium text-secondary-900">{t('No Inventory Items Found')}</p>
-                                            <p className="text-sm text-secondary-500 mt-1">{t('Check-in items to get started')}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Print Preview Modal */}
-            {itemToPrint && (
-                <PrintModal
-                    itemToPrint={itemToPrint}
-                    onClose={() => setItemToPrint(null)}
-                />
-            )}
-
-            {viewingEvidenceItem && (
-                <EvidenceViewer
-                    item={viewingEvidenceItem}
-                    onClose={() => setViewingEvidenceItem(null)}
-                />
-            )}
-
-            {/* Modals */}
-            {showEditModal && (
-                <InventoryEditModal
-                    isOpen={showEditModal}
-                    onClose={() => setShowEditModal(false)}
-                    item={editingItem}
-                    onSave={loadInventory}
-                    onDelete={handleDelete}
-                />
-            )}
-
-            {showHelpModal && (
-                <InventoryHelpModal
-                    isOpen={showHelpModal}
-                    onClose={() => setShowHelpModal(false)}
-                />
-            )}
-
-            {showCheckInModal && (
-                <InventoryCheckInModal
-                    isOpen={showCheckInModal}
-                    onClose={() => setShowCheckInModal(false)}
-                    onSave={loadInventory}
-                />
-            )}
-
-            {showCheckOutModal && (
-                <InventoryCheckOutModal
-                    isOpen={showCheckOutModal}
-                    onClose={() => setShowCheckOutModal(false)}
-                    onSuccess={loadInventory}
-                />
-            )}
-
-            {/* Tracking Modal */}
-            {showTrackingModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
-                        <div className="p-6 border-b border-secondary-100 flex items-center justify-between bg-secondary-50 rounded-t-xl">
-                            <div>
-                                <h3 className="text-lg font-bold text-secondary-900">{t('Item Journey Tracking')}</h3>
-                                <p className="text-secondary-500 text-sm font-mono mt-1">
-                                    QR: {selectedItem?.qr_code}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setShowTrackingModal(false)}
-                                className="text-secondary-400 hover:text-secondary-600 p-1 hover:bg-secondary-200 rounded-lg transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto">
-                            <TrackingTimeline events={trackingEvents} />
-                        </div>
-
-                        <div className="p-4 border-t border-secondary-100 flex justify-end">
-                            <button
-                                onClick={() => setShowTrackingModal(false)}
-                                className="px-4 py-2 bg-secondary-100 text-secondary-700 rounded-lg hover:bg-secondary-200 font-medium transition-colors"
-                            >
-                                {t('Close')}
-                            </button>
-                        </div>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            )}
 
-            <StockCheckModal
-                isOpen={showStockCheckModal}
-                onClose={() => setShowStockCheckModal(false)}
-            />
+                {/* Print Preview Modal */}
+                {itemToPrint && (
+                    <PrintModal
+                        itemToPrint={itemToPrint}
+                        onClose={() => setItemToPrint(null)}
+                    />
+                )}
 
-            {showScanner && (
-                <QRScanner
-                    onScan={handleScan}
-                    onClose={() => setShowScanner(false)}
+                {viewingEvidenceItem && (
+                    <EvidenceViewer
+                        item={viewingEvidenceItem}
+                        onClose={() => setViewingEvidenceItem(null)}
+                    />
+                )}
+
+                {/* Modals */}
+                {showEditModal && (
+                    <InventoryEditModal
+                        isOpen={showEditModal}
+                        onClose={() => setShowEditModal(false)}
+                        item={editingItem}
+                        onSave={loadInventory}
+                        onDelete={handleDelete}
+                    />
+                )}
+
+                {showHelpModal && (
+                    <InventoryHelpModal
+                        isOpen={showHelpModal}
+                        onClose={() => setShowHelpModal(false)}
+                    />
+                )}
+
+                {showCheckInModal && (
+                    <InventoryCheckInModal
+                        isOpen={showCheckInModal}
+                        onClose={() => setShowCheckInModal(false)}
+                        onSave={loadInventory}
+                    />
+                )}
+
+                {showCheckOutModal && (
+                    <InventoryCheckOutModal
+                        isOpen={showCheckOutModal}
+                        onClose={() => setShowCheckOutModal(false)}
+                        onSuccess={loadInventory}
+                    />
+                )}
+
+                {/* Tracking Modal */}
+                {showTrackingModal && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+                            <div className="p-6 border-b border-secondary-100 flex items-center justify-between bg-secondary-50 rounded-t-xl">
+                                <div>
+                                    <h3 className="text-lg font-bold text-secondary-900">{t('Item Journey Tracking')}</h3>
+                                    <p className="text-secondary-500 text-sm font-mono mt-1">
+                                        QR: {selectedItem?.qr_code}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setShowTrackingModal(false)}
+                                    className="text-secondary-400 hover:text-secondary-600 p-1 hover:bg-secondary-200 rounded-lg transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="p-6 overflow-y-auto">
+                                <TrackingTimeline events={trackingEvents} />
+                            </div>
+
+                            <div className="p-4 border-t border-secondary-100 flex justify-end">
+                                <button
+                                    onClick={() => setShowTrackingModal(false)}
+                                    className="px-4 py-2 bg-secondary-100 text-secondary-700 rounded-lg hover:bg-secondary-200 font-medium transition-colors"
+                                >
+                                    {t('Close')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <StockCheckModal
+                    isOpen={showStockCheckModal}
+                    onClose={() => setShowStockCheckModal(false)}
                 />
-            )}
+
+                {showScanner && (
+                    <QRScanner
+                        onScan={handleScan}
+                        onClose={() => setShowScanner(false)}
+                    />
+                )}
+            </div>
         </AppLayout>
     )
 }
