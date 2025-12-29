@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 import AppLayout from '../components/AppLayout'
 import { DataManager } from '../lib/dataManager'
@@ -6,11 +6,13 @@ import InventoryCheckInModal from '../components/InventoryCheckInModal'
 import InventoryCheckOutModal from '../components/InventoryCheckOutModal'
 import InventoryEditModal from '../components/InventoryEditModal' // Added
 import InventoryHelpModal from '../components/InventoryHelpModal' // Added
-import QRDisplayModal from '../components/QRDisplayModal'
+
 import TrackingTimeline from '../components/TrackingTimeline'
 import StockCheckModal from '../components/StockCheckModal'
 import QRScanner from '../components/QRScanner'
 import { useLanguage } from '../contexts/LanguageContext'
+import PrintModal from '../components/PrintModal'
+import EvidenceViewer from '../components/EvidenceViewer'
 import {
     Package,
     Search,
@@ -27,7 +29,13 @@ import {
     ClipboardCheck,
     Trash2,
     Edit, // Added
-    HelpCircle // Added
+    HelpCircle, // Added
+    Printer, // Added
+    BoxSelect, // Added
+    Palette, // Added
+    Diamond, // Added
+    Gem, // Added
+    Image as ImageIcon
 } from 'lucide-react'
 import { showConfirm, showSuccess, showError } from '../lib/sweetAlert'
 
@@ -43,19 +51,26 @@ export default function InventoryPage() {
     const [showEditModal, setShowEditModal] = useState(false) // Added
     const [showHelpModal, setShowHelpModal] = useState(false) // Added
     const [editingItem, setEditingItem] = useState(null) // Added
-    const [showQRModal, setShowQRModal] = useState(false)
+
     const [showTrackingModal, setShowTrackingModal] = useState(false)
     const [showStockCheckModal, setShowStockCheckModal] = useState(false)
     const [showScanner, setShowScanner] = useState(false)
     const [selectedItem, setSelectedItem] = useState(null)
     const [trackingEvents, setTrackingEvents] = useState([])
 
+    const [itemToPrint, setItemToPrint] = useState(null)
+    const [viewingEvidenceItem, setViewingEvidenceItem] = useState(null)
+
+    const onPrintClick = (item) => {
+        setItemToPrint(item)
+    }
+
     const handleEdit = (item) => { // Added
         setEditingItem(item)
         setShowEditModal(true)
     }
 
-    const handleDelete = async (item) => {
+    const handleDelete = async (item) => { // Added
         const result = await showConfirm({
             title: t('Delete Item?'),
             text: `${t('Are you sure you want to delete')} ${item.product?.name} (${item.qr_code})? ${t('This cannot be undone.')}`,
@@ -110,10 +125,7 @@ export default function InventoryPage() {
         setShowTrackingModal(true)
     }
 
-    const handleViewQR = (item) => {
-        setSelectedItem(item)
-        setShowQRModal(true)
-    }
+
 
     const handleMarkLost = async (item) => {
         const result = await showConfirm({
@@ -233,6 +245,8 @@ export default function InventoryPage() {
                         <thead className="bg-secondary-50 border-b border-secondary-200">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Item / QR')}</th>
+                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Box')}</th>
+                                <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Evidence')}</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Product')}</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-secondary-600 uppercase">{t('Location')}</th>
                                 <th className="px-6 py-3 text-center text-xs font-semibold text-secondary-600 uppercase">{t('Status')}</th>
@@ -242,7 +256,7 @@ export default function InventoryPage() {
                         <tbody className="divide-y divide-secondary-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-secondary-500">{t('Loading inventory...')}</td>
+                                    <td colSpan="7" className="px-6 py-8 text-center text-secondary-500">{t('Loading inventory...')}</td>
                                 </tr>
                             ) : filteredItems.length > 0 ? (
                                 filteredItems.map((item) => (
@@ -254,17 +268,94 @@ export default function InventoryPage() {
                                             </div>
                                             <div className="text-xs text-secondary-400 mt-1">Lot: {item.lot_number || '-'}</div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-secondary-900">{item.product?.name}</div>
-                                            <div className="text-xs text-secondary-500">{item.product?.code}</div>
-                                            {item.variant_id && item.variants && (
-                                                <div className="mt-1 flex items-center gap-1">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200">
-                                                        {item.variants.color && <span className="mr-1">{item.variants.color}</span>}
-                                                        {item.variants.size && <span>{item.variants.size}</span>}
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            {item.total_boxes > 1 ? (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-100">
+                                                        {item.box_number} / {item.total_boxes}
                                                     </span>
+                                                    {item.set_id && (
+                                                        <span className="text-[8px] text-primary-600 mt-0.5 font-bold">SET: #{item.set_id}</span>
+                                                    )}
                                                 </div>
+                                            ) : (
+                                                <span className="text-secondary-300 text-xs">-</span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            {item.photos && item.photos.length > 0 ? (
+                                                <button
+                                                    onClick={() => setViewingEvidenceItem(item)}
+                                                    className="group relative inline-flex items-center justify-center p-0.5"
+                                                    title="View Evidence Photos"
+                                                >
+                                                    <div className="w-10 h-10 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-secondary-100 ring-1 ring-secondary-200 group-hover:ring-primary-400 transition-all">
+                                                        <img src={item.photos[0].photo_url} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    {item.photos.length > 1 && (
+                                                        <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm ring-1 ring-primary-700/10">
+                                                            {item.photos.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <ImageIcon size={18} className="text-secondary-200 mx-auto" />
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-start gap-3">
+                                                {/* Product Image */}
+                                                <div className="w-12 h-12 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                                                    <img
+                                                        src={item.variants?.image_url || item.product?.image || item.product?.image_url || '/placeholder.png'}
+                                                        alt={item.product?.name}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100?text=No+Image' }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    {/* Matches Print Format */}
+                                                    <div className="font-bold text-sm text-secondary-900 font-mono">
+                                                        {item.variants?.sku || item.product?.product_code || item.product?.code}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs text-secondary-600 mt-1 flex-wrap">
+                                                        <span>{item.product?.name}</span>
+                                                        {item.product?.material && (
+                                                            <>
+                                                                <span className="text-secondary-300">•</span>
+                                                                <span>{item.product.material}</span>
+                                                            </>
+                                                        )}
+                                                        {item.variant_id && item.variants && (
+                                                            <div className="flex items-center gap-2 border-l border-secondary-300 pl-2">
+                                                                {item.variants.size && (
+                                                                    <span className="flex items-center gap-1" title="Size">
+                                                                        <BoxSelect size={12} className="text-secondary-400" />
+                                                                        {item.variants.size}
+                                                                    </span>
+                                                                )}
+                                                                {item.variants.color && (
+                                                                    <span className="flex items-center gap-1" title="Color">
+                                                                        <Palette size={12} className="text-secondary-400" />
+                                                                        {item.variants.color}
+                                                                    </span>
+                                                                )}
+                                                                {item.variants.crystal_color && (
+                                                                    <span className="flex items-center gap-1" title="Crystal">
+                                                                        <Diamond size={12} className="text-secondary-400" />
+                                                                        {item.variants.crystal_color}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {item.product?.description && (
+                                                        <div className="text-[10px] text-secondary-400 mt-0.5 line-clamp-1">
+                                                            {item.product.description}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-1.5 text-sm text-secondary-600">
@@ -281,12 +372,13 @@ export default function InventoryPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
+
                                             <button
-                                                onClick={() => handleViewQR(item)}
-                                                className="text-secondary-400 hover:text-primary-600 transition-colors mr-2"
-                                                title={t('View QR')}
+                                                onClick={() => onPrintClick(item)}
+                                                className="text-secondary-400 hover:text-secondary-700 transition-colors mr-2"
+                                                title={t('Print Label')}
                                             >
-                                                <QrCode size={18} />
+                                                <Printer size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleEdit(item)}
@@ -305,7 +397,7 @@ export default function InventoryPage() {
                                             {item.status !== 'lost' && item.status !== 'sold' && (
                                                 <button
                                                     onClick={() => handleMarkLost(item)}
-                                                    className="text-secondary-400 hover:text-danger-600 transition-colors mr-2" // Removed invalid trailing space/chars
+                                                    className="text-secondary-400 hover:text-danger-600 transition-colors mr-2"
                                                     title={t('Mark as Lost')}
                                                 >
                                                     <AlertTriangle size={18} />
@@ -317,7 +409,7 @@ export default function InventoryPage() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-12 text-center text-secondary-500">
+                                    <td colSpan="7" className="px-6 py-12 text-center text-secondary-500">
                                         <div className="flex flex-col items-center justify-center">
                                             <Box size={48} className="text-secondary-300 mb-4" />
                                             <p className="text-lg font-medium text-secondary-900">{t('No Inventory Items Found')}</p>
@@ -331,6 +423,21 @@ export default function InventoryPage() {
                 </div>
             </div>
 
+            {/* Print Preview Modal */}
+            {itemToPrint && (
+                <PrintModal
+                    itemToPrint={itemToPrint}
+                    onClose={() => setItemToPrint(null)}
+                />
+            )}
+
+            {viewingEvidenceItem && (
+                <EvidenceViewer
+                    item={viewingEvidenceItem}
+                    onClose={() => setViewingEvidenceItem(null)}
+                />
+            )}
+
             {/* Modals */}
             {showEditModal && (
                 <InventoryEditModal
@@ -338,7 +445,7 @@ export default function InventoryPage() {
                     onClose={() => setShowEditModal(false)}
                     item={editingItem}
                     onSave={loadInventory}
-                    onDelete={handleDelete} // Passed handleDelete
+                    onDelete={handleDelete}
                 />
             )}
 
@@ -364,16 +471,6 @@ export default function InventoryPage() {
                     onSuccess={loadInventory}
                 />
             )}
-
-            <QRDisplayModal
-                isOpen={showQRModal}
-                onClose={() => setShowQRModal(false)}
-                qrCode={selectedItem?.qr_code || ''}
-                productName={selectedItem?.product?.name || 'Unknown Product'}
-                lotNumber={selectedItem?.lot_number}
-                boxCount={selectedItem?.box_count || 1}
-                boxes={selectedItem?.boxes || []}
-            />
 
             {/* Tracking Modal */}
             {showTrackingModal && (
@@ -421,8 +518,6 @@ export default function InventoryPage() {
                     onClose={() => setShowScanner(false)}
                 />
             )}
-
-
         </AppLayout>
     )
 }

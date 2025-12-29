@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, CheckCircle, XCircle, AlertTriangle, Upload, Image as ImageIcon, Printer } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
-import QRDisplayModal from './QRDisplayModal'
+
 
 export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }) {
     const [status, setStatus] = useState('pass') // pass, fail, rework
@@ -14,7 +14,7 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
     const [products, setProducts] = useState([])
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [serialNumber, setSerialNumber] = useState('')
-    const [showQRModal, setShowQRModal] = useState(false)
+
 
     // Hardcoded template for now. In future, fetch from qc_templates based on product type
     const template = {
@@ -117,13 +117,7 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
                         <div className="text-sm text-secondary-500 mt-1 flex flex-col sm:flex-row sm:gap-4">
                             <span className="flex items-center gap-2">
                                 QR: <span className="font-mono bg-secondary-100 px-1 rounded">{item.qr_code}</span>
-                                <button
-                                    onClick={() => setShowQRModal(true)}
-                                    className="p-1 text-secondary-400 hover:text-primary-600 hover:bg-primary-50 rounded"
-                                    title="Print QR Label"
-                                >
-                                    <Printer size={16} />
-                                </button>
+
                             </span>
                         </div>
                     </div>
@@ -339,14 +333,7 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
                 </div>
             </div>
 
-            {/* QR Modal */}
-            <QRDisplayModal
-                isOpen={showQRModal}
-                onClose={() => setShowQRModal(false)}
-                qrCode={item.qr_code}
-                productName={item.product?.name || 'Unknown Product'}
-                lotNumber={serialNumber}
-            />
+
         </div >
     )
 }

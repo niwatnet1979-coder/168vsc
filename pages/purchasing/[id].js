@@ -90,21 +90,7 @@ export default function PurchaseOrderDetailPage() {
         }
     }
 
-    const handleReceivePO = async () => {
-        if (!confirm('Confirm receiving this PO? This will generate inventory items for all products in this order.')) return
 
-        setIsSaving(true)
-        try {
-            await DataManager.receivePurchaseOrder(id)
-            await loadPoData()
-            alert('Items received successfully! Stock has been updated.\nQR Codes have been generated.')
-        } catch (error) {
-            console.error(error)
-            alert('Error receiving items. Please check console.')
-        } finally {
-            setIsSaving(false)
-        }
-    }
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this Purchase Order? This action cannot be undone.')) return
@@ -235,23 +221,7 @@ export default function PurchaseOrderDetailPage() {
                             </div>
                         </div>
 
-                        {/* Actions */}
-                        {po.status !== 'received' && (
-                            <div className="bg-white rounded-xl shadow-sm border border-secondary-200 p-6 space-y-3">
-                                <h3 className="font-bold text-secondary-900">Next Actions</h3>
-                                <button
-                                    onClick={handleReceivePO}
-                                    disabled={isSaving}
-                                    className="w-full py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50 font-medium flex items-center justify-center gap-2"
-                                >
-                                    <Package size={18} />
-                                    Initialize Receiving
-                                </button>
-                                <p className="text-xs text-secondary-500 text-center">
-                                    Use "Receive" to convert this PO into Stock Items and generate QR Codes.
-                                </p>
-                            </div>
-                        )}
+
 
                         {po.status === 'received' && (
                             <div className="bg-green-50 rounded-xl border border-green-200 p-6 text-center">

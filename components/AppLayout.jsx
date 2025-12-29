@@ -26,7 +26,8 @@ import {
     ScrollText,
     Truck,
     Ship,
-    ArrowDownCircle
+    ArrowDownCircle,
+    QrCode
 } from 'lucide-react';
 import packageJson from '../package.json';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -78,7 +79,9 @@ const AppLayout = ({ children, renderHeader, renderBottomNav }) => {
         { name: 'Shipping', icon: Truck, path: '/shipping' }, // Outbound
         { name: 'Inbound Shipments', icon: Ship, path: '/shipments' }, // Inbound
         { name: 'Receiving', icon: ArrowDownCircle, path: '/receiving' },
+        { name: 'Inbound Station', icon: Package, path: '/inbound' },
         { name: 'Quality Control', icon: CheckCircle, path: '/qc' },
+        { name: 'LPN Manager', icon: QrCode, path: '/lpn-manager' },
 
         { name: 'Customers', icon: Users, path: '/customers' },
         { name: 'Team', icon: UserCog, path: '/team' },
