@@ -1,5 +1,9 @@
 import React from 'react'
-import { Package } from 'lucide-react'
+import { Package, Tag, Box } from 'lucide-react'
+
+const CodeIcon = () => <Package size={12} className="text-secondary-400" />
+const TagIcon = () => <Tag size={12} className="text-secondary-400" />
+const MaterialIcon = () => <Box size={12} className="text-secondary-400" />
 
 /**
  * ProductCard - Reusable component for displaying product information
@@ -47,9 +51,9 @@ export default function ProductCard({
     // Compact variant (for search dropdown)
     if (variant === 'compact') {
         return (
-            <div className={`flex items-center gap-3 ${className}`}>
+            <div className={`flex items-center gap-3 w-full ${className}`}>
                 {showImage && (
-                    <div className="w-12 h-12 flex-shrink-0 bg-secondary-100 rounded overflow-hidden">
+                    <div className="w-12 h-12 flex-shrink-0 bg-secondary-100 rounded-lg overflow-hidden border border-secondary-100 flex items-center justify-center text-secondary-300 relative">
                         {product.variants?.[0]?.images?.[0] ? (
                             <img
                                 src={product.variants[0].images[0]}
@@ -63,22 +67,40 @@ export default function ProductCard({
                         )}
                     </div>
                 )}
-                <div className="flex-1 min-w-0">
-                    <div className="font-medium text-secondary-900 truncate">{product.name}</div>
-                    <div className="text-xs text-secondary-500">
-                        {productCode}
-                        {product.category && ` • ${product.category}`}
-                        {product.material && ` • ${product.material}`}
+                <div className="flex-1 min-w-0 text-left">
+                    <div className="flex justify-between items-start">
+                        <div className="font-bold text-sm truncate pr-2 text-secondary-900">
+                            {product.name}
+                        </div>
+                        <div className="text-primary-600 font-bold text-sm whitespace-nowrap">
+                            {priceDisplay}
+                        </div>
+                    </div>
+
+                    <div className="text-[11px] text-secondary-500 flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 leading-none">
+                        <div className="flex items-center gap-1">
+                            <CodeIcon />
+                            <span>{productCode}</span>
+                        </div>
+                        {product.category && (
+                            <div className="flex items-center gap-1">
+                                <TagIcon />
+                                <span>{product.category}</span>
+                            </div>
+                        )}
+                        {product.material && (
+                            <div className="flex items-center gap-1">
+                                <MaterialIcon />
+                                <span>{product.material}</span>
+                            </div>
+                        )}
+                        <div className="ml-auto flex items-center gap-1.5 px-0.5">
+                            {showStock && (
+                                <span className="text-secondary-400 text-[10px]">คงเหลือ {totalStock}</span>
+                            )}
+                        </div>
                     </div>
                 </div>
-                {showPrice && (
-                    <div className="text-right flex-shrink-0">
-                        <div className="font-semibold text-primary-600">{priceDisplay}</div>
-                        {showStock && (
-                            <div className="text-xs text-secondary-500">คงเหลือ {totalStock}</div>
-                        )}
-                    </div>
-                )}
             </div>
         )
     }
