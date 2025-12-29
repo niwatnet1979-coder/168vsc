@@ -1,5 +1,5 @@
 import React from 'react'
-import { Package, Tag, Box } from 'lucide-react'
+import { Package, Tag, Box, Settings } from 'lucide-react'
 
 const CodeIcon = () => <Package size={12} className="text-secondary-400" />
 const TagIcon = () => <Tag size={12} className="text-secondary-400" />
@@ -16,7 +16,8 @@ export default function ProductCard({
     showPrice = true,
     showStock = true,
     className = '',
-    image = null // FIX: Accept explicit image override
+    image = null, // FIX: Accept explicit image override
+    onEdit = null // NEW: Callback for editing product
 }) {
     if (!product) return null
 
@@ -212,7 +213,21 @@ export default function ProductCard({
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
                         <span>{product.material || 'ไม่ระบุวัสดุ'}</span>
                     </div>
-                    <div>{product.variants?.length || 0} แบบ • คงเหลือ {totalStock}</div>
+                    <div className="flex items-center gap-1.5">
+                        <span>{product.variants?.length || 0} แบบ • คงเหลือ {totalStock}</span>
+                        {onEdit && (
+                            <div
+                                onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    onEdit()
+                                }}
+                                className="p-1 hover:bg-secondary-100 rounded-md transition-all cursor-pointer group/gear border border-transparent hover:border-secondary-200"
+                            >
+                                <Settings size={12} className="text-secondary-300 group-hover/gear:text-primary-600 transition-colors" />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

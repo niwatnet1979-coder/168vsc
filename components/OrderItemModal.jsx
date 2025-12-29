@@ -461,6 +461,7 @@ const OrderItemModal = React.forwardRef(({
                             selectedId={formData.product_id || formData.code}
                             onSelect={selectProduct}
                             onAdd={onAddNewProduct}
+                            onEdit={onEditProduct}
                             disabled={false}
                         />
                     </div>

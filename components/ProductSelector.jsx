@@ -27,7 +27,8 @@ export default function ProductSelector({
     onSelect,
     onAdd,
     disabled = false,
-    placeholder = "-- เลือกสินค้า --"
+    placeholder = "-- เลือกสินค้า --",
+    onEdit = null
 }) {
     const [query, setQuery] = useState('')
 
@@ -58,6 +59,7 @@ export default function ProductSelector({
                                         product={selectedProduct}
                                         variant="default"
                                         showImage={false} // Match user's green box preference
+                                        onEdit={() => onEdit && onEdit(selectedProduct)}
                                     />
                                 </Combobox.Button>
                             ) : (
