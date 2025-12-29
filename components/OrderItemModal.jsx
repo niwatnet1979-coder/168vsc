@@ -417,6 +417,8 @@ const OrderItemModal = React.forwardRef(({
             // Mapping for DataManager
             light: formData.bulbType || '', // Map bulbType to 'light' column
             lightColor: formData.lightColor || '',
+            // Map crystalColor state to DB column crystal_color
+            crystal_color: formData.crystalColor || '',
             remote: formData.remote || '',
             // Ensure jobs array is passed through if it exists in formData
             jobs: formData.jobs || [],

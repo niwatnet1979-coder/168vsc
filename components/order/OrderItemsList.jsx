@@ -182,18 +182,18 @@ export default function OrderItemsList({
                                         }
                                         return null
                                     })()}
-                                    {/* Color - Show variant color if selected, otherwise product color */}
+                                    {/* Color */}
                                     {(item.selectedVariant?.color || item.color) && (
                                         <div className="flex items-center gap-1" title="สี">
                                             <Palette size={12} />
                                             <span>{item.selectedVariant?.color || item.color}</span>
                                         </div>
                                     )}
-                                    {/* Crystal Data */}
-                                    {(item.selectedVariant?.crystalColor || item.crystalColor) && (
+                                    {/* Crystal Data - Strict DB Column: crystal_color */}
+                                    {(item.selectedVariant?.crystal_color || item.crystal_color) && (
                                         <div className="flex items-center gap-1" title="สีคริสตัล">
                                             <Gem size={12} />
-                                            <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
+                                            <span>{item.selectedVariant?.crystal_color || item.crystal_color}</span>
                                         </div>
                                     )}
                                     {item.lightColor && (
