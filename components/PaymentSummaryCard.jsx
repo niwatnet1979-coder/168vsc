@@ -144,7 +144,8 @@ export default function PaymentSummaryCard({
                     )}
                 </div>
 
-                {/* Discount */}
+
+
                 {/* Discount */}
                 <div className="flex justify-between items-center">
                     <span className="text-xs font-medium text-secondary-500">ส่วนลด</span>
@@ -189,12 +190,14 @@ export default function PaymentSummaryCard({
 
                 {/* VAT */}
                 {/* Pre-VAT (Only for INVAT mode) */}
-                {localVatIncluded && localVatRate > 0 && (
-                    <div className="flex justify-between items-center text-secondary-500 text-xs">
-                        <span>ราคาก่อน VAT</span>
-                        <span>{currency(displayPreVat)}</span>
-                    </div>
-                )}
+                {
+                    localVatIncluded && localVatRate > 0 && (
+                        <div className="flex justify-between items-center text-secondary-500 text-xs">
+                            <span>ราคาก่อน VAT</span>
+                            <span>{currency(displayPreVat)}</span>
+                        </div>
+                    )
+                }
 
                 {/* VAT */}
                 <div className="flex justify-between items-center">
@@ -242,25 +245,27 @@ export default function PaymentSummaryCard({
                 </div>
 
                 {/* Payment Schedule List */}
-                {otherOutstandingOrders.length > 0 && (
-                    <div className="pt-3 border-t border-secondary-200">
-                        <h3 className="text-sm font-bold text-secondary-900 mb-3">ยอดค้างจากออเดอร์อื่น</h3>
-                        <div className="space-y-2 mb-3">
-                            {otherOutstandingOrders.map((order) => (
-                                <div key={order.id} className="flex justify-between text-sm text-secondary-600">
-                                    <span>{order.id}</span>
-                                    <span className="font-medium text-warning-600">{currency(order.outstanding)}</span>
-                                </div>
-                            ))}
+                {
+                    otherOutstandingOrders.length > 0 && (
+                        <div className="pt-3 border-t border-secondary-200">
+                            <h3 className="text-sm font-bold text-secondary-900 mb-3">ยอดค้างจากออเดอร์อื่น</h3>
+                            <div className="space-y-2 mb-3">
+                                {otherOutstandingOrders.map((order) => (
+                                    <div key={order.id} className="flex justify-between text-sm text-secondary-600">
+                                        <span>{order.id}</span>
+                                        <span className="font-medium text-warning-600">{currency(order.outstanding)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between text-base font-bold text-secondary-900 pt-2 border-t border-dashed border-secondary-200">
+                                <span>รวมยอดทุกออเดอร์</span>
+                                <span className="text-warning-600">
+                                    {currency(total + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex justify-between text-base font-bold text-secondary-900 pt-2 border-t border-dashed border-secondary-200">
-                            <span>รวมยอดทุกออเดอร์</span>
-                            <span className="text-warning-600">
-                                {currency(total + otherOutstandingOrders.reduce((s, o) => s + o.outstanding, 0))}
-                            </span>
-                        </div>
-                    </div>
-                )}
+                    )
+                }
 
                 <div className="pt-3 border-t border-secondary-200">
                     <h3 className="text-sm font-bold text-secondary-900 mb-4">รายการการชำระเงิน</h3>

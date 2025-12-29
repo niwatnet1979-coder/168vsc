@@ -5,6 +5,7 @@ import {
     Users, QrCode, Plus, Lightbulb
 } from 'lucide-react';
 import OrderItemModal from '../OrderItemModal';
+import { cleanPrefix } from '../../lib/productHelpers';
 
 /**
  * OrderItemsList Component
@@ -130,38 +131,25 @@ export default function OrderItemsList({
 
                             </div>
 
-                            {/* Row 2: Specs & Description */}
+                            {/* Row 2: Specs & Description - REDESIGNED */}
                             <div className="flex justify-between items-center gap-4 text-xs text-secondary-600">
-                                {/* LEFT: Specs */}
-                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    {/* Dimensions - Moved from Row 1 */}
-                                    {item.material && (
-                                        <div className="flex items-center gap-1" title="วัสดุ">
-                                            <Layers size={12} />
-                                            <span>{item.material}</span>
-                                        </div>
-                                    )}
+                                {/* LEFT: Specs (Badge Style) */}
+                                <div className="flex flex-wrap items-center gap-2">
                                     {/* Dimensions */}
                                     {(() => {
                                         const getDims = (obj) => {
                                             if (!obj) return null
-                                            // 1. Try parsed dimensions object (from DataManager)
-                                            if (obj.dimensions) {
-                                                return { w: obj.dimensions.width, l: obj.dimensions.length, h: obj.dimensions.height }
-                                            }
-                                            // 2. Try parsing 'size' string (Raw DB format)
+                                            if (obj.dimensions) return { w: obj.dimensions.width, l: obj.dimensions.length, h: obj.dimensions.height }
                                             if (obj.size && typeof obj.size === 'string') {
                                                 const parts = obj.size.split('x').map(p => parseInt(p) || 0)
                                                 if (parts.length >= 3) return { l: parts[0], w: parts[1], h: parts[2] }
                                             }
-                                            // 3. Try legacy individual fields
                                             if (obj.width || obj.length || obj.height) {
                                                 return { w: obj.width, l: obj.length, h: obj.height }
                                             }
                                             return null
                                         }
 
-                                        // Priority: Selected Variant (Golden Source) -> Product -> Item (Fallback/Legacy)
                                         const dims = getDims(item.selectedVariant) ||
                                             getDims(item.product) ||
                                             (item.product?.variants?.[0] ? getDims(item.product.variants[0]) : null) ||
@@ -169,7 +157,7 @@ export default function OrderItemsList({
 
                                         if (dims && (dims.w || dims.l || dims.h)) {
                                             return (
-                                                <div className="flex items-center gap-1" title="ขนาด">
+                                                <div className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 flex items-center gap-1 font-medium" title="ขนาด">
                                                     <Scaling size={12} />
                                                     <span>
                                                         {dims.l ? `${dims.l}x` : ''}
@@ -182,52 +170,57 @@ export default function OrderItemsList({
                                         }
                                         return null
                                     })()}
-                                    {/* Color - Show variant color if selected, otherwise product color */}
-                                    {(item.selectedVariant?.color || item.color) && (
-                                        <div className="flex items-center gap-1" title="สี">
-                                            <Palette size={12} />
-                                            <span>{item.selectedVariant?.color || item.color}</span>
-                                        </div>
-                                    )}
-                                    {/* Crystal Data */}
-                                    {(item.selectedVariant?.crystalColor || item.crystalColor) && (
-                                        <div className="flex items-center gap-1" title="สีคริสตัล">
-                                            <Gem size={12} />
-                                            <span>{item.selectedVariant?.crystalColor || item.crystalColor}</span>
-                                        </div>
-                                    )}
-                                    {item.lightColor && (
-                                        <div className="flex items-center gap-1" title="แสงไฟ">
-                                            <Zap size={12} />
-                                            <span>{item.lightColor}</span>
-                                        </div>
-                                    )}
-                                    {/* FIX: Display Bulb Type (light) */}
-                                    {item.light && (
-                                        <div className="flex items-center gap-1" title="ขั้วไฟ">
-                                            <Lightbulb size={12} />
-                                            <span>{item.light}</span>
-                                        </div>
-                                    )}
-                                    {item.remote && (
-                                        <div className="flex items-center gap-1" title="รีโมท">
-                                            <Power size={12} />
-                                            <span>{item.remote}</span>
+
+                                    {/* Material */}
+                                    {item.material && (
+                                        <div className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded border border-gray-200 flex items-center gap-1 font-medium" title="วัสดุ">
+                                            <Layers size={12} />
+                                            <span>{cleanPrefix(item.material)}</span>
                                         </div>
                                     )}
 
-                                    {/* Description / Remark - Moved to follow Bulb Type */}
+                                    {/* Color */}
+                                    {(item.selectedVariant?.color || item.color) && (
+                                        <div className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100 flex items-center gap-1 font-medium" title="สี">
+                                            <Palette size={12} />
+                                            <span>{cleanPrefix(item.selectedVariant?.color || item.color)}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Crystal */}
+                                    {(item.selectedVariant?.crystalColor || item.crystalColor) && (
+                                        <div className="bg-pink-50 text-pink-700 px-1.5 py-0.5 rounded border border-pink-100 flex items-center gap-1 font-medium" title="สีคริสตัล">
+                                            <Gem size={12} />
+                                            <span>{cleanPrefix(item.selectedVariant?.crystalColor || item.crystalColor)}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Light Color */}
+                                    {(item.lightColor || item.light_color) && (
+                                        <div className="bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded border border-yellow-100 flex items-center gap-1 font-medium" title="แสงไฟ">
+                                            <Zap size={12} />
+                                            <span>{cleanPrefix(item.lightColor || item.light_color)}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Bulb Type (Light) */}
+                                    {(item.light || item.bulbType) && (
+                                        <div className="bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded border border-orange-100 flex items-center gap-1 font-medium" title="ขั้วไฟ">
+                                            <Lightbulb size={12} />
+                                            <span>{cleanPrefix(item.light || item.bulbType)}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Description */}
                                     {(item.remark || item.description) && (
-                                        <div className="flex items-center gap-1 text-secondary-500" title="หมายเหตุ">
+                                        <div className="flex items-center gap-1 text-secondary-500 ml-1" title="หมายเหตุ">
                                             <FileText size={12} />
-                                            <span className="truncate max-w-[200px]">
+                                            <span className="truncate max-w-[200px] italic">
                                                 {item.remark || item.description}
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                {/* RIGHT: Description */}
-
                             </div>
 
                             {/* Row 3: Job Info & Dates */}
