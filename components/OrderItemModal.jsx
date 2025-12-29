@@ -442,7 +442,7 @@ const OrderItemModal = React.forwardRef(({
 
     const Wrapper = isInline ? 'div' : 'div'
     const wrapperProps = isInline ? { className: "w-full h-full flex flex-col p-4" } : { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" }
-    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] h-auto max-h-[90vh] flex flex-col overflow-hidden" }
+    const containerProps = isInline ? { className: "w-full bg-white rounded-xl shadow-sm border border-secondary-200 flex flex-col overflow-hidden" } : { className: "bg-white rounded-xl shadow-2xl border border-secondary-200 w-full max-w-md min-w-[28rem] h-[620px] max-h-[90vh] flex flex-col overflow-hidden" }
 
 
     return (
