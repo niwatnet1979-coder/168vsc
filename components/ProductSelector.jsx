@@ -10,7 +10,7 @@ const ProductSearchInput = ({ query, setQuery, placeholder, disabled, open }) =>
             <Search size={14} />
         </div>
         <Combobox.Input
-            className={`w-full bg-white border border-secondary-200 rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-secondary-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text'}`}
+            className={`w-full bg-transparent border-none pl-9 pr-8 py-2.5 text-sm font-medium text-secondary-900 focus:ring-0 outline-none ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text'}`}
             displayValue={() => ''}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={open ? "พิมพ์เพื่อค้นหา..." : placeholder}
@@ -78,7 +78,7 @@ export default function ProductSelector({
                         </div>
 
                         <Combobox.Options
-                            className="absolute z-[110] mt-1.5 w-[calc(100%+1rem)] -left-2 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
+                            className="absolute z-[110] mt-1.5 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
                         >
                             <div className="overflow-y-auto max-h-[280px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {filteredProducts.length === 0 ? (
