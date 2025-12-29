@@ -62,7 +62,7 @@ export default function ProductSelector({
                                     />
                                 </Combobox.Button>
                             ) : (
-                                <div className="bg-secondary-50 p-3 rounded-lg border border-secondary-100">
+                                <div className="bg-secondary-50 p-3 rounded-lg border-none">
                                     <label className="block text-xs font-medium text-secondary-500 mb-1">
                                         สินค้า <span className="text-danger-500">*</span>
                                     </label>
@@ -78,7 +78,7 @@ export default function ProductSelector({
                         </div>
 
                         <Combobox.Options
-                            className="absolute z-[110] mt-1.5 w-[calc(100%+1.5rem)] -left-3 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
+                            className="absolute z-[110] mt-1.5 w-full left-0 bg-white rounded-lg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none flex flex-col overflow-hidden"
                         >
                             <div className="overflow-y-auto max-h-[280px] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {filteredProducts.length === 0 ? (
