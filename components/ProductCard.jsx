@@ -86,18 +86,23 @@ export default function ProductCard({
                                 <span>{product.material}</span>
                             </div>
                         )}
-                        {(product.description || product.category) && (
-                            <div className="flex items-center gap-1 truncate">
-                                <AlignLeft size={12} className="text-secondary-400" />
-                                <span className="truncate">{product.description || product.category}</span>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                            <TagIcon />
+                            <span>{product.variants?.length || 0} แบบ</span>
+                        </div>
                         <div className="ml-auto flex items-center gap-1.5 px-0.5">
                             {showStock && (
                                 <span className="text-secondary-400 text-[10px]">คงเหลือ {totalStock}</span>
                             )}
                         </div>
                     </div>
+
+                    {(product.description || product.category) && (
+                        <div className="text-[11px] text-secondary-500 flex items-center gap-1.5 mt-1 leading-tight truncate">
+                            <AlignLeft size={12} className="text-secondary-400 flex-shrink-0" />
+                            <span className="truncate opacity-80">{product.description || product.category}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         )
