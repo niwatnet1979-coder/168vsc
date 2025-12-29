@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { X, Trash2, Search, Wrench, Truck, HelpCircle, ChevronRight, Package, Plus, User, MapPin, Calendar, Box, Palette, Zap, Power, ChevronDown, Gem, Maximize2, Edit2 } from 'lucide-react'
 import { currency } from '../lib/utils'
 import { DataManager } from '../lib/dataManager'
-import Swal, { showConfirm, showSelect, showSelectVariant, showProductSearch } from '../lib/sweetAlert'
+import Swal, { showConfirm, showSelect } from '../lib/sweetAlert'
 import ProductCard from './ProductCard'
 import ConfirmDialog from './ConfirmDialog'
 import VariantSelector from './VariantSelector'
@@ -276,22 +276,8 @@ const OrderItemModal = React.forwardRef(({
     const selectProduct = async (product) => {
         // If same product, check if we should open variant selector
         if (formData.product_id === (product.uuid || product.product_code)) {
+            // Just close the dropdown if same product selected
             setShowSearchPopup(false)
-
-            // If it has variants, open variant selector
-            if (product.variants && product.variants.length > 0) {
-                await showSelectVariant({
-                    variants: product.variants,
-                    productName: product.name,
-                    material: product.material,
-                    selectedIndex: formData.selectedVariantIndex,
-                    onSelect: (index) => handleVariantSelect(index),
-                    actionButtonText: 'เพิ่ม Variant / แก้ไขสินค้า',
-                    onAction: () => {
-                        if (onEditProduct) onEditProduct(product)
-                    }
-                })
-            }
             return
         }
 
