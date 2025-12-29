@@ -386,6 +386,7 @@ export default function OrderForm() {
             paymentSchedule, setPaymentSchedule,
             selectedItemIndex, setSelectedItemIndex,
             selectedJobIndex, setSelectedJobIndex,
+            discount, setDiscount,
             shippingFee, setShippingFee,
             vatIncluded, setVatIncluded,
             orderNumber, setOrderNumber,
