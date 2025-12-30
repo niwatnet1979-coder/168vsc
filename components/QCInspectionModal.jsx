@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, CheckCircle, XCircle, AlertTriangle, Upload, Image as ImageIcon, Printer } from 'lucide-react'
+import { X, Save, CheckCircle, XCircle, AlertTriangle, Upload, Image as ImageIcon, Printer, Search, QrCode } from 'lucide-react'
 import { DataManager } from '../lib/dataManager'
+import { showSuccess, showError, showLoading } from '../lib/sweetAlert'
 
 
 export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }) {
@@ -80,23 +81,32 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
         e.preventDefault()
         if (!item) return
 
-        setIsSubmitting(true)
+        showLoading('กำลังบันทึกข้อมูล...', 'กรุณารอสักครู่')
         try {
             await DataManager.saveQCRecord({
                 inventory_item_id: item.id,
                 inspector_name: 'Current User', // To be replaced with auth user
-                result: status, // Legacy field if needed
+                status: status, // Changed from 'result' to 'status' to match DataManager expectations
                 checklist_results: checklist,
                 notes,
                 evidenceFiles,
                 new_product_id: selectedProduct, // Pass the selected product (might be changed)
                 serial_number: serialNumber // Pass the manufacturer S/N
             })
+
+            await showSuccess({
+                title: 'บันทึกสำเร็จ',
+                text: 'ผลการตรวจสอบถูกบันทึกเรียบร้อยแล้ว'
+            })
+
             onItemSaved()
             onClose()
         } catch (error) {
             console.error(error)
-            alert('Failed to save QC record')
+            await showError({
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถบันทึกผล QC ได้'
+            })
         } finally {
             setIsSubmitting(false)
         }
@@ -128,13 +138,58 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-8 flex-1 overflow-y-auto">
 
+                    {/* Inbound Evidence (New) */}
+                    {(item.evidence?.length > 0 || item.set_id) && (
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-secondary-900 uppercase tracking-wider border-b border-secondary-100 pb-2 flex items-center justify-between">
+                                Inbound Information
+                                {item.set_id && (
+                                    <span className="text-[10px] font-mono bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded border border-primary-200">
+                                        SET: #{item.set_id.split('-')[0].toUpperCase()} ({item.box_number || 1}/{item.total_boxes || 1})
+                                    </span>
+                                )}
+                            </h3>
+
+                            {item.evidence?.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {item.evidence.map((ev, i) => (
+                                        <div key={i} className="group relative rounded-lg border border-secondary-200 bg-secondary-50 aspect-square overflow-hidden cursor-zoom-in hover:shadow-md transition-all">
+                                            <img src={ev.media_url} className="w-full h-full object-cover" alt={ev.category} />
+                                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-1 text-[9px] text-white opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                                                {ev.category}: {ev.notes || 'No description'}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Product Identification (Blind Check-in Support) */}
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <label className="block text-sm font-bold text-blue-800 mb-2">Identify Product (SKU)</label>
+                    <div className={`p-4 rounded-xl border-2 transition-all ${item.status === 'pending_binding'
+                        ? 'border-amber-200 bg-amber-50 shadow-sm'
+                        : 'border-secondary-100 bg-white'
+                        }`}>
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${item.status === 'pending_binding' ? 'bg-amber-500 text-white' : 'bg-secondary-100 text-secondary-500'
+                                }`}>
+                                <Search size={18} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-secondary-900 italic">
+                                    {item.status === 'pending_binding' ? 'Identify Product (Swift Receive)' : 'Product Verification (SKU)'}
+                                </label>
+                                <p className="text-[10px] text-secondary-500 uppercase tracking-widest font-black">Link with Master SKU</p>
+                            </div>
+                        </div>
+
                         <select
                             value={selectedProduct || ''}
                             onChange={(e) => setSelectedProduct(e.target.value)}
-                            className="w-full p-2 border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
+                            className={`w-full p-3 border-2 rounded-xl focus:ring-4 transition-all text-sm font-bold ${item.status === 'pending_binding'
+                                ? 'border-amber-300 bg-white focus:ring-amber-500/10 focus:border-amber-500'
+                                : 'border-secondary-200 bg-secondary-50 focus:ring-primary-500/10 focus:border-primary-500'
+                                }`}
                         >
                             <option value="">-- Select Product --</option>
                             {products.map(p => (
@@ -143,20 +198,27 @@ export default function QCInspectionModal({ isOpen, onClose, onItemSaved, item }
                                 </option>
                             ))}
                         </select>
-                        <p className="text-xs text-blue-600 mt-1">
-                            * If this QR belongs to a different product (Blind Check-in), select the correct one here.
+                        <p className={`text-[11px] mt-2 flex items-center gap-1.5 ${item.status === 'pending_binding' ? 'text-amber-700' : 'text-secondary-500'
+                            }`}>
+                            <AlertTriangle size={12} />
+                            {item.status === 'pending_binding'
+                                ? 'This item was received swiftly. Please select the correct SKU now.'
+                                : 'If this QR belongs to a different product, update it here.'}
                         </p>
                     </div>
 
                     {/* Serial Number Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-secondary-700 mb-1">Manufacturer Serial Number (Optional)</label>
+                    <div className="bg-white p-4 rounded-xl border border-secondary-100 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <QrCode size={18} className="text-secondary-400" />
+                            <label className="text-sm font-bold text-secondary-700">Manufacturer Serial Number</label>
+                        </div>
                         <input
                             type="text"
                             value={serialNumber}
                             onChange={(e) => setSerialNumber(e.target.value)}
-                            className="w-full p-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="Enter S/N from the device label..."
+                            className="w-full p-3 border-2 border-secondary-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-mono font-bold"
+                            placeholder="Scan or type manufacturer S/N..."
                         />
                     </div>
 
