@@ -49,8 +49,10 @@ export default function InboundStationPage() {
     // Handle Barcode Scanner (Keyboard Shim)
     useEffect(() => {
         const handleKeyDown = (e) => {
-            // If in Step 2 and LPN input is not focused, capture keys
-            if (step === 2 && document.activeElement !== lpnInputRef.current) {
+            // Capture scanner input globally if not in an input field
+            const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)
+
+            if (!isInputFocused) {
                 if (e.key === 'Enter') {
                     if (scanBuffer) {
                         checkAndHandleLpn(scanBuffer)
@@ -384,33 +386,65 @@ export default function InboundStationPage() {
                                         </div>
                                     </div>
                                 ))}
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex flex-col items-center justify-center border-2 border-dashed border-secondary-300 rounded-xl bg-secondary-50 hover:bg-secondary-100 cursor-pointer min-h-[160px] transition-all group"
-                                >
-                                    <Camera size={32} className="text-secondary-400 mb-2 group-hover:scale-110 transition-transform" />
-                                    <span className="text-secondary-500 text-sm font-medium">Add More Photo</span>
-                                    {isUploading && <p className="text-primary-600 mt-2 font-bold animate-pulse text-xs">Uploading...</p>}
-                                </div>
                             </div>
                         )}
 
-                        <div className="flex justify-between items-center gap-2 pt-4 border-t border-secondary-100">
-                            <div className="text-left">
-                                <p className="text-xs text-secondary-400 font-medium uppercase tracking-wider">Fast Track</p>
-                                <button
-                                    onClick={() => setStep(2)}
-                                    className="text-primary-600 hover:text-primary-700 font-bold flex items-center gap-1 group"
-                                >
-                                    Skip to Binding <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
+                        <div className="pt-6 border-t border-secondary-100">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex-1 w-full text-left space-y-2">
+                                    <h4 className="text-sm font-bold text-secondary-900 flex items-center gap-2 uppercase tracking-wide">
+                                        <QrCode size={18} className="text-primary-600" />
+                                        1. Scan LPN Sticker
+                                    </h4>
+                                    <div className="relative group">
+                                        <input
+                                            type="text"
+                                            placeholder="Scan LPN-XXXXXX or Type..."
+                                            className="w-full px-4 py-3 bg-secondary-50 border-2 border-secondary-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all font-mono font-bold text-lg"
+                                            value={lpn}
+                                            onChange={e => setLpn(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && checkAndHandleLpn(e.target.value)}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                            {lpn ? (
+                                                <button onClick={() => setLpn('')} className="p-1.5 hover:bg-secondary-200 rounded-lg text-secondary-400">
+                                                    <X size={20} />
+                                                </button>
+                                            ) : (
+                                                <div className="px-2 py-1 bg-white border border-secondary-200 rounded text-[10px] font-bold text-secondary-400 shadow-sm">
+                                                    AUTO SCAN
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-end gap-3 w-full md:w-auto self-stretch">
+                                    <button
+                                        disabled={isSubmitting || !lpn}
+                                        onClick={() => submitBinding(true)}
+                                        className="flex-1 md:flex-none px-8 py-4 bg-secondary-900 text-white rounded-xl hover:bg-black disabled:bg-secondary-200 disabled:text-secondary-400 font-bold transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5 min-w-[180px]"
+                                    >
+                                        <span className="flex items-center gap-2 text-lg">
+                                            <CheckCircle size={22} />
+                                            Finish Swiftly
+                                        </span>
+                                        <span className="text-[10px] opacity-60 uppercase tracking-widest font-black">Save Evidence Only</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setStep(2)}
+                                        disabled={!lpn}
+                                        className="flex-1 md:flex-none px-8 py-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:bg-primary-100 disabled:text-primary-300 font-bold shadow-lg shadow-primary-200 transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5 min-w-[200px]"
+                                    >
+                                        <span className="flex items-center gap-2 text-lg">
+                                            Choose SKU
+                                            <ArrowRight size={22} className="animate-pulse" />
+                                        </span>
+                                        <span className="text-[10px] opacity-80 uppercase tracking-widest font-black text-primary-50">Select Product & Print</span>
+                                    </button>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setStep(2)}
-                                className="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-bold shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center gap-2"
-                            >
-                                Continue to LPN Binding <ArrowRight size={18} />
-                            </button>
                         </div>
                     </div>
                 )}
@@ -480,12 +514,12 @@ export default function InboundStationPage() {
                                                             key={v.id}
                                                             onClick={() => setSelectedVariant(v)}
                                                             className={`
-                                                                text-left p-3 rounded-lg border transition-all flex items-start gap-3
-                                                                ${selectedVariant?.id === v.id
+                                                        text-left p-3 rounded-lg border transition-all flex items-start gap-3
+                                                        ${selectedVariant?.id === v.id
                                                                     ? 'bg-primary-600 text-white border-primary-600 ring-2 ring-primary-300 ring-offset-1'
                                                                     : 'bg-white text-secondary-700 border-secondary-200 hover:border-primary-400 hover:shadow-sm'
                                                                 }
-                                                            `}
+                                                    `}
                                                         >
                                                             <div className={`w-12 h-12 bg-white rounded-lg border overflow-hidden flex-shrink-0 ${selectedVariant?.id === v.id ? 'border-primary-400' : 'border-secondary-100'}`}>
                                                                 <img
